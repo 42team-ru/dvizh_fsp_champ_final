@@ -1,0 +1,7 @@
+**/node_modules
+.git
+.idea
+.env
+backend
+deploy/*
+!deploy/Caddyfile

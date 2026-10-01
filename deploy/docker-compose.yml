@@ -1,0 +1,52 @@
+# Прод на VPS. Ничего не собирается на сервере: образы приходят из GHCR (pull качает только изменившиеся слои).
+# IMAGE (ghcr.io/owner/repo) и TAG выставляет CI в /opt/app/.env при каждом деплое.
+services:
+  db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: app
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d app"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    image: ${IMAGE}/app:${TAG:-latest}
+    restart: unless-stopped
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/app
+      DB_USER: app
+      DB_PASSWORD: ${DB_PASSWORD}
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health/readiness | grep -q UP"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+
+  web:
+    image: ${IMAGE}/web:${TAG:-latest}
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:-:80}
+    volumes:
+      # Сертификаты Let's Encrypt — обычная папка на диске VPS (/opt/app/data/caddy), а не docker volume:
+      # переживает `down -v`, `volume prune`, пересоздание контейнеров. Иначе упрёмся в лимиты Let's Encrypt.
+      - ./data/caddy:/data
+    depends_on:
+      - app
+
+volumes:
+  pgdata:

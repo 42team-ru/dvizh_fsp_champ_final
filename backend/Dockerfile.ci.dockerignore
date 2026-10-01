@@ -1,0 +1,6 @@
+.gradle
+.idea
+*.iml
+build/*
+!build/libs/
+!build/libs/app.jar

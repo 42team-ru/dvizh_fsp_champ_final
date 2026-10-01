@@ -1,0 +1,22 @@
+# DOMAIN=example.com -> автоматический HTTPS (Let's Encrypt)
+# DOMAIN не задан (":80") -> обычный HTTP по IP
+{$DOMAIN::80} {
+	encode zstd gzip
+
+	# Всё серверное -> бэк. Пока app перезапускается при деплое, Caddy держит запрос до 30с и ретраит
+	# (вместо 502), так что пользователь видит лишь небольшую задержку.
+	@backend path /api/* /actuator/health* /swagger-ui* /v3/api-docs*
+	handle @backend {
+		reverse_proxy app:8080 {
+			lb_try_duration 30s
+			lb_try_interval 500ms
+		}
+	}
+
+	# Остальное -> SPA (fallback на index.html для роутов React)
+	handle {
+		root * /srv/web
+		try_files {path} /index.html
+		file_server
+	}
+}

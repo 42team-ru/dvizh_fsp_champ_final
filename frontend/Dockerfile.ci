@@ -1,0 +1,4 @@
+# Тонкий образ для CI: dist уже собран в Actions. Контекст — корень репозитория.
+FROM caddy:2-alpine
+COPY deploy/Caddyfile /etc/caddy/Caddyfile
+COPY frontend/dist /srv/web

@@ -1,0 +1,9 @@
+**/node_modules
+**/dist
+**/build
+**/.gradle
+.git
+.idea
+.env
+deploy/app.jar
+deploy/web
