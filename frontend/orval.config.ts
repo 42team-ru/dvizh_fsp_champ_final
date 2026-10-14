@@ -1,18 +1,21 @@
-import { defineConfig } from 'orval'
+import { defineConfig } from "orval";
 
-// Контракт: openapi.json (лежит в репозитории, обновляется `yarn api:pull` с запущенного бэка).
-// Генерация: `yarn api:gen` -> src/api/generated (тоже коммитится, чтобы фронт собирался без бэка).
+// Спека лежит в git (обновляется через `yarn api:pull`), бэкенд для генерации не нужен.
 export default defineConfig({
-  api: {
-    input: { target: './openapi.json' },
+  core: {
+    input: "./src/shared/api/schemas/openapi.json",
     output: {
-      mode: 'tags-split',
-      target: './src/api/generated',
-      schemas: './src/api/generated/model',
-      client: 'react-query',
-      httpClient: 'fetch',
-      baseUrl: '', // относительные пути: /api/* в деве проксирует Vite, в проде Caddy
+      mode: "tags-split",
+      target: "./src/shared/api/generated/core",
+      client: "react-query",
+      baseUrl: "", // относительные пути: /api/* в деве проксирует Vite, в проде Caddy
       clean: true,
+      override: {
+        mutator: {
+          path: "./src/shared/api/mutators/authMutator.ts",
+          name: "authMutator",
+        },
+      },
     },
   },
-})
+});
