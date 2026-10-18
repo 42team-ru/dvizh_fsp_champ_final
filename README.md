@@ -18,14 +18,17 @@ make back    # http://localhost:8080  (swagger: /swagger-ui.html)
 make front   # http://localhost:5173  (/api проксируется на бэк)
 ```
 
+## Git-хуки
+Включаются сами при `yarn install` или первой сборке Gradle (вручную: `make hooks`), нужен Node. Хуки не пропускают подписи агентов и мат в коммитах и добавленном коде. Подробности: `AGENTS.md`.
+
 ## Деплой через GitHub Actions + GHCR
 Push в `main` → `.github/workflows/deploy.yml`:
-1. параллельно: **test** (тесты бэка, typecheck фронта) и **images** (jar и dist собираются на раннере с кэшем Gradle/Yarn);
-2. тонкие образы (`backend/Dockerfile.ci` = JRE + jar, `frontend/Dockerfile.ci` = Caddy + dist) собираются за секунды и пушатся в `ghcr.io/<owner>/<repo>/{app,web}` (теги `latest` и `<sha>`);
+1. параллельно: **test** (тесты бэка, typecheck фронта) и **images** (jar и фронта (`build/client`) собираются на раннере с кэшем Gradle/Yarn);
+2. тонкие образы (`backend/Dockerfile.ci` = JRE + jar, `frontend/Dockerfile.ci` = Caddy + build/client) собираются за секунды и пушатся в `ghcr.io/<owner>/<repo>/{app,web}` (теги `latest` и `<sha>`);
 3. **deploy**: на VPS кладётся `docker-compose.yml`, `docker compose pull` (качаются только изменившиеся слои) и `up -d`.
 
 Почему это быстро:
-- jar и dist собираются на раннере с кэшем, `docker build` ничего не компилирует (тонкие образы, секунды);
+- jar и фронта (`build/client`) собираются на раннере с кэшем, `docker build` ничего не компилирует (тонкие образы, секунды);
 - jar в образе **послойный** (`jarmode=tools extract --layers`): зависимости (~65 МБ) в отдельном слое, слой с кодом ~20 КБ → `pull` на VPS при обычном деплое качает килобайты;
 - `docker compose up -d --wait`: деплой падает красным, если бэк не стал healthy;
 - Caddy ретраит запросы до 30 с (`lb_try_duration`), пока `app` перезапускается, — вместо 502 пользователь видит лишь паузу;
