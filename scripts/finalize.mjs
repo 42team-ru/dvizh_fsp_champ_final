@@ -96,7 +96,12 @@ try {
 if (purge) for (const t of KEEP_LOCAL) rmSync(t, { recursive: true, force: true })
 
 // Контроль: в отслеживаемых файлах не должно остаться ссылок на удалённое
-const left = git('grep', '-nIE', 'hygiene|githooks|installGitHooks|core\\.hooksPath').split('\n').filter(Boolean)
+let left = []
+try {
+  left = git('grep', '-nIE', 'hygiene|githooks|installGitHooks|core\\.hooksPath').split('\n').filter(Boolean)
+} catch {
+  /* git grep завершается с кодом 1, когда ничего не найдено: это хорошо */
+}
 console.log('\n✔ Готово: один коммит создан.')
 if (left.length) {
   console.log('\nВнимание, остались упоминания (проверьте вручную):')
