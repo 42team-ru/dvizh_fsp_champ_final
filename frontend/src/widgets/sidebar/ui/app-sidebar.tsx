@@ -1,5 +1,8 @@
 import React from "react";
 import { NavLink, useNavigate } from "react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAuthLogout } from "@/shared/api/generated/core/auth/auth";
+import { USER_QUERY_KEY } from "@/entity/user/model/use-user";
 import {
   LayoutDashboard,
   Database,
@@ -62,6 +65,8 @@ export function AppSidebar({ user }: AppSidebarProps) {
 
   const logout = useAuthStore((s) => s.logout);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { mutateAsync: logoutAsync } = useAuthLogout();
 
   const toggle = () => {
     const next = !collapsed;
@@ -121,8 +126,11 @@ export function AppSidebar({ user }: AppSidebarProps) {
     };
   }, [isDragging]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    // Гасим сессию на сервере (cookie обнуляются); ошибка сети не должна блокировать выход
+    await logoutAsync().catch(() => undefined);
     logout();
+    queryClient.removeQueries({ queryKey: USER_QUERY_KEY });
     void navigate("/auth/login", { replace: true });
   };
 
