@@ -1,0 +1,4 @@
+# Настройки Codex для этого проекта (подхватываются, если папка отмечена как trusted в ~/.codex/config.toml).
+# Основная задача Codex здесь — писать тесты, см. раздел «Тесты» в CLAUDE.md.
+model = "gpt-6.1-sol"
+model_reasoning_effort = "medium"

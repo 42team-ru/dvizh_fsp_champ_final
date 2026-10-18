@@ -36,7 +36,7 @@ const PROFANITY = new RegExp(
 )
 
 // Где следы агентов допустимы (инструкции и сам скрипт) и что вообще не проверяем
-const ALLOW_AI = [/^CLAUDE\.md$/, /^AGENTS\.md$/, /^\.claude\//, /^\.githooks\//, /^scripts\/hygiene\.mjs$/]
+const ALLOW_AI = [/^CLAUDE\.md$/, /^AGENTS\.md$/, /^\.claude\//, /^\.codex\//, /^scripts\/finalize\.mjs$/, /^\.githooks\//, /^scripts\/hygiene\.mjs$/]
 const SKIP = [/^scripts\/hygiene\.mjs$/, /yarn\.lock$/, /openapi\.json$/, /\/generated\//, /\.(png|ico|jpg|jar|woff2?)$/, /gradle-wrapper\.jar$/]
 
 // Мусор, которому не место в репозитории
