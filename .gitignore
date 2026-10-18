@@ -13,3 +13,4 @@ deploy/.env
 Thumbs.db
 deploy_key
 deploy_key.pub
+/data/
