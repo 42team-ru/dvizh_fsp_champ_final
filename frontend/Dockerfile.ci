@@ -1,4 +1,4 @@
-# Тонкий образ для CI: dist уже собран в Actions. Контекст — корень репозитория.
+# Тонкий образ для CI: build/client уже собран (react-router build, ssr:false) в Actions. Контекст — корень репозитория.
 FROM caddy:2-alpine
 COPY deploy/Caddyfile /etc/caddy/Caddyfile
-COPY frontend/dist /srv/web
+COPY frontend/build/client /srv/web
