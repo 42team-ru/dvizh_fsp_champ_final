@@ -1,3 +1,5 @@
+> Это исходный README шаблона React Router. В проекте используется **yarn** (`yarn install`, `yarn dev`), а запуск всего проекта описан в [development.md](development.md).
+
 # Welcome to React Router!
 
 A modern, production-ready template for building full-stack React applications using React Router.

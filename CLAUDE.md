@@ -6,9 +6,13 @@
 
 - Никаких подписей агентов в коммитах и PR: не добавлять `Co-Authored-By`, `Generated with Claude Code` и любые похожие строки. Автор коммита — только пользователь.
 
+## Документация
+
+Вся документация в папке `docs/` (оглавление в `docs/README.md`); в корне остаётся только короткий `README.md`. Менялся деплой, переменные `.env` или процесс запуска — обновить `docs/dev-faq.md` и `docs/deploy.md`.
+
 ## Структура бэкенда
 
-Пакеты по слоям в `com.hackathon.app`: `rest`, `service`, `repository`, `entity`, `dto`, `config`, `exception` (подробно в README, раздел «Структура»).
+Пакеты по слоям в `com.hackathon.app`: `rest`, `service`, `repository`, `entity`, `dto`, `config`, `exception` (подробно в `docs/architecture.md`).
 - Зависимости только вниз: `rest → service → repository → entity`. Контроллер не ходит в репозиторий напрямую, сервис не знает про HTTP/cookie.
 - Сущности наружу не возвращать, только `dto` (records). Новая фича = новые файлы в этих же пакетах, а не новый корневой пакет.
 - Контроллеры только под `/api/...`, с `produces = APPLICATION_JSON_VALUE` и `@Tag` + `@Operation(operationId = "<tag>_<действие>")` (от этого зависят имена хуков Orval).

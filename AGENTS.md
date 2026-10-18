@@ -11,7 +11,7 @@
 
 ## Структура
 
-Бэкенд по слоям `rest / service / repository / entity / dto / config / exception`, зависимости только вниз (см. README, «Структура» и CLAUDE.md). Тесты лежат в `src/test/java/com/hackathon/app/e2e`.
+Бэкенд по слоям `rest / service / repository / entity / dto / config / exception`, зависимости только вниз (см. `docs/architecture.md` и CLAUDE.md). Тесты лежат в `src/test/java/com/hackathon/app/e2e`.
 
 ## Тесты (твоя основная задача)
 

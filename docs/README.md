@@ -1,0 +1,10 @@
+# Документация
+
+| Файл | О чём |
+|---|---|
+| [dev-faq.md](dev-faq.md) | **FAQ по деплою для разработчика**: сменить сервер, задеплоить руками, откат, домен, перенос БД, частые ошибки |
+| [deploy.md](deploy.md) | Как устроен автодеплой (GitHub Actions + GHCR) и почему он быстрый |
+| [development.md](development.md) | Локальная разработка, демо-режим, git-хуки |
+| [architecture.md](architecture.md) | Структура бэкенда по слоям, Orval и контракт API |
+| [orval.md](orval.md) | Генерация API-клиента для фронта |
+| [frontend.md](frontend.md) | Исходный README шаблона React Router |
