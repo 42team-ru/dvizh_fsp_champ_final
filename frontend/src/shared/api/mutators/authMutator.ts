@@ -60,6 +60,7 @@ const normalizeHeaders = (
 
 const PUBLIC_AUTH_PATHS = [
   "/auth/login",
+  "/demo/accounts",
   "/auth/logout",
   "/auth/register",
   "/auth/check/username",

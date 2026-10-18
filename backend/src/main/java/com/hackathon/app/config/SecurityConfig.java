@@ -42,7 +42,7 @@ public class SecurityConfig {
 
 	/** Эти пути не читают токен вовсе: протухший cookie не должен ломать вход и обновление сессии. */
 	private static final List<String> PUBLIC_AUTH = List.of("/api/auth/register", "/api/auth/login", "/api/auth/refresh",
-			"/api/auth/logout", "/api/auth/users/check/");
+			"/api/auth/logout", "/api/auth/users/check/", "/api/demo/");
 
 	@Bean
 	SecurityFilterChain filterChain(HttpSecurity http, BearerTokenResolver tokenResolver) {
@@ -52,7 +52,7 @@ public class SecurityConfig {
 			.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.authorizeHttpRequests(auth -> auth
 				.requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/refresh", "/api/auth/logout",
-						"/api/auth/users/check/**", "/api/ping").permitAll()
+						"/api/auth/users/check/**", "/api/demo/**", "/api/ping").permitAll()
 				.requestMatchers("/actuator/health/**", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
 				.requestMatchers("/api/**").authenticated()
 				.anyRequest().permitAll())

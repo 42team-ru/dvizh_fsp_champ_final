@@ -24,6 +24,8 @@ services:
       DB_USER: app
       DB_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
+      # Демо-режим (тестовые аккаунты с публичным паролем): включить DEMO_MODE=true в /opt/app/.env, если сервер используется как демо
+      DEMO_MODE: ${DEMO_MODE:-false}
     depends_on:
       db:
         condition: service_healthy

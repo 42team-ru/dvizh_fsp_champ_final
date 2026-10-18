@@ -144,6 +144,29 @@
         }
       }
     },
+    "/api/demo/accounts": {
+      "get": {
+        "tags": [
+          "demo"
+        ],
+        "operationId": "demo_accounts",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DemoAccountResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/auth/users/check/username": {
       "get": {
         "tags": [
@@ -334,6 +357,30 @@
           "time": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "DemoAccountResponse": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "systemRole": {
+            "type": "string",
+            "enum": [
+              "USER",
+              "ADMIN"
+            ]
           }
         }
       },

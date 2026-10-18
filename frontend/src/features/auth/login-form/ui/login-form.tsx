@@ -4,6 +4,7 @@ import { AuthPasswordInput } from "@/features/auth/shared/ui/auth-password-input
 import { AuthSubmitButton } from "@/features/auth/shared/ui/auth-submit-button";
 import { getFirstFieldError } from "@/shared/lib/form-errors";
 import { LoginFormLinks } from "./login-form-links";
+import DemoAccounts from "@/features/auth/demo-accounts/ui/demo-accounts";
 
 export default function LoginForm() {
   const { form, showPassword, setShowPassword } = useLoginForm();
@@ -68,6 +69,14 @@ export default function LoginForm() {
                     disabled={isSubmitting}
                   />
                 );
+              }}
+            />
+
+            <DemoAccounts
+              disabled={isSubmitting}
+              onPick={(username, password) => {
+                form.setFieldValue("username", username);
+                form.setFieldValue("password", password);
               }}
             />
 

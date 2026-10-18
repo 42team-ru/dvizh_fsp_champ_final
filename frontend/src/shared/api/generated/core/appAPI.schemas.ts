@@ -73,6 +73,22 @@ export interface PingResponse {
   time?: string;
 }
 
+export type DemoAccountResponseSystemRole = typeof DemoAccountResponseSystemRole[keyof typeof DemoAccountResponseSystemRole];
+
+
+export const DemoAccountResponseSystemRole = {
+  USER: 'USER',
+  ADMIN: 'ADMIN',
+} as const;
+
+export interface DemoAccountResponse {
+  username?: string;
+  password?: string;
+  firstName?: string;
+  lastName?: string;
+  systemRole?: DemoAccountResponseSystemRole;
+}
+
 export interface AvailabilityCheckResponse {
   available?: boolean;
 }
