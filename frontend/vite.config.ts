@@ -14,7 +14,7 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5173,
       // В деве /api идёт на локальный бэкенд, в проде это делает Caddy
-      proxy: backendUrl ? { "/api": backendUrl } : undefined,
+      proxy: { "/api": backendUrl || "http://localhost:8080" },
     },
   };
 });

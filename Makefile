@@ -1,6 +1,10 @@
-.PHONY: hooks scan junk clean db back front logs
-db:            ## Postgres для разработки
-	docker compose -f docker-compose.dev.yml up -d
+.PHONY: hooks scan junk clean dev dev-down db back front logs
+dev:           ## Всё для разработки одной командой: БД + бэкенд + фронт (Ctrl+C остановит бэк и фронт)
+	node scripts/dev.mjs
+dev-down:      ## Остановить БД разработки (данные сохраняются)
+	docker compose -f docker-compose.dev.yml down
+db:            ## Только Postgres для разработки (порт 5440)
+	docker compose -f docker-compose.dev.yml up -d --wait
 back:          ## Бэкенд локально
 	cd backend && ./gradlew bootRun
 front:         ## Фронт локально
