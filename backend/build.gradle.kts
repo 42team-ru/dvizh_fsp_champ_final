@@ -59,6 +59,25 @@ tasks.withType<Test> {
 	useJUnitPlatform()
 }
 
+// `./gradlew test` — быстрые тесты на H2, Docker не нужен.
+// `./gradlew postgresTest` — смоук на настоящем Postgres (Testcontainers). `./gradlew check` (CI) — оба.
+tasks.test {
+	useJUnitPlatform { excludeTags("postgres") }
+}
+
+val postgresTest by tasks.registering(Test::class) {
+	group = "verification"
+	description = "Тесты с тегом postgres (Testcontainers, нужен Docker)"
+	testClassesDirs = sourceSets.test.get().output.classesDirs
+	classpath = sourceSets.test.get().runtimeClasspath
+	useJUnitPlatform { includeTags("postgres") }
+	shouldRunAfter(tasks.test)
+}
+
+tasks.check {
+	dependsOn(postgresTest)
+}
+
 // Включает git-хуки репозитория при первой сборке (молча пропускает, если нет git, например в Docker)
 val installGitHooks by tasks.registering {
 	val repoRoot: File = project.rootDir.parentFile

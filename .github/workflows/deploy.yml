@@ -26,7 +26,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v6
       - name: Backend tests (Testcontainers)
         working-directory: backend
-        run: ./gradlew test
+        run: ./gradlew check
       - uses: actions/setup-node@v7
         with:
           node-version: 24
