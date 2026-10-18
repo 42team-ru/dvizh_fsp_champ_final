@@ -45,7 +45,6 @@ dependencies {
 	testAnnotationProcessor("org.projectlombok:lombok")
 }
 
-// Фиксированное имя jar: деплой копирует build/libs/app.jar
 tasks.bootJar {
 	archiveFileName = "app.jar"
 }
@@ -56,4 +55,23 @@ tasks.jar {
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+}
+
+// Включает git-хуки репозитория при первой сборке (молча пропускает, если нет git, например в Docker)
+val installGitHooks by tasks.registering {
+	val repoRoot: File = project.rootDir.parentFile
+	doLast {
+		try {
+			ProcessBuilder("git", "config", "core.hooksPath", ".githooks")
+				.directory(repoRoot)
+				.redirectErrorStream(true)
+				.start()
+				.waitFor()
+		} catch (_: Exception) {
+		}
+	}
+}
+
+tasks.compileJava {
+	dependsOn(installGitHooks)
 }
