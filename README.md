@@ -15,14 +15,12 @@ Swagger: http://localhost:8080/swagger-ui.html
 
 ## Быстрый старт (разработка)
 ```bash
-make dev     # всё сразу: Postgres (порт 5440) + бэкенд :8080 + фронт :5173; Ctrl+C останавливает
-             # без make: node scripts/dev.mjs (работает и на Windows)
-
-# по отдельности:
-make db      # только Postgres в докере (порт 5440, чтобы не конфликтовать с локальным 5432)
-make back    # http://localhost:8080  (swagger: /swagger-ui.html)
-make front   # http://localhost:5173  (/api проксируется на бэк)
+make dev     # Postgres в докере (порт 5440, не конфликтует с локальным 5432); один раз, дальше работает сам
+make back    # бэкенд http://localhost:8080 (swagger: /swagger-ui.html), в своём терминале
+make front   # фронт   http://localhost:5173 (/api проксируется на бэк), в своём терминале
 make dev-down  # остановить БД разработки
+# без make: node scripts/dev.mjs [back|front] (работает и на Windows)
+# бэк и фронт запускаются отдельно, чтобы каждый перезапускать независимо: Ctrl+C и снова make back
 ```
 
 ## Git-хуки

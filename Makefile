@@ -1,14 +1,12 @@
-.PHONY: hooks scan junk clean dev dev-down db back front logs
-dev:           ## Всё для разработки одной командой: БД + бэкенд + фронт (Ctrl+C остановит бэк и фронт)
+.PHONY: hooks scan junk clean dev dev-down back front logs
+dev:           ## Postgres для разработки (один раз, остаётся работать); бэк и фронт запускайте отдельно: make back / make front
 	node scripts/dev.mjs
 dev-down:      ## Остановить БД разработки (данные сохраняются)
 	docker compose -f docker-compose.dev.yml down
-db:            ## Только Postgres для разработки (порт 5440)
-	docker compose -f docker-compose.dev.yml up -d --wait
-back:          ## Бэкенд локально
-	cd backend && ./gradlew bootRun
-front:         ## Фронт локально
-	cd frontend && yarn dev
+back:          ## Бэкенд :8080 (свой терминал, Ctrl+C и снова make back)
+	node scripts/dev.mjs back
+front:         ## Фронт :5173 (свой терминал)
+	node scripts/dev.mjs front
 logs:
 	@. ./.env && ssh $$VPS_HOST "cd $${VPS_DIR:-/opt/app} && docker compose logs -f --tail=100"
 hooks:         ## Включить git-хуки проверки коммитов (один раз после клона)
