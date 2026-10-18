@@ -7,8 +7,8 @@ import {
   type RegisterFormValues,
 } from "./register-shema";
 import {
-  useRegisterAuthRegisterPost,
-  type RegisterAuthRegisterPostMutationError,
+  useAuthRegister,
+  type AuthRegisterMutationError,
 } from "@/shared/api/generated/core/auth/auth";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
@@ -21,7 +21,7 @@ import {
 
 export function useRegisterForm() {
   const navigate = useNavigate();
-  const { mutateAsync: registerAsync } = useRegisterAuthRegisterPost();
+  const { mutateAsync: registerAsync } = useAuthRegister();
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordVerification, setShowPasswordVerification] =
     useState(false);
@@ -64,7 +64,7 @@ export function useRegisterForm() {
 
         navigate("/auth/login", { viewTransition: true });
       } catch (error: unknown) {
-        const apiError = error as RegisterAuthRegisterPostMutationError;
+        const apiError = error as AuthRegisterMutationError;
         toast.error("Ошибка при регистрации", {
           description: apiError.detail ?? "Попробуйте снова позже.",
         });

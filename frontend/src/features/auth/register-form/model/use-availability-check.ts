@@ -1,10 +1,10 @@
 import { useCallback, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  getCheckEmailAvailabilityAuthCheckEmailGetQueryOptions,
-  getCheckUsernameAvailabilityAuthCheckUsernameGetQueryOptions,
+  getAuthCheckEmailQueryOptions,
+  getAuthCheckUsernameQueryOptions,
 } from "@/shared/api/generated/core/auth/auth";
-import type { AvailabilityResponse } from "@/shared/api/generated/core/hackathonTemplateAPI.schemas";
+import type { AvailabilityResponse } from "@/shared/api/generated/core/coreServiceAPI.schemas";
 import { registerEmailSchema, registerUsernameSchema } from "./register-shema";
 
 type AvailabilityQueryResult = {
@@ -91,7 +91,7 @@ export function useUsernameAvailability(formRef: React.RefObject<any>): Availabi
   const fetchAvailability = useCallback(
     (username: string) => {
       const queryOptions =
-        getCheckUsernameAvailabilityAuthCheckUsernameGetQueryOptions({
+        getAuthCheckUsernameQueryOptions({
           username,
         });
 
@@ -183,7 +183,7 @@ export function useEmailAvailability(formRef: React.RefObject<any>): Availabilit
 
   const fetchAvailability = useCallback(
     (email: string) => {
-      const queryOptions = getCheckEmailAvailabilityAuthCheckEmailGetQueryOptions(
+      const queryOptions = getAuthCheckEmailQueryOptions(
         { email },
       );
 

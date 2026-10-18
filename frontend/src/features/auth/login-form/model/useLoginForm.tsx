@@ -3,8 +3,8 @@ import { loginSchema } from "./login-shema";
 import { useState } from "react";
 import {
   useAuthLogout,
-  useLoginAuthLoginPost,
-  type LoginAuthLoginPostMutationError,
+  useAuthLogin,
+  type AuthLoginMutationError,
 } from "@/shared/api/generated/core/auth/auth";
 import { USER_QUERY_KEY } from "@/entity/user/model/use-user";
 import { useQueryClient } from "@tanstack/react-query";
@@ -16,7 +16,7 @@ export function useLoginForm() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showPassword, setShowPassword] = useState(false);
-  const { mutateAsync: loginAsync } = useLoginAuthLoginPost();
+  const { mutateAsync: loginAsync } = useAuthLogin();
   const { mutateAsync: logoutAsync } = useAuthLogout();
   const form = useForm({
     defaultValues: {
@@ -48,7 +48,7 @@ export function useLoginForm() {
         queryClient.removeQueries({ queryKey: USER_QUERY_KEY });
         navigate("/dashboard", { viewTransition: true });
       } catch (error: unknown) {
-        const apiError = error as LoginAuthLoginPostMutationError;
+        const apiError = error as AuthLoginMutationError;
         toast.error("Ошибка при входе", {
           description: apiError.detail ?? "Попробуйте снова позже.",
         });

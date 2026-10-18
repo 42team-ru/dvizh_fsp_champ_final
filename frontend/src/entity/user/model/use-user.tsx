@@ -1,19 +1,19 @@
 import {
-  getMeAuthMeGetQueryKey,
-  useMeAuthMeGet,
-  type meAuthMeGetResponseSuccess,
+  getAuthMeQueryKey,
+  useAuthMe,
+  type authMeResponseSuccess,
 } from "@/shared/api/generated/core/auth/auth";
-import type { UserRead } from "@/shared/api/generated/core/hackathonTemplateAPI.schemas";
+import type { UserResponse } from "@/shared/api/generated/core/coreServiceAPI.schemas";
 
-export const USER_QUERY_KEY = getMeAuthMeGetQueryKey();
+export const USER_QUERY_KEY = getAuthMeQueryKey();
 
 const isAuthMeSuccess = (
   response?: unknown,
-): response is meAuthMeGetResponseSuccess & { data: UserRead } =>
+): response is authMeResponseSuccess & { data: UserResponse } =>
   (response as { status?: number })?.status === 200;
 
 export const useUser = () => {
-  const query = useMeAuthMeGet({
+  const query = useAuthMe({
     query: {
       queryKey: USER_QUERY_KEY,
       staleTime: 5 * 60 * 1000,
@@ -22,7 +22,7 @@ export const useUser = () => {
     },
   });
 
-  const user: UserRead | undefined = isAuthMeSuccess(query.data)
+  const user: UserResponse | undefined = isAuthMeSuccess(query.data)
     ? query.data.data
     : undefined;
 

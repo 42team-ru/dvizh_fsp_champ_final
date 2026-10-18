@@ -5,7 +5,7 @@ const BACKEND_FALLBACK = "http://localhost:8080";
 
 const trimTrailingSlash = (value: string) => value.replace(/\/+$/, "");
 
-export const baseURL = import.meta.env.VITE_BACKEND_URL || BACKEND_FALLBACK;
+export const baseURL = import.meta.env.VITE_BACKEND_URL ?? BACKEND_FALLBACK;
 const REFRESH_ENDPOINT = "/auth/refresh";
 const MAX_REFRESH_RETRIES = 1;
 

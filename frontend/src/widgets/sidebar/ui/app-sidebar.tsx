@@ -25,7 +25,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/shared/components/ui/dialog";
-import type { UserRead } from "@/shared/api/generated/core/hackathonTemplateAPI.schemas";
+import type { UserResponse } from "@/shared/api/generated/core/coreServiceAPI.schemas";
 import useAuthStore from "@/entity/auth/model/auth-store";
 
 const NAV_ITEMS = [
@@ -44,7 +44,7 @@ const STORAGE_KEY = "sidebar:collapsed";
 const DRAG_THRESHOLD = 40;
 
 interface AppSidebarProps {
-  user: UserRead;
+  user: UserResponse;
 }
 
 export function AppSidebar({ user }: AppSidebarProps) {
