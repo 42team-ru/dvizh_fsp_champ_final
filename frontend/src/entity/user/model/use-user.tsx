@@ -3,7 +3,7 @@ import {
   useAuthMe,
   type authMeResponseSuccess,
 } from "@/shared/api/generated/core/auth/auth";
-import type { UserResponse } from "@/shared/api/generated/core/coreServiceAPI.schemas";
+import type { UserResponse } from "@/shared/api/generated/core/appAPI.schemas";
 
 export const USER_QUERY_KEY = getAuthMeQueryKey();
 

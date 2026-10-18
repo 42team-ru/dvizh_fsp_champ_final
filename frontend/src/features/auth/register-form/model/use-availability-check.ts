@@ -4,12 +4,12 @@ import {
   getAuthCheckEmailQueryOptions,
   getAuthCheckUsernameQueryOptions,
 } from "@/shared/api/generated/core/auth/auth";
-import type { AvailabilityResponse } from "@/shared/api/generated/core/coreServiceAPI.schemas";
+import type { AvailabilityCheckResponse } from "@/shared/api/generated/core/appAPI.schemas";
 import { registerEmailSchema, registerUsernameSchema } from "./register-shema";
 
 type AvailabilityQueryResult = {
   status: number;
-  data: AvailabilityResponse;
+  data: AvailabilityCheckResponse;
 };
 
 function getAvailability(

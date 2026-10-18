@@ -20,12 +20,12 @@ const username = z
 
 const password = z
   .string()
-  .min(6, "Пароль должен содержать как минимум 6 символов.")
+  .min(8, "Пароль должен содержать как минимум 8 символов.")
   .max(100, "Пароль должен содержать не более 100 символов.");
 
 const passwordVerification = z
   .string()
-  .min(6, "Пароль должен содержать как минимум 6 символов.")
+  .min(8, "Пароль должен содержать как минимум 8 символов.")
   .max(100, "Пароль должен содержать не более 100 символов.");
 
 export { email as registerEmailSchema, username as registerUsernameSchema };

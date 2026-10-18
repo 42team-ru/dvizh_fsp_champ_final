@@ -46,8 +46,8 @@ export function useRegisterForm() {
       try {
         await registerAsync({
           data: {
-            first_name: value.firstName,
-            last_name: value.lastName,
+            firstName: value.firstName,
+            lastName: value.lastName,
             email: value.email,
             password: value.password,
             username: value.username,

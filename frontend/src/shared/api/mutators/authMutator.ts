@@ -6,7 +6,7 @@ const BACKEND_FALLBACK = "http://localhost:8080";
 const trimTrailingSlash = (value: string) => value.replace(/\/+$/, "");
 
 export const baseURL = import.meta.env.VITE_BACKEND_URL ?? BACKEND_FALLBACK;
-const REFRESH_ENDPOINT = "/auth/refresh";
+const REFRESH_ENDPOINT = "/api/auth/refresh";
 const MAX_REFRESH_RETRIES = 1;
 
 type ExtendedAxiosRequestConfig = AxiosRequestConfig & {
@@ -60,6 +60,7 @@ const normalizeHeaders = (
 
 const PUBLIC_AUTH_PATHS = [
   "/auth/login",
+  "/auth/logout",
   "/auth/register",
   "/auth/check/username",
   "/auth/check/email",

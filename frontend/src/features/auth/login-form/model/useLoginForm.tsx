@@ -37,7 +37,6 @@ export function useLoginForm() {
           data: {
             username: value.username,
             password: value.password,
-            device_type: "WEB",
           },
         });
 

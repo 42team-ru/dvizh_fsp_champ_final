@@ -25,7 +25,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/shared/components/ui/dialog";
-import type { UserResponse } from "@/shared/api/generated/core/coreServiceAPI.schemas";
+import type { UserResponse } from "@/shared/api/generated/core/appAPI.schemas";
 import useAuthStore from "@/entity/auth/model/auth-store";
 
 const NAV_ITEMS = [
@@ -127,14 +127,14 @@ export function AppSidebar({ user }: AppSidebarProps) {
   };
 
   const initials = [
-    user.first_name?.[0] ?? user.username?.[0] ?? "?",
-    user.last_name?.[0] ?? "",
+    user.firstName?.[0] ?? user.username?.[0] ?? "?",
+    user.lastName?.[0] ?? "",
   ]
     .join("")
     .toUpperCase();
   const fullName =
-    `${user.first_name} ${user.last_name}`.trim() || user.username;
-  const roleLabel = user.roles.length ? user.roles.join(", ") : "USER";
+    `${user.firstName} ${user.lastName}`.trim() || user.username;
+  const roleLabel = user.systemRole ?? "USER";
 
   return (
     <aside
