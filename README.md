@@ -19,7 +19,7 @@ make front   # http://localhost:5173  (/api проксируется на бэк
 ```
 
 ## Git-хуки
-Включаются сами при `yarn install` или первой сборке Gradle (вручную: `make hooks`), нужен Node. Хуки не пропускают подписи агентов и мат в коммитах и добавленном коде. Подробности: `AGENTS.md`.
+Включаются сами при `yarn install` или первой сборке Gradle (вручную: `make hooks`), нужен Node. Хуки проверяют сообщения коммитов и добавленный код на запрещённые слова и не пропускают мусорные файлы (`make junk` — отчёт, `make clean` — убрать артефакты сборки).
 
 ## Деплой через GitHub Actions + GHCR
 Push в `main` → `.github/workflows/deploy.yml`:
@@ -64,7 +64,15 @@ cd frontend && yarn api          # = api:pull (скачать спеку) + api:
 - Поменяли контроллер/DTO → `yarn api` → закоммитить `openapi.json` и `src/api/generated`.
 
 ## Структура
-- `backend/` — Spring: web, validation, data-jpa, flyway, postgres, security (stateless, всё открыто), actuator, springdoc, lombok, testcontainers. Миграции: `src/main/resources/db/migration`.
+- `backend/` — Spring Boot (web, validation, data-jpa, flyway, postgres, security + JWT в cookie, actuator, springdoc, lombok). Миграции: `src/main/resources/db/migration`. Пакеты `com.hackathon.app` по слоям:
+  - `rest` — контроллеры (только HTTP: разобрать запрос, вызвать сервис, вернуть DTO; cookie);
+  - `service` — бизнес-логика и транзакции, не знает про HTTP;
+  - `repository` — Spring Data интерфейсы доступа к БД;
+  - `entity` — JPA-сущности (наружу не отдаём, только через `dto`);
+  - `dto` — запросы и ответы API (records, валидация);
+  - `config` — Security, OpenAPI, `@ConfigurationProperties`;
+  - `exception` — свои исключения и единый `ApiExceptionHandler` (RFC 9457).
+  Зависимости идут только вниз: `rest → service → repository → entity`. Пример готового флоу: регистрация и вход (`AuthController`, `AuthService`).
 - `frontend/` — Vite + React заглушка.
 - `deploy/` — prod `docker-compose.yml` (образы из GHCR) + `Caddyfile` (`/api` → бэк, остальное → SPA).
 - `*/Dockerfile` — полная сборка из исходников (для жюри); `*/Dockerfile.ci` — тонкие образы для CI.
