@@ -24,6 +24,9 @@ services:
       DB_URL: jdbc:postgresql://db:5432/app
       DB_USER: app
       DB_PASSWORD: ${DB_PASSWORD:-app}
+      JWT_SECRET: ${JWT_SECRET:-demo-only-secret-demo-only-secret-demo}
+      # Демо-режим для жюри: CORS открыт для любого origin. В проде (deploy/) остаётся строгий список.
+      CORS_ORIGINS: "*"
     depends_on:
       db:
         condition: service_healthy

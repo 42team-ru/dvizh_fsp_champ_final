@@ -1,4 +1,4 @@
-package com.hackathon.app.common;
+package com.hackathon.app.exception;
 
 import java.util.NoSuchElementException;
 
@@ -15,5 +15,15 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 	@ExceptionHandler(NoSuchElementException.class)
 	ProblemDetail notFound(NoSuchElementException e) {
 		return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage());
+	}
+
+	@ExceptionHandler(UnauthorizedException.class)
+	ProblemDetail unauthorized(UnauthorizedException e) {
+		return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, e.getMessage());
+	}
+
+	@ExceptionHandler(ConflictException.class)
+	ProblemDetail conflict(ConflictException e) {
+		return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
 	}
 }

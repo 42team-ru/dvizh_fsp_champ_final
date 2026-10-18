@@ -1,0 +1,39 @@
+package com.hackathon.app.entity;
+
+import java.time.Instant;
+import java.util.UUID;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Entity
+@Table(name = "users")
+@Getter
+@Setter
+@NoArgsConstructor
+public class AppUser {
+
+	public enum SystemRole { USER, ADMIN }
+
+	public enum AuthProvider { LOCAL, YANDEX, GITHUB }
+
+	@Id
+	private UUID id;
+	private String username;
+	private String email;
+	private String passwordHash;
+	private String firstName;
+	private String lastName;
+	private boolean active;
+	@Enumerated(EnumType.STRING)
+	private SystemRole systemRole;
+	@Enumerated(EnumType.STRING)
+	private AuthProvider authProvider;
+	private Instant createdAt;
+}

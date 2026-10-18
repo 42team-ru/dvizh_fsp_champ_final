@@ -35,4 +35,9 @@ springdoc:
     path: /swagger-ui.html
 
 app:
+  auth:
+    # В проде задаётся через JWT_SECRET (минимум 32 символа). Дефолт — только для локальной разработки.
+    jwt-secret: ${JWT_SECRET:dev-only-secret-dev-only-secret-dev-only}
+    access-ttl: 15m
+    refresh-ttl: 14d
   cors-allowed-origins: ${CORS_ORIGINS:http://localhost:5173}

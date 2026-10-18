@@ -121,6 +121,7 @@ jobs:
           # токен живёт только в этой джобе; на VPS он нужен лишь чтобы вытянуть (возможно приватные) образы
           ssh vps "set -e; cd $DIR
             echo '$GH_TOKEN' | docker login ghcr.io -u '$GH_USER' --password-stdin
+            grep -q '^JWT_SECRET=' .env || echo "JWT_SECRET=$(openssl rand -hex 32)" >> .env
             sed -i '/^IMAGE=/d;/^TAG=/d' .env
             printf 'IMAGE=$IMAGE\nTAG=$TAG\n' >> .env
             docker compose pull app web
