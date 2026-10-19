@@ -304,6 +304,8 @@ export interface SportResponse {
   slug: string;
   /** Добавлен пользователем, а не из справочника */
   custom: boolean;
+  /** Иллюстрация вида спорта; у видов без своей картинки — общая */
+  imageUrl: string;
 }
 
 /**

@@ -11,6 +11,8 @@ import com.hackathon.app.domain.mapper.SportMapper;
 import com.hackathon.app.repository.SportRepository;
 import com.hackathon.app.util.Strings;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +22,9 @@ public class SportService {
 
     private final SportRepository sports;
     private final SportMapper mapper;
+
+    /** Папка с иллюстрациями в classpath; имя файла — slug вида спорта. */
+    private static final String IMAGES = "sport-images/";
 
     /** Пустой запрос — весь справочник, иначе поиск по подстроке без учёта регистра, пробелов и ё/е. */
     @Transactional(readOnly = true)
@@ -34,6 +39,18 @@ public class SportService {
     @Transactional(readOnly = true)
     public Sport get(UUID sportId) {
         return sports.findById(sportId).orElseThrow();
+    }
+
+    /**
+     * Иллюстрация вида спорта: файл {@code sport-images/<slug>.webp} в ресурсах приложения.
+     * Новый вид не требует кода: без своей картинки (в том числе неизвестный id) отдаётся общая {@code default.webp}.
+     */
+    @Transactional(readOnly = true)
+    public Resource image(UUID sportId) {
+        return sports.findById(sportId)
+                .map(sport -> new ClassPathResource(IMAGES + sport.getSlug() + ".webp"))
+                .filter(Resource::exists)
+                .orElseGet(() -> new ClassPathResource(IMAGES + "default.webp"));
     }
 
     /**

@@ -47,3 +47,14 @@
 - Общие шаги (зарегистрировать и войти, создать админа, создать событие) вынеси в один хелпер в `e2e/support/`, чтобы не копировать их по классам.
 - Контекст Spring и H2 общие для тестов: давай пользователям уникальные имена (суффикс), чтобы тесты не мешали друг другу.
 - Даты событий — в будущем от текущего момента (`Instant.now().plus(2, DAYS)`). Событие «уже началось» через API не создать: если ветка нужна, подготовь его через репозиторий.
+
+## Иллюстрации видов спорта
+
+Стиль, сцены и устройство API — в `docs/sport-images.md`. Генерация одной картинки (stdin обязательно закрыть, иначе `codex exec` ждёт ввода):
+
+```bash
+codex exec --skip-git-repo-check -s workspace-write -C /tmp/sport-img \
+  "Generate ONE image with your image generation tool, then save it as ./<slug>.png in the current directory. Do nothing else. Prompt: <СТИЛЬ> Scene: <СЦЕНА>" < /dev/null
+```
+
+Одна картинка — около 24 тысяч токенов и 3–5 минут. Дальше конвертация в WebP 640×640 и файл `backend/src/main/resources/sport-images/<slug>.webp`.

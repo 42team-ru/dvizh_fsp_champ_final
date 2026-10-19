@@ -168,3 +168,116 @@ export function useSportsSearch<TData = Awaited<ReturnType<typeof sportsSearch>>
 
 
 
+export type sportsImageResponse200 = {
+  data: Blob
+  status: 200
+}
+
+export type sportsImageResponseSuccess = (sportsImageResponse200) & {
+  headers: Headers;
+};
+;
+
+export type sportsImageResponse = (sportsImageResponseSuccess)
+
+export const getSportsImageUrl = (id: string,) => {
+
+
+
+
+  return `/api/sports/${id}/image`
+}
+
+/**
+ * WebP-картинка для карточек. Для своих видов без иллюстрации — общая картинка. Доступна без входа, кешируется на неделю.
+ * @summary Иллюстрация вида спорта
+ */
+export const sportsImage = async (id: string, options?: Parameters<typeof authMutator>[1]): Promise<sportsImageResponse> => {
+
+  return authMutator<sportsImageResponse>(getSportsImageUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getSportsImageQueryKey = (id: string,) => {
+    return [
+    `/api/sports/${id}/image`
+    ] as const;
+    }
+
+
+export const getSportsImageQueryOptions = <TData = Awaited<ReturnType<typeof sportsImage>>, TError = ErrorType<unknown>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof sportsImage>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getSportsImageQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof sportsImage>>> = ({ signal }) => sportsImage(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof sportsImage>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type SportsImageQueryResult = NonNullable<Awaited<ReturnType<typeof sportsImage>>>
+export type SportsImageQueryError = ErrorType<unknown>
+
+
+export function useSportsImage<TData = Awaited<ReturnType<typeof sportsImage>>, TError = ErrorType<unknown>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof sportsImage>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof sportsImage>>,
+          TError,
+          Awaited<ReturnType<typeof sportsImage>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useSportsImage<TData = Awaited<ReturnType<typeof sportsImage>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof sportsImage>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof sportsImage>>,
+          TError,
+          Awaited<ReturnType<typeof sportsImage>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useSportsImage<TData = Awaited<ReturnType<typeof sportsImage>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof sportsImage>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Иллюстрация вида спорта
+ */
+
+export function useSportsImage<TData = Awaited<ReturnType<typeof sportsImage>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof sportsImage>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getSportsImageQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+

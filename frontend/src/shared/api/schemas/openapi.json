@@ -1321,6 +1321,40 @@
         }
       }
     },
+    "/api/sports/{id}/image": {
+      "get": {
+        "tags": [
+          "sports"
+        ],
+        "summary": "Иллюстрация вида спорта",
+        "description": "WebP-картинка для карточек. Для своих видов без иллюстрации — общая картинка. Доступна без входа, кешируется на неделю.",
+        "operationId": "sports_image",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "image/webp": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/registrations/mine": {
       "get": {
         "tags": [
@@ -2710,11 +2744,17 @@
           "custom": {
             "type": "boolean",
             "description": "Добавлен пользователем, а не из справочника"
+          },
+          "imageUrl": {
+            "type": "string",
+            "description": "Иллюстрация вида спорта; у видов без своей картинки — общая",
+            "example": "/api/sports/3f1c…/image"
           }
         },
         "required": [
           "custom",
           "id",
+          "imageUrl",
           "name",
           "slug"
         ]
