@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useSportsSearch } from "@/shared/api/generated/core/sports/sports";
 import type { EventsListParams } from "@/shared/api/generated/core/appAPI.schemas";
 
@@ -28,8 +28,11 @@ export function useFeedFilters() {
   const isSport = !["Все", "Сегодня", "Выходные"].includes(chip);
   const sport = useSportsSearch({ query: chip }, { query: { enabled: isSport, staleTime: 10 * 60_000 } });
   const found = sport.data?.status === 200 ? sport.data.data.find((s) => s.name.toLowerCase() === chip.toLowerCase()) : undefined;
-  const params: EventsListParams = isSport
+  // Период считается один раз при выборе чипа: иначе «сейчас» в параметрах менялось бы на каждом рендере
+  // и каждый рендер давал бы новый ключ кэша — и новый запрос.
+  const range = useMemo(() => period(chip), [chip]);
+  const params: EventsListParams = useMemo(() => isSport
     ? (found ? { sportId: found.id } : { searchText: chip })
-    : period(chip);
+    : range, [isSport, found, chip, range]);
   return { chip, setChip, params, ready: !isSport || !sport.isPending };
 }

@@ -25,9 +25,13 @@ public class ScheduleDescriptions {
 
 	private static final String FALLBACK = "по расписанию";
 	private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("HH:mm");
-	/** Части правила, которые умеем сказать словами. */
-	private static final Set<Part> SUPPORTED = EnumSet.of(Part.FREQ, Part.INTERVAL, Part.BYDAY, Part.BYMONTHDAY,
-			Part.COUNT, Part.UNTIL, Part.WKST);
+	/**
+	 * Части правила, которые умеем сказать словами. Именами, а не константами Part: в lib-recur классы Part и
+	 * RecurrenceRule инициализируют друг друга по кругу, и если Part загрузить первым (здесь, в статическом поле),
+	 * его инициализация падает до перезапуска JVM (ExceptionInInitializerError в RecurrenceRule$Part). К Part
+	 * обращаемся только после new RecurrenceRule(...).
+	 */
+	private static final Set<String> SUPPORTED = Set.of("FREQ", "INTERVAL", "BYDAY", "BYMONTHDAY", "COUNT", "UNTIL", "WKST");
 
 	/** Все правила через «; » в их порядке. */
 	public static String describe(List<LocalDateTime> firstStarts, List<String> rrules) {
@@ -45,7 +49,7 @@ public class ScheduleDescriptions {
 			return FALLBACK;
 		}
 		for (var part : Part.values()) {
-			if (rule.hasPart(part) && !SUPPORTED.contains(part)) {
+			if (rule.hasPart(part) && !SUPPORTED.contains(part.name())) {
 				return FALLBACK;
 			}
 		}

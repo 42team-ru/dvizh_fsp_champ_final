@@ -8,7 +8,7 @@ import { REGISTRATION_STATUS } from "@/shared/lib/statuses";
 import { formatWhen } from "@/entity/event/lib/event-format";
 import { cn } from "cn";
 import { toMapParams } from "../lib/bbox";
-import { createEventsMap, hasMapKey, type Bbox, type MapPoint, type MapProvider } from "../lib/map-provider";
+import { createEventsMap, hasMapKey, inBbox, type Bbox, type MapPoint, type MapProvider } from "../lib/map-provider";
 
 /** Фильтры ленты, которые понимает карта (format не нужен: на карте только очные). */
 export type MapFilters = Pick<EventsMapParams, "searchText" | "sportId" | "level" | "joinMode" | "from" | "to">;
@@ -41,7 +41,10 @@ export function EventsMap({ filters = {}, className, mapClassName }: {
 }) {
   const provider = useRef<MapProvider | null>(null);
   const container = useRef<HTMLDivElement | null>(null);
+  /** Область запроса: меняется, только когда экран выходит за уже загруженное. */
   const [bbox, setBbox] = useState<Bbox | null>(null);
+  /** Что на экране: по нему фильтруется лента времени. */
+  const [visible, setVisible] = useState<Bbox | null>(null);
   const [selected, setSelected] = useState<EventMapProperties | null>(null);
   const [day, setDay] = useState<number | null>(null);
   const [failed, setFailed] = useState(false);
@@ -59,7 +62,12 @@ export function EventsMap({ filters = {}, className, mapClassName }: {
         setSelected(point.data);
         map.focus(point);
       });
-      unsubscribe = map.onViewportChange((next) => setBbox(toMapParams(next)));
+      unsubscribe = map.onViewportChange(({ fetch, visible: view }) => {
+        const next = toMapParams(fetch);
+        // Тот же bbox — тот же объект состояния: без лишнего рендера и запроса.
+        setBbox((prev) => prev && JSON.stringify(prev) === JSON.stringify(next) ? prev : next);
+        setVisible(view);
+      });
     }).catch((error) => {
       console.error("2GIS map failed to load", error);
       setFailed(true);
@@ -80,6 +88,7 @@ export function EventsMap({ filters = {}, className, mapClassName }: {
   const data = query.data?.status === 200 ? query.data.data : undefined;
   const points = useMemo(() => (data?.features ?? []).map(toPoint)
     .sort((a, b) => a.data.startAt.localeCompare(b.data.startAt)), [data]);
+  const onScreen = useMemo(() => (visible ? points.filter((p) => inBbox(visible, p.coordinates)) : points), [points, visible]);
 
   useEffect(() => {
     provider.current?.setPoints(points);
@@ -102,7 +111,7 @@ export function EventsMap({ filters = {}, className, mapClassName }: {
 
   // Лента времени: события области по дням, внутри дня — по времени.
   const groups: { label: string; items: MapPoint[] }[] = [];
-  for (const point of points) {
+  for (const point of onScreen) {
     const date = new Date(point.data.startAt);
     const index = Math.round((startOfDay(date).getTime() - today.getTime()) / 86_400_000);
     const label = index >= 0 && index < DAYS_AHEAD ? dayLabel(date, index) : formatWhen(point.data.startAt).replace(/ \d\d:\d\d$/, "");
@@ -159,7 +168,7 @@ export function EventsMap({ filters = {}, className, mapClassName }: {
           ))}
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto pr-1">
-          {bbox && points.length === 0 && !query.isFetching && (
+          {bbox && onScreen.length === 0 && !query.isFetching && (
             <p className="text-sm font-semibold text-muted-foreground">В этой области событий нет — сдвиньте карту или выберите другой день.</p>
           )}
           {groups.map((group) => (

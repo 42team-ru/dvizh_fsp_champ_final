@@ -4,6 +4,7 @@ export * from './comments/comments';
 export * from './demo/demo';
 export * from './events/events';
 export * from './files/files';
+export * from './notifications/notifications';
 export * from './occurrences/occurrences';
 export * from './organizations/organizations';
 export * from './pets/pets';

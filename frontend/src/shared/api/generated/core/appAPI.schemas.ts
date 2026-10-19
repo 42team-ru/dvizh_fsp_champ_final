@@ -154,7 +154,6 @@ export type UserSportRequestLevel = typeof UserSportRequestLevel[keyof typeof Us
 export const UserSportRequestLevel = {
   BEGINNER: 'BEGINNER',
   AMATEUR: 'AMATEUR',
-  ADVANCED: 'ADVANCED',
   PRO: 'PRO',
 } as const;
 
@@ -209,7 +208,6 @@ export type UserSportResponseLevel = typeof UserSportResponseLevel[keyof typeof 
 export const UserSportResponseLevel = {
   BEGINNER: 'BEGINNER',
   AMATEUR: 'AMATEUR',
-  ADVANCED: 'ADVANCED',
   PRO: 'PRO',
 } as const;
 
@@ -237,7 +235,6 @@ export type SaveUserPreferencesRequestLevel = typeof SaveUserPreferencesRequestL
 export const SaveUserPreferencesRequestLevel = {
   BEGINNER: 'BEGINNER',
   AMATEUR: 'AMATEUR',
-  ADVANCED: 'ADVANCED',
   PRO: 'PRO',
 } as const;
 
@@ -286,7 +283,6 @@ export type UserPreferencesResponseLevel = typeof UserPreferencesResponseLevel[k
 export const UserPreferencesResponseLevel = {
   BEGINNER: 'BEGINNER',
   AMATEUR: 'AMATEUR',
-  ADVANCED: 'ADVANCED',
   PRO: 'PRO',
 } as const;
 
@@ -412,6 +408,76 @@ export interface OrganizationResponse {
   updatedAt?: string;
   logoUrl?: string;
   documents?: FileResponse[];
+}
+
+export type SaveNotificationSettingsRequestChannelsItem = typeof SaveNotificationSettingsRequestChannelsItem[keyof typeof SaveNotificationSettingsRequestChannelsItem];
+
+
+export const SaveNotificationSettingsRequestChannelsItem = {
+  TELEGRAM: 'TELEGRAM',
+  MAX: 'MAX',
+  EMAIL: 'EMAIL',
+} as const;
+
+export type SaveNotificationSettingsRequestCategoriesItem = typeof SaveNotificationSettingsRequestCategoriesItem[keyof typeof SaveNotificationSettingsRequestCategoriesItem];
+
+
+export const SaveNotificationSettingsRequestCategoriesItem = {
+  REMINDERS: 'REMINDERS',
+  EVENTS: 'EVENTS',
+  REGISTRATIONS: 'REGISTRATIONS',
+  DISCUSSIONS: 'DISCUSSIONS',
+  ORGANIZATIONS: 'ORGANIZATIONS',
+  ORGANIZERS: 'ORGANIZERS',
+} as const;
+
+export interface SaveNotificationSettingsRequest {
+  channels: SaveNotificationSettingsRequestChannelsItem[];
+  categories: SaveNotificationSettingsRequestCategoriesItem[];
+}
+
+export type ChannelChannel = typeof ChannelChannel[keyof typeof ChannelChannel];
+
+
+export const ChannelChannel = {
+  TELEGRAM: 'TELEGRAM',
+  MAX: 'MAX',
+  EMAIL: 'EMAIL',
+} as const;
+
+export interface Channel {
+  channel: ChannelChannel;
+  mode: string;
+  available: boolean;
+  connected: boolean;
+}
+
+export type NotificationSettingsResponseChannelsItem = typeof NotificationSettingsResponseChannelsItem[keyof typeof NotificationSettingsResponseChannelsItem];
+
+
+export const NotificationSettingsResponseChannelsItem = {
+  TELEGRAM: 'TELEGRAM',
+  MAX: 'MAX',
+  EMAIL: 'EMAIL',
+} as const;
+
+export type NotificationSettingsResponseCategoriesItem = typeof NotificationSettingsResponseCategoriesItem[keyof typeof NotificationSettingsResponseCategoriesItem];
+
+
+export const NotificationSettingsResponseCategoriesItem = {
+  REMINDERS: 'REMINDERS',
+  EVENTS: 'EVENTS',
+  REGISTRATIONS: 'REGISTRATIONS',
+  DISCUSSIONS: 'DISCUSSIONS',
+  ORGANIZATIONS: 'ORGANIZATIONS',
+  ORGANIZERS: 'ORGANIZERS',
+} as const;
+
+export interface NotificationSettingsResponse {
+  channels: NotificationSettingsResponseChannelsItem[];
+  categories: NotificationSettingsResponseCategoriesItem[];
+  reminders: boolean;
+  availableChannels: Channel[];
 }
 
 /**
@@ -1164,6 +1230,22 @@ export interface ShopItemResponse {
   hint?: string;
 }
 
+export interface NotificationPollResponse {
+  changed: boolean;
+  revision: number;
+  unreadCount: number;
+}
+
+export interface TelegramLinkResponse {
+  url: string;
+  expiresAt: string;
+}
+
+export interface ReadNotificationsRequest {
+  /** @minimum 0 */
+  throughRevision: number;
+}
+
 /**
  * Запись на мероприятие; тело можно не передавать
  */
@@ -1868,6 +1950,72 @@ export interface FeaturedOrganizationResponse {
   period: string;
 }
 
+export type NotificationResponseType = typeof NotificationResponseType[keyof typeof NotificationResponseType];
+
+
+export const NotificationResponseType = {
+  REMINDER: 'REMINDER',
+  EVENT_CHANGED: 'EVENT_CHANGED',
+  EVENT_UNPUBLISHED: 'EVENT_UNPUBLISHED',
+  EVENT_DELETED: 'EVENT_DELETED',
+  OCCURRENCE_CANCELLED: 'OCCURRENCE_CANCELLED',
+  OCCURRENCE_RESCHEDULED: 'OCCURRENCE_RESCHEDULED',
+  REGISTRATION_CREATED: 'REGISTRATION_CREATED',
+  REGISTRATION_CANCELLED: 'REGISTRATION_CANCELLED',
+  REGISTRATION_APPROVED: 'REGISTRATION_APPROVED',
+  REGISTRATION_REJECTED: 'REGISTRATION_REJECTED',
+  COMMENT_REPLY: 'COMMENT_REPLY',
+  ORGANIZATION_SUBMITTED: 'ORGANIZATION_SUBMITTED',
+  ORGANIZATION_APPROVED: 'ORGANIZATION_APPROVED',
+  ORGANIZATION_REJECTED: 'ORGANIZATION_REJECTED',
+  ORGANIZER_ADDED: 'ORGANIZER_ADDED',
+  ORGANIZER_REMOVED: 'ORGANIZER_REMOVED',
+  QUORUM_REACHED: 'QUORUM_REACHED',
+  QUORUM_LOST: 'QUORUM_LOST',
+  OCCURRENCE_CONFIRMED: 'OCCURRENCE_CONFIRMED',
+} as const;
+
+export type NotificationResponseCategory = typeof NotificationResponseCategory[keyof typeof NotificationResponseCategory];
+
+
+export const NotificationResponseCategory = {
+  REMINDERS: 'REMINDERS',
+  EVENTS: 'EVENTS',
+  REGISTRATIONS: 'REGISTRATIONS',
+  DISCUSSIONS: 'DISCUSSIONS',
+  ORGANIZATIONS: 'ORGANIZATIONS',
+  ORGANIZERS: 'ORGANIZERS',
+} as const;
+
+export interface NotificationResponse {
+  id: string;
+  actorId?: string;
+  type: NotificationResponseType;
+  category: NotificationResponseCategory;
+  title: string;
+  body: string;
+  targetPath: string;
+  eventId?: string;
+  occurrenceId?: string;
+  organizationId?: string;
+  createdAt: string;
+  readAt?: string;
+  revision: number;
+}
+
+export interface NotificationPageResponse {
+  items: NotificationResponse[];
+  nextCursor?: string;
+  unreadCount: number;
+  revision: number;
+}
+
+export interface TelegramConnectionResponse {
+  available: boolean;
+  connected: boolean;
+  username?: string;
+}
+
 /**
  * Статус
  */
@@ -2408,6 +2556,24 @@ export const RegistrationsMineWhen = {
   UPCOMING: 'UPCOMING',
   PAST: 'PAST',
 } as const;
+
+export type NotificationsListParams = {
+cursor?: string;
+size?: number;
+unreadOnly?: boolean;
+};
+
+export type NotificationsPollParams = {
+/**
+ * @minimum 0
+ */
+revision?: number;
+/**
+ * @minimum 0
+ * @maximum 30
+ */
+timeoutSeconds?: number;
+};
 
 export type EventsMineParams = {
 status?: EventsMineStatus;
