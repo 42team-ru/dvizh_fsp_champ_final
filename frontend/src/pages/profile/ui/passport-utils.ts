@@ -7,7 +7,6 @@ import type {
 export const SPORT_LEVEL_LABEL: Record<UserSportResponseLevel, string> = {
   BEGINNER: "Новичок",
   AMATEUR: "Любитель",
-  ADVANCED: "Продвинутый",
   PRO: "Профи",
 };
 
@@ -15,7 +14,6 @@ export const SPORT_LEVEL_LABEL: Record<UserSportResponseLevel, string> = {
 export const LEVEL_PIPS: Record<UserSportResponseLevel, number> = {
   BEGINNER: 1,
   AMATEUR: 2,
-  ADVANCED: 3,
   PRO: 4,
 };
 

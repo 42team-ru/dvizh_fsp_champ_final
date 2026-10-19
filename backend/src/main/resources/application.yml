@@ -62,4 +62,15 @@ app:
     # В Docker-образе — venv /opt/pet-import; на Windows обычно просто python.
     python: ${PET_IMPORT_PYTHON:python3}
     timeout: 30s
+  notifications:
+    # Адрес сайта для ссылок в уведомлениях (Telegram открывает /events/{id})
+    public-url: ${APP_PUBLIC_URL:http://localhost:5173}
+    # Пояс разовых событий в тексте уведомлений; серии используют свой пояс
+    time-zone: ${NOTIFICATIONS_TIME_ZONE:Asia/Krasnoyarsk}
+    scheduling-enabled: ${NOTIFICATIONS_SCHEDULING_ENABLED:true}
+    telegram:
+      enabled: ${TELEGRAM_ENABLED:false}
+      token: ${TELEGRAM_BOT_TOKEN:}
+      username: ${TELEGRAM_BOT_USERNAME:}
+      webhook-secret: ${TELEGRAM_WEBHOOK_SECRET:}
   cors-allowed-origins: ${CORS_ORIGINS:http://localhost:5173}

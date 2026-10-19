@@ -35,10 +35,11 @@ public class NotificationDeliveryService {
     private final DbTimeRepository dbTime;
     private final NotificationProperties properties;
     private final MeterRegistry metrics;
+    private final TelegramCard card;
 
     /** Данные одной попытки, включая fencing token. */
     public record Claim(UUID id, UUID leaseToken, UUID userId, UUID bindingId,
-                        NotificationChannel channel, Long chatId, String text) {}
+                        NotificationChannel channel, Long chatId, String text, NotificationTransport.Photo photo) {}
 
     public List<UUID> due() { return deliveries.due(dbTime.now(), PageRequest.of(0, 100)); }
 
@@ -74,14 +75,15 @@ public class NotificationDeliveryService {
         var token = UUID.randomUUID();
         mapper.claim(d, token, now.plusSeconds(60), d.getAttempts() + 1);
         String text = d.getText();
+        NotificationTransport.Photo photo = null;
         if (notification != null) {
             var link = properties.publicUrl().resolve(notification.getTargetPath()).toString();
-            var content = notification.getTitle() + "\n" + notification.getBody();
-            // Telegram принимает не более 4096 символов; ссылка сохраняется целиком.
-            int budget = Math.max(0, 4000 - link.length());
-            text = content.substring(0, Math.min(content.length(), budget)) + "\n" + link;
+            // Карточка с датой, местом и картинкой; ссылка сохраняется целиком при любом урезании текста.
+            var content = card.build(notification, link);
+            text = content.text();
+            photo = d.getChannel() == NotificationChannel.TELEGRAM ? content.photo() : null;
         }
-        return new Claim(d.getId(), token, d.getUserId(), d.getBindingId(), d.getChannel(), d.getChatId(), text);
+        return new Claim(d.getId(), token, d.getUserId(), d.getBindingId(), d.getChannel(), d.getChatId(), text, photo);
     }
 
     @Transactional

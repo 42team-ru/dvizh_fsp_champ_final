@@ -71,6 +71,7 @@ public class OccurrenceService {
 	private final OccurrenceMapper mapper;
 	private final EventMapper eventMapper;
 	private final UserMapper userMapper;
+	private final NotificationChanges notificationChanges;
 
 	/**
 	 * После сохранения мероприятия приводит занятия к форме: разовому — одно занятие с его временем,
@@ -105,7 +106,7 @@ public class OccurrenceService {
 	/** «Приду» на занятие серии; повторное нажатие ничего не меняет. */
 	@Transactional
 	public OccurrenceResponse attend(UUID eventId, UUID occurrenceId, UUID userId) {
-		var event = lockEvent(eventId);
+		var event = lockEvent(eventId, userId);
 		var occurrence = find(eventId, occurrenceId);
 		var now = dbTime.now();
 		if (attendances.findByOccurrenceIdAndUserId(occurrenceId, userId).isEmpty()) {
@@ -123,7 +124,7 @@ public class OccurrenceService {
 	/** Снять отметку; если её нет — ничего не меняется. */
 	@Transactional
 	public OccurrenceResponse unattend(UUID eventId, UUID occurrenceId, UUID userId) {
-		var event = lockEvent(eventId);
+		var event = lockEvent(eventId, userId);
 		var occurrence = find(eventId, occurrenceId);
 		var now = dbTime.now();
 		var mine = attendances.findByOccurrenceIdAndUserId(occurrenceId, userId);
@@ -403,8 +404,11 @@ public class OccurrenceService {
 		}
 	}
 
-	private Event lockEvent(UUID eventId) {
-		return events.findByIdForUpdate(eventId).orElseThrow(() -> new NoSuchElementException(EventService.NOT_FOUND));
+	/** Блокировка мероприятия и снимок для уведомлений: изменения этой команды сравнятся перед commit. */
+	private Event lockEvent(UUID eventId, UUID userId) {
+		var event = events.findByIdForUpdate(eventId).orElseThrow(() -> new NoSuchElementException(EventService.NOT_FOUND));
+		notificationChanges.watch(eventId, userId);
+		return event;
 	}
 
 	private EventOccurrence find(UUID eventId, UUID occurrenceId) {
@@ -414,7 +418,7 @@ public class OccurrenceService {
 
 	/** Мероприятие под блокировкой; действие доступно только организатору (иначе 403). */
 	private Event organizerLocked(UUID eventId, UUID userId, String forbidden) {
-		var event = lockEvent(eventId);
+		var event = lockEvent(eventId, userId);
 		if (!policy.isOrganizer(event, userId)) {
 			throw new ForbiddenException(forbidden);
 		}

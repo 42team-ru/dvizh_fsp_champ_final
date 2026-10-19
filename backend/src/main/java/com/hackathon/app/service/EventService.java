@@ -64,6 +64,7 @@ public class EventService {
     private final EventFeedRepository feed;
     private final OccurrenceService occurrenceService;
     private final ScheduleExpander expander;
+    private final NotificationChanges notificationChanges;
     private final UserSportService userSports;
 
     /**
@@ -148,6 +149,8 @@ public class EventService {
                 firstSlot != null ? firstSlot.start() : request.startAt(),
                 firstSlot != null ? firstSlot.end() : request.endAt()));
         occurrenceService.apply(saved, plan, now);
+        // Новое мероприятие никого не оповещает, но ставит напоминания по своим занятиям.
+        notificationChanges.watch(saved.getId(), userId);
         return get(saved.getId(), userId);
     }
 
@@ -165,6 +168,7 @@ public class EventService {
         if (!policy.canManage(event, userId)) {
             throw new ConflictException("Мероприятие удалено, редактировать нельзя");
         }
+        notificationChanges.watch(eventId, userId);
         var now = dbTime.now();
         validate(request, now);
         if ((request.schedule() != null) != event.isRecurring()) {
@@ -229,6 +233,7 @@ public class EventService {
         if (!policy.canManage(event, userId)) {
             throw new ConflictException("Мероприятие удалено, менять фото нельзя");
         }
+        notificationChanges.watch(eventId, userId);
         return event;
     }
 

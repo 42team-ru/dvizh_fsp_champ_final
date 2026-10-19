@@ -2,6 +2,7 @@ package com.hackathon.app.service;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -35,6 +36,8 @@ public class AdminOrganizationService {
 	private static final int MAX_PAGE_SIZE = 100;
 
 	private final OrganizationRepository organizations;
+
+	private final NotificationSubjects notificationSubjects;
 	private final AppUserRepository users;
 	private final DbTimeRepository dbTime;
 	private final OrganizationMapper mapper;
@@ -76,8 +79,13 @@ public class AdminOrganizationService {
 	}
 
 	private AdminOrganizationResponse decide(Organization org, OrganizationStatus status, String rejectReason, UUID adminId) {
+		// Повторное решение с той же причиной ничего нового организации не сообщает.
+		boolean changed = org.getStatus() != status || !Objects.equals(org.getRejectReason(), Strings.blankToNull(rejectReason));
 		mapper.decide(org, status, rejectReason, dbTime.now(), adminId);
 		organizations.saveAndFlush(org);
+		if (changed) {
+			notificationSubjects.decided(org, adminId);
+		}
 		log.info("Решение по организации: organizationId={}, adminId={}, status={}", org.getId(), adminId,
 				org.getStatus());
 		return toAdmin(org);

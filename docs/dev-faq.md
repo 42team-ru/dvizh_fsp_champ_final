@@ -171,6 +171,8 @@ docker compose up -d --wait
 | `DEMO_MODE` | `true` включает демо-аккаунты, по умолчанию `false` | вы |
 | `IMAGE`, `TAG` | какие образы запускать | CI при каждом деплое |
 | `PORT`, `HTTPS_PORT`, `CORS_ORIGINS` | только для варианта А (корневой compose) | вы |
+| `APP_PUBLIC_URL` | адрес сайта для ссылок в уведомлениях, например `https://sport.example` | вы |
+| `TELEGRAM_ENABLED`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `TELEGRAM_WEBHOOK_SECRET` | бот уведомлений, по умолчанию выключен; после запуска один раз `node scripts/telegram-webhook.mjs set` (см. `docs/notifications.md`) | вы |
 | `VITE_2GIS_KEY`, `VITE_2GIS_STYLE_ID` | ключ и необязательный стиль карты 2ГИС. Нужны **при сборке фронта**, а не на сервере: в варианте А их берёт `docker compose` из корневого `.env`, при деплое через GitHub Actions — секреты репозитория с теми же именами (`gh secret set VITE_2GIS_KEY`). В деве (`make front`) фронт тоже читает их из корневого `.env` | вы |
 
 ## Частые ошибки

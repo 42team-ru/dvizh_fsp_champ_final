@@ -48,6 +48,7 @@ public class RegistrationService {
     private final EventAccessPolicy policy;
     private final RegistrationMapper mapper;
     private final OccurrenceService occurrences;
+    private final NotificationChanges notificationChanges;
 
     /**
      * FREE — сразу CONFIRMED, REQUEST — PENDING. После отмены та же строка переиспользуется.
@@ -57,6 +58,7 @@ public class RegistrationService {
     public RegistrationResponse create(UUID eventId, UUID userId, String message) {
         var event = events.findByIdForUpdate(eventId)
                 .orElseThrow(() -> new NoSuchElementException(EventService.NOT_FOUND));
+        notificationChanges.watch(eventId, userId);
         var myRegistration = registrations.findByEventIdAndUserId(eventId, userId).orElse(null);
         var now = dbTime.now();
         var confirmedCount = registrations.countByEventIdAndStatus(eventId, RegistrationStatus.CONFIRMED);
@@ -83,12 +85,13 @@ public class RegistrationService {
      */
     @Transactional
     public RegistrationResponse cancel(UUID eventId, UUID userId) {
-        var event = events.findById(eventId).orElseThrow(() -> new NoSuchElementException(EventService.NOT_FOUND));
+        var event = events.findByIdForUpdate(eventId).orElseThrow(() -> new NoSuchElementException(EventService.NOT_FOUND));
         var myRegistration = registrations.findByEventIdAndUserId(eventId, userId)
                 .orElseThrow(() -> new NoSuchElementException("Вы не записаны на это мероприятие"));
         if (myRegistration.getStatus() == RegistrationStatus.CANCELLED) {
             return mapper.toResponse(myRegistration);
         }
+        notificationChanges.watch(eventId, userId);
         var now = dbTime.now();
         var blockedReason = policy.cancelBlockedReason(event, myRegistration, now);
         if (blockedReason != null) {
@@ -197,6 +200,7 @@ public class RegistrationService {
         if (!policy.canManage(event, userId)) {
             throw new ConflictException("Мероприятие удалено, решать заявки нельзя");
         }
+        notificationChanges.watch(event.getId(), userId);
         return new ManagedRegistration(registration, event);
     }
 }

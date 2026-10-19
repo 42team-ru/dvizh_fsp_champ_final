@@ -2,6 +2,7 @@ package com.hackathon.app.e2e.support;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 import java.time.Instant;
@@ -18,7 +19,10 @@ import com.hackathon.app.repository.AppUserRepository;
 import jakarta.servlet.http.Cookie;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.mock.web.MockAsyncContext;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.RequestBuilder;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder;
 import tools.jackson.databind.JavaType;
@@ -131,6 +135,57 @@ public class TestApi {
 		return json.readValue(response, type);
 	}
 
+	/**
+	 * Начать асинхронный запрос (long polling) и не ждать ответа. Если сервер ответил сразу — ответ уже готов.
+	 */
+	<T> Pending<T> begin(String label, AbstractMockHttpServletRequestBuilder<?> request, Cookie cookie, JavaType type) {
+		if (cookie != null) {
+			request.cookie(cookie);
+		}
+		return new Pending<>(label, call(request).andReturn(), type);
+	}
+
+	/** Незавершённый асинхронный запрос: дождаться ответа или имитировать истечение ожидания. */
+	public final class Pending<T> {
+
+		private final String label;
+		private final MvcResult started;
+		private final JavaType type;
+
+		private Pending(String label, MvcResult started, JavaType type) {
+			this.label = label;
+			this.started = started;
+			this.type = type;
+		}
+
+		/** Дождаться результата (до 10 секунд) и разобрать ответ. */
+		public T await() {
+			if (!started.getRequest().isAsyncStarted()) {
+				return read(expectSuccess(label, started));
+			}
+			started.getAsyncResult(10_000);
+			return read(expectSuccess(label, call(asyncDispatch(started)).andReturn()));
+		}
+
+		/** Истекло время ожидания на стороне сервера: контейнер сообщает слушателям, затем ответ разбирается. */
+		public T timeout() {
+			if (started.getRequest().getAsyncContext() instanceof MockAsyncContext context) {
+				for (var listener : context.getListeners()) {
+					try {
+						listener.onTimeout(new jakarta.servlet.AsyncEvent(context));
+					} catch (java.io.IOException e) {
+						throw new IllegalStateException(e);
+					}
+				}
+			}
+			return await();
+		}
+
+		private T read(String body) {
+			return type == null || body.isBlank() ? null : json.readValue(body, type);
+		}
+	}
+
 	/** Сырой запрос для редких проверок формата (cookie, GeoJSON): ResultActions без разбора. */
 	ResultActions raw(AbstractMockHttpServletRequestBuilder<?> request, Cookie cookie) {
 		if (cookie != null) {
@@ -151,7 +206,7 @@ public class TestApi {
 		return json.getTypeFactory().constructParametricType(container, parameter);
 	}
 
-	private ResultActions call(AbstractMockHttpServletRequestBuilder<?> request) {
+	private ResultActions call(RequestBuilder request) {
 		try {
 			return mvc.perform(request);
 		} catch (Exception e) {
@@ -160,8 +215,12 @@ public class TestApi {
 	}
 
 	private String expectSuccess(String label, ResultActions result) {
+		return expectSuccess(label, result.andReturn());
+	}
+
+	private String expectSuccess(String label, MvcResult result) {
 		try {
-			var response = result.andReturn().getResponse();
+			var response = result.getResponse();
 			var body = response.getContentAsString();
 			var status = HttpStatus.valueOf(response.getStatus());
 			if (status.is2xxSuccessful()) {
@@ -177,15 +236,15 @@ public class TestApi {
 	}
 
 	/** Точный успешный код — часть контракта, как и поля DTO. */
-	private HttpStatus expectedStatus(ResultActions result) {
-		var request = result.andReturn().getRequest();
+	private HttpStatus expectedStatus(MvcResult result) {
+		var request = result.getRequest();
 		var path = request.getRequestURI();
 		if (request.getMethod().equals("POST")) {
 			if (path.equals("/api/auth/logout")) {
 				return HttpStatus.NO_CONTENT;
 			}
 			if (path.equals("/api/auth/register") || path.equals("/api/events")
-					|| path.matches("/api/events/[^/]+/(registrations|comments)")) {
+					|| path.matches("/api/events/[^/]+/(registrations|comments|photos)")) {
 				return HttpStatus.CREATED;
 			}
 		}

@@ -53,7 +53,7 @@ public class NotificationJobs {
         if (claim == null) return;
         try {
             var transport = transports.stream().filter(t -> t.channel() == claim.channel()).findFirst().orElseThrow();
-            deliveries.complete(claim, transport.send(claim.chatId(), claim.text()));
+            deliveries.complete(claim, transport.send(claim.chatId(), claim.text(), claim.photo()));
         } catch (NotificationTransportException error) {
             deliveries.failed(claim, error);
             if (error.status() == 403 && claim.userId() != null) telegram.blocked(claim.userId(), claim.bindingId());
