@@ -113,6 +113,7 @@ public class DemoSeeder {
 	private final DemoBulkSeeder bulk;
 	private final DemoEconomySeeder economy;
 	private final DemoPetSeeder pets;
+	private final DemoAlbumSeeder album;
 	private final AuthService authService;
 	private final UserProfileService profileService;
 	private final UserSportService userSportService;
@@ -329,6 +330,7 @@ public class DemoSeeder {
 		economy.confirmMonthAward(adminId);
 		pets.dressCore(cast);
 		bulk.dress(people);
+		album.seed(cast);
 		log.info("Demo data seeded in {} ms", System.currentTimeMillis() - started);
 	}
 

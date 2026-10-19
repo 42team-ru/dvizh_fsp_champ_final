@@ -347,6 +347,60 @@ export interface PetRenameRequest {
   name: string;
 }
 
+/**
+ * Подпись к фото альбома
+ */
+export interface AlbumCaptionRequest {
+  /**
+     * Подпись; пустая стирает
+     * @minLength 0
+     * @maxLength 300
+     */
+  caption?: string;
+}
+
+/**
+ * Статус мероприятия
+ */
+export type AlbumEventResponseStatus = typeof AlbumEventResponseStatus[keyof typeof AlbumEventResponseStatus];
+
+
+export const AlbumEventResponseStatus = {
+  PUBLISHED: 'PUBLISHED',
+  UNPUBLISHED: 'UNPUBLISHED',
+  DELETED: 'DELETED',
+} as const;
+
+/**
+ * Занятие в альбоме
+ */
+export interface AlbumEventResponse {
+  id: string;
+  /** Название */
+  title: string;
+  /** Начало (у серии — первое занятие) */
+  startAt: string;
+  /** Статус мероприятия */
+  status: AlbumEventResponseStatus;
+  sport: SportResponse;
+}
+
+/**
+ * Фото альбома
+ */
+export interface AlbumPhotoResponse {
+  id: string;
+  /** Адрес картинки: /api/files/{id} */
+  url: string;
+  /** Подпись */
+  caption?: string;
+  /** Когда загружено */
+  createdAt: string;
+  /** Моё фото: можно править подпись и удалить */
+  mine: boolean;
+  event: AlbumEventResponse;
+}
+
 export type SaveOrganizationRequestContacts = {[key: string]: string};
 
 export interface SaveOrganizationRequest {
@@ -1682,6 +1736,25 @@ export interface PublicUserResponse {
   photos: FileResponse[];
 }
 
+export interface PageResponseAlbumPhotoResponse {
+  items?: AlbumPhotoResponse[];
+  page?: number;
+  size?: number;
+  totalElements?: number;
+  totalPages?: number;
+}
+
+/**
+ * Папка альбома = занятие
+ */
+export interface AlbumFolderResponse {
+  event: AlbumEventResponse;
+  /** Сколько фото в папке */
+  photoCount: number;
+  /** Обложка — последнее загруженное фото: /api/files/{id} */
+  coverUrl: string;
+}
+
 /**
  * За что
  */
@@ -2339,6 +2412,22 @@ export type UsersAddPhotoBody = {
   file: Blob | File;
 };
 
+export type UsersAddAlbumPhotoParams = {
+/**
+ * Занятие (папка)
+ */
+eventId?: string;
+/**
+ * Подпись
+ */
+caption?: string;
+};
+
+export type UsersAddAlbumPhotoBody = {
+  /** Фото */
+  file: Blob | File;
+};
+
 export type OrganizationsAddDocumentBody = {
   /** Документ */
   file: Blob | File;
@@ -2502,6 +2591,28 @@ export type AdminPreviewPetItemBody = {
   /** Картинка PNG или SVG до 5 МБ */
   file: Blob | File;
 };
+
+export type UsersAlbumParams = {
+/**
+ * Занятие (папка)
+ */
+eventId?: string;
+/**
+ * Вид спорта
+ */
+sportId?: string;
+sort?: UsersAlbumSort;
+page?: number;
+size?: number;
+};
+
+export type UsersAlbumSort = typeof UsersAlbumSort[keyof typeof UsersAlbumSort];
+
+
+export const UsersAlbumSort = {
+  NEWEST: 'NEWEST',
+  OLDEST: 'OLDEST',
+} as const;
 
 export type UsersHistoryParams = {
 /**

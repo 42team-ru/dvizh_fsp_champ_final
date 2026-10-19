@@ -4,6 +4,14 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+import com.hackathon.app.domain.dto.AlbumCaptionRequest;
+import com.hackathon.app.domain.dto.AlbumEventResponse;
+import com.hackathon.app.domain.dto.AlbumFolderResponse;
+import com.hackathon.app.domain.dto.AlbumPhotoResponse;
+import com.hackathon.app.domain.enums.AlbumSort;
+import com.hackathon.app.service.AlbumService;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import com.hackathon.app.domain.dto.AttendanceSummaryResponse;
 import com.hackathon.app.domain.dto.AttendedOccurrenceResponse;
 import com.hackathon.app.domain.dto.MeResponse;
@@ -62,6 +70,7 @@ class UserController {
 	private final AttendanceHistoryService history;
 	private final WalletService wallet;
 	private final AchievementService achievements;
+	private final AlbumService album;
 
 	@GetMapping("/me/wallet")
 	@Operation(operationId = "users_wallet", summary = "Мой кошелёк: монеты, уровень, энергия и последние операции")
@@ -216,6 +225,87 @@ class UserController {
         log.info("Endpoint response: DELETE /api/users/me/photos/{}, count={}", fileId, response.size());
         return response;
     }
+
+	@GetMapping("/{id}/album")
+	@Operation(operationId = "users_album", summary = "Альбом человека: фото с занятий страницей",
+			description = "eventId — одна папка (занятие), sportId — фильтр «Все фото». Сортировка по времени загрузки. "
+					+ "mine = true у своих фото: их можно подписать и удалить.")
+	@ApiResponse(responseCode = "404", description = "Пользователь не найден", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+	@ApiResponse(responseCode = "200", description = "Страница фото", useReturnTypeSchema = true)
+	PageResponse<AlbumPhotoResponse> album(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,
+			@Parameter(description = "Занятие (папка)") @RequestParam(required = false) UUID eventId,
+			@Parameter(description = "Вид спорта") @RequestParam(required = false) UUID sportId,
+			@RequestParam(defaultValue = "NEWEST") AlbumSort sort,
+			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
+		log.info("Endpoint called: GET /api/users/{}/album, userId={}, eventId={}, sportId={}, sort={}, page={}, size={}",
+				id, jwt.getSubject(), eventId, sportId, sort, page, size);
+		var response = album.photos(id, userId(jwt), eventId, sportId, sort, page, size);
+		log.info("Endpoint response: GET /api/users/{}/album, total={}", id, response.totalElements());
+		return response;
+	}
+
+	@GetMapping("/{id}/album/events")
+	@Operation(operationId = "users_albumFolders", summary = "Папки альбома: занятия с фото, новые сверху")
+	@ApiResponse(responseCode = "404", description = "Пользователь не найден", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+	@ApiResponse(responseCode = "200", description = "Папки", useReturnTypeSchema = true)
+	List<AlbumFolderResponse> albumFolders(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+		log.info("Endpoint called: GET /api/users/{}/album/events, userId={}", id, jwt.getSubject());
+		var response = album.folders(id);
+		log.info("Endpoint response: GET /api/users/{}/album/events, folders={}", id, response.size());
+		return response;
+	}
+
+	@GetMapping("/me/album/eligible-events")
+	@Operation(operationId = "users_albumEligibleEvents", summary = "С каких занятий можно добавить фото",
+			description = "Начавшиеся и не удалённые мероприятия, где я организатор или подтверждённый участник. Новые сверху.")
+	List<AlbumEventResponse> albumEligibleEvents(@AuthenticationPrincipal Jwt jwt) {
+		log.info("Endpoint called: GET /api/users/me/album/eligible-events, userId={}", jwt.getSubject());
+		var response = album.eligibleEvents(userId(jwt));
+		log.info("Endpoint response: GET /api/users/me/album/eligible-events, count={}", response.size());
+		return response;
+	}
+
+	@PostMapping(path = "/me/album", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@Operation(operationId = "users_addAlbumPhoto", summary = "Добавить фото с занятия в альбом (JPG, PNG, WebP до 5 МБ)",
+			description = "Фото попадает в папку занятия и в «Все фото». Подпись до 300 символов, необязательна.")
+	@ApiResponse(responseCode = "200", description = "Добавленное фото", useReturnTypeSchema = true)
+	@ApiResponse(responseCode = "400", description = "Не выбрано занятие, длинная подпись, неверный формат или размер", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+	@ApiResponse(responseCode = "403", description = "Занятие не моё", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+	@ApiResponse(responseCode = "409", description = "Альбом заполнен, занятие удалено или ещё не началось", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+	AlbumPhotoResponse addAlbumPhoto(@AuthenticationPrincipal Jwt jwt,
+			@Parameter(description = "Занятие (папка)") @RequestParam(required = false) UUID eventId,
+			@Parameter(description = "Подпись") @RequestParam(required = false) String caption,
+			@Parameter(description = "Фото") @RequestPart("file") MultipartFile file) {
+		log.info("Endpoint called: POST /api/users/me/album, userId={}, eventId={}, request={}", jwt.getSubject(), eventId,
+				Uploads.describe(file));
+		var response = album.add(userId(jwt), eventId, caption, Uploads.of(file));
+		log.info("Endpoint response: POST /api/users/me/album, photoId={}", response.id());
+		return response;
+	}
+
+	@PutMapping(path = "/me/album/{fileId}", consumes = MediaType.APPLICATION_JSON_VALUE)
+	@Operation(operationId = "users_captionAlbumPhoto", summary = "Изменить подпись своего фото в альбоме")
+	@ApiResponse(responseCode = "200", description = "Фото с новой подписью", useReturnTypeSchema = true)
+	@ApiResponse(responseCode = "400", description = "Подпись длиннее 300 символов", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+	@ApiResponse(responseCode = "404", description = "Фото не найдено в своём альбоме", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+	AlbumPhotoResponse captionAlbumPhoto(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID fileId,
+			@Valid @RequestBody AlbumCaptionRequest request) {
+		log.info("Endpoint called: PUT /api/users/me/album/{}, userId={}, request={}", fileId, jwt.getSubject(), request);
+		var response = album.caption(userId(jwt), fileId, request.caption());
+		log.info("Endpoint response: PUT /api/users/me/album/{}, photoId={}", fileId, response.id());
+		return response;
+	}
+
+	@DeleteMapping("/me/album/{fileId}")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	@Operation(operationId = "users_removeAlbumPhoto", summary = "Удалить своё фото из альбома")
+	@ApiResponse(responseCode = "204", description = "Удалено")
+	@ApiResponse(responseCode = "404", description = "Фото не найдено в своём альбоме", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+	void removeAlbumPhoto(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID fileId) {
+		log.info("Endpoint called: DELETE /api/users/me/album/{}, userId={}", fileId, jwt.getSubject());
+		album.remove(userId(jwt), fileId);
+		log.info("Endpoint response: DELETE /api/users/me/album/{}, removed", fileId);
+	}
 
 	@PutMapping(path = "/me/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Operation(operationId = "users_uploadAvatar", summary = "Загрузить аватар (JPG, PNG, WebP до 5 МБ)",

@@ -3,9 +3,8 @@ import { Link, Navigate, useParams } from "react-router";
 import { useUser } from "@/entity/user/model/use-user";
 import { useUsersGet } from "@/shared/api/generated/core/users/users";
 import { usePetsGetUser } from "@/shared/api/generated/core/pets/pets";
-import type { FileResponse } from "@/shared/api/generated/core/appAPI.schemas";
-import { baseURL } from "@/shared/api/mutators/authMutator";
 import { AppHeader } from "@/widgets/app-header/ui/app-header";
+import { ProfileGallery } from "@/widgets/profile-gallery/ui/profile-gallery";
 import { MobileTabBar } from "@/widgets/mobile-shell/ui/mobile-tab-bar";
 import { BeaverPet } from "@/widgets/beaver-pet/ui/beaver-pet";
 import type { BeaverActivity, BeaverOutfit } from "@/widgets/beaver-pet/ui/beaver-wardrobe";
@@ -16,17 +15,14 @@ import { UserAvatar } from "@/shared/components/ui/user-avatar";
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
 import { Eyebrow } from "@/shared/components/ui/eyebrow";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/shared/components/ui/dialog";
 
 const SPORT_TONES = ["bg-sky-soft", "bg-lime-soft", "bg-peach"];
-const imageUrl = (photo: FileResponse) => new URL(photo.url, baseURL).toString();
 
 /** Чужой профиль: те же данные, что в своём, но только для просмотра. */
 export default function UserPage() {
   const { id = "" } = useParams();
   const { user: me } = useUser();
   const [speechContainer, setSpeechContainer] = useState<HTMLDivElement | null>(null);
-  const [preview, setPreview] = useState<FileResponse | null>(null);
   const profile = useUsersGet(id, { query: { enabled: Boolean(id), retry: false } });
   const petQuery = usePetsGetUser(id, { query: { enabled: Boolean(id), retry: false } });
 
@@ -101,24 +97,7 @@ export default function UserPage() {
               </Card>
             )}
 
-            {user.photos.length > 0 && (
-              <Card className="gap-4 p-5 lg:p-6">
-                <h2 className="font-display text-lg font-bold lg:text-[22px]">Фото</h2>
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                  {user.photos.map((photo, index) => (
-                    <button
-                      key={photo.id}
-                      type="button"
-                      onClick={() => setPreview(photo)}
-                      aria-label={`Открыть фото ${index + 1}`}
-                      className="overflow-hidden rounded-2xl border-2 border-ink focus-visible:outline-2 focus-visible:outline-ring"
-                    >
-                      <img src={imageUrl(photo)} alt="" loading="lazy" className="aspect-square w-full object-cover" />
-                    </button>
-                  ))}
-                </div>
-              </Card>
-            )}
+            <ProfileGallery owner={{ ...user, id }} mine={false} aboutPhotos={user.photos} />
 
             {user.events.length > 0 && (
               <Card className="gap-3 p-5 lg:p-6">
@@ -140,13 +119,6 @@ export default function UserPage() {
           </>
         )}
       </main>
-      <Dialog open={Boolean(preview)} onOpenChange={(open) => { if (!open) setPreview(null); }}>
-        <DialogContent className="sm:max-w-3xl">
-          <DialogTitle>Фото</DialogTitle>
-          <DialogDescription className="sr-only">{preview?.name}</DialogDescription>
-          {preview && <img src={imageUrl(preview)} alt={preview.name} className="max-h-[75dvh] w-full object-contain" />}
-        </DialogContent>
-      </Dialog>
       <div className="lg:hidden">
         <MobileTabBar current="feed" />
       </div>

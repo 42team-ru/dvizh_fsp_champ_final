@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Pencil } from "lucide-react";
 import { useUser } from "@/entity/user/model/use-user";
 import { UserAvatar } from "@/shared/components/ui/user-avatar";
 import { EditProfileDialog } from "@/features/edit-profile/ui/edit-profile-dialog";
@@ -160,9 +161,11 @@ function PetPage() {
         <WardrobeDialog>
           <Button
             variant="soft"
+            aria-label="Изменить имя и образ питомца"
             className="mt-1 h-10 shrink-0 px-4 text-[13px]"
           >
-            Изменить образ
+            <Pencil className="size-3.5" />
+            Изменить
           </Button>
         </WardrobeDialog>
       </div>

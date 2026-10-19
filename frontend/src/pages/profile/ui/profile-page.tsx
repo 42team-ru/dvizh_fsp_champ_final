@@ -1,14 +1,14 @@
 import { useAttendance } from "./use-attendance";
 import { PassportSpread, SPREAD_H } from "./passport-spread";
 import { HistoryCard } from "./history-card";
-import { useProfile } from "../model/use-profile";
-import { ProfileGallery } from "./profile-gallery";
+import { AchievementsColumn } from "./achievements";
 import { ProfileMobile } from "./profile-mobile";
+import { useUser } from "@/entity/user/model/use-user";
+import { ProfileGallery } from "@/widgets/profile-gallery/ui/profile-gallery";
 import { AppHeader } from "@/widgets/app-header/ui/app-header";
 import { Badge } from "@/shared/components/ui/badge";
 import { Card } from "@/shared/components/ui/card";
 import { Eyebrow } from "@/shared/components/ui/eyebrow";
-import { Icon } from "@/shared/components/ui/icon";
 import { RoughBorder } from "@/shared/components/ui/rough-border";
 import { cn } from "cn";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
@@ -37,58 +37,8 @@ function Attendance() {
   );
 }
 
-function Achievements() {
-  const { achievements } = useProfile();
-  const unlocked = achievements.filter((a) => a.unlocked);
-  const next = achievements.find((a) => !a.unlocked);
-  return (
-    <Card
-      className="absolute top-0 left-[944px] w-[272px] gap-4 overflow-hidden p-5"
-      style={{ height: SPREAD_H }}
-    >
-      <div className="flex items-baseline justify-between gap-2">
-        <h2 className="font-display text-[22px] leading-[27px] font-bold text-foreground">
-          Достижения
-        </h2>
-        <span className="text-[13px] leading-[18px] font-bold whitespace-nowrap text-muted-foreground">
-          {unlocked.length} из {achievements.length}
-        </span>
-      </div>
-      <ul className="flex min-h-0 flex-col gap-[10px] overflow-y-auto">
-        {unlocked.map((b) => (
-          <li
-            key={b.title}
-            className="flex items-center gap-[10px] rounded-2xl border-2 border-ink p-3"
-          >
-            <span
-              className={cn(
-                "flex size-10 shrink-0 items-center justify-center rounded-xl border-2 border-ink",
-                b.tone
-              )}
-            >
-              <Icon name={`profile/${b.icon}`} className="size-5" />
-            </span>
-            <span className="text-[13px] leading-[18px] font-extrabold text-foreground">
-              {b.title}
-            </span>
-          </li>
-        ))}
-        {next && (
-          <li className="flex items-center gap-[10px] rounded-2xl border-2 border-dashed border-ink p-3">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border-2 border-dashed border-ink">
-              <Icon name="profile/icon-lock" className="size-[18px]" />
-            </span>
-            <span className="text-[13px] leading-[18px] font-extrabold text-muted-foreground">
-              Следующее · {next.title}
-            </span>
-          </li>
-        )}
-      </ul>
-    </Card>
-  );
-}
-
 export default function ProfilePage() {
+  const { user } = useUser();
   return (
     <>
     <ProfileMobile />
@@ -100,9 +50,9 @@ export default function ProfilePage() {
           <PassportSpread />
           <HistoryCard />
           <Attendance />
-          <Achievements />
+          <AchievementsColumn className="absolute top-0 left-[944px] w-[272px]" style={{ height: SPREAD_H }} />
         </div>
-        <div className="mt-6"><ProfileGallery /></div>
+        {user?.id && <ProfileGallery className="mt-6" owner={{ ...user, id: user.id }} mine />}
       </main>
     </div>
     </>

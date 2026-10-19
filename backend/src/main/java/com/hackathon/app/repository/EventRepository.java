@@ -50,4 +50,18 @@ public interface EventRepository extends JpaRepository<Event, UUID>, JpaSpecific
 			where e.authorId = :userId or e.id in (select o.eventId from EventOrganizer o where o.userId = :userId)
 			order by e.startAt desc""")
 	List<Event> findOrganizedBy(UUID userId);
+
+	/**
+	 * С каких мероприятий можно добавить фото в альбом: уже начались, не удалены, я организатор или подтверждённый
+	 * участник. Те же правила проверяет AlbumService при загрузке. Свежие сверху.
+	 */
+	@Query("""
+			select e from Event e
+			where e.status <> com.hackathon.app.domain.enums.EventStatus.DELETED and e.startAt <= :now
+			  and (e.authorId = :userId
+			    or e.id in (select o.eventId from EventOrganizer o where o.userId = :userId)
+			    or e.id in (select r.eventId from Registration r where r.userId = :userId
+			        and r.status = com.hackathon.app.domain.enums.RegistrationStatus.CONFIRMED))
+			order by e.startAt desc, e.id""")
+	List<Event> findAlbumEligible(UUID userId, java.time.Instant now, Pageable limit);
 }

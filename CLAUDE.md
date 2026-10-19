@@ -86,7 +86,17 @@ JPG/PNG/WebP по 5 МБ. `GET /api/users/me/photos` (`users_myPhotos`) возв
 Изменения возвращают весь список по времени загрузки. Лимит защищён блокировкой пользователя.
 `PublicUserResponse.photos` показывает галерею всем вошедшим; скачивание — существующий `/api/files/{id}`.
 Чужой файл, аватар или неизвестный id при удалении → 404; без входа → 401.
-Загрузка/удаление аватара не меняет галерею. Во фронте отдельный блок «Мои фото» в мобильном и десктопном профиле.
+Загрузка/удаление аватара не меняет галерею. Во фронте это вкладка «Обо мне» виджета `widgets/profile-gallery`.
+
+**Альбом по занятиям** (виджет `widgets/profile-gallery`: «Папки», «Все фото», «Обо мне»; в своём и чужом профиле).
+Фото — `files` с `kind = ALBUM_PHOTO`, `event_id` = папка, `caption` до 300 (V22). Логика — `AlbumService`.
+`GET /api/users/{id}/album?eventId=&sportId=&sort=NEWEST|OLDEST&page=&size=` (`users_album`, `mine` у своих) ·
+`GET /api/users/{id}/album/events` — папки, новые занятия сверху (`users_albumFolders`) ·
+`GET /api/users/me/album/eligible-events` (`users_albumEligibleEvents`) ·
+`POST /api/users/me/album?eventId=&caption=` multipart `file` (`users_addAlbumPhoto`) ·
+`PUT /api/users/me/album/{fileId}` `{caption}` (`users_captionAlbumPhoto`) · `DELETE …/{fileId}` → 204 (`users_removeAlbumPhoto`).
+Добавить можно с начавшегося не удалённого мероприятия, где ты организатор или CONFIRMED-участник (иначе 403; удалено/не началось/больше 200 фото → 409; без занятия → 400).
+Демо: `DemoAlbumSeeder` загружает фото Анне и Петру через `AlbumService` (картинки видов спорта).
 
 ## Предпочтения онбординга
 

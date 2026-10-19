@@ -23,11 +23,9 @@ const LATIN: Record<string, string> = {
 const latin = (text: string) =>
   [...text.toLowerCase()].map((c) => LATIN[c] ?? (/[a-z0-9]/.test(c) ? c.toUpperCase() : "<")).join("");
 
-export type Achievement = { title: string; icon: string; tone: string; unlocked: boolean };
-
 /**
  * Всё для экрана профиля из API: кто я, мои виды спорта, посещения (всего и по дням текущего месяца),
- * сколько мероприятий я организую. Достижения считаются из этих же данных.
+ * сколько мероприятий я организую.
  */
 export function useProfile() {
   const { user } = useUser();
@@ -55,14 +53,6 @@ export function useProfile() {
   const lastName = user?.lastName ?? "";
   const number = (user?.id ?? "").replace(/-/g, "").slice(0, 4).toUpperCase();
 
-  const achievements: Achievement[] = [
-    { title: "Первая тренировка", icon: "icon-trophy", tone: "bg-secondary", unlocked: attended >= 1 },
-    { title: "10 посещений", icon: "icon-flame", tone: "bg-peach", unlocked: attended >= 10 },
-    { title: "Три вида спорта", icon: "icon-sun", tone: "bg-lavender-soft", unlocked: sports.length >= 3 },
-    { title: "Организатор", icon: "icon-star", tone: "bg-sky-soft", unlocked: organized >= 1 },
-    { title: "50 посещений", icon: "icon-trophy", tone: "bg-lime-soft", unlocked: attended >= 50 },
-  ];
-
   return {
     user,
     isLoading: !user,
@@ -82,6 +72,5 @@ export function useProfile() {
     month: MONTHS[now.getMonth()],
     days,
     monthTotal: days.reduce((sum, n) => sum + n, 0),
-    achievements,
   };
 }

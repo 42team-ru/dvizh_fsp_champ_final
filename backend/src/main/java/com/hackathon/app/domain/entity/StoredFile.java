@@ -3,6 +3,7 @@ package com.hackathon.app.domain.entity;
 import java.util.UUID;
 
 import com.hackathon.app.domain.enums.FileKind;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -48,4 +49,7 @@ public class StoredFile extends AuditEntity {
 	private UUID eventId;
 	/** Порядок фото в галерее мероприятия. */
 	private Integer position;
+	/** Подпись к фото альбома. */
+	@Column(length = 300)
+	private String caption;
 }

@@ -12,7 +12,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuthLogout } from "@/shared/api/generated/core/auth/auth";
 import { USER_QUERY_KEY } from "@/entity/user/model/use-user";
 import { MyBeaverPet } from "@/widgets/beaver-pet/ui/my-beaver-pet";
-import { ProfileGallery } from "./profile-gallery";
+import { ProfileGallery } from "@/widgets/profile-gallery/ui/profile-gallery";
+import { AchievementsStrip } from "./achievements";
 import { MobileTabBar } from "@/widgets/mobile-shell/ui/mobile-tab-bar";
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
@@ -201,50 +202,6 @@ function Head({
   );
 }
 
-function Achievements() {
-  const { achievements } = useProfile();
-  const unlocked = achievements.filter((a) => a.unlocked);
-  const next = achievements.find((a) => !a.unlocked);
-  return (
-    <>
-      <Head
-        title="Достижения"
-        hint={`${unlocked.length} из ${achievements.length}`}
-      />
-      <div className="no-scrollbar flex gap-3 overflow-x-auto px-4">
-        {unlocked.map((b) => (
-          <div
-            key={b.title}
-            className="box-border flex w-[130px] shrink-0 flex-col gap-[10px] rounded-[20px] border-2 border-ink bg-card p-[14px]"
-          >
-            <span
-              className={cn(
-                "box-border flex size-12 items-center justify-center rounded-[14px] border-2 border-ink",
-                b.tone,
-              )}
-            >
-              <Icon name={`${dir}/${b.icon}`} className="size-6" />
-            </span>
-            <span className="text-[13px] leading-[17px] font-extrabold text-foreground">
-              {b.title}
-            </span>
-          </div>
-        ))}
-        {next && (
-          <div className="box-border flex w-[130px] shrink-0 flex-col gap-[10px] rounded-[20px] border-2 border-dashed border-muted-foreground bg-card p-[14px]">
-            <span className="box-border flex size-12 items-center justify-center rounded-[14px] border-2 border-dashed border-muted-foreground">
-              <Icon name={`${dir}/icon-lock`} className="size-6" />
-            </span>
-            <span className="text-[13px] leading-[17px] font-extrabold text-muted-foreground">
-              {next.title}
-            </span>
-          </div>
-        )}
-      </div>
-    </>
-  );
-}
-
 function Wardrobe() {
   const { worn } = useWardrobe();
   const cards =
@@ -323,18 +280,26 @@ function Settings() {
   );
 }
 
+function Gallery() {
+  const { user } = useProfile();
+  if (!user?.id) return null;
+  return (
+    <div className="px-4">
+      <ProfileGallery owner={{ ...user, id: user.id }} mine />
+    </div>
+  );
+}
+
 export function ProfileMobile() {
   return (
     <div className="relative isolate flex min-h-dvh overflow-clip flex-col gap-4 bg-background pb-[110px] lg:hidden">
       <MemphisBackground variant="mobile" seed="profile" />
       <AppBar />
       <Passport />
-      <div className="px-4">
-        <ProfileGallery />
-      </div>
+      <Gallery />
       <Pet />
       <Attendance />
-      <Achievements />
+      <AchievementsStrip />
       <Wardrobe />
       <Settings />
       <MobileTabBar current="profile" />

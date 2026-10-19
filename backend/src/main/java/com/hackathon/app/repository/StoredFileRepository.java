@@ -6,6 +6,8 @@ import java.util.UUID;
 
 import com.hackathon.app.domain.entity.StoredFile;
 import com.hackathon.app.domain.enums.FileKind;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -32,4 +34,20 @@ public interface StoredFileRepository extends JpaRepository<StoredFile, UUID> {
 
 	@Query("select coalesce(max(f.position), 0) from StoredFile f where f.eventId = :eventId and f.kind = :kind")
 	int maxPosition(UUID eventId, FileKind kind);
+
+	/** Альбом человека: фото с занятий, по желанию одного занятия или вида спорта; порядок задаёт Pageable. */
+	@Query(value = """
+			select f from StoredFile f join Event e on e.id = f.eventId
+			where f.uploadedById = :userId and f.kind = com.hackathon.app.domain.enums.FileKind.ALBUM_PHOTO
+			  and f.eventId = coalesce(:eventId, f.eventId)
+			  and e.sportId = coalesce(:sportId, e.sportId)""",
+			countQuery = """
+			select count(f) from StoredFile f join Event e on e.id = f.eventId
+			where f.uploadedById = :userId and f.kind = com.hackathon.app.domain.enums.FileKind.ALBUM_PHOTO
+			  and f.eventId = coalesce(:eventId, f.eventId)
+			  and e.sportId = coalesce(:sportId, e.sportId)""")
+	Page<StoredFile> findAlbum(UUID userId, UUID eventId, UUID sportId, Pageable pageable);
+
+	/** Все фото альбома, свежие первыми: из них собираются папки. */
+	List<StoredFile> findByUploadedByIdAndKindOrderByCreatedAtDescIdDesc(UUID uploadedById, FileKind kind);
 }

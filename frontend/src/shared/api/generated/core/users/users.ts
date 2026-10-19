@@ -26,9 +26,14 @@ import type {
 
 import type {
   AchievementResponse,
+  AlbumCaptionRequest,
+  AlbumEventResponse,
+  AlbumFolderResponse,
+  AlbumPhotoResponse,
   AttendanceSummaryResponse,
   FileResponse,
   MeResponse,
+  PageResponseAlbumPhotoResponse,
   PageResponseAttendedOccurrenceResponse,
   ProblemDetail,
   PublicUserResponse,
@@ -37,7 +42,10 @@ import type {
   UpdateProfileRequest,
   UserPreferencesResponse,
   UserSportResponse,
+  UsersAddAlbumPhotoBody,
+  UsersAddAlbumPhotoParams,
   UsersAddPhotoBody,
+  UsersAlbumParams,
   UsersHistoryParams,
   UsersHistorySummaryParams,
   UsersUploadAvatarBody,
@@ -795,6 +803,210 @@ export const useUsersDeleteAvatar = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getUsersDeleteAvatarMutationOptions(options), queryClient);
     }
+    export type usersCaptionAlbumPhotoResponse200 = {
+  data: AlbumPhotoResponse
+  status: 200
+}
+
+export type usersCaptionAlbumPhotoResponse400 = {
+  data: ProblemDetail
+  status: 400
+}
+
+export type usersCaptionAlbumPhotoResponse404 = {
+  data: ProblemDetail
+  status: 404
+}
+
+export type usersCaptionAlbumPhotoResponseSuccess = (usersCaptionAlbumPhotoResponse200) & {
+  headers: Headers;
+};
+export type usersCaptionAlbumPhotoResponseError = (usersCaptionAlbumPhotoResponse400 | usersCaptionAlbumPhotoResponse404) & {
+  headers: Headers;
+};
+
+export type usersCaptionAlbumPhotoResponse = (usersCaptionAlbumPhotoResponseSuccess | usersCaptionAlbumPhotoResponseError)
+
+export const getUsersCaptionAlbumPhotoUrl = (fileId: string,) => {
+
+
+
+
+  return `/api/users/me/album/${fileId}`
+}
+
+/**
+ * @summary Изменить подпись своего фото в альбоме
+ */
+export const usersCaptionAlbumPhoto = async (fileId: string,
+    albumCaptionRequest: AlbumCaptionRequest, options?: Parameters<typeof authMutator>[1]): Promise<usersCaptionAlbumPhotoResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return authMutator<usersCaptionAlbumPhotoResponse>(getUsersCaptionAlbumPhotoUrl(fileId),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(albumCaptionRequest)
+  }
+);}
+
+
+
+
+
+export const getUsersCaptionAlbumPhotoMutationKey = () => ['usersCaptionAlbumPhoto'] as const;
+
+export const getUsersCaptionAlbumPhotoMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersCaptionAlbumPhoto>>, TError,UsersCaptionAlbumPhotoMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof usersCaptionAlbumPhoto>>, TError,UsersCaptionAlbumPhotoMutationVariables, TContext> => {
+
+const mutationKey = getUsersCaptionAlbumPhotoMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersCaptionAlbumPhoto>>, UsersCaptionAlbumPhotoMutationVariables> = (props) => {
+          const {fileId,data} = props ?? {};
+
+          return  usersCaptionAlbumPhoto(fileId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UsersCaptionAlbumPhotoMutationResult = NonNullable<Awaited<ReturnType<typeof usersCaptionAlbumPhoto>>>
+    export type UsersCaptionAlbumPhotoMutationBody = AlbumCaptionRequest
+    export type UsersCaptionAlbumPhotoMutationError = ErrorType<ProblemDetail>
+    export type UsersCaptionAlbumPhotoMutationVariables = {fileId: string;data: AlbumCaptionRequest}
+
+    /**
+ * @summary Изменить подпись своего фото в альбоме
+ */
+export const useUsersCaptionAlbumPhoto = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersCaptionAlbumPhoto>>, TError,UsersCaptionAlbumPhotoMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof usersCaptionAlbumPhoto>>,
+        TError,
+        UsersCaptionAlbumPhotoMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUsersCaptionAlbumPhotoMutationOptions(options), queryClient);
+    }
+    export type usersRemoveAlbumPhotoResponse204 = {
+  data: void
+  status: 204
+}
+
+export type usersRemoveAlbumPhotoResponse404 = {
+  data: ProblemDetail
+  status: 404
+}
+
+export type usersRemoveAlbumPhotoResponseSuccess = (usersRemoveAlbumPhotoResponse204) & {
+  headers: Headers;
+};
+export type usersRemoveAlbumPhotoResponseError = (usersRemoveAlbumPhotoResponse404) & {
+  headers: Headers;
+};
+
+export type usersRemoveAlbumPhotoResponse = (usersRemoveAlbumPhotoResponseSuccess | usersRemoveAlbumPhotoResponseError)
+
+export const getUsersRemoveAlbumPhotoUrl = (fileId: string,) => {
+
+
+
+
+  return `/api/users/me/album/${fileId}`
+}
+
+/**
+ * @summary Удалить своё фото из альбома
+ */
+export const usersRemoveAlbumPhoto = async (fileId: string, options?: Parameters<typeof authMutator>[1]): Promise<usersRemoveAlbumPhotoResponse> => {
+
+  return authMutator<usersRemoveAlbumPhotoResponse>(getUsersRemoveAlbumPhotoUrl(fileId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getUsersRemoveAlbumPhotoMutationKey = () => ['usersRemoveAlbumPhoto'] as const;
+
+export const getUsersRemoveAlbumPhotoMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersRemoveAlbumPhoto>>, TError,UsersRemoveAlbumPhotoMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof usersRemoveAlbumPhoto>>, TError,UsersRemoveAlbumPhotoMutationVariables, TContext> => {
+
+const mutationKey = getUsersRemoveAlbumPhotoMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersRemoveAlbumPhoto>>, UsersRemoveAlbumPhotoMutationVariables> = (props) => {
+          const {fileId} = props ?? {};
+
+          return  usersRemoveAlbumPhoto(fileId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UsersRemoveAlbumPhotoMutationResult = NonNullable<Awaited<ReturnType<typeof usersRemoveAlbumPhoto>>>
+
+    export type UsersRemoveAlbumPhotoMutationError = ErrorType<ProblemDetail>
+    export type UsersRemoveAlbumPhotoMutationVariables = {fileId: string}
+
+    /**
+ * @summary Удалить своё фото из альбома
+ */
+export const useUsersRemoveAlbumPhoto = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersRemoveAlbumPhoto>>, TError,UsersRemoveAlbumPhotoMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof usersRemoveAlbumPhoto>>,
+        TError,
+        UsersRemoveAlbumPhotoMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUsersRemoveAlbumPhotoMutationOptions(options), queryClient);
+    }
     export type usersMyPhotosResponse200 = {
   data: FileResponse[]
   status: 200
@@ -1009,6 +1221,121 @@ export const useUsersAddPhoto = <TError = ErrorType<ProblemDetail>,
       > => {
       return useMutation(getUsersAddPhotoMutationOptions(options), queryClient);
     }
+    export type usersAddAlbumPhotoResponse200 = {
+  data: AlbumPhotoResponse
+  status: 200
+}
+
+export type usersAddAlbumPhotoResponse400 = {
+  data: ProblemDetail
+  status: 400
+}
+
+export type usersAddAlbumPhotoResponse403 = {
+  data: ProblemDetail
+  status: 403
+}
+
+export type usersAddAlbumPhotoResponse409 = {
+  data: ProblemDetail
+  status: 409
+}
+
+export type usersAddAlbumPhotoResponseSuccess = (usersAddAlbumPhotoResponse200) & {
+  headers: Headers;
+};
+export type usersAddAlbumPhotoResponseError = (usersAddAlbumPhotoResponse400 | usersAddAlbumPhotoResponse403 | usersAddAlbumPhotoResponse409) & {
+  headers: Headers;
+};
+
+export type usersAddAlbumPhotoResponse = (usersAddAlbumPhotoResponseSuccess | usersAddAlbumPhotoResponseError)
+
+export const getUsersAddAlbumPhotoUrl = (params?: UsersAddAlbumPhotoParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/users/me/album?${stringifiedParams}` : `/api/users/me/album`
+}
+
+/**
+ * Фото попадает в папку занятия и в «Все фото». Подпись до 300 символов, необязательна.
+ * @summary Добавить фото с занятия в альбом (JPG, PNG, WebP до 5 МБ)
+ */
+export const usersAddAlbumPhoto = async (usersAddAlbumPhotoBody?: UsersAddAlbumPhotoBody,
+    params?: UsersAddAlbumPhotoParams, options?: Parameters<typeof authMutator>[1]): Promise<usersAddAlbumPhotoResponse> => {
+    const formData = new FormData();
+if(usersAddAlbumPhotoBody?.file !== undefined) {
+ formData.append(`file`, usersAddAlbumPhotoBody.file);
+ }
+
+  return authMutator<usersAddAlbumPhotoResponse>(getUsersAddAlbumPhotoUrl(params),
+  {
+    ...options,
+    method: 'POST'
+    ,
+    body: formData
+  }
+);}
+
+
+
+
+
+export const getUsersAddAlbumPhotoMutationKey = () => ['usersAddAlbumPhoto'] as const;
+
+export const getUsersAddAlbumPhotoMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersAddAlbumPhoto>>, TError,UsersAddAlbumPhotoMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof usersAddAlbumPhoto>>, TError,UsersAddAlbumPhotoMutationVariables, TContext> => {
+
+const mutationKey = getUsersAddAlbumPhotoMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersAddAlbumPhoto>>, UsersAddAlbumPhotoMutationVariables> = (props) => {
+          const {data,params} = props ?? {};
+
+          return  usersAddAlbumPhoto(data,params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UsersAddAlbumPhotoMutationResult = NonNullable<Awaited<ReturnType<typeof usersAddAlbumPhoto>>>
+    export type UsersAddAlbumPhotoMutationBody = UsersAddAlbumPhotoBody | undefined
+    export type UsersAddAlbumPhotoMutationError = ErrorType<ProblemDetail>
+    export type UsersAddAlbumPhotoMutationVariables = {data?: UsersAddAlbumPhotoBody;params?: UsersAddAlbumPhotoParams}
+
+    /**
+ * @summary Добавить фото с занятия в альбом (JPG, PNG, WebP до 5 МБ)
+ */
+export const useUsersAddAlbumPhoto = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersAddAlbumPhoto>>, TError,UsersAddAlbumPhotoMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof usersAddAlbumPhoto>>,
+        TError,
+        UsersAddAlbumPhotoMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUsersAddAlbumPhotoMutationOptions(options), queryClient);
+    }
     export type usersGetResponse200 = {
   data: PublicUserResponse
   status: 200
@@ -1118,6 +1445,260 @@ export function useUsersGet<TData = Awaited<ReturnType<typeof usersGet>>, TError
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getUsersGetQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type usersAlbumResponse200 = {
+  data: PageResponseAlbumPhotoResponse
+  status: 200
+}
+
+export type usersAlbumResponse404 = {
+  data: ProblemDetail
+  status: 404
+}
+
+export type usersAlbumResponseSuccess = (usersAlbumResponse200) & {
+  headers: Headers;
+};
+export type usersAlbumResponseError = (usersAlbumResponse404) & {
+  headers: Headers;
+};
+
+export type usersAlbumResponse = (usersAlbumResponseSuccess | usersAlbumResponseError)
+
+export const getUsersAlbumUrl = (id: string,
+    params?: UsersAlbumParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/users/${id}/album?${stringifiedParams}` : `/api/users/${id}/album`
+}
+
+/**
+ * eventId — одна папка (занятие), sportId — фильтр «Все фото». Сортировка по времени загрузки. mine = true у своих фото: их можно подписать и удалить.
+ * @summary Альбом человека: фото с занятий страницей
+ */
+export const usersAlbum = async (id: string,
+    params?: UsersAlbumParams, options?: Parameters<typeof authMutator>[1]): Promise<usersAlbumResponse> => {
+
+  return authMutator<usersAlbumResponse>(getUsersAlbumUrl(id,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getUsersAlbumQueryKey = (id: string,
+    params?: UsersAlbumParams,) => {
+    return [
+    `/api/users/${id}/album`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getUsersAlbumQueryOptions = <TData = Awaited<ReturnType<typeof usersAlbum>>, TError = ErrorType<ProblemDetail>>(id: string,
+    params?: UsersAlbumParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersAlbum>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getUsersAlbumQueryKey(id,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof usersAlbum>>> = ({ signal }) => usersAlbum(id,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof usersAlbum>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type UsersAlbumQueryResult = NonNullable<Awaited<ReturnType<typeof usersAlbum>>>
+export type UsersAlbumQueryError = ErrorType<ProblemDetail>
+
+
+export function useUsersAlbum<TData = Awaited<ReturnType<typeof usersAlbum>>, TError = ErrorType<ProblemDetail>>(
+ id: string,
+    params: undefined |  UsersAlbumParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersAlbum>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersAlbum>>,
+          TError,
+          Awaited<ReturnType<typeof usersAlbum>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUsersAlbum<TData = Awaited<ReturnType<typeof usersAlbum>>, TError = ErrorType<ProblemDetail>>(
+ id: string,
+    params?: UsersAlbumParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersAlbum>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersAlbum>>,
+          TError,
+          Awaited<ReturnType<typeof usersAlbum>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUsersAlbum<TData = Awaited<ReturnType<typeof usersAlbum>>, TError = ErrorType<ProblemDetail>>(
+ id: string,
+    params?: UsersAlbumParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersAlbum>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Альбом человека: фото с занятий страницей
+ */
+
+export function useUsersAlbum<TData = Awaited<ReturnType<typeof usersAlbum>>, TError = ErrorType<ProblemDetail>>(
+ id: string,
+    params?: UsersAlbumParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersAlbum>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getUsersAlbumQueryOptions(id,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type usersAlbumFoldersResponse200 = {
+  data: AlbumFolderResponse[]
+  status: 200
+}
+
+export type usersAlbumFoldersResponse404 = {
+  data: ProblemDetail
+  status: 404
+}
+
+export type usersAlbumFoldersResponseSuccess = (usersAlbumFoldersResponse200) & {
+  headers: Headers;
+};
+export type usersAlbumFoldersResponseError = (usersAlbumFoldersResponse404) & {
+  headers: Headers;
+};
+
+export type usersAlbumFoldersResponse = (usersAlbumFoldersResponseSuccess | usersAlbumFoldersResponseError)
+
+export const getUsersAlbumFoldersUrl = (id: string,) => {
+
+
+
+
+  return `/api/users/${id}/album/events`
+}
+
+/**
+ * @summary Папки альбома: занятия с фото, новые сверху
+ */
+export const usersAlbumFolders = async (id: string, options?: Parameters<typeof authMutator>[1]): Promise<usersAlbumFoldersResponse> => {
+
+  return authMutator<usersAlbumFoldersResponse>(getUsersAlbumFoldersUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getUsersAlbumFoldersQueryKey = (id: string,) => {
+    return [
+    `/api/users/${id}/album/events`
+    ] as const;
+    }
+
+
+export const getUsersAlbumFoldersQueryOptions = <TData = Awaited<ReturnType<typeof usersAlbumFolders>>, TError = ErrorType<ProblemDetail>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersAlbumFolders>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getUsersAlbumFoldersQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof usersAlbumFolders>>> = ({ signal }) => usersAlbumFolders(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof usersAlbumFolders>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type UsersAlbumFoldersQueryResult = NonNullable<Awaited<ReturnType<typeof usersAlbumFolders>>>
+export type UsersAlbumFoldersQueryError = ErrorType<ProblemDetail>
+
+
+export function useUsersAlbumFolders<TData = Awaited<ReturnType<typeof usersAlbumFolders>>, TError = ErrorType<ProblemDetail>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersAlbumFolders>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersAlbumFolders>>,
+          TError,
+          Awaited<ReturnType<typeof usersAlbumFolders>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUsersAlbumFolders<TData = Awaited<ReturnType<typeof usersAlbumFolders>>, TError = ErrorType<ProblemDetail>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersAlbumFolders>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersAlbumFolders>>,
+          TError,
+          Awaited<ReturnType<typeof usersAlbumFolders>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUsersAlbumFolders<TData = Awaited<ReturnType<typeof usersAlbumFolders>>, TError = ErrorType<ProblemDetail>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersAlbumFolders>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Папки альбома: занятия с фото, новые сверху
+ */
+
+export function useUsersAlbumFolders<TData = Awaited<ReturnType<typeof usersAlbumFolders>>, TError = ErrorType<ProblemDetail>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersAlbumFolders>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getUsersAlbumFoldersQueryOptions(id,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -1476,6 +2057,119 @@ export function useUsersHistorySummary<TData = Awaited<ReturnType<typeof usersHi
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getUsersHistorySummaryQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type usersAlbumEligibleEventsResponse200 = {
+  data: AlbumEventResponse[]
+  status: 200
+}
+
+export type usersAlbumEligibleEventsResponseSuccess = (usersAlbumEligibleEventsResponse200) & {
+  headers: Headers;
+};
+;
+
+export type usersAlbumEligibleEventsResponse = (usersAlbumEligibleEventsResponseSuccess)
+
+export const getUsersAlbumEligibleEventsUrl = () => {
+
+
+
+
+  return `/api/users/me/album/eligible-events`
+}
+
+/**
+ * Начавшиеся и не удалённые мероприятия, где я организатор или подтверждённый участник. Новые сверху.
+ * @summary С каких занятий можно добавить фото
+ */
+export const usersAlbumEligibleEvents = async ( options?: Parameters<typeof authMutator>[1]): Promise<usersAlbumEligibleEventsResponse> => {
+
+  return authMutator<usersAlbumEligibleEventsResponse>(getUsersAlbumEligibleEventsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getUsersAlbumEligibleEventsQueryKey = () => {
+    return [
+    `/api/users/me/album/eligible-events`
+    ] as const;
+    }
+
+
+export const getUsersAlbumEligibleEventsQueryOptions = <TData = Awaited<ReturnType<typeof usersAlbumEligibleEvents>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersAlbumEligibleEvents>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getUsersAlbumEligibleEventsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof usersAlbumEligibleEvents>>> = ({ signal }) => usersAlbumEligibleEvents({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof usersAlbumEligibleEvents>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type UsersAlbumEligibleEventsQueryResult = NonNullable<Awaited<ReturnType<typeof usersAlbumEligibleEvents>>>
+export type UsersAlbumEligibleEventsQueryError = ErrorType<unknown>
+
+
+export function useUsersAlbumEligibleEvents<TData = Awaited<ReturnType<typeof usersAlbumEligibleEvents>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersAlbumEligibleEvents>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersAlbumEligibleEvents>>,
+          TError,
+          Awaited<ReturnType<typeof usersAlbumEligibleEvents>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUsersAlbumEligibleEvents<TData = Awaited<ReturnType<typeof usersAlbumEligibleEvents>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersAlbumEligibleEvents>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersAlbumEligibleEvents>>,
+          TError,
+          Awaited<ReturnType<typeof usersAlbumEligibleEvents>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUsersAlbumEligibleEvents<TData = Awaited<ReturnType<typeof usersAlbumEligibleEvents>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersAlbumEligibleEvents>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary С каких занятий можно добавить фото
+ */
+
+export function useUsersAlbumEligibleEvents<TData = Awaited<ReturnType<typeof usersAlbumEligibleEvents>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersAlbumEligibleEvents>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getUsersAlbumEligibleEventsQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
