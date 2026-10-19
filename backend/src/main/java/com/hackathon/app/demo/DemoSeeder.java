@@ -13,9 +13,12 @@ import java.util.Map;
 import java.util.UUID;
 
 import com.hackathon.app.domain.dto.EventRequest;
+import com.hackathon.app.domain.dto.HelpersPreferences;
+import com.hackathon.app.domain.dto.HomePoint;
 import com.hackathon.app.domain.dto.RegisterRequest;
 import com.hackathon.app.domain.dto.RegistrationResponse;
 import com.hackathon.app.domain.dto.SaveOrganizationRequest;
+import com.hackathon.app.domain.dto.SaveUserPreferencesRequest;
 import com.hackathon.app.domain.dto.SaveUserSportsRequest;
 import com.hackathon.app.domain.dto.ScheduleRequest;
 import com.hackathon.app.domain.dto.ScheduleRuleRequest;
@@ -23,6 +26,8 @@ import com.hackathon.app.domain.dto.UpdateProfileRequest;
 import com.hackathon.app.domain.dto.UserSportRequest;
 import com.hackathon.app.domain.enums.AccountType;
 import com.hackathon.app.domain.enums.ContactType;
+import com.hackathon.app.domain.enums.Daytime;
+import com.hackathon.app.domain.enums.DismissReason;
 import com.hackathon.app.domain.enums.EventFormat;
 import com.hackathon.app.domain.enums.EventKind;
 import com.hackathon.app.domain.enums.EventLevel;
@@ -45,6 +50,8 @@ import com.hackathon.app.service.OrganizationService;
 import com.hackathon.app.service.RegistrationService;
 import com.hackathon.app.service.UserProfileService;
 import com.hackathon.app.service.UserSportService;
+import com.hackathon.app.service.UserPreferencesService;
+import com.hackathon.app.service.RecommendationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -118,6 +125,8 @@ public class DemoSeeder {
 	private final AuthService authService;
 	private final UserProfileService profileService;
 	private final UserSportService userSportService;
+	private final UserPreferencesService preferencesService;
+	private final RecommendationService recommendationService;
 	private final OrganizationService organizationService;
 	private final AdminOrganizationService adminOrganizationService;
 	private final EventService eventService;
@@ -343,6 +352,15 @@ public class DemoSeeder {
 		sports(cast.id("anna"), SportLevel.BEGINNER, "Бег", "Йога");
 		sports(cast.id("petr"), SportLevel.AMATEUR, "Шахматы", "Футбол", "Баскетбол");
 		sports(cast.id("olga"), null, "Зарядка", "Петанк");
+		// Предпочтения с домом: подборка «Вам подойдёт» считает расстояние от дома и удобное время.
+		preferencesService.save(cast.id("anna"), new SaveUserPreferencesRequest(SportLevel.BEGINNER,
+				List.of(DayOfWeek.TUESDAY, DayOfWeek.THURSDAY, DayOfWeek.SATURDAY), Daytime.EVENING, 5,
+				new HelpersPreferences(true, true, true), new HomePoint(56.0106, 92.8526)));
+		preferencesService.save(cast.id("olga"), new SaveUserPreferencesRequest(SportLevel.BEGINNER,
+				List.of(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY, DayOfWeek.SUNDAY), Daytime.MORNING, 3,
+				new HelpersPreferences(true, true, false), new HomePoint(56.0290, 92.9300)));
+		// Анна уже скрыла турнир «Ладьи» из подборки: в разборе оценки видно «Вы скрыли его из подборки».
+		recommendationService.dismiss(cast.id("anna"), clubTournament, DismissReason.NOT_INTERESTED);
 		data.flushAndClear();
 
 		// Прошлое: встречи основных персонажей и клуба «Ладья», затем вся история по времени с настоящим начислением.

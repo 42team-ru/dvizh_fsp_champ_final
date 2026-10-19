@@ -18,7 +18,6 @@ import com.hackathon.app.domain.dto.PageResponse;
 import com.hackathon.app.domain.entity.AppUser;
 import com.hackathon.app.domain.entity.Event;
 import com.hackathon.app.domain.enums.EventFormat;
-import com.hackathon.app.domain.enums.EventLevel;
 import com.hackathon.app.domain.enums.EventStatus;
 import com.hackathon.app.domain.enums.FileKind;
 import com.hackathon.app.domain.enums.RegistrationStatus;
@@ -255,31 +254,6 @@ public class EventService {
         mapper.announce(event, null, null);
         events.saveAndFlush(event);
         return get(eventId, userId);
-    }
-
-    /**
-     * Похожие встречи: когда мест нет или заявку отклонили, человек не упирается в тупик. Опубликованные будущие
-     * того же вида спорта и совместимого уровня, кроме этой, моих (я организатор или уже записан) и полных.
-     */
-    @Transactional(readOnly = true)
-    public List<EventSummaryResponse> similar(UUID eventId, UUID userId, int limit) {
-        var event = events.findById(eventId).orElseThrow(() -> new NoSuchElementException(NOT_FOUND));
-        var now = dbTime.now();
-        int size = Math.clamp(limit, 1, 20);
-        var level = event.getLevel() == EventLevel.ANY ? null : event.getLevel();
-        var spec = EventSpecifications.feed(null, event.getSportId(), level, null, null, null, null, null);
-        // с запасом: часть отсеется ниже как моя или полная
-        var ids = feed.findIds(spec, now, null, size * 4 + 1);
-        var candidates = EventListLookups.sortedLike(events.findAllById(ids), ids).stream()
-                .filter(candidate -> !candidate.getId().equals(eventId) && !policy.isOrganizer(candidate, userId))
-                .toList();
-        return summaries(candidates, userId).stream()
-                .filter(summary -> summary.myRegistrationStatus() == null
-                        || summary.myRegistrationStatus() == RegistrationStatus.CANCELLED)
-                .filter(summary -> summary.capacity() == null || summary.recurring()
-                        || summary.participantsCount() < summary.capacity())
-                .limit(size)
-                .toList();
     }
 
     /**

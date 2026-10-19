@@ -20,5 +20,11 @@ public record SaveUserPreferencesRequest(
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) @NotNull Daytime daytime,
         @Schema(description = "Радиус поиска в километрах", requiredMode = Schema.RequiredMode.REQUIRED)
         @NotNull @Min(1) @Max(20) Integer radiusKm,
-        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) @NotNull @Valid HelpersPreferences helpers) {
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) @NotNull @Valid HelpersPreferences helpers,
+        @Schema(description = "Домашняя точка для подбора «рядом с домом»; не передана — очищается") @Valid HomePoint home) {
+    /** Без домашней точки. */
+    public SaveUserPreferencesRequest(SportLevel level, List<DayOfWeek> days, Daytime daytime, Integer radiusKm,
+            HelpersPreferences helpers) {
+        this(level, days, daytime, radiusKm, helpers, null);
+    }
 }

@@ -239,6 +239,9 @@ public class TestApi {
 	private HttpStatus expectedStatus(MvcResult result) {
 		var request = result.getRequest();
 		var path = request.getRequestURI();
+		if (path.matches("/api/recommendations/events/[^/]+/dismiss")) {
+			return HttpStatus.NO_CONTENT;
+		}
 		if (request.getMethod().equals("POST")) {
 			if (path.equals("/api/auth/logout")) {
 				return HttpStatus.NO_CONTENT;
