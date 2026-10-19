@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { createPointPicker, hasMapKey, type PointPicker } from "../lib/map-provider";
 
-/** Мини-карта места события: клик ставит точку. value и onChange — [lon, lat]; без onChange — только показ. */
+/**
+ * Мини-карта места события: клик ставит точку. value и onChange — [lon, lat]; без onChange — только показ.
+ * Если value поменяли снаружи (выбрали подсказку адреса), карта ставит маркер и приближается к нему.
+ */
 export function LocationPicker({ value, onChange, className }: {
   value: [number, number] | null;
   onChange?(point: [number, number]): void;
@@ -12,11 +15,13 @@ export function LocationPicker({ value, onChange, className }: {
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
   const [failed, setFailed] = useState(false);
+  /** Последняя точка, которую поставил сам клик: к ней не надо перелетать. */
+  const clicked = useRef<[number, number] | null>(null);
 
   useEffect(() => {
     if (!hasMapKey() || !container.current) return;
     let cancelled = false;
-    createPointPicker(container.current, value, onChange ? (point) => onChangeRef.current?.(point) : undefined).then((p) => {
+    createPointPicker(container.current, value, onChange ? (point) => { clicked.current = point; onChangeRef.current?.(point); } : undefined).then((p) => {
       if (cancelled) return p.destroy();
       picker.current = p;
     }).catch((error) => {
@@ -28,8 +33,13 @@ export function LocationPicker({ value, onChange, className }: {
       picker.current?.destroy();
       picker.current = null;
     };
-    // Карта создаётся один раз; дальнейшие изменения value ставит сам пикер.
+    // Карта создаётся один раз; дальнейшие изменения value — в эффекте ниже.
   }, []);
+
+  useEffect(() => {
+    if (!picker.current || !value || value === clicked.current) return;
+    picker.current.show(value);
+  }, [value]);
 
   if (!hasMapKey() || failed) {
     return (

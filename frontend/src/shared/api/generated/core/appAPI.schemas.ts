@@ -347,69 +347,6 @@ export interface PetRenameRequest {
   name: string;
 }
 
-/**
- * Подпись к фото альбома
- */
-export interface AlbumCaptionRequest {
-  /**
-     * Подпись; пусто — без подписи
-     * @minLength 0
-     * @maxLength 300
-     */
-  caption?: string;
-}
-
-/**
- * Мероприятие в альбоме
- */
-export interface AlbumEventResponse {
-  id: string;
-  /** Название */
-  title: string;
-  /** Вид спорта */
-  sport: SportResponse;
-  /** Начало (у серии — первое занятие) */
-  startAt: string;
-  /** Сколько фото с этого мероприятия в альбоме; в списке доступных для загрузки — 0 */
-  photosCount: number;
-}
-
-/**
- * Публичная карточка человека: организатор или участник, без email
- */
-export interface UserShortResponse {
-  id: string;
-  /** Логин */
-  username: string;
-  /** Имя */
-  firstName: string;
-  /** Фамилия */
-  lastName: string;
-  /** Ссылка на аватар */
-  avatarUrl?: string;
-  /** Город */
-  city?: string;
-}
-
-/**
- * Фото альбома
- */
-export interface AlbumPhotoResponse {
-  id: string;
-  /** Ссылка на картинку */
-  url: string;
-  /** Подпись */
-  caption?: string;
-  /** Когда добавлено */
-  createdAt: string;
-  /** Кто добавил */
-  author: UserShortResponse;
-  /** С какого мероприятия */
-  event: AlbumEventResponse;
-  /** Моё фото: можно подписать и удалить */
-  mine: boolean;
-}
-
 export type SaveOrganizationRequestContacts = {[key: string]: string};
 
 export interface SaveOrganizationRequest {
@@ -806,6 +743,23 @@ export const EventResponseStatus = {
   UNPUBLISHED: 'UNPUBLISHED',
   DELETED: 'DELETED',
 } as const;
+
+/**
+ * Публичная карточка человека: организатор или участник, без email
+ */
+export interface UserShortResponse {
+  id: string;
+  /** Логин */
+  username: string;
+  /** Имя */
+  firstName: string;
+  /** Фамилия */
+  lastName: string;
+  /** Ссылка на аватар */
+  avatarUrl?: string;
+  /** Город */
+  city?: string;
+}
 
 /**
  * Статус допуска: страница открывается только у APPROVED
@@ -1827,14 +1781,6 @@ export interface PublicUserResponse {
   photos: FileResponse[];
 }
 
-export interface PageResponseAlbumPhotoResponse {
-  items?: AlbumPhotoResponse[];
-  page?: number;
-  size?: number;
-  totalElements?: number;
-  totalPages?: number;
-}
-
 /**
  * За что
  */
@@ -2517,22 +2463,6 @@ export type UsersAddPhotoBody = {
   file: Blob | File;
 };
 
-export type AlbumsAddParams = {
-/**
- * Мероприятие, с которого фото
- */
-eventId: string;
-/**
- * Подпись, до 300 символов
- */
-caption?: string;
-};
-
-export type AlbumsAddBody = {
-  /** Картинка */
-  file: Blob | File;
-};
-
 export type OrganizationsAddDocumentBody = {
   /** Документ */
   file: Blob | File;
@@ -2726,24 +2656,6 @@ export type AdminPreviewPetItemBody = {
   /** Картинка PNG или SVG до 5 МБ */
   file: Blob | File;
 };
-
-export type AlbumsListParams = {
-eventId?: string;
-sportId?: string;
-sort?: AlbumsListSort;
-page?: number;
-size?: number;
-};
-
-export type AlbumsListSort = typeof AlbumsListSort[keyof typeof AlbumsListSort];
-
-
-export const AlbumsListSort = {
-  NEWEST: 'NEWEST',
-  OLDEST: 'OLDEST',
-  EVENT_NEWEST: 'EVENT_NEWEST',
-  EVENT_OLDEST: 'EVENT_OLDEST',
-} as const;
 
 export type UsersHistoryParams = {
 /**

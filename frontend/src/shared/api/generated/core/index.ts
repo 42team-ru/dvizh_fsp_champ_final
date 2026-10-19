@@ -1,5 +1,4 @@
 export * from './admin/admin';
-export * from './albums/albums';
 export * from './auth/auth';
 export * from './comments/comments';
 export * from './demo/demo';

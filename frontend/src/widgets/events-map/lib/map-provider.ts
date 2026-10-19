@@ -234,6 +234,8 @@ export async function createEventsMap(container: HTMLElement, center = DEFAULT_C
 export interface PointPicker {
   /** Поставить маркер программно (например, при открытии формы с уже выбранной точкой). */
   setPoint(point: [number, number] | null): void;
+  /** Поставить маркер и приблизить карту к точке (выбор подсказки адреса). */
+  show(point: [number, number], zoom?: number): void;
   destroy(): void;
 }
 
@@ -268,6 +270,10 @@ export async function createPointPicker(container: HTMLElement, initial: [number
   });
   return {
     setPoint,
+    show(point, zoom = 16) {
+      setPoint(point);
+      map.setView([point[1], point[0]], zoom);
+    },
     destroy() {
       marker?.remove();
       map.remove();

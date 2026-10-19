@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router";
 import { useEventsCreate } from "@/shared/api/generated/core/events/events";
 import type { EventRequest, EventRequestJoinMode, EventRequestKind, EventRequestLevel } from "@/shared/api/generated/core/appAPI.schemas";
@@ -6,6 +6,9 @@ import { EventRequestLevel as LEVELS } from "@/shared/api/generated/core/appAPI.
 import { AppHeader } from "@/widgets/app-header/ui/app-header";
 import { MobileTabBar } from "@/widgets/mobile-shell/ui/mobile-tab-bar";
 import { LocationPicker } from "@/widgets/events-map/ui/location-picker";
+import { AddressInput } from "@/widgets/events-map/ui/address-input";
+import { addressAt } from "@/widgets/events-map/lib/geocoder";
+import { DEFAULT_CENTER } from "@/widgets/events-map/lib/map-provider";
 import { SportPicker, type PickedSport } from "@/features/sport-picker/ui/sport-picker";
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
@@ -41,7 +44,11 @@ export default function EventCreatePage() {
   const create = useEventsCreate();
   const tomorrow = new Date(Date.now() + 86_400_000);
   const [sport, setSport] = useState<PickedSport | null>(null);
+  /** Точка места: из подсказки адреса или клика по карте. Без неё адрес не засчитывается. */
   const [point, setPoint] = useState<[number, number] | null>(null);
+  const [locating, setLocating] = useState(false);
+  /** Последний клик по карте: ответ геокодера на прежний клик не должен перезаписать адрес. */
+  const lastClick = useRef<[number, number] | null>(null);
   const [repeat, setRepeat] = useState(false);
   const [f, setF] = useState({
     title: "", description: "", format: "OFFLINE" as "OFFLINE" | "ONLINE", address: "", locationNote: "", onlineUrl: "",
@@ -50,12 +57,24 @@ export default function EventCreatePage() {
     capacity: "", minParticipants: "", requirements: "", equipment: "", privateDetails: "",
   });
   const set = (patch: Partial<typeof f>) => setF((prev) => ({ ...prev, ...patch }));
+
+  /** Клик по карте: ставим точку и сами подставляем адрес (обратный геокодер 2ГИС). */
+  const pickOnMap = async (next: [number, number]) => {
+    lastClick.current = next;
+    setPoint(next);
+    setLocating(true);
+    const found = await addressAt(next).catch(() => null);
+    if (lastClick.current !== next) return;
+    setLocating(false);
+    set({ address: found ?? `Точка на карте: ${next[1].toFixed(5)}, ${next[0].toFixed(5)}` });
+  };
   const [localError, setLocalError] = useState<string | null>(null);
 
   const submit = () => {
     setLocalError(null);
     if (!sport) return setLocalError("Выберите вид спорта или добавьте свой");
-    if (f.format === "OFFLINE" && !point) return setLocalError("Отметьте место на карте");
+    if (f.format === "OFFLINE" && !point) return setLocalError("Выберите адрес из подсказок или отметьте место на карте");
+    if (f.format === "OFFLINE" && locating) return setLocalError("Определяем адрес точки — секунду");
     const duration = minutesBetween(f.start, f.end);
     if (duration <= 0) return setLocalError("Окончание должно быть позже начала");
     const data: EventRequest = {
@@ -169,13 +188,17 @@ export default function EventCreatePage() {
             </div>
             {f.format === "OFFLINE" ? (
               <>
-                <label className={field}>Адрес
-                  <Input required maxLength={500} value={f.address} placeholder="Красноярск, ул. Ленина, 1" onChange={(e) => set({ address: e.target.value })} />
-                </label>
                 <div className={field}>
-                  Точка на карте {point ? "· выбрана" : "· нажмите на карту"}
-                  <LocationPicker value={point} onChange={setPoint} className="h-[300px] w-full" />
+                  Адрес
+                  <AddressInput value={f.address} near={point ?? DEFAULT_CENTER} invalid={Boolean(f.address) && !point}
+                    onText={(text) => { lastClick.current = null; setLocating(false); setPoint(null); set({ address: text }); }}
+                    onPick={(place) => { lastClick.current = null; setLocating(false); setPoint(place.point); set({ address: place.address }); }} />
+                  <span className="text-xs font-semibold text-muted-foreground">
+                    {locating ? "Определяем адрес точки…" : point ? "Место выбрано — можно уточнить кликом по карте"
+                      : "Начните вводить и выберите подсказку или нажмите на карту"}
+                  </span>
                 </div>
+                <LocationPicker value={point} onChange={(next) => void pickOnMap(next)} className="h-[300px] w-full" />
                 <label className={field}>Как найти место
                   <Input maxLength={1000} value={f.locationNote} placeholder="Вход со стороны парка" onChange={(e) => set({ locationNote: e.target.value })} />
                 </label>
