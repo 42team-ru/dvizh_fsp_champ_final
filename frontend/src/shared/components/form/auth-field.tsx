@@ -15,8 +15,10 @@ export function AuthField({
   children: ReactNode;
 }) {
   return (
-    <Field data-invalid={isInvalid}>
-      <FieldLabel htmlFor={name}>{label}</FieldLabel>
+    <Field data-invalid={isInvalid} className="gap-[6px]">
+      <FieldLabel htmlFor={name} className="text-[13px] leading-[normal] font-bold text-foreground">
+        {label}
+      </FieldLabel>
       {children}
       {isInvalid && errorMessage ? <FieldError>{errorMessage}</FieldError> : null}
     </Field>

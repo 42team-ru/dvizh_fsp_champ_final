@@ -207,6 +207,12 @@ cd backend && ./gradlew postgresTest  # смоук миграций на нас�
 - Данные — только через сгенерированные Orval-хуки (`@/shared/api/generated/core/...`), руками axios не вызываем.
 - Подписи статусов для UI (текст, цвет, иконка) в одном месте: `src/shared/lib/statuses.ts`. Статусы записи, события и организации не пишем строками по компонентам.
 - Доступность: крупный шрифт и кнопки, контрастные состояния, понятные подтверждения. Цвет не единственный носитель смысла.
+- **Дизайн Memphis (Figma).** Токены лежат в `src/app/styles/app.css`.
+    - Только shadcn/ui (`shared/components/ui`) + Tailwind, стили через токены, без хардкода цветов (`bg-ink`, `text-ultramarine`, а не `#13142B`).
+    - Тени жёсткие, без blur: `shadow-[3px_3px_0_var(--ink)]` (токен `shadow-hard-sm`) и `shadow-[6px_6px_0_var(--ink)]` (`shadow-hard`).
+    - Обводка 2px внутри блока (`box-border`, `border-2 border-ink`).
+    - Шрифты: Unbounded (заголовки, `font-display`) и Manrope (текст, `font-sans`).
+    - Не «улучшать» дизайн: размеры и текст как в Figma.
 - **Хвосты шаблона убрать:**
     - тексты NaturalQL: `auth-layout.tsx`, `home.tsx`, `app-sidebar.tsx`;
     - фолбэк `https://42team.ru/api` в `useAlternativeBlock`;

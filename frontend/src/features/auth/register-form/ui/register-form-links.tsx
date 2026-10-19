@@ -2,17 +2,15 @@ import { Link } from "react-router";
 
 export function RegisterFormLinks() {
   return (
-    <div className="flex justify-center">
-      <p className="text-xs md:text-sm text-muted-foreground">
-        Уже есть аккаунт?{" "}
-        <Link
-          to="/auth/login"
-          className="text-foreground text-md hover:text-foreground/80 transition-colors"
-          viewTransition
-        >
-          Войти
-        </Link>
-      </p>
-    </div>
+    <p className="w-full text-center text-sm font-semibold text-muted-foreground">
+      Уже есть аккаунт?{" "}
+      <Link
+        to="/auth/login"
+        className="font-extrabold text-primary hover:text-primary/80"
+        viewTransition
+      >
+        Войти
+      </Link>
+    </p>
   );
 }

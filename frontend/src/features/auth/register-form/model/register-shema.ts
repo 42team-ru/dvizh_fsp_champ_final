@@ -1,19 +1,21 @@
 import z from "zod";
 
-const firstName = z
+const name = z
   .string()
-  .min(2, "Имя должно содержать как минимум 2 символа.")
-  .max(100, "Имя должно содержать не более 100 символов.");
-
-const lastName = z
-  .string()
-  .min(2, "Фамилия должна содержать как минимум 2 символа.")
-  .max(100, "Фамилия должна содержать не более 100 символов.");
+  .trim()
+  .refine((value) => value.split(/\s+/).length >= 2, "Укажите имя и фамилию.")
+  .refine(
+    (value) => value.split(/\s+/).every((part) => part.length >= 2),
+    "Имя и фамилия должны содержать как минимум 2 символа.",
+  )
+  .refine((value) => value.length <= 200, "Слишком длинное имя.");
 
 const email = z
   .string()
-  .email("Пожалуйста, введите действительный email адрес.");
+  .email("Пожалуйста, введите действительный email адрес.")
+  .max(50, "Email должен содержать не более 50 символов.");
 
+/** Логин совпадает с email: отдельного поля в форме нет. */
 const username = z
   .string()
   .min(3, "Имя пользователя должно содержать как минимум 3 символа.");
@@ -23,95 +25,34 @@ const password = z
   .min(8, "Пароль должен содержать как минимум 8 символов.")
   .max(100, "Пароль должен содержать не более 100 символов.");
 
-const passwordVerification = z
-  .string()
-  .min(8, "Пароль должен содержать как минимум 8 символов.")
-  .max(100, "Пароль должен содержать не более 100 символов.");
-
 export { email as registerEmailSchema, username as registerUsernameSchema };
 
-const registerBaseSchema = z.object({
-  firstName,
-  lastName,
+export const registerSchema = z.object({
+  name,
   email,
-  username,
   password,
-  passwordVerification,
+  city: z.string(),
+  agree: z.literal(true, "Нужно принять правила и политику."),
 });
 
-export const registerStep1Schema = registerBaseSchema.pick({
-  firstName: true,
-  lastName: true,
-});
+export type RegisterFormValues = z.infer<typeof registerSchema>;
 
-export const registerStep2Schema = registerBaseSchema.pick({
-  username: true,
-  email: true,
-});
-
-export const registerStep3Schema = registerBaseSchema
-  .pick({
-    password: true,
-    passwordVerification: true,
-  })
-  .refine((data) => data.password === data.passwordVerification, {
-    message: "Пароли не совпадают.",
-    path: ["passwordVerification"],
-  });
-
-export const registerSchema = registerBaseSchema.refine(
-  (data) => data.password === data.passwordVerification,
-  {
-    message: "Пароли не совпадают.",
-    path: ["passwordVerification"],
-  },
-);
-
-export type RegisterFormValues = z.infer<typeof registerBaseSchema>;
-
-export const REGISTER_STEP_FIELD_GROUPS: Record<
-  1 | 2 | 3,
-  readonly (keyof RegisterFormValues)[]
-> = {
-  1: ["firstName", "lastName"],
-  2: ["username", "email"],
-  3: ["password", "passwordVerification"],
-};
-
-export function parseRegisterStep(
-  step: 1 | 2 | 3,
-  values: RegisterFormValues,
-):
-  | { ok: true }
-  | { ok: false; fieldErrors: Partial<Record<keyof RegisterFormValues, string>> } {
-  const schema =
-    step === 1 ? registerStep1Schema : step === 2 ? registerStep2Schema : registerStep3Schema;
-  const payload =
-    step === 1
-      ? { firstName: values.firstName, lastName: values.lastName }
-      : step === 2
-        ? { username: values.username, email: values.email }
-        : {
-            password: values.password,
-            passwordVerification: values.passwordVerification,
-          };
-
-  const result = schema.safeParse(payload);
-  if (result.success) {
-    return { ok: true };
-  }
-
-  const fieldErrors: Partial<Record<keyof RegisterFormValues, string>> = {};
-  for (const issue of result.error.issues) {
-    const key = issue.path[0];
-    if (typeof key !== "string") {
-      continue;
-    }
-    const fieldKey = key as keyof RegisterFormValues;
-    if (fieldErrors[fieldKey]) {
-      continue;
-    }
-    fieldErrors[fieldKey] = issue.message;
-  }
-  return { ok: false, fieldErrors };
+/** Делит «Имя Фамилия» на имя и фамилию (всё после первого слова — фамилия). */
+export function splitName(value: string) {
+  const [firstName, ...rest] = value.trim().split(/\s+/);
+  return { firstName, lastName: rest.join(" ") };
 }
+
+/** Сколько из четырёх делений надёжности пароля заполнено. */
+export function passwordStrength(value: string): 0 | 1 | 2 | 3 | 4 {
+  if (!value) return 0;
+  let score = 1;
+  if (value.length >= 8) score += 1;
+  if (/[a-zа-я]/.test(value) && /[A-ZА-Я]/.test(value)) score += 1;
+  if (/\d/.test(value) && /[^\p{L}\d]/u.test(value)) score += 1;
+  return Math.min(score, 4) as 1 | 2 | 3 | 4;
+}
+
+export const STRENGTH_LABEL = ["", "Слабый", "Средний", "Хороший", "Надёжный"] as const;
+
+export const CITIES = ["Красноярск", "Новосибирск", "Томск", "Москва", "Санкт-Петербург"] as const;

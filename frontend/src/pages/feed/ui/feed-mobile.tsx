@@ -1,0 +1,327 @@
+import { MobileAppBar } from "@/widgets/mobile-shell/ui/mobile-app-bar";
+import { MobileTabBar } from "@/widgets/mobile-shell/ui/mobile-tab-bar";
+import { Badge } from "@/shared/components/ui/badge";
+import { Button } from "@/shared/components/ui/button";
+import { Card } from "@/shared/components/ui/card";
+import { Disc } from "@/shared/components/ui/disc";
+import { Icon } from "@/shared/components/ui/icon";
+import { Progress } from "@/shared/components/ui/progress";
+import { cn } from "cn";
+
+const dir = "m-feed";
+const CHIPS = ["Все", "Рядом", "Сегодня", "Бег", "Футбол", "Йога", "Вело"];
+const PEOPLE_TONES = ["bg-sky", "bg-mint", "bg-peach"];
+
+type Big = {
+  sport: string;
+  when: string;
+  dist: string;
+  title: string;
+  place: string;
+  people: string[];
+  going: number;
+  total?: number;
+  warn?: boolean;
+  photo: string;
+  decor: string;
+  height: number;
+  distTop: number;
+};
+
+const BIG: Record<string, Big> = {
+  football: {
+    sport: "ФУТБОЛ",
+    when: "Сегодня 19:30",
+    dist: "3,2 км",
+    title: "Вечерний футбол 6×6",
+    place: "Стадион «Локомотив» · любители",
+    people: ["ИВ", "АР", "ОТ"],
+    going: 11,
+    total: 14,
+    photo: "bg-photo-lime",
+    decor: "photo-decor.svg",
+    height: 150,
+    distTop: 111,
+  },
+  yoga: {
+    sport: "ЙОГА",
+    when: "Сегодня 20:30",
+    dist: "2,1 км",
+    title: "Вечерняя йога в зале",
+    place: "Студия «Тихо» · любой уровень",
+    people: ["ЛП", "ТС", "ОК"],
+    going: 10,
+    total: 12,
+    warn: true,
+    photo: "bg-photo-mint",
+    decor: "photo-decor1.svg",
+    height: 130,
+    distTop: 91,
+  },
+  bike: {
+    sport: "ВЕЛО",
+    when: "Вс 11:00",
+    dist: "4,1 км",
+    title: "Вело до Удачного и обратно",
+    place: "34 км, средний темп, остановка на кофе",
+    people: ["ДК", "ТС", "РМ"],
+    going: 12,
+    photo: "bg-photo-lime",
+    decor: "photo-decor2.svg",
+    height: 120,
+    distTop: 81,
+  },
+  tennis: {
+    sport: "ТЕННИС",
+    when: "Сб 14:00",
+    dist: "5,0 км",
+    title: "Теннис на кортах",
+    place: "Корты «Академия» · опытным",
+    people: ["ТС", "РМ"],
+    going: 3,
+    total: 4,
+    warn: true,
+    photo: "bg-photo-lilac",
+    decor: "photo-decor2.svg",
+    height: 120,
+    distTop: 81,
+  },
+};
+
+const SMALL = [
+  { sport: "ШАХМАТЫ", when: "Сегодня 18:00", title: "Шахматы в парке", dist: "0,9 км", left: "осталось 3", pct: 70, tone: "bg-photo-lilac" },
+  { sport: "БЕГ", when: "Сегодня 20:00", title: "Лёгкая пробежка у моста", dist: "1,4 км", left: "без лимита", pct: 25, tone: "bg-peach" },
+  { sport: "ИГРЫ", when: "Сб 16:00", title: "Стритбол во дворе", dist: "2,6 км", left: "осталось 2", pct: 80, tone: "bg-peach" },
+  { sport: "ПЛАВАНИЕ", when: "Вс 12:00", title: "Свободное плавание", dist: "3,8 км", left: "без лимита", pct: 25, tone: "bg-sky" },
+];
+
+const NEAR = [
+  { i: "МС", tone: "bg-mint", name: "Макс Сидоров", meta: "Бег, вело · 1,1 км" },
+  { i: "КЕ", tone: "bg-sky", name: "Катя Егорова", meta: "Йога, плавание · 2,3 км" },
+];
+
+const tag =
+  "h-auto border-[1.5px] px-[10px] py-1 text-[10px] leading-[normal] font-extrabold tracking-[1px]";
+
+function BigCard({ e }: { e: Big }) {
+  return (
+    <div className="px-4">
+      <Card className="overflow-hidden rounded-[22px]">
+        <div className={cn("relative shrink-0 overflow-hidden", e.photo)} style={{ height: e.height }}>
+          <img
+            src={`/${dir}/${e.decor}`}
+            alt=""
+            className="absolute top-0 left-0 size-full max-w-none object-cover"
+          />
+          <Badge variant="outline" className={cn(tag, "absolute top-3 left-3 bg-card")}>
+            {e.sport}
+          </Badge>
+          <span className="absolute top-3 right-3 rounded-pill bg-ink px-[10px] py-1 text-[11px] leading-[normal] font-extrabold tracking-[1px] whitespace-nowrap text-secondary">
+            {e.when}
+          </span>
+          <span
+            className="absolute left-3 box-border flex items-center gap-1 rounded-pill border-[1.5px] border-ink bg-card py-1 pr-[10px] pl-2"
+            style={{ top: e.distTop }}
+          >
+            <Icon name={`${dir}/icon-pin`} className="size-[13px]" />
+            <span className="text-xs leading-[normal] font-bold text-foreground">{e.dist}</span>
+          </span>
+        </div>
+        <div className="flex flex-col gap-2 p-[14px]">
+          <p className="font-display text-base leading-[21px] font-bold text-foreground">{e.title}</p>
+          <p className="text-[13px] leading-[18px] font-medium text-muted-foreground">{e.place}</p>
+          <div className="flex items-center gap-2 whitespace-nowrap">
+            <span className="flex items-center">
+              {e.people.map((p, i) => (
+                <Disc
+                  key={p}
+                  initials={p}
+                  tone={PEOPLE_TONES[i]}
+                  className={cn("size-7", i < e.people.length - 1 && "mr-[-8px]")}
+                  textClassName="text-xs leading-[normal]"
+                />
+              ))}
+            </span>
+            <span className="text-[13px] leading-[normal] font-bold text-foreground">
+              {e.total ? `Идут ${e.going} из ${e.total}` : `Идут ${e.going}`}
+            </span>
+            <span
+              className={cn(
+                "ml-auto text-xs leading-[normal] font-extrabold",
+                e.warn ? "text-accent" : "text-muted-foreground"
+              )}
+            >
+              {e.total ? `осталось ${e.total - e.going}` : "без лимита"}
+            </span>
+          </div>
+          <Progress
+            value={e.total ? (e.going / e.total) * 100 : 60}
+            className="bg-card"
+          />
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function SmallRow({ items }: { items: (typeof SMALL)[number][] }) {
+  return (
+    <div className="grid grid-cols-2 gap-4 px-4">
+      {items.map((s) => (
+        <Card key={s.title} className="overflow-hidden rounded-[20px]">
+          <div className={cn("relative h-[84px] shrink-0 overflow-hidden", s.tone)}>
+            <img
+              src={`/${dir}/decor.svg`}
+              alt=""
+              className="absolute top-0 left-0 size-full max-w-none object-cover"
+            />
+            <Badge
+              variant="outline"
+              className={cn(tag, "absolute top-[10px] left-[10px] bg-card text-[9px]")}
+            >
+              {s.sport}
+            </Badge>
+            <span className="absolute top-[52px] left-[10px] rounded-pill bg-ink px-[10px] py-1 text-[10px] leading-[normal] font-extrabold tracking-[1px] whitespace-nowrap text-secondary">
+              {s.when}
+            </span>
+          </div>
+          <div className="flex flex-col gap-[6px] p-3">
+            <p className="font-display text-[13px] leading-[17px] font-bold text-foreground">
+              {s.title}
+            </p>
+            <p className="text-xs leading-[normal] font-medium whitespace-nowrap text-muted-foreground">
+              {s.dist}
+            </p>
+            <Progress value={s.pct} className="bg-card" />
+            <p className="text-[11px] leading-[normal] font-extrabold whitespace-nowrap text-muted-foreground">
+              {s.left}
+            </p>
+          </div>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+function NearbyPeople() {
+  return (
+    <div className="px-4">
+      <Card className="gap-3 rounded-[22px] p-4">
+        <div className="flex items-center justify-between leading-[normal] whitespace-nowrap">
+          <span className="font-display text-base font-bold text-foreground">Люди рядом</span>
+          <span className="text-[13px] font-extrabold text-primary">ещё 12</span>
+        </div>
+        {NEAR.map((p) => (
+          <div key={p.i} className="flex h-12 items-center gap-[10px]">
+            <Disc
+              initials={p.i}
+              tone={p.tone}
+              className="size-11"
+              textClassName="text-xs leading-[normal]"
+            />
+            <div className="flex min-w-0 flex-1 flex-col gap-px leading-[normal] whitespace-nowrap">
+              <span className="text-sm font-extrabold text-foreground">{p.name}</span>
+              <span className="text-xs font-medium text-muted-foreground">{p.meta}</span>
+            </div>
+            <Button variant="soft" className="h-10 w-[112px] shrink-0 px-5 text-xs">
+              Подписаться
+            </Button>
+          </div>
+        ))}
+      </Card>
+    </div>
+  );
+}
+
+function Promo() {
+  return (
+    <div className="px-4">
+      <div className="box-border flex w-full flex-col gap-3 rounded-[24px] border-2 border-ink bg-secondary p-5 shadow-[4px_4px_0_var(--ink)]">
+        <div className="flex items-center gap-2">
+          <div className="flex min-w-0 flex-1 flex-col gap-[6px] font-bold text-foreground">
+            <p className="font-display text-[17px] leading-[23px]">Не нашёл свою тусовку?</p>
+            <p className="text-[13px] leading-[18px]">
+              Создай событие — Бублик расскажет о нём соседям с теми же интересами.
+            </p>
+          </div>
+          <img src={`/${dir}/img.png`} alt="" className="size-24 shrink-0 object-contain" />
+        </div>
+        <Button variant="ink" className="h-[52px] w-full px-5">
+          <Icon name={`${dir}/icon-plus`} className="size-[18px]" />
+          Создать событие
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+export function FeedMobile() {
+  return (
+    <div className="flex min-h-dvh flex-col gap-4 bg-background pb-[110px] lg:hidden">
+      <MobileAppBar dir={dir} title="Лента" titleClassName="text-xl" />
+
+      <div className="flex gap-[10px] px-4">
+        <label className="box-border flex h-[52px] min-w-0 flex-1 items-center gap-[10px] rounded-2xl border-2 border-ink bg-card px-4">
+          <Icon name={`${dir}/icon-search`} className="size-5" />
+          <input
+            placeholder="Найти события и людей"
+            className="min-w-0 flex-1 bg-transparent text-[15px] font-medium text-foreground outline-none placeholder:text-muted-foreground"
+          />
+        </label>
+        <button
+          type="button"
+          aria-label="Фильтры"
+          className="box-border flex size-[52px] shrink-0 items-center justify-center rounded-2xl border-2 border-ink bg-primary shadow-hard-sm"
+        >
+          <Icon name={`${dir}/icon-filter`} className="size-[22px]" />
+        </button>
+      </div>
+
+      <div className="no-scrollbar flex gap-2 overflow-x-auto px-4">
+        {CHIPS.map((c, i) => (
+          <Button
+            key={c}
+            variant={i === 0 ? "ink" : "soft"}
+            className="h-11 shrink-0 px-[18px] text-sm shadow-none"
+          >
+            {c}
+          </Button>
+        ))}
+      </div>
+
+      <div className="px-4">
+        <div
+          role="tablist"
+          className="box-border flex h-12 w-full items-center gap-1 rounded-pill border-2 border-ink bg-card p-1"
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected
+            className="box-border h-[38px] min-w-0 flex-1 rounded-pill border-2 border-ink bg-secondary text-sm font-extrabold text-foreground"
+          >
+            Список
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={false}
+            className="h-[38px] min-w-0 flex-1 rounded-pill text-sm font-extrabold text-foreground"
+          >
+            Карта
+          </button>
+        </div>
+      </div>
+
+      <BigCard e={BIG.football} />
+      <SmallRow items={SMALL.slice(0, 2)} />
+      <NearbyPeople />
+      <BigCard e={BIG.yoga} />
+      <SmallRow items={SMALL.slice(2)} />
+      <Promo />
+      <BigCard e={BIG.bike} />
+      <BigCard e={BIG.tennis} />
+      <MobileTabBar current="feed" />
+    </div>
+  );
+}

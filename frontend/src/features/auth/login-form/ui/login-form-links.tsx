@@ -2,24 +2,15 @@ import { Link } from "react-router";
 
 export function LoginFormLinks() {
   return (
-    <div className="flex justify-between">
-      <p className="text-xs md:text-sm text-muted-foreground">
-        Нет аккаунта?{" "}
-        <Link
-          to="/auth/register"
-          className="text-foreground text-md hover:text-foreground/80 transition-colors"
-          viewTransition
-        >
-          Зарегистрироваться
-        </Link>
-      </p>
+    <p className="w-full text-center text-sm font-semibold text-muted-foreground">
+      Нет аккаунта?{" "}
       <Link
-        to="/auth/forgot-password"
-        className="text-muted-foreground text-md hover:text-foreground transition-colors"
+        to="/auth/register"
+        className="font-extrabold text-primary hover:text-primary/80"
         viewTransition
       >
-        <p className="text-xs md:text-sm">Забыли пароль?</p>
+        Зарегистрироваться
       </Link>
-    </div>
+    </p>
   );
 }

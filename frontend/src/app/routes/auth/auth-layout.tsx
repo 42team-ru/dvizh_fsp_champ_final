@@ -1,72 +1,121 @@
-import { AuroraBackground } from "@/shared/components/ui/aurora-background";
-import ShinyText from "@/shared/components/ShinyText";
-import TextType from "@/shared/components/TextType";
-import { ChevronLeft } from "lucide-react";
-import { Link, Outlet } from "react-router";
+import { Outlet, useLocation } from "react-router";
+
+type Brand = {
+  title: string;
+  mobileTitle: string;
+  text: string;
+  bubble: string;
+  /** Папка в `public/` с картинками панели. */
+  assets: "login" | "register";
+  bublik: string;
+  contentTop: string;
+  /** Мобильный баннер: высота, папка картинок и положение Бублика. */
+  banner: { height: number; dir: string; bublik: string };
+};
+
+const LOGIN_BRAND: Brand = {
+  title: "С возвращением в игру",
+  mobileTitle: "С возвращением в игру",
+  text: "Тренировки, команды и события рядом — всё ждёт тебя.",
+  bubble: "Бублик скучал. Заходи — серия не ждёт!",
+  assets: "login",
+  bublik: "bublik.png",
+  contentTop: "lg:pt-[155px]",
+  banner: { height: 250, dir: "m-login", bublik: "left-[212px] top-[88px] size-[170px]" },
+};
+
+const REGISTER_BRAND: Brand = {
+  title: "Собери свой паспорт спортсмена",
+  mobileTitle: "Собери свой паспорт",
+  text: "Он заполняется сам: каждая тренировка — новая печать.",
+  bubble: "Привет! Я Бублик. Сначала паспорт, потом знакомство!",
+  assets: "register",
+  bublik: "bublik.png",
+  contentTop: "lg:pt-[103px]",
+  banner: { height: 200, dir: "m-register", bublik: "left-[242px] top-[68px] size-[140px]" },
+};
 
 export default function AuthLayout() {
-  return (
-    <div className="flex h-dvh w-full overflow-hidden">
-      <div className="relative hidden h-full flex-1 flex-col items-start justify-between overflow-hidden p-12 md:flex md:w-1/2">
-        <LeftSide />
-      </div>
+  const { pathname } = useLocation();
+  const brand = pathname.includes("/register") ? REGISTER_BRAND : LOGIN_BRAND;
 
-      <div className="flex h-full w-full flex-1 flex-col overflow-y-auto px-6 py-10 pb-6! md:w-1/2 md:border-l md:border-border md:px-14 md:py-16">
+  return (
+    <div className="flex min-h-dvh w-full flex-col bg-background lg:flex-row">
+      <MobileBanner brand={brand} />
+      <BrandPanel brand={brand} />
+      <div className={`relative flex-1 px-4 pt-[18px] pb-5 lg:px-16 lg:pb-10 ${brand.contentTop}`}>
         <Outlet />
       </div>
     </div>
   );
 }
 
-function LeftSide() {
+function BrandPanel({ brand }: { brand: Brand }) {
+  const dir = `/${brand.assets}`;
   return (
-    <div className="absolute inset-0">
-      <div className="relative h-full w-full">
-        <Link
-          to="/"
-          className="group absolute top-12 left-8 z-100 flex items-center gap-1 px-0! font-medium text-muted-foreground transition-all hover:text-foreground"
-        >
-          <ChevronLeft
-            size={22}
-            className="transition-transform duration-200 group-hover:-translate-x-1"
-          />
-          Назад
-        </Link>
-        <div
-          className="pointer-events-none absolute inset-0 overflow-hidden bg-muted/30 dark:bg-background"
-          aria-hidden="true"
-        >
-          <AuroraBackground
-            asLayer
-            className="absolute inset-0 bg-muted/30 dark:bg-background"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/0 via-background/10 to-background/45" />
-        </div>
-        <div className="absolute bottom-12 left-8 z-10 flex w-[min(70%,520px)] flex-col gap-4 rounded-lg border border-border/70 bg-card/82 p-6 shadow-xl backdrop-blur-md">
-          <ShinyText
-            text="Задавайте вопросы данным на русском с NaturalQL"
-            className="text-4xl font-bold leading-tight"
-            color="var(--muted-foreground)"
-            shineColor="var(--foreground)"
-            speed={3}
-          />
-          <div className="relative">
-            <p className="invisible text-base leading-7 text-foreground/85">
-              NaturalQL сам построит SQL, достанет данные и покажет результат в
-              графиках и отчетах.
-            </p>
-            <TextType
-              as="p"
-              text="NaturalQL сам построит SQL, достанет данные и покажет результат в графиках и отчетах."
-              className="absolute inset-0 text-base leading-7 text-foreground/85"
-              cursorClassName="text-primary"
-              typingSpeed={24}
-              pauseDuration={0}
-              loop={false}
-            />
-          </div>
-        </div>
+    <aside className="relative hidden min-h-[820px] w-[420px] shrink-0 overflow-hidden bg-primary lg:block">
+      <img
+        src={`${dir}/memphis.svg`}
+        alt=""
+        className="absolute top-0 left-0 h-[820px] w-[420px] max-w-none"
+      />
+      <div className="absolute top-10 left-10 flex items-center gap-[10px]">
+        <span className="flex size-10 items-center justify-center rounded-[12px] border-2 border-ink bg-secondary">
+          <img src="/login/run.svg" alt="" className="size-[22px]" />
+        </span>
+        <span className="font-display text-[17px] font-bold whitespace-nowrap text-white">
+          [Название]
+        </span>
       </div>
-    </div>
+      <h2 className="absolute top-[130px] left-10 w-[340px] font-display text-[32px] leading-10 font-extrabold tracking-[-0.5px] text-white">
+        {brand.title}
+      </h2>
+      <p className="absolute top-[266px] left-10 w-[320px] text-base leading-6 font-semibold text-lilac">
+        {brand.text}
+      </p>
+      <div className="absolute top-[432px] left-10 box-border flex w-[260px] items-start rounded-[18px] border-2 border-ink bg-card px-4 py-[14px] shadow-[3px_3px_0_var(--lime)]">
+        <p className="text-sm leading-5 font-bold text-foreground">{brand.bubble}</p>
+      </div>
+      <img
+        src={`${dir}/tail.svg`}
+        alt=""
+        className="absolute top-[502px] left-[100px] h-[18px] w-6 max-w-none"
+      />
+      <img
+        src={`${dir}/${brand.bublik}`}
+        alt=""
+        className="pointer-events-none absolute top-[548px] left-[60px] size-[240px] max-w-none object-contain"
+      />
+    </aside>
+  );
+}
+
+/** Верхний баннер мобильной версии вместо боковой панели. */
+function MobileBanner({ brand }: { brand: Brand }) {
+  const { banner } = brand;
+  const dir = `/${banner.dir}`;
+  return (
+    <header
+      className="relative w-full shrink-0 overflow-hidden rounded-b-[32px] bg-primary lg:hidden"
+      style={{ height: banner.height }}
+    >
+      <img src={`${dir}/memphis-decor.svg`} alt="" className="absolute inset-0 size-full max-w-none" />
+      <div className="absolute top-[18px] left-4 flex items-center gap-2">
+        <span className="flex size-9 items-center justify-center rounded-[11px] border-2 border-ink bg-secondary">
+          <img src={`${dir}/icon-run.svg`} alt="" className="size-5" />
+        </span>
+        <span className="font-display text-base leading-[normal] font-bold whitespace-nowrap text-white">
+          [Название]
+        </span>
+      </div>
+      <p className="absolute top-[76px] left-4 w-[200px] break-words font-display text-[22px] leading-7 font-extrabold tracking-[-0.3px] text-white">
+        {brand.mobileTitle}
+      </p>
+      <img
+        src={`${dir}/img.png`}
+        alt=""
+        className={`pointer-events-none absolute max-w-none object-contain ${banner.bublik}`}
+      />
+    </header>
   );
 }
