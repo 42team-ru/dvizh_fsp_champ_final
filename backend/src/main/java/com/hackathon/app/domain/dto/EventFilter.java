@@ -27,5 +27,8 @@ public record EventFilter(
 		@Schema(description = "Очно или онлайн")
 		EventFormat format,
 		@Schema(description = "Только мероприятия этой организации — для её публичной страницы")
-		UUID organizationId) {
+		UUID organizationId,
+		@Schema(description = "«Для меня»: только виды спорта из моего профиля и подходящие моему уровню в них "
+				+ "(уровень мероприятия «Любой» или как у меня; уровень не указан — любой)")
+		Boolean forMe) {
 }

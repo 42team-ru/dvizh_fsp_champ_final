@@ -11,6 +11,9 @@ import com.hackathon.app.domain.dto.EventRequest;
 import com.hackathon.app.domain.dto.EventResponse;
 import com.hackathon.app.domain.dto.EventSummaryResponse;
 import com.hackathon.app.domain.dto.OrganizerResponse;
+import com.hackathon.app.domain.dto.PageResponse;
+import com.hackathon.app.domain.enums.EventStatus;
+import com.hackathon.app.domain.enums.TimeScope;
 import com.hackathon.app.service.EventMapService;
 import com.hackathon.app.service.EventOrganizerService;
 import com.hackathon.app.service.EventService;
@@ -36,6 +39,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -78,11 +82,13 @@ class EventController {
 
     @GetMapping("/mine")
     @Operation(operationId = "events_mine", summary = "Мои мероприятия как организатора",
-            description = "Во всех статусах, включая снятые и удалённые.")
-    List<EventSummaryResponse> mine(@AuthenticationPrincipal Jwt jwt) {
+            description = "Во всех статусах, включая снятые и удалённые. Новые сверху; page с нуля, size до 100. UPCOMING — есть будущее занятие SCHEDULED, PAST — будущих занятий нет.")
+    PageResponse<EventSummaryResponse> mine(@AuthenticationPrincipal Jwt jwt,
+            @RequestParam(required = false) EventStatus status, @RequestParam(required = false) TimeScope when,
+            @RequestParam(required = false) String searchText, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
         log.info("Endpoint called: GET /api/events/mine, userId={}", jwt.getSubject());
-        var response = events.mine(userId(jwt));
-        log.info("Endpoint response: GET /api/events/mine, count={}", response.size());
+        var response = events.mine(userId(jwt), status, when, searchText, page, size);
+        log.info("Endpoint response: GET /api/events/mine, count={}", response.totalElements());
         return response;
     }
 

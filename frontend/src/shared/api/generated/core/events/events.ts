@@ -33,6 +33,8 @@ import type {
   EventsAddPhotoBody,
   EventsListParams,
   EventsMapParams,
+  EventsMineParams,
+  PageResponseEventSummaryResponse,
   ProblemDetail
 } from '../appAPI.schemas';
 
@@ -740,7 +742,7 @@ export const useEventsAddOrganizer = <TError = ErrorType<ProblemDetail>,
       return useMutation(getEventsAddOrganizerMutationOptions(options), queryClient);
     }
     export type eventsMineResponse200 = {
-  data: EventSummaryResponse[]
+  data: PageResponseEventSummaryResponse
   status: 200
 }
 
@@ -751,21 +753,28 @@ export type eventsMineResponseSuccess = (eventsMineResponse200) & {
 
 export type eventsMineResponse = (eventsMineResponseSuccess)
 
-export const getEventsMineUrl = () => {
+export const getEventsMineUrl = (params?: EventsMineParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/events/mine`
+  return stringifiedParams.length > 0 ? `/api/events/mine?${stringifiedParams}` : `/api/events/mine`
 }
 
 /**
- * Во всех статусах, включая снятые и удалённые.
+ * Во всех статусах, включая снятые и удалённые. Новые сверху; page с нуля, size до 100. UPCOMING — есть будущее занятие SCHEDULED, PAST — будущих занятий нет.
  * @summary Мои мероприятия как организатора
  */
-export const eventsMine = async ( options?: Parameters<typeof authMutator>[1]): Promise<eventsMineResponse> => {
+export const eventsMine = async (params?: EventsMineParams, options?: Parameters<typeof authMutator>[1]): Promise<eventsMineResponse> => {
 
-  return authMutator<eventsMineResponse>(getEventsMineUrl(),
+  return authMutator<eventsMineResponse>(getEventsMineUrl(params),
   {
     ...options,
     method: 'GET'
@@ -778,23 +787,23 @@ export const eventsMine = async ( options?: Parameters<typeof authMutator>[1]): 
 
 
 
-export const getEventsMineQueryKey = () => {
+export const getEventsMineQueryKey = (params?: EventsMineParams,) => {
     return [
-    `/api/events/mine`
+    `/api/events/mine`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getEventsMineQueryOptions = <TData = Awaited<ReturnType<typeof eventsMine>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsMine>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+export const getEventsMineQueryOptions = <TData = Awaited<ReturnType<typeof eventsMine>>, TError = ErrorType<unknown>>(params?: EventsMineParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsMine>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getEventsMineQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getEventsMineQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof eventsMine>>> = ({ signal }) => eventsMine({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof eventsMine>>> = ({ signal }) => eventsMine(params, { signal, ...requestOptions });
 
 
 
@@ -808,7 +817,7 @@ export type EventsMineQueryError = ErrorType<unknown>
 
 
 export function useEventsMine<TData = Awaited<ReturnType<typeof eventsMine>>, TError = ErrorType<unknown>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsMine>>, TError, TData>> & Pick<
+ params: undefined |  EventsMineParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsMine>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof eventsMine>>,
           TError,
@@ -818,7 +827,7 @@ export function useEventsMine<TData = Awaited<ReturnType<typeof eventsMine>>, TE
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useEventsMine<TData = Awaited<ReturnType<typeof eventsMine>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsMine>>, TError, TData>> & Pick<
+ params?: EventsMineParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsMine>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof eventsMine>>,
           TError,
@@ -828,7 +837,7 @@ export function useEventsMine<TData = Awaited<ReturnType<typeof eventsMine>>, TE
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useEventsMine<TData = Awaited<ReturnType<typeof eventsMine>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsMine>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ params?: EventsMineParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsMine>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -836,11 +845,11 @@ export function useEventsMine<TData = Awaited<ReturnType<typeof eventsMine>>, TE
  */
 
 export function useEventsMine<TData = Awaited<ReturnType<typeof eventsMine>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsMine>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ params?: EventsMineParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsMine>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getEventsMineQueryOptions(options)
+  const queryOptions = getEventsMineQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

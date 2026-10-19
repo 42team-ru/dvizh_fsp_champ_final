@@ -9,21 +9,26 @@ import java.util.stream.Collectors;
 import com.hackathon.app.domain.dto.EventRegistrationResponse;
 import com.hackathon.app.domain.dto.EventSummaryResponse;
 import com.hackathon.app.domain.dto.MyRegistrationResponse;
+import com.hackathon.app.domain.dto.PageResponse;
 import com.hackathon.app.domain.dto.RegistrationResponse;
 import com.hackathon.app.domain.entity.AppUser;
 import com.hackathon.app.domain.entity.Event;
 import com.hackathon.app.domain.entity.Registration;
 import com.hackathon.app.domain.enums.JoinMode;
 import com.hackathon.app.domain.enums.RegistrationStatus;
+import com.hackathon.app.domain.enums.TimeScope;
 import com.hackathon.app.domain.exception.ConflictException;
 import com.hackathon.app.domain.exception.ForbiddenException;
 import com.hackathon.app.domain.mapper.RegistrationMapper;
 import com.hackathon.app.repository.AppUserRepository;
 import com.hackathon.app.repository.DbTimeRepository;
 import com.hackathon.app.repository.EventRepository;
+import com.hackathon.app.repository.MineSpecifications;
 import com.hackathon.app.repository.RegistrationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -157,17 +162,17 @@ public class RegistrationService {
      * Мои записи со статусом мероприятия: снятое с публикации тоже видно. У серии — моё ближайшее отмеченное занятие.
      */
     @Transactional(readOnly = true)
-    public List<MyRegistrationResponse> mine(UUID userId) {
-        var myRegistrations = registrations.findByUserIdOrderByCreatedAtDesc(userId);
-        var eventIds = myRegistrations.stream().map(Registration::getEventId).toList();
+    public PageResponse<MyRegistrationResponse> mine(UUID userId, RegistrationStatus status, TimeScope when, int page, int size) {
+        var myRegistrations = registrations.findAll(MineSpecifications.registrations(userId, status, when, dbTime.now()),
+                PageRequest.of(Math.max(0, page), Math.clamp(size, 1, 100), Sort.by(Sort.Direction.DESC, "createdAt", "id")));
+        var eventIds = myRegistrations.getContent().stream().map(Registration::getEventId).toList();
         var eventList = events.findAllById(eventIds);
         var eventsById = eventService.summaries(eventList, userId).stream()
                 .collect(Collectors.toMap(EventSummaryResponse::id, Function.identity()));
         var myNextByEventId = occurrences.myNext(userId, eventList, dbTime.now());
-        return myRegistrations.stream()
-                .map(registration -> mapper.toMine(registration, eventsById.get(registration.getEventId()),
-                        myNextByEventId.get(registration.getEventId())))
-                .toList();
+        return PageResponse.of(myRegistrations,
+                registration -> mapper.toMine(registration, eventsById.get(registration.getEventId()),
+                        myNextByEventId.get(registration.getEventId())));
     }
 
     private RegistrationResponse decide(Registration registration, RegistrationStatus status, String reason,

@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.TemporalAdjusters;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +18,8 @@ import com.hackathon.app.domain.dto.EventRequest;
 import com.hackathon.app.domain.dto.ScheduleRequest;
 import com.hackathon.app.domain.dto.ScheduleRuleRequest;
 import com.hackathon.app.domain.dto.SaveOrganizationRequest;
+import com.hackathon.app.domain.dto.SaveUserSportsRequest;
+import com.hackathon.app.domain.dto.UserSportRequest;
 import com.hackathon.app.domain.entity.Event;
 import com.hackathon.app.domain.entity.EventOccurrence;
 import com.hackathon.app.domain.entity.Registration;
@@ -28,6 +31,7 @@ import com.hackathon.app.domain.enums.EventStatus;
 import com.hackathon.app.domain.enums.JoinMode;
 import com.hackathon.app.domain.enums.OrganizationStatus;
 import com.hackathon.app.domain.enums.RegistrationStatus;
+import com.hackathon.app.domain.enums.SportLevel;
 import com.hackathon.app.domain.enums.SystemRole;
 import com.hackathon.app.domain.mapper.CommentMapper;
 import com.hackathon.app.domain.mapper.EventMapper;
@@ -101,6 +105,7 @@ public class DemoSeeder {
 	private final EventOrganizerRepository organizers;
 	private final CommentRepository comments;
 	private final SportService sportService;
+	private final UserSportService userSportService;
 	private final OccurrenceService occurrenceService;
 	private final EventOccurrenceRepository occurrences;
 	private final OccurrenceAttendanceRepository attendances;
@@ -307,11 +312,26 @@ public class DemoSeeder {
 			events.save(volleyball);
 		}
 
+		// Виды спорта в профиле: у Анны, Петра и Ольги сразу работает лента «Для меня».
+		sports(ids.get("anna"), SportLevel.BEGINNER, "Бег", "Йога");
+		sports(ids.get("petr"), SportLevel.AMATEUR, "Шахматы", "Футбол", "Баскетбол");
+		sports(ids.get("olga"), null, "Зарядка", "Петанк");
+
 		// Бобр: готовые образы из встроенного гардероба.
 		demoPets.seed(ids);
 
 		// Живой проект: сотни людей в 12 городах, клубы, мероприятия, записи и обсуждения за полгода.
 		demoBulk.seed(ids);
+	}
+
+	/** Виды спорта в профиле с одним уровнем; уже заполненный профиль не трогаем. */
+	private void sports(UUID userId, SportLevel level, String... sportNames) {
+		if (!userSportService.of(userId).isEmpty()) {
+			return;
+		}
+		userSportService.save(userId, new SaveUserSportsRequest(Arrays.stream(sportNames)
+				.map(name -> new UserSportRequest(null, name, level))
+				.toList()));
 	}
 
 	/** Логин → id; недостающие аккаунты создаются с общим демо-паролем. */

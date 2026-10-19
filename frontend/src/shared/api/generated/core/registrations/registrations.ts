@@ -25,11 +25,12 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  MyRegistrationResponse,
+  PageResponseMyRegistrationResponse,
   ProblemDetail,
   RegistrationRequest,
   RegistrationResponse,
   RegistrationsListForEventParams,
+  RegistrationsMineParams,
   RejectRegistrationRequest
 } from '../appAPI.schemas';
 
@@ -510,7 +511,7 @@ export const useRegistrationsCreate = <TError = ErrorType<ProblemDetail>,
       return useMutation(getRegistrationsCreateMutationOptions(options), queryClient);
     }
     export type registrationsMineResponse200 = {
-  data: MyRegistrationResponse[]
+  data: PageResponseMyRegistrationResponse
   status: 200
 }
 
@@ -521,21 +522,28 @@ export type registrationsMineResponseSuccess = (registrationsMineResponse200) & 
 
 export type registrationsMineResponse = (registrationsMineResponseSuccess)
 
-export const getRegistrationsMineUrl = () => {
+export const getRegistrationsMineUrl = (params?: RegistrationsMineParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/registrations/mine`
+  return stringifiedParams.length > 0 ? `/api/registrations/mine?${stringifiedParams}` : `/api/registrations/mine`
 }
 
 /**
- * Со статусом записи и мероприятия: снятое с публикации тоже видно.
+ * Со статусом записи и мероприятия: снятое с публикации тоже видно. Новые сверху; page с нуля, size до 100. UPCOMING — есть будущее занятие SCHEDULED, PAST — будущих занятий нет.
  * @summary Мои записи
  */
-export const registrationsMine = async ( options?: Parameters<typeof authMutator>[1]): Promise<registrationsMineResponse> => {
+export const registrationsMine = async (params?: RegistrationsMineParams, options?: Parameters<typeof authMutator>[1]): Promise<registrationsMineResponse> => {
 
-  return authMutator<registrationsMineResponse>(getRegistrationsMineUrl(),
+  return authMutator<registrationsMineResponse>(getRegistrationsMineUrl(params),
   {
     ...options,
     method: 'GET'
@@ -548,23 +556,23 @@ export const registrationsMine = async ( options?: Parameters<typeof authMutator
 
 
 
-export const getRegistrationsMineQueryKey = () => {
+export const getRegistrationsMineQueryKey = (params?: RegistrationsMineParams,) => {
     return [
-    `/api/registrations/mine`
+    `/api/registrations/mine`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getRegistrationsMineQueryOptions = <TData = Awaited<ReturnType<typeof registrationsMine>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof registrationsMine>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+export const getRegistrationsMineQueryOptions = <TData = Awaited<ReturnType<typeof registrationsMine>>, TError = ErrorType<unknown>>(params?: RegistrationsMineParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof registrationsMine>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getRegistrationsMineQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getRegistrationsMineQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof registrationsMine>>> = ({ signal }) => registrationsMine({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof registrationsMine>>> = ({ signal }) => registrationsMine(params, { signal, ...requestOptions });
 
 
 
@@ -578,7 +586,7 @@ export type RegistrationsMineQueryError = ErrorType<unknown>
 
 
 export function useRegistrationsMine<TData = Awaited<ReturnType<typeof registrationsMine>>, TError = ErrorType<unknown>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof registrationsMine>>, TError, TData>> & Pick<
+ params: undefined |  RegistrationsMineParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof registrationsMine>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof registrationsMine>>,
           TError,
@@ -588,7 +596,7 @@ export function useRegistrationsMine<TData = Awaited<ReturnType<typeof registrat
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useRegistrationsMine<TData = Awaited<ReturnType<typeof registrationsMine>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof registrationsMine>>, TError, TData>> & Pick<
+ params?: RegistrationsMineParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof registrationsMine>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof registrationsMine>>,
           TError,
@@ -598,7 +606,7 @@ export function useRegistrationsMine<TData = Awaited<ReturnType<typeof registrat
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useRegistrationsMine<TData = Awaited<ReturnType<typeof registrationsMine>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof registrationsMine>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ params?: RegistrationsMineParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof registrationsMine>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -606,11 +614,11 @@ export function useRegistrationsMine<TData = Awaited<ReturnType<typeof registrat
  */
 
 export function useRegistrationsMine<TData = Awaited<ReturnType<typeof registrationsMine>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof registrationsMine>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ params?: RegistrationsMineParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof registrationsMine>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getRegistrationsMineQueryOptions(options)
+  const queryOptions = getRegistrationsMineQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

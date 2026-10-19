@@ -17,6 +17,8 @@ public record PublicUserResponse(
 		@Schema(description = "Ссылка на аватар") String avatarUrl,
 		@Schema(description = "Город", example = "Красноярск") String city,
 		@Schema(description = "О себе", example = "Играю в футбол по выходным") String bio,
+		@Schema(description = "Виды спорта и уровень в каждом", requiredMode = REQUIRED) List<UserSportResponse> sports,
+		@Schema(description = "Сколько встреч посетил", example = "14", requiredMode = REQUIRED) long attendedCount,
 		@Schema(description = "Опубликованные и ещё не начавшиеся мероприятия, где человек автор; ближайшие первыми",
 				requiredMode = REQUIRED) List<EventSummaryResponse> events) {
 }
