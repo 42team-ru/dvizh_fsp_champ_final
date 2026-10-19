@@ -47,6 +47,7 @@ import com.hackathon.app.domain.dto.UserSportResponse;
 import com.hackathon.app.domain.dto.CreatePermissionResponse;
 import com.hackathon.app.domain.dto.MyRegistrationResponse;
 import com.hackathon.app.domain.dto.OrganizationResponse;
+import com.hackathon.app.domain.dto.OrganizerInvitationResponse;
 import com.hackathon.app.domain.dto.OrganizerResponse;
 import com.hackathon.app.domain.dto.PageResponse;
 import com.hackathon.app.domain.dto.RecommendationExplainResponse;
@@ -291,9 +292,26 @@ public class Actor {
 		return myEventsPage(Map.of("size", "100")).items();
 	}
 
+	/** Пригласить в соорганизаторы: права появятся, когда приглашённый примет (acceptOrganizerInvite). */
 	public List<OrganizerResponse> addOrganizer(UUID eventId, String login) {
 		return send("POST /api/events/" + eventId + "/organizers", post("/api/events/{id}/organizers", eventId),
 				Map.of("login", login), listOf(OrganizerResponse.class));
+	}
+
+	/** Мои приглашения в соорганизаторы, которые ждут ответа. */
+	public List<OrganizerInvitationResponse> organizerInvitations() {
+		return send("GET /api/events/organizer-invitations", get("/api/events/organizer-invitations"), null,
+				listOf(OrganizerInvitationResponse.class));
+	}
+
+	public List<OrganizerInvitationResponse> acceptOrganizerInvite(UUID eventId) {
+		return send("POST /api/events/" + eventId + "/organizers/invitation/accept",
+				post("/api/events/{id}/organizers/invitation/accept", eventId), null, listOf(OrganizerInvitationResponse.class));
+	}
+
+	public List<OrganizerInvitationResponse> declineOrganizerInvite(UUID eventId) {
+		return send("POST /api/events/" + eventId + "/organizers/invitation/decline",
+				post("/api/events/{id}/organizers/invitation/decline", eventId), null, listOf(OrganizerInvitationResponse.class));
 	}
 
 	public List<OrganizerResponse> removeOrganizer(UUID eventId, UUID userId) {

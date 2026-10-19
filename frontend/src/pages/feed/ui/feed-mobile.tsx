@@ -301,7 +301,7 @@ export function FeedMobile() {
 
       {view === "map" ? (
         <div className="px-4">
-          <EventsMap filters={{ searchText: params.searchText, sportId: params.sportId, level: params.level, joinMode: params.joinMode }} className="w-full" mapClassName="h-[45dvh]" />
+          <EventsMap withHome filters={{ searchText: params.searchText, sportId: params.sportId, level: params.level, joinMode: params.joinMode }} className="w-full" mapClassName="h-[45dvh]" />
         </div>
       ) : (
         <>

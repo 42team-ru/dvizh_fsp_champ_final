@@ -136,8 +136,9 @@ public class EventService {
                 registerBlocked == null ? policy.joinAs(event, participants.size()) : null,
                 waitlist.position(myRegistration),
                 myRegistration != null && myRegistration.getStatus() == RegistrationStatus.REJECTED
-                        ? myRegistration.getDecisionReason() : null);
-        return mapper.toResponse(event, sport, author, organization, organizerService.list(event), participants,
+                        ? myRegistration.getDecisionReason() : null,
+                organizerService.isInvited(eventId, userId));
+        return mapper.toResponse(event, sport, author, organization, organizerService.list(event, userId), participants,
                 participants.size(), files.eventPhotos(eventId), viewer,
                 canSeePrivateDetails ? event.getOnlineUrl() : null,
                 canSeePrivateDetails ? event.getPrivateDetails() : null,

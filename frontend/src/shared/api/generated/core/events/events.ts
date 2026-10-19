@@ -39,6 +39,7 @@ import type {
   EventsMineParams,
   EventsSimilarParams,
   FocusPoint,
+  OrganizerInvitationResponse,
   OrganizerResponse,
   PageResponseEventSummaryResponse,
   ProblemDetail
@@ -1009,8 +1010,8 @@ export const getEventsAddOrganizerUrl = (id: string,) => {
 }
 
 /**
- * Только автор. Соорганизатор правит мероприятие и решает заявки наравне с автором. Возвращает новый состав.
- * @summary Добавить соорганизатора
+ * Только автор. Человек получает уведомление и сам принимает или отказывается; до ответа он в составе с invited = true. Соорганизатор правит мероприятие и решает заявки наравне с автором. Возвращает новый состав.
+ * @summary Пригласить соорганизатора
  */
 export const eventsAddOrganizer = async (id: string,
     addOrganizerRequest: AddOrganizerRequest, options?: Parameters<typeof authMutator>[1]): Promise<eventsAddOrganizerResponse> => {
@@ -1077,7 +1078,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type EventsAddOrganizerMutationVariables = {id: string;data: AddOrganizerRequest}
 
     /**
- * @summary Добавить соорганизатора
+ * @summary Пригласить соорганизатора
  */
 export const useEventsAddOrganizer = <TError = ErrorType<ProblemDetail>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAddOrganizer>>, TError,EventsAddOrganizerMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
@@ -1088,6 +1089,197 @@ export const useEventsAddOrganizer = <TError = ErrorType<ProblemDetail>,
         TContext
       > => {
       return useMutation(getEventsAddOrganizerMutationOptions(options), queryClient);
+    }
+    export type eventsDeclineOrganizerInviteResponse200 = {
+  data: OrganizerInvitationResponse[]
+  status: 200
+}
+
+export type eventsDeclineOrganizerInviteResponse404 = {
+  data: ProblemDetail
+  status: 404
+}
+
+export type eventsDeclineOrganizerInviteResponseSuccess = (eventsDeclineOrganizerInviteResponse200) & {
+  headers: Headers;
+};
+export type eventsDeclineOrganizerInviteResponseError = (eventsDeclineOrganizerInviteResponse404) & {
+  headers: Headers;
+};
+
+export type eventsDeclineOrganizerInviteResponse = (eventsDeclineOrganizerInviteResponseSuccess | eventsDeclineOrganizerInviteResponseError)
+
+export const getEventsDeclineOrganizerInviteUrl = (id: string,) => {
+
+
+
+
+  return `/api/events/${id}/organizers/invitation/decline`
+}
+
+/**
+ * Автору приходит уведомление. Возвращает оставшиеся приглашения.
+ * @summary Отказаться от приглашения в соорганизаторы
+ */
+export const eventsDeclineOrganizerInvite = async (id: string, options?: Parameters<typeof authMutator>[1]): Promise<eventsDeclineOrganizerInviteResponse> => {
+
+  return authMutator<eventsDeclineOrganizerInviteResponse>(getEventsDeclineOrganizerInviteUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getEventsDeclineOrganizerInviteMutationKey = () => ['eventsDeclineOrganizerInvite'] as const;
+
+export const getEventsDeclineOrganizerInviteMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsDeclineOrganizerInvite>>, TError,EventsDeclineOrganizerInviteMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof eventsDeclineOrganizerInvite>>, TError,EventsDeclineOrganizerInviteMutationVariables, TContext> => {
+
+const mutationKey = getEventsDeclineOrganizerInviteMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof eventsDeclineOrganizerInvite>>, EventsDeclineOrganizerInviteMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  eventsDeclineOrganizerInvite(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type EventsDeclineOrganizerInviteMutationResult = NonNullable<Awaited<ReturnType<typeof eventsDeclineOrganizerInvite>>>
+
+    export type EventsDeclineOrganizerInviteMutationError = ErrorType<ProblemDetail>
+    export type EventsDeclineOrganizerInviteMutationVariables = {id: string}
+
+    /**
+ * @summary Отказаться от приглашения в соорганизаторы
+ */
+export const useEventsDeclineOrganizerInvite = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsDeclineOrganizerInvite>>, TError,EventsDeclineOrganizerInviteMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof eventsDeclineOrganizerInvite>>,
+        TError,
+        EventsDeclineOrganizerInviteMutationVariables,
+        TContext
+      > => {
+      return useMutation(getEventsDeclineOrganizerInviteMutationOptions(options), queryClient);
+    }
+    export type eventsAcceptOrganizerInviteResponse200 = {
+  data: OrganizerInvitationResponse[]
+  status: 200
+}
+
+export type eventsAcceptOrganizerInviteResponse404 = {
+  data: ProblemDetail
+  status: 404
+}
+
+export type eventsAcceptOrganizerInviteResponse409 = {
+  data: ProblemDetail
+  status: 409
+}
+
+export type eventsAcceptOrganizerInviteResponseSuccess = (eventsAcceptOrganizerInviteResponse200) & {
+  headers: Headers;
+};
+export type eventsAcceptOrganizerInviteResponseError = (eventsAcceptOrganizerInviteResponse404 | eventsAcceptOrganizerInviteResponse409) & {
+  headers: Headers;
+};
+
+export type eventsAcceptOrganizerInviteResponse = (eventsAcceptOrganizerInviteResponseSuccess | eventsAcceptOrganizerInviteResponseError)
+
+export const getEventsAcceptOrganizerInviteUrl = (id: string,) => {
+
+
+
+
+  return `/api/events/${id}/organizers/invitation/accept`
+}
+
+/**
+ * Становлюсь соорганизатором: правлю мероприятие и решаю заявки. Автору приходит уведомление. Возвращает оставшиеся приглашения.
+ * @summary Принять приглашение в соорганизаторы
+ */
+export const eventsAcceptOrganizerInvite = async (id: string, options?: Parameters<typeof authMutator>[1]): Promise<eventsAcceptOrganizerInviteResponse> => {
+
+  return authMutator<eventsAcceptOrganizerInviteResponse>(getEventsAcceptOrganizerInviteUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getEventsAcceptOrganizerInviteMutationKey = () => ['eventsAcceptOrganizerInvite'] as const;
+
+export const getEventsAcceptOrganizerInviteMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAcceptOrganizerInvite>>, TError,EventsAcceptOrganizerInviteMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof eventsAcceptOrganizerInvite>>, TError,EventsAcceptOrganizerInviteMutationVariables, TContext> => {
+
+const mutationKey = getEventsAcceptOrganizerInviteMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof eventsAcceptOrganizerInvite>>, EventsAcceptOrganizerInviteMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  eventsAcceptOrganizerInvite(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type EventsAcceptOrganizerInviteMutationResult = NonNullable<Awaited<ReturnType<typeof eventsAcceptOrganizerInvite>>>
+
+    export type EventsAcceptOrganizerInviteMutationError = ErrorType<ProblemDetail>
+    export type EventsAcceptOrganizerInviteMutationVariables = {id: string}
+
+    /**
+ * @summary Принять приглашение в соорганизаторы
+ */
+export const useEventsAcceptOrganizerInvite = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAcceptOrganizerInvite>>, TError,EventsAcceptOrganizerInviteMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof eventsAcceptOrganizerInvite>>,
+        TError,
+        EventsAcceptOrganizerInviteMutationVariables,
+        TContext
+      > => {
+      return useMutation(getEventsAcceptOrganizerInviteMutationOptions(options), queryClient);
     }
     export type eventsSimilarResponse200 = {
   data: EventSummaryResponse[]
@@ -1326,6 +1518,119 @@ export function useEventsCalendar<TData = Awaited<ReturnType<typeof eventsCalend
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getEventsCalendarQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type eventsOrganizerInvitationsResponse200 = {
+  data: OrganizerInvitationResponse[]
+  status: 200
+}
+
+export type eventsOrganizerInvitationsResponseSuccess = (eventsOrganizerInvitationsResponse200) & {
+  headers: Headers;
+};
+;
+
+export type eventsOrganizerInvitationsResponse = (eventsOrganizerInvitationsResponseSuccess)
+
+export const getEventsOrganizerInvitationsUrl = () => {
+
+
+
+
+  return `/api/events/organizer-invitations`
+}
+
+/**
+ * Приглашения, которые ждут моего ответа: новые сверху, без удалённых мероприятий.
+ * @summary Мои приглашения в соорганизаторы
+ */
+export const eventsOrganizerInvitations = async ( options?: Parameters<typeof authMutator>[1]): Promise<eventsOrganizerInvitationsResponse> => {
+
+  return authMutator<eventsOrganizerInvitationsResponse>(getEventsOrganizerInvitationsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getEventsOrganizerInvitationsQueryKey = () => {
+    return [
+    `/api/events/organizer-invitations`
+    ] as const;
+    }
+
+
+export const getEventsOrganizerInvitationsQueryOptions = <TData = Awaited<ReturnType<typeof eventsOrganizerInvitations>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsOrganizerInvitations>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getEventsOrganizerInvitationsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof eventsOrganizerInvitations>>> = ({ signal }) => eventsOrganizerInvitations({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof eventsOrganizerInvitations>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type EventsOrganizerInvitationsQueryResult = NonNullable<Awaited<ReturnType<typeof eventsOrganizerInvitations>>>
+export type EventsOrganizerInvitationsQueryError = ErrorType<unknown>
+
+
+export function useEventsOrganizerInvitations<TData = Awaited<ReturnType<typeof eventsOrganizerInvitations>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsOrganizerInvitations>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof eventsOrganizerInvitations>>,
+          TError,
+          Awaited<ReturnType<typeof eventsOrganizerInvitations>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useEventsOrganizerInvitations<TData = Awaited<ReturnType<typeof eventsOrganizerInvitations>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsOrganizerInvitations>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof eventsOrganizerInvitations>>,
+          TError,
+          Awaited<ReturnType<typeof eventsOrganizerInvitations>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useEventsOrganizerInvitations<TData = Awaited<ReturnType<typeof eventsOrganizerInvitations>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsOrganizerInvitations>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Мои приглашения в соорганизаторы
+ */
+
+export function useEventsOrganizerInvitations<TData = Awaited<ReturnType<typeof eventsOrganizerInvitations>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsOrganizerInvitations>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getEventsOrganizerInvitationsQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -1823,7 +2128,7 @@ export const getEventsRemoveOrganizerUrl = (id: string,
 }
 
 /**
- * Автор убирает любого соорганизатора, соорганизатор может выйти сам. Автора убрать нельзя. Возвращает новый состав.
+ * Автор убирает любого соорганизатора или отзывает приглашение, соорганизатор может выйти сам. Автора убрать нельзя. Возвращает новый состав.
  * @summary Убрать соорганизатора
  */
 export const eventsRemoveOrganizer = async (id: string,

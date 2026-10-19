@@ -17,6 +17,7 @@ import { fullName, initials, privateNote, type useEvent } from "../model/use-eve
 import { QrCode } from "@/shared/components/ui/qr-code";
 import { plural } from "@/shared/lib/plural";
 import { EventShare } from "./event-share";
+import { InviteActions } from "@/features/organizer-invite/ui/invite-actions";
 
 const dir = "m-event";
 const TONES = ["bg-sky", "bg-mint", "bg-peach", "bg-secondary", "bg-lavender-soft"];
@@ -179,6 +180,18 @@ export function EventMobile({ m }: { m: EventModel }) {
         <div role="alert" className="mx-4 rounded-[20px] border-2 border-ink bg-destructive px-4 py-3 text-destructive-foreground">
           <p className="font-display text-base font-bold">{m.moderated.title}</p>
           {m.moderated.reason && <p className="mt-1 text-sm font-semibold">Причина: {m.moderated.reason}</p>}
+        </div>
+      )}
+
+      {viewer.organizerInvite && (
+        <div role="status" className="mx-4 flex flex-col gap-3 rounded-[20px] border-2 border-ink bg-lime-soft px-4 py-3">
+          <div>
+            <p className="font-display text-base font-bold text-foreground">Вас зовут в организаторы</p>
+            <p className="mt-1 text-sm font-semibold text-muted-foreground">
+              {fullName(e.author)} приглашает вести встречу вместе: править карточку и решать заявки.
+            </p>
+          </div>
+          <InviteActions eventId={e.id} compact />
         </div>
       )}
 

@@ -110,6 +110,9 @@ public class DemoSeeder {
 			new Account("elena", "Елена", "Кузнецова", SystemRole.USER, "Бегаю полумарафоны", false, 120),
 			new Account("sergey", "Сергей", "Белов", SystemRole.USER, "Волейбол, футбол, шахматы", false, 180),
 			new Account("nikolai", "Николай", "Лебедев", SystemRole.USER, "Привёз петанк из Франции", false, 75),
+			// весь гардероб бобра: заработала на своих встречах и скупила магазин (DemoEconomySeeder.scheduleCollector)
+			new Account("vika", "Виктория", "Крылова", SystemRole.USER,
+					"Провожу встречи дважды в день — и бобр одет с иголочки", true, 120),
 			// аккаунты организаций: имя и фамилия — контактное лицо
 			new Account("ladya", "Игорь", "Савельев", SystemRole.ORG, null, true, 170),
 			new Account("enisey", "Марина", "Соколова", SystemRole.ORG, null, true, 3),
@@ -232,7 +235,11 @@ public class DemoSeeder {
 				null, 56.0275, 92.9301, EventLevel.AMATEUR, EventKind.GAME,
 				"Уверенно держите мяч, играем без грубости", "Сменная обувь (шиповки или сороконожки), вода",
 				14, JoinMode.FREE, "Чат игры: https://t.me/demo_football_tatyshev", null, null));
+		// соорганизатора приглашают, он принимает — как живые пользователи
 		organizerService.add(football, cast.id("dmitry"), "nikolai");
+		organizerService.accept(football, cast.id("nikolai"));
+		// приглашение без ответа: Пётр видит его в «Активности» и на карточке футбола
+		organizerService.add(football, cast.id("dmitry"), "petr");
 		join(football, cast.id("sergey"), null);
 		join(football, cast.id("elena"), null);
 		// Сценарий 5: вопрос участника, ответы автора и соорганизатора с меткой «Организатор».
@@ -375,6 +382,7 @@ public class DemoSeeder {
 		// Итоги месяца и покупки: «Организацию месяца» подтверждает админ, бобры одеваются на заработанные монеты.
 		economy.confirmMonthAward(adminId);
 		pets.dressCore(cast);
+		pets.dressCollector(cast.id("vika"));
 		bulk.dress(people);
 		album.seed(cast);
 		log.info("Demo data seeded in {} ms", System.currentTimeMillis() - started);

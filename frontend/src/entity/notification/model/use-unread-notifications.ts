@@ -4,8 +4,10 @@ import type { NotificationsListTypesItem } from "@/shared/api/generated/core/app
 export const REPLY_TYPES: NotificationsListTypesItem[] = ["COMMENT_REPLY", "COMMENT_CREATED"];
 export const ACHIEVEMENT_TYPES: NotificationsListTypesItem[] = ["ACHIEVEMENT_UNLOCKED"];
 export const REMINDER_TYPES: NotificationsListTypesItem[] = ["REMINDER"];
+/** Команда организаторов: приглашение (с кнопками «Принять» / «Отказаться»), принятие и отказ. */
+export const TEAM_TYPES: NotificationsListTypesItem[] = ["ORGANIZER_INVITED", "ORGANIZER_ADDED", "ORGANIZER_INVITE_DECLINED"];
 /** Типы, которые показывает «Активность»: по ним же считается счётчик на кнопке в навигации. */
-export const ACTIVITY_TYPES: NotificationsListTypesItem[] = [...REPLY_TYPES, ...ACHIEVEMENT_TYPES, ...REMINDER_TYPES];
+export const ACTIVITY_TYPES: NotificationsListTypesItem[] = [...REPLY_TYPES, ...ACHIEVEMENT_TYPES, ...REMINDER_TYPES, ...TEAM_TYPES];
 
 /**
  * Непрочитанные уведомления «Активности»: по типам и всего. Один запрос на шапку, нижнее меню и страницу,

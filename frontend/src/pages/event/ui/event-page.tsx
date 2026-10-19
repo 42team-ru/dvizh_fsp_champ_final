@@ -2,7 +2,7 @@ import { coverOf } from "@/entity/event/lib/cover";
 import { MessageCircleQuestion } from "lucide-react";
 import { EmptyState } from "@/shared/components/ui/empty-state";
 import { WavingBeaver } from "@/widgets/beaver-pet/ui/waving-beaver";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { CancelledStamp } from "@/shared/components/ui/cancelled-stamp";
 import { Link } from "react-router";
 import { EventMobile } from "./event-mobile";
@@ -22,6 +22,7 @@ import { cn } from "cn";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 import { QrCode } from "@/shared/components/ui/qr-code";
 import { EventShare } from "./event-share";
+import { InviteActions } from "@/features/organizer-invite/ui/invite-actions";
 
 type EventModel = ReturnType<typeof useEvent>;
 
@@ -317,7 +318,7 @@ function Organizer({ m }: { m: EventModel }) {
       <div className="grid grid-cols-2 gap-2">
         {[
           { v: String(m.going), l: "записались", tone: "bg-lime-soft" },
-          { v: String(e.organizers.length), l: "организаторов", tone: "bg-background" },
+          { v: String(e.organizers.filter((o) => !o.invited).length), l: "организаторов", tone: "bg-background" },
         ].map((s) => (
           <div
             key={s.l}
@@ -381,7 +382,14 @@ function RouteMap({ m }: { m: EventModel }) {
 function Chat({ m }: { m: EventModel }) {
   const [text, setText] = useState("");
   const [replyTo, setReplyTo] = useState<{ id: string; who: string } | null>(null);
+  const input = useRef<HTMLInputElement>(null);
   const canComment = m.event!.viewer.canComment;
+  // «Ответить»: сразу в поле ввода — фокус и прокрутка к нему, без второго клика
+  const reply = (id: string, who: string) => {
+    setReplyTo({ id, who });
+    input.current?.focus({ preventScroll: true });
+    input.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
   const send = async () => {
     if (!text.trim()) return;
     try {
@@ -432,7 +440,7 @@ function Chat({ m }: { m: EventModel }) {
               </p>
               {canComment && !c.deleted && (
                 <button type="button" className="mt-1 text-xs font-bold text-muted-foreground underline"
-                  onClick={() => setReplyTo({ id: c.id, who: fullName(c.author) })}>Ответить</button>
+                  onClick={() => reply(c.id, fullName(c.author))}>Ответить</button>
               )}
             </div>
           </div>
@@ -447,7 +455,7 @@ function Chat({ m }: { m: EventModel }) {
             </p>
           )}
           <div className="box-border flex h-12 items-center gap-[10px] rounded-pill border-2 border-ink bg-background pr-1.5 pl-5">
-            <input value={text} maxLength={2000} onChange={(event) => setText(event.target.value)} aria-label="Сообщение"
+            <input ref={input} value={text} maxLength={2000} onChange={(event) => setText(event.target.value)} aria-label="Сообщение"
               placeholder="Задайте вопрос или напишите участникам" className="min-w-0 flex-1 bg-transparent text-[15px] outline-none" />
             <Button type="submit" size="sm" disabled={!text.trim() || m.commentPending}>Отправить</Button>
           </div>
@@ -529,6 +537,17 @@ export default function EventPage() {
           <div role="alert" className="w-[1216px] rounded-[22px] border-2 border-ink bg-destructive px-6 py-4 text-destructive-foreground">
             <p className="font-display text-lg font-bold">{m.moderated.title}</p>
             {m.moderated.reason && <p className="mt-1 text-base font-semibold">Причина: {m.moderated.reason}</p>}
+          </div>
+        )}
+        {m.event?.viewer.organizerInvite && (
+          <div role="status" className="flex w-[1216px] items-center gap-5 rounded-[22px] border-2 border-ink bg-lime-soft px-6 py-4 shadow-hard-sm">
+            <div className="min-w-0 flex-1">
+              <p className="font-display text-lg font-bold text-foreground">Вас зовут в организаторы</p>
+              <p className="mt-1 text-base font-semibold text-muted-foreground">
+                {fullName(m.event.author)} приглашает вести встречу вместе: править карточку и решать заявки.
+              </p>
+            </div>
+            <InviteActions eventId={m.event.id} />
           </div>
         )}
         {m.event && (

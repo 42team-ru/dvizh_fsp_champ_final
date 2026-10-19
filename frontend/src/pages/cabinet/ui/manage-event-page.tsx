@@ -146,7 +146,7 @@ export default function ManageEventPage() {
       tabs={[
         { key: "requests", label: event.joinMode === "REQUEST" ? "Заявки" : "Участники", count: event.joinMode === "REQUEST" ? pending : event.participantsCount },
         { key: "occurrences", label: "Занятия", count: occs.data?.status === 200 ? occs.data.data.length : undefined },
-        { key: "team", label: "Команда", count: event.organizers.length },
+        { key: "team", label: "Команда", count: event.organizers.filter((o) => !o.invited).length },
         { key: "photos", label: "Фото", count: event.photos.length },
         { key: "discussion", label: "Обсуждение", count: comments.data?.status === 200 ? comments.data.data.length : undefined },
       ]}

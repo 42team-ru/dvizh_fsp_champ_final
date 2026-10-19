@@ -46,9 +46,11 @@ class NotificationFlowE2ETest {
         var form = EventForm.byRequest().online("https://private.example/meeting").privateDetails("Секретный код 9182");
         var event = author.createEvent(form);
         author.addOrganizer(event.id(), co.username());
-        assertThat(types(co)).containsExactly(NotificationType.ORGANIZER_ADDED);
+        assertThat(types(co)).containsExactly(NotificationType.ORGANIZER_INVITED);
+        co.acceptOrganizerInvite(event.id());
+        assertThat(types(author)).containsExactly(NotificationType.ORGANIZER_ADDED);
         var registration = member.joinEvent(event.id());
-        assertThat(types(author)).containsExactly(NotificationType.REGISTRATION_CREATED);
+        assertThat(types(author)).containsExactly(NotificationType.REGISTRATION_CREATED, NotificationType.ORGANIZER_ADDED);
         assertThat(member.notifications().items()).isEmpty();
         author.approve(registration.id());
         author.approve(registration.id());
@@ -156,9 +158,10 @@ class NotificationFlowE2ETest {
         assertThat(types(commenter)).containsExactly(NotificationType.COMMENT_REPLY);
         // вопрос в общий поток доходит до организатора; свои сообщения и ответы — нет
         assertThat(types(author)).containsExactly(NotificationType.COMMENT_CREATED);
-        author.addOrganizer(event.id(), co.username()); co.removeOrganizer(event.id(), co.id());
-        assertThat(types(co)).containsExactly(NotificationType.ORGANIZER_ADDED);
-        assertThat(types(author)).containsExactly(NotificationType.ORGANIZER_REMOVED, NotificationType.COMMENT_CREATED);
+        author.addOrganizer(event.id(), co.username()); co.acceptOrganizerInvite(event.id()); co.removeOrganizer(event.id(), co.id());
+        assertThat(types(co)).containsExactly(NotificationType.ORGANIZER_INVITED);
+        assertThat(types(author)).containsExactly(NotificationType.ORGANIZER_REMOVED, NotificationType.ORGANIZER_ADDED,
+                NotificationType.COMMENT_CREATED);
     }
 
     private List<NotificationType> types(Actor actor) { return actor.notifications().items().stream().map(NotificationResponse::type).toList(); }

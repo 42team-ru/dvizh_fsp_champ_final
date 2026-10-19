@@ -12,6 +12,7 @@ import com.hackathon.app.service.PetService;
 import com.hackathon.app.service.ShopService;
 import com.hackathon.app.service.WalletService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Component;
  * эксклюзивы дают достижения, надевается только своё ({@link PetService#save}), имя меняется через {@link PetService#rename}.
  * Что не по карману или не получено — просто не надето.
  */
+@Slf4j
 @Component
 @RequiredArgsConstructor
 class DemoPetSeeder {
@@ -66,6 +68,31 @@ class DemoPetSeeder {
 		olga.put("shirt", "training");
 		dress(cast.id("olga"), "lift", olga);
 		pets.rename(cast.id("olga"), "Бодрячок");
+	}
+
+	/**
+	 * Весь гардероб: купить в магазине всё, на что хватает заработанного (эксклюзивы уже выданы достижениями),
+	 * и надеть парадный образ из эксклюзивов.
+	 */
+	void dressCollector(UUID userId) {
+		int balance = wallet.balance(userId);
+		for (var item : shop.shop(userId)) {
+			if (!item.owned() && item.kind() == PetItemKind.SHOP && item.price() <= balance) {
+				shop.buy(userId, item.id());
+				balance -= item.price();
+			}
+		}
+		var missing = shop.shop(userId).stream().filter(i -> !i.owned()).map(ShopItemResponse::id).toList();
+		if (!missing.isEmpty()) {
+			log.warn("Demo collector does not own everything: {}", missing);
+		}
+		var outfit = new LinkedHashMap<String, String>();
+		outfit.put("hat", "crown");
+		outfit.put("neck", "medal");
+		outfit.put("shirt", "beavers");
+		outfit.put("eyewear", "sunglasses");
+		dress(userId, "juggle", outfit);
+		pets.rename(userId, "Модник");
 	}
 
 	/**

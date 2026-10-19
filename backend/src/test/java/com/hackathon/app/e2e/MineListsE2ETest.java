@@ -80,6 +80,7 @@ class MineListsE2ETest {
         var recent = author.createEvent(EventForm.free().title(title + " new"));
         co.createEvent(EventForm.free().title(title + " foreign"));
         author.addOrganizer(recent.id(), co.username());
+        co.acceptOrganizerInvite(recent.id());
         admin.unpublishEvent(recent.id(), "Уточнение");
         author.cancelOccurrence(recent.id(), author.occurrences(recent.id()).getFirst().id(), "Отмена");
         var page = author.myEventsPage(Map.of("searchText", title.toUpperCase(Locale.ROOT), "size", "1"));

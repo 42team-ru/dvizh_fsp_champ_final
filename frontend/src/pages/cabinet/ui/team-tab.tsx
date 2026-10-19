@@ -30,7 +30,7 @@ export function TeamTab({ event, refresh }: { event: ManagedEvent; refresh: () =
     if (!login.trim()) return;
     add.mutate(
       { id: event.id, data: { login: login.trim() } },
-      { onSuccess: () => (toast.success("Соорганизатор добавлен"), setLogin(""), void refresh()) },
+      { onSuccess: () => (toast.success("Приглашение отправлено", { description: "Человек станет соорганизатором, когда примет его." }), setLogin(""), void refresh()) },
     );
   };
 
@@ -38,7 +38,8 @@ export function TeamTab({ event, refresh }: { event: ManagedEvent; refresh: () =
     <section className={card}>
       <h2 className="font-display text-xl font-extrabold text-foreground">Организаторы</h2>
       <p className="text-[13px] leading-[18px] font-medium text-muted-foreground">
-        Соорганизатор правит мероприятие и решает заявки наравне с автором. Состав меняет только автор.
+        Соорганизатор правит мероприятие и решает заявки наравне с автором. Автор приглашает — человек получает уведомление
+        и сам принимает или отказывается. Состав меняет только автор.
       </p>
       {event.organizers.map((o) => (
         <div key={o.user.id} className="flex flex-wrap items-center gap-3 rounded-[14px] border-[1.5px] border-ink bg-card px-3 py-2.5">
@@ -50,15 +51,16 @@ export function TeamTab({ event, refresh }: { event: ManagedEvent; refresh: () =
             <Chip tone="bg-secondary">Автор</Chip>
           ) : (
             <>
-              <Chip>Соорганизатор</Chip>
+              {o.invited ? <Chip tone="bg-lavender-soft">Ждёт ответа</Chip> : <Chip>Соорганизатор</Chip>}
               {canEdit && (
                 <OrangeButton
                   disabled={remove.isPending}
                   onClick={() =>
-                    remove.mutate({ id: event.id, userId: o.user.id }, { onSuccess: () => (toast.success("Соорганизатор убран"), void refresh()) })
+                    remove.mutate({ id: event.id, userId: o.user.id },
+                      { onSuccess: () => (toast.success(o.invited ? "Приглашение отозвано" : "Соорганизатор убран"), void refresh()) })
                   }
                 >
-                  Убрать
+                  {o.invited ? "Отозвать" : "Убрать"}
                 </OrangeButton>
               )}
             </>
@@ -69,7 +71,7 @@ export function TeamTab({ event, refresh }: { event: ManagedEvent; refresh: () =
 
       {canEdit ? (
         <form onSubmit={submit} className="flex flex-col gap-2">
-          <Divider>Добавить соорганизатора</Divider>
+          <Divider>Пригласить соорганизатора</Divider>
           <div className="flex flex-col gap-2.5 sm:flex-row">
             <input
               value={login}
@@ -78,7 +80,7 @@ export function TeamTab({ event, refresh }: { event: ManagedEvent; refresh: () =
               aria-label="Логин или email соорганизатора"
               className={`${inputClass} sm:max-w-[320px]`}
             />
-            <Button type="submit" disabled={add.isPending || !login.trim()}>Добавить</Button>
+            <Button type="submit" disabled={add.isPending || !login.trim()}>Пригласить</Button>
           </div>
           {add.error?.detail && <Warning className="py-2">{add.error.detail}</Warning>}
         </form>

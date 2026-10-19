@@ -21,6 +21,8 @@ export interface MapProvider {
   onPointClick(cb: (point: MapPoint) => void): void;
   /** Показать точку: сдвинуть карту и подсветить метку (выбор в ленте времени). */
   focus(point: MapPoint | null): void;
+  /** Отдельная метка дома [lon, lat]: не кластеризуется и не кликается; null — убрать. */
+  setHome(point: [number, number] | null): void;
   destroy(): void;
 }
 
@@ -169,6 +171,7 @@ export async function createEventsMap(container: HTMLElement, center = DEFAULT_C
   let activeId: string | null = null;
   let layers: DgLayer[] = [];
   let clickHandler: ((point: MapPoint) => void) | undefined;
+  let home: DgLayer | undefined;
 
   // Рисуем только то, что на экране (с небольшим запасом), и один раз после остановки карты.
   const render = () => {
@@ -233,9 +236,22 @@ export async function createEventsMap(container: HTMLElement, center = DEFAULT_C
       if (point) map.setView([point.coordinates[1], point.coordinates[0]], Math.max(map.getZoom(), 15));
       render();
     },
+    setHome(point) {
+      home?.remove();
+      home = point
+        ? dg.marker([point[1], point[0]], {
+            // Капля 40×50 из public/feed, кончик — в точке (18, 46).
+            icon: dg.divIcon({ className: "map-pin-host", iconSize: [40, 50], iconAnchor: [18, 46],
+              html: '<img class="map-home" src="/feed/map-home-pin.svg" width="40" height="50" alt="Мой дом" title="Мой дом">' }),
+            interactive: false,
+            zIndexOffset: 2000,
+          }).addTo(map)
+        : undefined;
+    },
     destroy() {
       window.clearTimeout(renderTimer);
       layers.forEach((layer) => layer.remove());
+      home?.remove();
       map.remove();
       el.remove();
     },

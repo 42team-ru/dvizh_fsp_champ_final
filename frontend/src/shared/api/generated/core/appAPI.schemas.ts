@@ -968,7 +968,7 @@ export interface OrganizationShortResponse {
 }
 
 /**
- * Организатор мероприятия: автор или соорганизатор
+ * Организатор мероприятия: автор, соорганизатор или приглашённый в соорганизаторы (invited)
  */
 export interface OrganizerResponse {
   /** Кто */
@@ -977,6 +977,8 @@ export interface OrganizerResponse {
   author: boolean;
   /** Организация, если это её аккаунт: показывать её название вместо контактного лица; иначе null */
   organization?: OrganizationShortResponse;
+  /** Только приглашён и ещё не ответил: прав организатора пока нет. Такие строки видят только организаторы */
+  invited: boolean;
 }
 
 /**
@@ -1178,6 +1180,8 @@ export interface ViewerResponse {
   waitlistPosition?: number;
   /** Причина отказа организатора, если моя заявка отклонена; иначе null */
   decisionReason?: string;
+  /** Меня пригласили в соорганизаторы и ждут ответа: показать «Принять» и «Отказаться» */
+  organizerInvite: boolean;
 }
 
 /**
@@ -1548,6 +1552,20 @@ export interface AddOrganizerRequest {
      * @maxLength 255
      */
   login: string;
+}
+
+/**
+ * Приглашение в соорганизаторы, которое ждёт моего ответа
+ */
+export interface OrganizerInvitationResponse {
+  /** Мероприятие */
+  eventId: string;
+  /** Название мероприятия */
+  eventTitle: string;
+  /** Кто пригласил (автор мероприятия) */
+  invitedBy: UserShortResponse;
+  /** Когда пригласили */
+  invitedAt: string;
 }
 
 /**
@@ -2525,6 +2543,8 @@ export const NotificationResponseType = {
   ORGANIZATION_REJECTED: 'ORGANIZATION_REJECTED',
   ORGANIZER_ADDED: 'ORGANIZER_ADDED',
   ORGANIZER_REMOVED: 'ORGANIZER_REMOVED',
+  ORGANIZER_INVITED: 'ORGANIZER_INVITED',
+  ORGANIZER_INVITE_DECLINED: 'ORGANIZER_INVITE_DECLINED',
   QUORUM_REACHED: 'QUORUM_REACHED',
   QUORUM_LOST: 'QUORUM_LOST',
   OCCURRENCE_CONFIRMED: 'OCCURRENCE_CONFIRMED',
@@ -2594,6 +2614,8 @@ export const NotificationTypeCountResponseType = {
   ORGANIZATION_REJECTED: 'ORGANIZATION_REJECTED',
   ORGANIZER_ADDED: 'ORGANIZER_ADDED',
   ORGANIZER_REMOVED: 'ORGANIZER_REMOVED',
+  ORGANIZER_INVITED: 'ORGANIZER_INVITED',
+  ORGANIZER_INVITE_DECLINED: 'ORGANIZER_INVITE_DECLINED',
   QUORUM_REACHED: 'QUORUM_REACHED',
   QUORUM_LOST: 'QUORUM_LOST',
   OCCURRENCE_CONFIRMED: 'OCCURRENCE_CONFIRMED',
@@ -3394,6 +3416,8 @@ export const NotificationsListTypesItem = {
   ORGANIZATION_REJECTED: 'ORGANIZATION_REJECTED',
   ORGANIZER_ADDED: 'ORGANIZER_ADDED',
   ORGANIZER_REMOVED: 'ORGANIZER_REMOVED',
+  ORGANIZER_INVITED: 'ORGANIZER_INVITED',
+  ORGANIZER_INVITE_DECLINED: 'ORGANIZER_INVITE_DECLINED',
   QUORUM_REACHED: 'QUORUM_REACHED',
   QUORUM_LOST: 'QUORUM_LOST',
   OCCURRENCE_CONFIRMED: 'OCCURRENCE_CONFIRMED',

@@ -74,6 +74,7 @@ class PetMoodE2ETest {
         var form = EventForm.byRequest().startsIn(Duration.ofDays(5));
         var event = author.createEvent(form);
         author.addOrganizer(event.id(), coOrganizer.username());
+        coOrganizer.acceptOrganizerInvite(event.id());
         var request = participant.joinEvent(event.id());
         assertThat(participant.pet().mood()).isEqualTo(THINKING);
         assertThat(participant.pet().status().message()).isEqualTo("Жду ответа по «" + event.title() + "»");

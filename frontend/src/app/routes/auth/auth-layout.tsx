@@ -1,3 +1,4 @@
+import { BeaverPet } from "@/widgets/beaver-pet/ui/beaver-pet";
 import { useLocation } from "react-router";
 import { PageTransition } from "@/shared/components/ui/page-transition";
 import { BrandPlate } from "@/shared/components/ui/brand-plate";
@@ -80,11 +81,10 @@ function BrandPanel({ brand }: { brand: Brand }) {
         alt=""
         className="absolute top-[502px] left-[100px] h-[18px] w-6 max-w-none"
       />
-      <img
-        src={`${dir}/${brand.bublik}`}
-        alt=""
-        className="pointer-events-none absolute top-[548px] left-[60px] size-[240px] max-w-none object-contain"
-      />
+      {/* обычный бобр без вещей: живой, моргает, следит за курсором и реагирует на тычки */}
+      <div className="absolute top-[540px] left-[50px] w-[260px]">
+        <BeaverPet withCatalog={false} className="[&_.beaver-speech]:hidden" />
+      </div>
     </aside>
   );
 }

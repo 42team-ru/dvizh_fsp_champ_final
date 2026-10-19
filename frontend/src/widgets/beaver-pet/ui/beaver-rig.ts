@@ -261,7 +261,9 @@ export function createBeaverRig(root: HTMLElement, followCursor: boolean, onInte
   }
 
   function frame(now: number, loop = true) {
-    const dt = Math.min((now - last) / 1000, 1 / 30);
+    // Метка rAF бывает раньше performance.now() при создании (длинный монтаж диалога): отрицательный dt
+    // превращает затухание пружин в раскачку — голова делает полуоборот, лапы взлетают. Поэтому снизу 0.
+    const dt = Math.max(0, Math.min((now - last) / 1000, 1 / 30));
     last = now;
     t += dt;
     // Реакция поверх базового настроения; закончилась — плавно возвращаемся к базовому.

@@ -39,10 +39,12 @@ type Props = {
   onClick?: () => void;
   /** Первый контакт (тычок или поглаживание): хозяин развеселил бобра — сохранить это на сервере. */
   onCheer?: () => void;
+  /** Подгружать каталог вещей от админа. На страницах входа выключено: без входа API отвечает 401. */
+  withCatalog?: boolean;
 };
 
 /** Анимированный маскот-бобр. Настроение, наряд и активность задаются пропсами, движение считает beaver-rig. */
-export function BeaverPet({ mood = "idle", outfit = {}, activity = "none", followCursor = true, className, onClick, say, sayHref, speechContainer, extraArts, onCheer, ref: handleRef }: Props) {
+export function BeaverPet({ mood = "idle", outfit = {}, activity = "none", followCursor = true, className, onClick, say, sayHref, speechContainer, extraArts, onCheer, withCatalog = true, ref: handleRef }: Props) {
   const instanceId = useId();
   const svgPrefix = `beaver-${instanceId.replace(/[^a-zA-Z0-9_-]/g, (char) => `_${char.codePointAt(0)!.toString(16)}_`)}`;
   const scopedSvg = useMemo(() => scopeSvgIds(beaverSvg, svgPrefix, baseReferenceIds), [svgPrefix]);
@@ -54,7 +56,7 @@ export function BeaverPet({ mood = "idle", outfit = {}, activity = "none", follo
   onCheerRef.current = onCheer;
   const outfitKey = JSON.stringify(outfit);
   // Вещи от админа рисуются по каталогу; встроенные знает сам гардероб.
-  const catalog = usePetsCatalog({ query: { staleTime: 5 * 60_000 } });
+  const catalog = usePetsCatalog({ query: { staleTime: 5 * 60_000, enabled: withCatalog } });
   const arts = useMemo(() => {
     const map: BeaverArts = { ...extraArts };
     for (const slot of catalog.data?.data.slots ?? []) {

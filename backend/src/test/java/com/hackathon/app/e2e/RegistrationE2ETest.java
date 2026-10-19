@@ -164,6 +164,8 @@ class RegistrationE2ETest {
 		var organizers = author.addOrganizer(id, co.username());
 		assertThat(organizers).hasSize(2);
 		assertThat(organizers.get(1).user().username()).isEqualTo(co.username());
+		assertThat(organizers.get(1).invited()).isTrue();
+		co.acceptOrganizerInvite(id);
 		var coId = users.findByUsernameIgnoreCaseOrEmailIgnoreCase(co.username(), co.username()).orElseThrow().getId();
 		var thirdRequest = third.joinEvent(id);
 		assertThat(thirdRequest.status()).isEqualTo(PENDING);
