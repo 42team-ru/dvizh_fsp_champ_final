@@ -10,6 +10,7 @@ import static org.springframework.http.HttpStatus.*;
 
 import java.util.Map;
 
+import com.hackathon.app.domain.enums.NotificationType;
 import com.hackathon.app.e2e.support.EventForm;
 import com.hackathon.app.e2e.support.OrganizationForm;
 import com.hackathon.app.e2e.support.TestApi;
@@ -172,5 +173,82 @@ class OrganizationApprovalE2ETest {
 		var unchanged = org.myOrganization();
 		assertThat(unchanged.status()).isEqualTo(PENDING);
 		assertThat(unchanged.rejectReason()).isNull();
+	}
+
+	/**
+	 * ФЛОУ: организация указывает виды спорта, получает допуск, публикует событие; админ отзывает допуск
+	 *   и затем одобряет снова.
+	 * ШАГИ:
+	 *   1. Анкета без видов спорта — 400; с двумя видами (справочный и свой) — сохраняются.
+	 *   2. Одобрить, создать событие: пользователь видит виды на странице и событие в ленте.
+	 *   3. Отклонить уже одобренную: событие пропадает из ленты, запись и правка — 409, создавать нельзя.
+	 *   4. Админ видит событие в списке организации; одобрить снова — событие возвращается в ленту.
+	 * ПРОВЕРЯЕМ: sports в анкете и публичной странице, eventsCount и фильтр admin_listEvents по организации,
+	 *   скрытие событий отозванной организации и точные причины отказа.
+	 * ПОЧЕМУ ВАЖНО: ТЗ требует спортивные интересы в профиле и «до допуска — никаких публикаций»;
+	 *   отзыв не должен оставлять в ленте события со ссылкой на несуществующую страницу.
+	 */
+	@Test
+	void sportsAreSavedAndRevokedOrganizationEventsDisappearUntilApprovedAgain() {
+		// 1. Виды спорта обязательны.
+		var org = api.newOrganization("org");
+		var admin = api.newAdmin();
+		var user = api.newUser("user");
+		var custom = uniqueName("Сапсёрфинг ");
+		assertThatApi(() -> org.submitOrganization(OrganizationForm.valid().sports()))
+				.fails(BAD_REQUEST, "Укажите хотя бы один вид спорта, которым занимается организация");
+		var saved = org.submitOrganization(OrganizationForm.valid().sports("Шахматы", custom));
+		assertThat(saved.sports()).extracting(s -> s.name()).containsExactly("Шахматы", custom);
+
+		// 2. После допуска виды на странице, событие в ленте.
+		admin.approveOrganization(saved.id());
+		assertThat(user.openOrganization(saved.id()).sports()).hasSize(2);
+		var title = uniqueName("Турнир ");
+		var event = org.createEvent(EventForm.free().title(title));
+		assertThat(user.search(title)).extracting(e -> e.id()).containsExactly(event.id());
+
+		// 3. Отзыв допуска прячет события и закрывает действия.
+		admin.rejectOrganization(saved.id(), "Жалобы участников");
+		assertThat(user.search(title)).isEmpty();
+		assertThat(user.openEvent(event.id()).viewer().registerBlockedReason())
+				.isEqualTo("Запись закрыта: организация не допущена к публикации");
+		assertThatApi(() -> user.joinEvent(event.id())).fails(CONFLICT, "Запись закрыта: организация не допущена к публикации");
+		assertThatApi(() -> org.updateEvent(event.id(), EventForm.free().title(title)))
+				.fails(CONFLICT, "Организация не допущена администратором: управлять её мероприятиями нельзя");
+		assertThat(org.createPermission().canCreate()).isFalse();
+
+		// 4. Админ видит события организации; повторный допуск всё возвращает.
+		assertThat(admin.adminOrganization(saved.id()).eventsCount()).isEqualTo(1);
+		assertThat(admin.adminEventsOfOrganization(saved.id()).items()).extracting(e -> e.id()).containsExactly(event.id());
+		admin.approveOrganization(saved.id());
+		assertThat(user.search(title)).extracting(e -> e.id()).containsExactly(event.id());
+		assertThat(org.createPermission().canCreate()).isTrue();
+	}
+
+	/**
+	 * ФЛОУ: админ возвращает анкету на доработку, организация дополняет её и снова уходит на проверку.
+	 * ШАГИ: 1. Подать анкету. 2. Вернуть на доработку с причиной. 3. Проверить кабинет и запрет публикации.
+	 *   4. Исправить анкету — снова PENDING. 5. Возврат одобренной — 409.
+	 * ПРОВЕРЯЕМ: статус REVISION и причину в кабинете, уведомление ORGANIZATION_RETURNED, 403 на создание,
+	 *   PENDING после правки, 409 для одобренной.
+	 * ПОЧЕМУ ВАЖНО: «дополните анкету» — не отказ; организация должна понять, что сделать, и не начинать заново.
+	 */
+	@Test
+	void returnedForRevisionQuestionnaireGoesBackToReviewAfterEdit() {
+		var org = api.newOrganization("org");
+		var admin = api.newAdmin();
+		var form = OrganizationForm.valid();
+		var id = org.submitOrganization(form).id();
+		assertThat(admin.returnOrganization(id, "Добавьте расписание").status()).isEqualTo(REVISION);
+
+		var cabinet = org.myOrganization();
+		assertThat(cabinet.status()).isEqualTo(REVISION);
+		assertThat(cabinet.rejectReason()).isEqualTo("Добавьте расписание");
+		assertThat(org.notifications().items()).extracting(n -> n.type()).contains(NotificationType.ORGANIZATION_RETURNED);
+		assertThatApi(() -> org.createEvent(EventForm.free())).fails(FORBIDDEN);
+
+		assertThat(org.submitOrganization(form.description("Занятия по вторникам и четвергам")).status()).isEqualTo(PENDING);
+		admin.approveOrganization(id);
+		assertThatApi(() -> admin.returnOrganization(id, "Ещё раз")).fails(CONFLICT, "На доработку возвращается только заявка на проверке");
 	}
 }

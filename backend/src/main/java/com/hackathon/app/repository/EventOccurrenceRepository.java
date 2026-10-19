@@ -128,4 +128,16 @@ public interface EventOccurrenceRepository extends JpaRepository<EventOccurrence
 			group by e.sportId
 			order by count(o) desc""")
 	List<SportCount> countAttendedBySport(UUID userId, UUID sportId, Instant from, Instant to);
+
+	/**
+	 * Доверие к организатору: сколько встреч уже прошло — неотменённые занятия, начавшиеся до now, у его неудалённых
+	 * мероприятий. Ровно один из authorId и organizationId задан: человек или организация.
+	 */
+	@Query("""
+			select count(o) from EventOccurrence o join Event e on e.id = o.eventId
+			where o.status = com.hackathon.app.domain.enums.OccurrenceStatus.SCHEDULED and o.startAt < :now
+			  and e.status <> com.hackathon.app.domain.enums.EventStatus.DELETED
+			  and e.authorId = coalesce(:authorId, e.authorId)
+			  and (:organizationId is null or e.organizationId = :organizationId)""")
+	long countHosted(UUID authorId, UUID organizationId, Instant now);
 }

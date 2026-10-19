@@ -11,5 +11,11 @@ import java.util.UUID;
 public record PublicOrganizationResponse(UUID id, String name, String description, String city,
 		Map<ContactType, String> contacts, String logoUrl, List<FileResponse> documents,
 		/** Подтверждённые награды «Организация месяца», свежие первыми. */
-		List<AwardBadgeResponse> awards) {
+		List<AwardBadgeResponse> awards,
+		/** Виды спорта организации. */
+		List<SportResponse> sports,
+		/** Доверие: сколько встреч уже провела (прошедшие неотменённые занятия). */
+		long hostedMeetings,
+		/** Доверие: сколько разных людей подтверждённо записывались на её прошедшие встречи. */
+		long participantsTotal) {
 }

@@ -366,6 +366,18 @@ export interface SaveOrganizationRequest {
      */
   city?: string;
   contacts: SaveOrganizationRequestContacts;
+  /**
+     * @minItems 0
+     * @maxItems 10
+     */
+  sportIds?: string[];
+  /**
+     * @minItems 0
+     * @maxItems 10
+     * @items.minLength 0
+     * @items.maxLength 100
+     */
+  sportNames?: string[];
 }
 
 /**
@@ -392,6 +404,7 @@ export const OrganizationResponseStatus = {
   PENDING: 'PENDING',
   APPROVED: 'APPROVED',
   REJECTED: 'REJECTED',
+  REVISION: 'REVISION',
 } as const;
 
 export interface OrganizationResponse {
@@ -408,6 +421,7 @@ export interface OrganizationResponse {
   updatedAt?: string;
   logoUrl?: string;
   documents?: FileResponse[];
+  sports?: SportResponse[];
 }
 
 export type SaveNotificationSettingsRequestChannelsItem = typeof SaveNotificationSettingsRequestChannelsItem[keyof typeof SaveNotificationSettingsRequestChannelsItem];
@@ -748,14 +762,17 @@ export interface UserShortResponse {
 }
 
 /**
- * Организатор мероприятия: автор или соорганизатор
+ * Статус допуска: страница открывается только у APPROVED
  */
-export interface OrganizerResponse {
-  /** Кто */
-  user: UserShortResponse;
-  /** Автор мероприятия; его нельзя убрать, только он меняет состав организаторов */
-  author: boolean;
-}
+export type OrganizationShortResponseStatus = typeof OrganizationShortResponseStatus[keyof typeof OrganizationShortResponseStatus];
+
+
+export const OrganizationShortResponseStatus = {
+  PENDING: 'PENDING',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  REVISION: 'REVISION',
+} as const;
 
 /**
  * Организация в карточке мероприятия: ссылка на её публичную страницу
@@ -764,6 +781,20 @@ export interface OrganizationShortResponse {
   id: string;
   /** Название */
   name: string;
+  /** Статус допуска: страница открывается только у APPROVED */
+  status: OrganizationShortResponseStatus;
+}
+
+/**
+ * Организатор мероприятия: автор или соорганизатор
+ */
+export interface OrganizerResponse {
+  /** Кто */
+  user: UserShortResponse;
+  /** Автор мероприятия; его нельзя убрать, только он меняет состав организаторов */
+  author: boolean;
+  /** Организация, если это её аккаунт: показывать её название вместо контактного лица; иначе null */
+  organization?: OrganizationShortResponse;
 }
 
 /**
@@ -920,6 +951,21 @@ export const ViewerResponseRegistrationStatus = {
   PENDING: 'PENDING',
   REJECTED: 'REJECTED',
   CANCELLED: 'CANCELLED',
+  WAITLISTED: 'WAITLISTED',
+} as const;
+
+/**
+ * Какой статус получу, если нажму «Записаться»: CONFIRMED — сразу участник, PENDING — заявка, WAITLISTED — мест нет, встану в лист ожидания; null — записаться нельзя
+ */
+export type ViewerResponseJoinAs = typeof ViewerResponseJoinAs[keyof typeof ViewerResponseJoinAs];
+
+
+export const ViewerResponseJoinAs = {
+  CONFIRMED: 'CONFIRMED',
+  PENDING: 'PENDING',
+  REJECTED: 'REJECTED',
+  CANCELLED: 'CANCELLED',
+  WAITLISTED: 'WAITLISTED',
 } as const;
 
 /**
@@ -944,6 +990,10 @@ export interface ViewerResponse {
   canSeePrivateDetails: boolean;
   /** Могу написать в обсуждение */
   canComment: boolean;
+  /** Какой статус получу, если нажму «Записаться»: CONFIRMED — сразу участник, PENDING — заявка, WAITLISTED — мест нет, встану в лист ожидания; null — записаться нельзя */
+  joinAs?: ViewerResponseJoinAs;
+  /** Моё место в листе ожидания (1 — следующий); null — я не в листе ожидания */
+  waitlistPosition?: number;
 }
 
 /**
@@ -1015,6 +1065,10 @@ export interface EventResponse {
   moderationReason?: string;
   /** Когда снято или удалено */
   moderatedAt?: string;
+  /** Объявление организатора участникам, закрепить вверху карточки; null — нет */
+  announcement?: string;
+  /** Когда опубликовано объявление; null — нет */
+  announcedAt?: string;
   /** Фото по порядку, первое — обложка; до 6 */
   photos: FileResponse[];
   /** Что могу делать я */
@@ -1053,10 +1107,12 @@ export interface CommentReplyResponse {
   id: string;
   /** Автор исходного сообщения */
   author: UserShortResponse;
-  /** Начало текста (до 140 символов); null — сообщение удалено */
+  /** Начало текста (до 140 символов); null — сообщение удалено или скрыто */
   text?: string;
   /** Исходное сообщение удалено */
   deleted: boolean;
+  /** Исходное сообщение скрыто модератором */
+  hidden: boolean;
 }
 
 /**
@@ -1066,7 +1122,9 @@ export interface CommentResponse {
   id: string;
   /** Кто написал */
   author: UserShortResponse;
-  /** Текст; null — сообщение удалено (показать «Сообщение удалено») */
+  /** Организация, от имени которой написано (автор — её аккаунт); null — человек. Показывать её название вместо имени контактного лица */
+  organization?: OrganizationShortResponse;
+  /** Текст; null — сообщение удалено автором или скрыто модератором */
   text?: string;
   /** Автор — организатор мероприятия: показать метку «Организатор» */
   isOrganizer: boolean;
@@ -1084,6 +1142,22 @@ export interface CommentResponse {
   editedAt?: string;
   /** Удалено автором */
   deleted: boolean;
+  /** Скрыто администратором: показать «Сообщение скрыто модератором» */
+  hidden: boolean;
+  /** Причина скрытия — только администратору и автору; иначе null */
+  hiddenReason?: string;
+}
+
+/**
+ * Объявление организатора участникам: закрепляется вверху карточки и приходит уведомлением
+ */
+export interface AnnouncementRequest {
+  /**
+     * Текст
+     * @minLength 0
+     * @maxLength 1000
+     */
+  text: string;
 }
 
 /**
@@ -1172,6 +1246,7 @@ export const RegistrationResponseStatus = {
   PENDING: 'PENDING',
   REJECTED: 'REJECTED',
   CANCELLED: 'CANCELLED',
+  WAITLISTED: 'WAITLISTED',
 } as const;
 
 /**
@@ -1403,6 +1478,7 @@ export const AdminOrganizationResponseStatus = {
   PENDING: 'PENDING',
   APPROVED: 'APPROVED',
   REJECTED: 'REJECTED',
+  REVISION: 'REVISION',
 } as const;
 
 export interface OrganizationAccountResponse {
@@ -1429,6 +1505,8 @@ export interface AdminOrganizationResponse {
   updatedAt?: string;
   logoUrl?: string;
   documents?: FileResponse[];
+  sports?: SportResponse[];
+  eventsCount?: number;
 }
 
 /**
@@ -1481,6 +1559,18 @@ export interface AdminEventResponse {
   /** Когда снято или удалено */
   moderatedAt?: string;
   createdAt: string;
+}
+
+/**
+ * Скрытие сообщения администратором
+ */
+export interface HideCommentRequest {
+  /**
+     * Причина: её увидят автор сообщения и администраторы
+     * @minLength 0
+     * @maxLength 1000
+     */
+  reason: string;
 }
 
 /**
@@ -1596,6 +1686,7 @@ export const EventSummaryResponseMyRegistrationStatus = {
   PENDING: 'PENDING',
   REJECTED: 'REJECTED',
   CANCELLED: 'CANCELLED',
+  WAITLISTED: 'WAITLISTED',
 } as const;
 
 /**
@@ -1649,6 +1740,10 @@ export interface EventSummaryResponse {
   authorId: string;
   /** Организация; null — от частного лица */
   organizationId?: string;
+  /** Кто организует: автор мероприятия (у события организации — её аккаунт) */
+  organizer: UserShortResponse;
+  /** Организация для подписи «Шахматный клуб «Ладья»»; null — от частного лица */
+  organization?: OrganizationShortResponse;
   /** Статус моей записи; null — не записан */
   myRegistrationStatus?: EventSummaryResponseMyRegistrationStatus;
   /** Обложка (первое фото): /api/files/{id}; null — без фото */
@@ -1676,6 +1771,10 @@ export interface PublicUserResponse {
   sports: UserSportResponse[];
   /** Сколько встреч посетил */
   attendedCount: number;
+  /** Доверие к организатору: сколько встреч уже провёл */
+  hostedMeetings: number;
+  /** Доверие к организатору: сколько разных людей записывались на его прошедшие встречи */
+  participantsTotal: number;
   /** Опубликованные и ещё не начавшиеся мероприятия, где человек автор; ближайшие первыми */
   events: EventSummaryResponse[];
   /** Фото личной галереи в порядке загрузки, до 6; отдельно от аватара */
@@ -1821,6 +1920,7 @@ export const MyRegistrationResponseStatus = {
   PENDING: 'PENDING',
   REJECTED: 'REJECTED',
   CANCELLED: 'CANCELLED',
+  WAITLISTED: 'WAITLISTED',
 } as const;
 
 /**
@@ -1841,6 +1941,8 @@ export interface MyRegistrationResponse {
   event: EventSummaryResponse;
   /** У серии — моё ближайшее отмеченное занятие; null — не отмечен или разовое */
   myNextOccurrence?: OccurrenceShortResponse;
+  /** Место в листе ожидания (1 — следующий); null — не в листе ожидания */
+  waitlistPosition?: number;
 }
 
 export interface PageResponseMyRegistrationResponse {
@@ -1934,6 +2036,9 @@ export interface PublicOrganizationResponse {
   logoUrl?: string;
   documents?: FileResponse[];
   awards?: AwardBadgeResponse[];
+  sports?: SportResponse[];
+  hostedMeetings?: number;
+  participantsTotal?: number;
 }
 
 /**
@@ -1973,6 +2078,11 @@ export const NotificationResponseType = {
   QUORUM_REACHED: 'QUORUM_REACHED',
   QUORUM_LOST: 'QUORUM_LOST',
   OCCURRENCE_CONFIRMED: 'OCCURRENCE_CONFIRMED',
+  COMMENT_CREATED: 'COMMENT_CREATED',
+  COMMENT_HIDDEN: 'COMMENT_HIDDEN',
+  EVENT_RESTORED: 'EVENT_RESTORED',
+  EVENT_ANNOUNCEMENT: 'EVENT_ANNOUNCEMENT',
+  ORGANIZATION_RETURNED: 'ORGANIZATION_RETURNED',
 } as const;
 
 export type NotificationResponseCategory = typeof NotificationResponseCategory[keyof typeof NotificationResponseCategory];
@@ -2027,6 +2137,7 @@ export const EventRegistrationResponseStatus = {
   PENDING: 'PENDING',
   REJECTED: 'REJECTED',
   CANCELLED: 'CANCELLED',
+  WAITLISTED: 'WAITLISTED',
 } as const;
 
 /**
@@ -2046,6 +2157,8 @@ export interface EventRegistrationResponse {
   /** Когда решено */
   decidedAt?: string;
   createdAt: string;
+  /** Когда встал в лист ожидания (порядок очереди); null — не в листе ожидания */
+  queuedAt?: string;
 }
 
 export interface PageResponseEventSummaryResponse {
@@ -2118,6 +2231,7 @@ export const EventMapPropertiesMyRegistrationStatus = {
   PENDING: 'PENDING',
   REJECTED: 'REJECTED',
   CANCELLED: 'CANCELLED',
+  WAITLISTED: 'WAITLISTED',
 } as const;
 
 /**
@@ -2182,6 +2296,16 @@ export interface EventMapResponse {
   truncated: boolean;
   /** Сколько точек отдаётся максимум */
   limit: number;
+}
+
+/**
+ * Может ли текущий аккаунт создавать мероприятия: фронт рисует кнопку «Создать» по этому ответу
+ */
+export interface CreatePermissionResponse {
+  /** Можно создавать */
+  canCreate: boolean;
+  /** Почему нельзя, текст для человека; null — можно */
+  reason?: string;
 }
 
 export type DemoAccountResponseSystemRole = typeof DemoAccountResponseSystemRole[keyof typeof DemoAccountResponseSystemRole];
@@ -2346,7 +2470,7 @@ export type OrganizationsAddDocumentBody = {
 
 export type EventsListParams = {
 /**
- * Поиск по названию и описанию без учёта регистра
+ * Поиск без учёта регистра по названию, описанию, адресу, виду спорта и организации
  */
 searchText?: string;
 /**
@@ -2381,6 +2505,35 @@ organizationId?: string;
  * «Для меня»: только виды спорта из моего профиля и подходящие моему уровню в них (уровень мероприятия «Любой» или как у меня; уровень не указан — любой)
  */
 forMe?: boolean;
+/**
+ * Рядом с точкой: широта (вместе с lon); онлайн-мероприятия показываются всегда
+ * @minimum -90
+ * @maximum 90
+ */
+lat?: number;
+/**
+ * Рядом с точкой: долгота (вместе с lat)
+ * @minimum -180
+ * @maximum 180
+ */
+lon?: number;
+/**
+ * Радиус «рядом» в км, 1–100; по умолчанию 10
+ * @minimum 1
+ * @maximum 100
+ */
+radiusKm?: number;
+/**
+ * Страница с нуля; по умолчанию 0
+ * @minimum 0
+ */
+page?: number;
+/**
+ * Размер страницы 1–100; по умолчанию 100. Пришло меньше size — дальше пусто
+ * @minimum 1
+ * @maximum 100
+ */
+size?: number;
 };
 
 export type EventsListLevel = typeof EventsListLevel[keyof typeof EventsListLevel];
@@ -2421,6 +2574,7 @@ export const RegistrationsListForEventStatus = {
   PENDING: 'PENDING',
   REJECTED: 'REJECTED',
   CANCELLED: 'CANCELLED',
+  WAITLISTED: 'WAITLISTED',
 } as const;
 
 export type EventsAddPhotoBody = {
@@ -2547,6 +2701,7 @@ export const RegistrationsMineStatus = {
   PENDING: 'PENDING',
   REJECTED: 'REJECTED',
   CANCELLED: 'CANCELLED',
+  WAITLISTED: 'WAITLISTED',
 } as const;
 
 export type RegistrationsMineWhen = typeof RegistrationsMineWhen[keyof typeof RegistrationsMineWhen];
@@ -2573,6 +2728,13 @@ revision?: number;
  * @maximum 30
  */
 timeoutSeconds?: number;
+};
+
+export type EventsSimilarParams = {
+/**
+ * Сколько показать, 1–20
+ */
+limit?: number;
 };
 
 export type EventsMineParams = {
@@ -2718,10 +2880,19 @@ export const AdminListOrganizationsStatus = {
   PENDING: 'PENDING',
   APPROVED: 'APPROVED',
   REJECTED: 'REJECTED',
+  REVISION: 'REVISION',
 } as const;
 
 export type AdminListEventsParams = {
 status?: AdminListEventsStatus;
+/**
+ * Только мероприятия этой организации
+ */
+organizationId?: string;
+/**
+ * Только мероприятия этого автора
+ */
+authorId?: string;
 searchText?: string;
 page?: number;
 size?: number;

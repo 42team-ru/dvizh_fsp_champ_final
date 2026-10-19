@@ -120,9 +120,17 @@ public class NotificationChanges {
         boolean cardChanged = !before.content().equals(after.content());
         boolean datesAdded = after.slots().keySet().stream().anyMatch(id -> !before.slots().containsKey(id));
         if (moderated) {
-            var type = after.status() == EventStatus.DELETED ? NotificationType.EVENT_DELETED : NotificationType.EVENT_UNPUBLISHED;
-            add(result, command, after, actorId, type, NotificationCategory.EVENTS, audience(after), null,
-                    type == NotificationType.EVENT_DELETED ? "Мероприятие удалено" : "Мероприятие снято с публикации", after.reason());
+            var type = switch (after.status()) {
+                case DELETED -> NotificationType.EVENT_DELETED;
+                case PUBLISHED -> NotificationType.EVENT_RESTORED;
+                case UNPUBLISHED -> NotificationType.EVENT_UNPUBLISHED;
+            };
+            var title = switch (type) {
+                case EVENT_DELETED -> "Мероприятие удалено";
+                case EVENT_RESTORED -> "Мероприятие снова опубликовано";
+                default -> "Мероприятие снято с публикации";
+            };
+            add(result, command, after, actorId, type, NotificationCategory.EVENTS, audience(after), null, title, after.reason());
         } else if (cardChanged || datesAdded) {
             var affected = after.slots().values().stream().filter(s -> {
                 var old = before.slots().get(s.id());
@@ -165,14 +173,16 @@ public class NotificationChanges {
                 add(result, command + ":" + registration.userId(), after, actorId, NotificationType.REGISTRATION_CREATED,
                         NotificationCategory.REGISTRATIONS, after.organizers().keySet(), null,
                         status == RegistrationStatus.PENDING ? "Новая заявка на участие" : "Новый участник", null);
-            else if (status == RegistrationStatus.CANCELLED)
+            else if (status == RegistrationStatus.CANCELLED && old != null && old.status() != RegistrationStatus.WAITLISTED)
                 add(result, command + ":" + registration.userId(), after, actorId, NotificationType.REGISTRATION_CANCELLED,
                         NotificationCategory.REGISTRATIONS, after.organizers().keySet(), null, "Участник отменил запись", null);
             else if (status == RegistrationStatus.CONFIRMED || status == RegistrationStatus.REJECTED)
                 add(result, command, after, actorId,
                         status == RegistrationStatus.CONFIRMED ? NotificationType.REGISTRATION_APPROVED : NotificationType.REGISTRATION_REJECTED,
                         NotificationCategory.REGISTRATIONS, Set.of(registration.userId()), null,
-                        status == RegistrationStatus.CONFIRMED ? "Ваша запись подтверждена" : "Ваша заявка отклонена или участие прекращено", registration.reason());
+                        status == RegistrationStatus.REJECTED ? "Ваша заявка отклонена или участие прекращено"
+                                : old != null && old.status() == RegistrationStatus.WAITLISTED ? "Освободилось место — вы записаны"
+                                : "Ваша запись подтверждена", registration.reason());
         }
         for (var id : after.organizers().keySet()) if (!before.organizers().containsKey(id))
             add(result, command, after, actorId, NotificationType.ORGANIZER_ADDED, NotificationCategory.ORGANIZERS,
@@ -185,7 +195,8 @@ public class NotificationChanges {
 
     private Set<UUID> audience(Snapshot event) {
         var ids = new HashSet<>(event.organizers().keySet());
-        event.registrations().values().stream().filter(r -> r.status() == RegistrationStatus.CONFIRMED || r.status() == RegistrationStatus.PENDING)
+        event.registrations().values().stream().filter(r -> r.status() == RegistrationStatus.CONFIRMED
+                        || r.status() == RegistrationStatus.PENDING || r.status() == RegistrationStatus.WAITLISTED)
                 .forEach(r -> ids.add(r.userId()));
         return ids;
     }

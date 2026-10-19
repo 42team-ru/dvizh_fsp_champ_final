@@ -26,6 +26,8 @@ import type {
 
 import type {
   AddOrganizerRequest,
+  AnnouncementRequest,
+  CreatePermissionResponse,
   EventMapResponse,
   EventRequest,
   EventResponse,
@@ -34,6 +36,7 @@ import type {
   EventsListParams,
   EventsMapParams,
   EventsMineParams,
+  EventsSimilarParams,
   OrganizerResponse,
   PageResponseEventSummaryResponse,
   ProblemDetail
@@ -305,6 +308,211 @@ export const useEventsUpdate = <TError = ErrorType<ProblemDetail>,
       > => {
       return useMutation(getEventsUpdateMutationOptions(options), queryClient);
     }
+    export type eventsAnnounceResponse200 = {
+  data: EventResponse
+  status: 200
+}
+
+export type eventsAnnounceResponse403 = {
+  data: ProblemDetail
+  status: 403
+}
+
+export type eventsAnnounceResponse409 = {
+  data: ProblemDetail
+  status: 409
+}
+
+export type eventsAnnounceResponseSuccess = (eventsAnnounceResponse200) & {
+  headers: Headers;
+};
+export type eventsAnnounceResponseError = (eventsAnnounceResponse403 | eventsAnnounceResponse409) & {
+  headers: Headers;
+};
+
+export type eventsAnnounceResponse = (eventsAnnounceResponseSuccess | eventsAnnounceResponseError)
+
+export const getEventsAnnounceUrl = (id: string,) => {
+
+
+
+
+  return `/api/events/${id}/announcement`
+}
+
+/**
+ * Закрепляется вверху карточки и приходит уведомлением участникам, ожидающим решения и листу ожидания. Новое заменяет прежнее. Только организатор.
+ * @summary Опубликовать объявление участникам
+ */
+export const eventsAnnounce = async (id: string,
+    announcementRequest: AnnouncementRequest, options?: Parameters<typeof authMutator>[1]): Promise<eventsAnnounceResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return authMutator<eventsAnnounceResponse>(getEventsAnnounceUrl(id),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(announcementRequest)
+  }
+);}
+
+
+
+
+
+export const getEventsAnnounceMutationKey = () => ['eventsAnnounce'] as const;
+
+export const getEventsAnnounceMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAnnounce>>, TError,EventsAnnounceMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof eventsAnnounce>>, TError,EventsAnnounceMutationVariables, TContext> => {
+
+const mutationKey = getEventsAnnounceMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof eventsAnnounce>>, EventsAnnounceMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  eventsAnnounce(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type EventsAnnounceMutationResult = NonNullable<Awaited<ReturnType<typeof eventsAnnounce>>>
+    export type EventsAnnounceMutationBody = AnnouncementRequest
+    export type EventsAnnounceMutationError = ErrorType<ProblemDetail>
+    export type EventsAnnounceMutationVariables = {id: string;data: AnnouncementRequest}
+
+    /**
+ * @summary Опубликовать объявление участникам
+ */
+export const useEventsAnnounce = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAnnounce>>, TError,EventsAnnounceMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof eventsAnnounce>>,
+        TError,
+        EventsAnnounceMutationVariables,
+        TContext
+      > => {
+      return useMutation(getEventsAnnounceMutationOptions(options), queryClient);
+    }
+    export type eventsClearAnnouncementResponse200 = {
+  data: EventResponse
+  status: 200
+}
+
+export type eventsClearAnnouncementResponse403 = {
+  data: ProblemDetail
+  status: 403
+}
+
+export type eventsClearAnnouncementResponseSuccess = (eventsClearAnnouncementResponse200) & {
+  headers: Headers;
+};
+export type eventsClearAnnouncementResponseError = (eventsClearAnnouncementResponse403) & {
+  headers: Headers;
+};
+
+export type eventsClearAnnouncementResponse = (eventsClearAnnouncementResponseSuccess | eventsClearAnnouncementResponseError)
+
+export const getEventsClearAnnouncementUrl = (id: string,) => {
+
+
+
+
+  return `/api/events/${id}/announcement`
+}
+
+/**
+ * @summary Снять объявление
+ */
+export const eventsClearAnnouncement = async (id: string, options?: Parameters<typeof authMutator>[1]): Promise<eventsClearAnnouncementResponse> => {
+
+  return authMutator<eventsClearAnnouncementResponse>(getEventsClearAnnouncementUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getEventsClearAnnouncementMutationKey = () => ['eventsClearAnnouncement'] as const;
+
+export const getEventsClearAnnouncementMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsClearAnnouncement>>, TError,EventsClearAnnouncementMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof eventsClearAnnouncement>>, TError,EventsClearAnnouncementMutationVariables, TContext> => {
+
+const mutationKey = getEventsClearAnnouncementMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof eventsClearAnnouncement>>, EventsClearAnnouncementMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  eventsClearAnnouncement(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type EventsClearAnnouncementMutationResult = NonNullable<Awaited<ReturnType<typeof eventsClearAnnouncement>>>
+
+    export type EventsClearAnnouncementMutationError = ErrorType<ProblemDetail>
+    export type EventsClearAnnouncementMutationVariables = {id: string}
+
+    /**
+ * @summary Снять объявление
+ */
+export const useEventsClearAnnouncement = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsClearAnnouncement>>, TError,EventsClearAnnouncementMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof eventsClearAnnouncement>>,
+        TError,
+        EventsClearAnnouncementMutationVariables,
+        TContext
+      > => {
+      return useMutation(getEventsClearAnnouncementMutationOptions(options), queryClient);
+    }
     export type eventsListResponse200 = {
   data: EventSummaryResponse[]
   status: 200
@@ -333,7 +541,7 @@ export const getEventsListUrl = (params?: EventsListParams,) => {
 }
 
 /**
- * Только опубликованные, ближайшие первыми, до 100 штук. Без from — начиная с текущего момента.
+ * Только опубликованные и видимые (организация одобрена), ближайшие первыми. Без from — начиная с текущего момента. Постранично: page и size (до 100); пришло меньше size — дальше пусто. lat/lon/radiusKm — рядом с точкой, онлайн показывается всегда.
  * @summary Лента мероприятий
  */
 export const eventsList = async (params?: EventsListParams, options?: Parameters<typeof authMutator>[1]): Promise<eventsListResponse> => {
@@ -763,7 +971,255 @@ export const useEventsAddOrganizer = <TError = ErrorType<ProblemDetail>,
       > => {
       return useMutation(getEventsAddOrganizerMutationOptions(options), queryClient);
     }
-    export type eventsMineResponse200 = {
+    export type eventsSimilarResponse200 = {
+  data: EventSummaryResponse[]
+  status: 200
+}
+
+export type eventsSimilarResponse404 = {
+  data: ProblemDetail
+  status: 404
+}
+
+export type eventsSimilarResponseSuccess = (eventsSimilarResponse200) & {
+  headers: Headers;
+};
+export type eventsSimilarResponseError = (eventsSimilarResponse404) & {
+  headers: Headers;
+};
+
+export type eventsSimilarResponse = (eventsSimilarResponseSuccess | eventsSimilarResponseError)
+
+export const getEventsSimilarUrl = (id: string,
+    params?: EventsSimilarParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/events/${id}/similar?${stringifiedParams}` : `/api/events/${id}/similar`
+}
+
+/**
+ * Когда мест нет или заявку отклонили: ближайшие опубликованные того же вида спорта и уровня, кроме этой, моих и полных.
+ * @summary Похожие встречи
+ */
+export const eventsSimilar = async (id: string,
+    params?: EventsSimilarParams, options?: Parameters<typeof authMutator>[1]): Promise<eventsSimilarResponse> => {
+
+  return authMutator<eventsSimilarResponse>(getEventsSimilarUrl(id,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getEventsSimilarQueryKey = (id: string,
+    params?: EventsSimilarParams,) => {
+    return [
+    `/api/events/${id}/similar`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getEventsSimilarQueryOptions = <TData = Awaited<ReturnType<typeof eventsSimilar>>, TError = ErrorType<ProblemDetail>>(id: string,
+    params?: EventsSimilarParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsSimilar>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getEventsSimilarQueryKey(id,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof eventsSimilar>>> = ({ signal }) => eventsSimilar(id,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof eventsSimilar>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type EventsSimilarQueryResult = NonNullable<Awaited<ReturnType<typeof eventsSimilar>>>
+export type EventsSimilarQueryError = ErrorType<ProblemDetail>
+
+
+export function useEventsSimilar<TData = Awaited<ReturnType<typeof eventsSimilar>>, TError = ErrorType<ProblemDetail>>(
+ id: string,
+    params: undefined |  EventsSimilarParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsSimilar>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof eventsSimilar>>,
+          TError,
+          Awaited<ReturnType<typeof eventsSimilar>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useEventsSimilar<TData = Awaited<ReturnType<typeof eventsSimilar>>, TError = ErrorType<ProblemDetail>>(
+ id: string,
+    params?: EventsSimilarParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsSimilar>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof eventsSimilar>>,
+          TError,
+          Awaited<ReturnType<typeof eventsSimilar>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useEventsSimilar<TData = Awaited<ReturnType<typeof eventsSimilar>>, TError = ErrorType<ProblemDetail>>(
+ id: string,
+    params?: EventsSimilarParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsSimilar>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Похожие встречи
+ */
+
+export function useEventsSimilar<TData = Awaited<ReturnType<typeof eventsSimilar>>, TError = ErrorType<ProblemDetail>>(
+ id: string,
+    params?: EventsSimilarParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsSimilar>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getEventsSimilarQueryOptions(id,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type eventsCalendarResponseDefault = {
+  data: unknown
+  status: number
+}
+
+;
+export type eventsCalendarResponseError = (eventsCalendarResponseDefault) & {
+  headers: Headers;
+};
+
+export type eventsCalendarResponse = (eventsCalendarResponseError)
+
+export const getEventsCalendarUrl = (id: string,) => {
+
+
+
+
+  return `/api/events/${id}/calendar.ics`
+}
+
+/**
+ * Разовое — одно занятие; серия — мои отмеченные будущие занятия, а без отметок — все будущие. Приватные детали — только участникам и организатору.
+ * @summary Добавить в календарь (.ics)
+ */
+export const eventsCalendar = async (id: string, options?: Parameters<typeof authMutator>[1]): Promise<eventsCalendarResponse> => {
+
+  return authMutator<eventsCalendarResponse>(getEventsCalendarUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getEventsCalendarQueryKey = (id: string,) => {
+    return [
+    `/api/events/${id}/calendar.ics`
+    ] as const;
+    }
+
+
+export const getEventsCalendarQueryOptions = <TData = Awaited<ReturnType<typeof eventsCalendar>>, TError = ErrorType<unknown>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsCalendar>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getEventsCalendarQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof eventsCalendar>>> = ({ signal }) => eventsCalendar(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof eventsCalendar>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type EventsCalendarQueryResult = NonNullable<Awaited<ReturnType<typeof eventsCalendar>>>
+export type EventsCalendarQueryError = ErrorType<unknown>
+
+
+export function useEventsCalendar<TData = Awaited<ReturnType<typeof eventsCalendar>>, TError = ErrorType<unknown>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsCalendar>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof eventsCalendar>>,
+          TError,
+          Awaited<ReturnType<typeof eventsCalendar>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useEventsCalendar<TData = Awaited<ReturnType<typeof eventsCalendar>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsCalendar>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof eventsCalendar>>,
+          TError,
+          Awaited<ReturnType<typeof eventsCalendar>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useEventsCalendar<TData = Awaited<ReturnType<typeof eventsCalendar>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsCalendar>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Добавить в календарь (.ics)
+ */
+
+export function useEventsCalendar<TData = Awaited<ReturnType<typeof eventsCalendar>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsCalendar>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getEventsCalendarQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type eventsMineResponse200 = {
   data: PageResponseEventSummaryResponse
   status: 200
 }
@@ -992,6 +1448,119 @@ export function useEventsMap<TData = Awaited<ReturnType<typeof eventsMap>>, TErr
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getEventsMapQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type eventsCreatePermissionResponse200 = {
+  data: CreatePermissionResponse
+  status: 200
+}
+
+export type eventsCreatePermissionResponseSuccess = (eventsCreatePermissionResponse200) & {
+  headers: Headers;
+};
+;
+
+export type eventsCreatePermissionResponse = (eventsCreatePermissionResponseSuccess)
+
+export const getEventsCreatePermissionUrl = () => {
+
+
+
+
+  return `/api/events/create-permission`
+}
+
+/**
+ * Админ не создаёт; организация — только после одобрения заявки. Причина — текст для пояснения у кнопки.
+ * @summary Могу ли я создавать мероприятия
+ */
+export const eventsCreatePermission = async ( options?: Parameters<typeof authMutator>[1]): Promise<eventsCreatePermissionResponse> => {
+
+  return authMutator<eventsCreatePermissionResponse>(getEventsCreatePermissionUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getEventsCreatePermissionQueryKey = () => {
+    return [
+    `/api/events/create-permission`
+    ] as const;
+    }
+
+
+export const getEventsCreatePermissionQueryOptions = <TData = Awaited<ReturnType<typeof eventsCreatePermission>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsCreatePermission>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getEventsCreatePermissionQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof eventsCreatePermission>>> = ({ signal }) => eventsCreatePermission({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof eventsCreatePermission>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type EventsCreatePermissionQueryResult = NonNullable<Awaited<ReturnType<typeof eventsCreatePermission>>>
+export type EventsCreatePermissionQueryError = ErrorType<unknown>
+
+
+export function useEventsCreatePermission<TData = Awaited<ReturnType<typeof eventsCreatePermission>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsCreatePermission>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof eventsCreatePermission>>,
+          TError,
+          Awaited<ReturnType<typeof eventsCreatePermission>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useEventsCreatePermission<TData = Awaited<ReturnType<typeof eventsCreatePermission>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsCreatePermission>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof eventsCreatePermission>>,
+          TError,
+          Awaited<ReturnType<typeof eventsCreatePermission>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useEventsCreatePermission<TData = Awaited<ReturnType<typeof eventsCreatePermission>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsCreatePermission>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Могу ли я создавать мероприятия
+ */
+
+export function useEventsCreatePermission<TData = Awaited<ReturnType<typeof eventsCreatePermission>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsCreatePermission>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getEventsCreatePermissionQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

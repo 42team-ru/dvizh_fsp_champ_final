@@ -14,7 +14,6 @@ import com.hackathon.app.domain.dto.RegistrationResponse;
 import com.hackathon.app.domain.entity.AppUser;
 import com.hackathon.app.domain.entity.Event;
 import com.hackathon.app.domain.entity.Registration;
-import com.hackathon.app.domain.enums.JoinMode;
 import com.hackathon.app.domain.enums.RegistrationStatus;
 import com.hackathon.app.domain.enums.TimeScope;
 import com.hackathon.app.domain.exception.ConflictException;
@@ -49,29 +48,32 @@ public class RegistrationService {
     private final RegistrationMapper mapper;
     private final OccurrenceService occurrences;
     private final NotificationChanges notificationChanges;
+    private final WaitlistService waitlist;
 
     /**
-     * FREE — сразу CONFIRMED, REQUEST — PENDING. После отмены та же строка переиспользуется.
+     * FREE — сразу CONFIRMED, а если мест нет — WAITLISTED (лист ожидания); REQUEST — PENDING.
+     * После отмены та же строка переиспользуется.
      * У серии это вступление в серию: на занятия участник отмечается отдельно (OccurrenceService.attend).
      */
     @Transactional
     public RegistrationResponse create(UUID eventId, UUID userId, String message) {
         var event = events.findByIdForUpdate(eventId)
                 .orElseThrow(() -> new NoSuchElementException(EventService.NOT_FOUND));
+        var user = users.findById(userId).orElseThrow(() -> new NoSuchElementException("Пользователь не найден"));
         notificationChanges.watch(eventId, userId);
         var myRegistration = registrations.findByEventIdAndUserId(eventId, userId).orElse(null);
         var now = dbTime.now();
         var confirmedCount = registrations.countByEventIdAndStatus(eventId, RegistrationStatus.CONFIRMED);
-        var blockedReason = policy.registerBlockedReason(event, userId, myRegistration, confirmedCount, now);
+        var blockedReason = policy.registerBlockedReason(event, user.getSystemRole(), userId, myRegistration, confirmedCount, now);
         if (blockedReason != null) {
             throw new ConflictException(blockedReason);
         }
-        boolean freeJoin = event.getJoinMode() == JoinMode.FREE;
-        var status = freeJoin ? RegistrationStatus.CONFIRMED : RegistrationStatus.PENDING;
-        var decidedAt = freeJoin ? now : null;
+        var status = policy.joinAs(event, confirmedCount);
+        var decidedAt = status == RegistrationStatus.CONFIRMED ? now : null;
+        var queuedAt = status == RegistrationStatus.WAITLISTED ? now : null;
         var registration = myRegistration == null
-                ? mapper.toRegistration(eventId, userId, status, message, decidedAt)
-                : mapper.rejoin(myRegistration, status, message, decidedAt);
+                ? mapper.toRegistration(eventId, userId, status, message, decidedAt, queuedAt)
+                : mapper.rejoin(myRegistration, status, message, decidedAt, queuedAt);
         try {
             return mapper.toResponse(registrations.saveAndFlush(registration));
         } catch (DataIntegrityViolationException _) { // двойной клик: unique(event_id, user_id)
@@ -97,9 +99,13 @@ public class RegistrationService {
         if (blockedReason != null) {
             throw new ConflictException(blockedReason);
         }
+        boolean freedSeat = myRegistration.getStatus() == RegistrationStatus.CONFIRMED;
         var cancelled = registrations.saveAndFlush(mapper.cancel(myRegistration, now, userId));
         if (event.isRecurring()) {
             occurrences.dropFutureAttendance(eventId, userId, now);
+        }
+        if (freedSeat) {
+            waitlist.promote(event, now);
         }
         return mapper.toResponse(cancelled);
     }
@@ -135,7 +141,7 @@ public class RegistrationService {
         }
         var confirmedCount = registrations.countByEventIdAndStatus(managed.event().getId(),
                 RegistrationStatus.CONFIRMED);
-        var blockedReason = policy.approveBlockedReason(managed.event(), managed.registration(), confirmedCount);
+        var blockedReason = policy.approveBlockedReason(managed.event(), managed.registration(), confirmedCount, dbTime.now());
         if (blockedReason != null) {
             throw new ConflictException(blockedReason);
         }
@@ -153,7 +159,11 @@ public class RegistrationService {
         if (blockedReason != null) {
             throw new ConflictException(blockedReason);
         }
+        boolean freedSeat = managed.registration().getStatus() == RegistrationStatus.CONFIRMED;
         var response = decide(managed.registration(), RegistrationStatus.REJECTED, reason, userId);
+        if (freedSeat) {
+            waitlist.promote(managed.event(), dbTime.now());
+        }
         if (managed.event().isRecurring()) {
             occurrences.dropFutureAttendance(managed.event().getId(), managed.registration().getUserId(),
                     dbTime.now());
@@ -175,7 +185,7 @@ public class RegistrationService {
         var myNextByEventId = occurrences.myNext(userId, eventList, dbTime.now());
         return PageResponse.of(myRegistrations,
                 registration -> mapper.toMine(registration, eventsById.get(registration.getEventId()),
-                        myNextByEventId.get(registration.getEventId())));
+                        myNextByEventId.get(registration.getEventId()), waitlist.position(registration)));
     }
 
     private RegistrationResponse decide(Registration registration, RegistrationStatus status, String reason,
@@ -198,7 +208,7 @@ public class RegistrationService {
             throw new ForbiddenException("Решение по заявке принимает только организатор");
         }
         if (!policy.canManage(event, userId)) {
-            throw new ConflictException("Мероприятие удалено, решать заявки нельзя");
+            throw new ConflictException(policy.manageConflictReason(event, "Мероприятие удалено, решать заявки нельзя"));
         }
         notificationChanges.watch(event.getId(), userId);
         return new ManagedRegistration(registration, event);

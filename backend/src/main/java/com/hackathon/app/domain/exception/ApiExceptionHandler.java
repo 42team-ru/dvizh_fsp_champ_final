@@ -3,6 +3,7 @@ package com.hackathon.app.domain.exception;
 import java.util.LinkedHashMap;
 import java.util.NoSuchElementException;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -45,6 +46,12 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 	@ExceptionHandler(ConflictException.class)
 	ProblemDetail conflict(ConflictException e) {
 		return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
+	}
+
+	/** Нарушение уникальности на гонке двух одинаковых запросов: не 500, а понятный конфликт. */
+	@ExceptionHandler(DataIntegrityViolationException.class)
+	ProblemDetail dataConflict(DataIntegrityViolationException e) {
+		return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, "Данные изменились одновременно, повторите действие");
 	}
 
 	@ExceptionHandler(ServiceUnavailableException.class)

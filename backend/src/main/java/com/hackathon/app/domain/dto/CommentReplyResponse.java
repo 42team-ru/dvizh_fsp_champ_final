@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public record CommentReplyResponse(
 		@Schema(description = "id исходного сообщения — для перехода к нему", requiredMode = REQUIRED) UUID id,
 		@Schema(description = "Автор исходного сообщения", requiredMode = REQUIRED) UserShortResponse author,
-		@Schema(description = "Начало текста (до 140 символов); null — сообщение удалено") String text,
-		@Schema(description = "Исходное сообщение удалено", requiredMode = REQUIRED) boolean deleted) {
+		@Schema(description = "Начало текста (до 140 символов); null — сообщение удалено или скрыто") String text,
+		@Schema(description = "Исходное сообщение удалено", requiredMode = REQUIRED) boolean deleted,
+		@Schema(description = "Исходное сообщение скрыто модератором", requiredMode = REQUIRED) boolean hidden) {
 }

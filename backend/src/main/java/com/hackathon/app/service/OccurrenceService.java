@@ -250,6 +250,22 @@ public class OccurrenceService {
 		return users.stream().map(userMapper::toShort).toList();
 	}
 
+	/**
+	 * Занятия для календаря .ics: будущие и неотменённые. У серии — мои отметки, а если их нет — все будущие
+	 * (не больше лимита серии).
+	 */
+	@Transactional(readOnly = true)
+	public List<EventOccurrence> calendarOccurrences(Event event, UUID userId, Instant now) {
+		var upcoming = occurrences.findByEventIdOrderByStartAt(event.getId()).stream()
+				.filter(o -> o.getStatus() == OccurrenceStatus.SCHEDULED && o.getStartAt().isAfter(now)).toList();
+		if (!event.isRecurring() || upcoming.isEmpty()) {
+			return upcoming;
+		}
+		var mine = attendances.findByUserIdAndOccurrenceIdIn(userId, upcoming.stream().map(EventOccurrence::getId).toList())
+				.stream().map(OccurrenceAttendance::getOccurrenceId).collect(Collectors.toSet());
+		return mine.isEmpty() ? upcoming : upcoming.stream().filter(o -> mine.contains(o.getId())).toList();
+	}
+
 	/** Расписание серии для карточки; у разового — null. */
 	@Transactional(readOnly = true)
 	public ScheduleResponse schedule(Event event) {

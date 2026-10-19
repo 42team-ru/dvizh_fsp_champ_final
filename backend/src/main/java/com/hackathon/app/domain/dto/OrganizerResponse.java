@@ -8,5 +8,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public record OrganizerResponse(
 		@Schema(description = "Кто", requiredMode = REQUIRED) UserShortResponse user,
 		@Schema(description = "Автор мероприятия; его нельзя убрать, только он меняет состав организаторов", requiredMode = REQUIRED)
-		boolean author) {
+		boolean author,
+		@Schema(description = "Организация, если это её аккаунт: показывать её название вместо контактного лица; иначе null")
+		OrganizationShortResponse organization) {
 }

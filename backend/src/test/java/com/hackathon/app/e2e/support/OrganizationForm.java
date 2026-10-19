@@ -4,7 +4,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Анкета организации для тестов: по умолчанию валидная (название, описание, город, телефон).
+ * Анкета организации для тестов: по умолчанию валидная (название, описание, город, телефон, шахматы).
  * <pre>{@code
  * OrganizationForm.valid().name("Ладья").contact("TELEGRAM", "@ladya")
  * }</pre>
@@ -18,6 +18,7 @@ public final class OrganizationForm {
 		fields.put("name", TestApi.uniqueName("Клуб "));
 		fields.put("description", "Любительский спортивный клуб");
 		fields.put("city", "Красноярск");
+		fields.put("sportNames", java.util.List.of("Шахматы"));
 		contacts.put("PHONE", "+7 900 000-00-00");
 	}
 
@@ -43,6 +44,11 @@ public final class OrganizationForm {
 	public OrganizationForm noContacts() {
 		contacts.clear();
 		return this;
+	}
+
+	/** Виды спорта своими названиями (как в форме): заменяют умолчание. */
+	public OrganizationForm sports(String... names) {
+		return with("sportNames", java.util.List.of(names));
 	}
 
 	public OrganizationForm with(String field, Object value) {

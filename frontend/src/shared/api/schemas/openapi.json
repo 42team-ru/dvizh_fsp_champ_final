@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:8081",
+      "url": "http://localhost:8080",
       "description": "Generated server url"
     }
   ],
@@ -1018,6 +1018,109 @@
         }
       }
     },
+    "/api/events/{id}/announcement": {
+      "put": {
+        "tags": [
+          "events"
+        ],
+        "summary": "Опубликовать объявление участникам",
+        "description": "Закрепляется вверху карточки и приходит уведомлением участникам, ожидающим решения и листу ожидания. Новое заменяет прежнее. Только организатор.",
+        "operationId": "events_announce",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnnouncementRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Не организатор",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Удалено или организация не допущена",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "events"
+        ],
+        "summary": "Снять объявление",
+        "operationId": "events_clearAnnouncement",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Не организатор",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/pets/items/{code}/fit": {
       "put": {
         "tags": [
@@ -1493,17 +1596,17 @@
           "events"
         ],
         "summary": "Лента мероприятий",
-        "description": "Только опубликованные, ближайшие первыми, до 100 штук. Без from — начиная с текущего момента.",
+        "description": "Только опубликованные и видимые (организация одобрена), ближайшие первыми. Без from — начиная с текущего момента. Постранично: page и size (до 100); пришло меньше size — дальше пусто. lat/lon/radiusKm — рядом с точкой, онлайн показывается всегда.",
         "operationId": "events_list",
         "parameters": [
           {
             "name": "searchText",
             "in": "query",
-            "description": "Поиск по названию и описанию без учёта регистра",
+            "description": "Поиск без учёта регистра по названию, описанию, адресу, виду спорта и организации",
             "required": false,
             "schema": {
               "type": "string",
-              "description": "Поиск по названию и описанию без учёта регистра",
+              "description": "Поиск без учёта регистра по названию, описанию, адресу, виду спорта и организации",
               "example": "футбол"
             },
             "example": "футбол"
@@ -1609,6 +1712,80 @@
               "type": "boolean",
               "description": "«Для меня»: только виды спорта из моего профиля и подходящие моему уровню в них (уровень мероприятия «Любой» или как у меня; уровень не указан — любой)"
             }
+          },
+          {
+            "name": "lat",
+            "in": "query",
+            "description": "Рядом с точкой: широта (вместе с lon); онлайн-мероприятия показываются всегда",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "description": "Рядом с точкой: широта (вместе с lon); онлайн-мероприятия показываются всегда",
+              "example": 56.0153,
+              "maximum": 90,
+              "minimum": -90
+            },
+            "example": 56.0153
+          },
+          {
+            "name": "lon",
+            "in": "query",
+            "description": "Рядом с точкой: долгота (вместе с lat)",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "description": "Рядом с точкой: долгота (вместе с lat)",
+              "example": 92.8932,
+              "maximum": 180,
+              "minimum": -180
+            },
+            "example": 92.8932
+          },
+          {
+            "name": "radiusKm",
+            "in": "query",
+            "description": "Радиус «рядом» в км, 1–100; по умолчанию 10",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Радиус «рядом» в км, 1–100; по умолчанию 10",
+              "example": 10,
+              "maximum": 100,
+              "minimum": 1
+            },
+            "example": 10
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Страница с нуля; по умолчанию 0",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Страница с нуля; по умолчанию 0",
+              "example": 0,
+              "minimum": 0
+            },
+            "example": 0
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Размер страницы 1–100; по умолчанию 100. Пришло меньше size — дальше пусто",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Размер страницы 1–100; по умолчанию 100. Пришло меньше size — дальше пусто",
+              "example": 20,
+              "maximum": 100,
+              "minimum": 1
+            },
+            "example": 20
           }
         ],
         "responses": {
@@ -1706,7 +1883,8 @@
                 "CONFIRMED",
                 "PENDING",
                 "REJECTED",
-                "CANCELLED"
+                "CANCELLED",
+                "WAITLISTED"
               ]
             }
           }
@@ -2863,6 +3041,49 @@
         }
       }
     },
+    "/api/admin/organizations/{id}/return": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Вернуть анкету на доработку с причиной",
+        "description": "Только заявку на проверке (иначе 409). Не отказ: организация дополняет анкету, и она снова уходит на проверку.",
+        "operationId": "admin_returnOrganization",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectOrganizationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminOrganizationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/organizations/{id}/reject": {
       "post": {
         "tags": [
@@ -2989,6 +3210,154 @@
           },
           "409": {
             "description": "Мероприятие уже удалено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/events/{id}/restore": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Вернуть снятое мероприятие в публикацию",
+        "description": "Только снятое с публикации: снова в ленте, запись открыта, участники получают уведомление.",
+        "operationId": "admin_restoreEvent",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminEventResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Мероприятия нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Удалено или уже опубликовано",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/comments/{id}/unhide": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Вернуть скрытое сообщение",
+        "operationId": "admin_unhideComment",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Сообщения нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/comments/{id}/hide": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Скрыть сообщение с причиной",
+        "description": "Мероприятие и остальное обсуждение остаются; вместо текста все видят «Сообщение скрыто модератором», автор — причину. Ответить на скрытое и изменить его нельзя.",
+        "operationId": "admin_hideComment",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HideCommentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Сообщения нет",
             "content": {
               "application/json": {
                 "schema": {
@@ -3346,7 +3715,8 @@
                 "CONFIRMED",
                 "PENDING",
                 "REJECTED",
-                "CANCELLED"
+                "CANCELLED",
+                "WAITLISTED"
               ]
             }
           },
@@ -3699,6 +4069,63 @@
         }
       }
     },
+    "/api/events/{id}/similar": {
+      "get": {
+        "tags": [
+          "events"
+        ],
+        "summary": "Похожие встречи",
+        "description": "Когда мест нет или заявку отклонили: ближайшие опубликованные того же вида спорта и уровня, кроме этой, моих и полных.",
+        "operationId": "events_similar",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Сколько показать, 1–20",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 6
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EventSummaryResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Мероприятия нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/events/{id}/occurrences/{occurrenceId}/attendees": {
       "get": {
         "tags": [
@@ -3759,6 +4186,35 @@
                   "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/{id}/calendar.ics": {
+      "get": {
+        "tags": [
+          "events"
+        ],
+        "summary": "Добавить в календарь (.ics)",
+        "description": "Разовое — одно занятие; серия — мои отмеченные будущие занятия, а без отметок — все будущие. Приватные детали — только участникам и организатору.",
+        "operationId": "events_calendar",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Файл iCalendar",
+            "content": {
+              "text/calendar": {}
             }
           }
         }
@@ -4014,6 +4470,28 @@
         }
       }
     },
+    "/api/events/create-permission": {
+      "get": {
+        "tags": [
+          "events"
+        ],
+        "summary": "Могу ли я создавать мероприятия",
+        "description": "Админ не создаёт; организация — только после одобрения заявки. Причина — текст для пояснения у кнопки.",
+        "operationId": "events_createPermission",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatePermissionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/demo/accounts": {
       "get": {
         "tags": [
@@ -4234,7 +4712,8 @@
               "enum": [
                 "PENDING",
                 "APPROVED",
-                "REJECTED"
+                "REJECTED",
+                "REVISION"
               ]
             }
           },
@@ -4318,7 +4797,8 @@
         "tags": [
           "admin"
         ],
-        "summary": "Мероприятия во всех статусах: фильтр по статусу и поиск по названию",
+        "summary": "Мероприятия во всех статусах",
+        "description": "Фильтры по статусу, организации (её мероприятия со страницы организации) и автору, поиск по названию.",
         "operationId": "admin_listEvents",
         "parameters": [
           {
@@ -4332,6 +4812,26 @@
                 "UNPUBLISHED",
                 "DELETED"
               ]
+            }
+          },
+          {
+            "name": "organizationId",
+            "in": "query",
+            "description": "Только мероприятия этой организации",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "authorId",
+            "in": "query",
+            "description": "Только мероприятия этого автора",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
             }
           },
           {
@@ -5276,6 +5776,25 @@
               "type": "string"
             },
             "minProperties": 1
+          },
+          "sportIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "maxItems": 10,
+            "minItems": 0
+          },
+          "sportNames": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 100,
+              "minLength": 0
+            },
+            "maxItems": 10,
+            "minItems": 0
           }
         },
         "required": [
@@ -5345,7 +5864,8 @@
             "enum": [
               "PENDING",
               "APPROVED",
-              "REJECTED"
+              "REJECTED",
+              "REVISION"
             ]
           },
           "rejectReason": {
@@ -5374,6 +5894,12 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/FileResponse"
+            }
+          },
+          "sports": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SportResponse"
             }
           }
         }
@@ -5899,6 +6425,16 @@
             "format": "date-time",
             "description": "Когда снято или удалено"
           },
+          "announcement": {
+            "type": "string",
+            "description": "Объявление организатора участникам, закрепить вверху карточки; null — нет",
+            "example": "Переносим начало на 20:00"
+          },
+          "announcedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Когда опубликовано объявление; null — нет"
+          },
           "photos": {
             "type": "array",
             "description": "Фото по порядку, первое — обложка; до 6",
@@ -6106,11 +6642,22 @@
             "type": "string",
             "description": "Название",
             "example": "Шахматный клуб «Ладья»"
+          },
+          "status": {
+            "type": "string",
+            "description": "Статус допуска: страница открывается только у APPROVED",
+            "enum": [
+              "PENDING",
+              "APPROVED",
+              "REJECTED",
+              "REVISION"
+            ]
           }
         },
         "required": [
           "id",
-          "name"
+          "name",
+          "status"
         ]
       },
       "OrganizerResponse": {
@@ -6124,6 +6671,10 @@
           "author": {
             "type": "boolean",
             "description": "Автор мероприятия; его нельзя убрать, только он меняет состав организаторов"
+          },
+          "organization": {
+            "$ref": "#/components/schemas/OrganizationShortResponse",
+            "description": "Организация, если это её аккаунт: показывать её название вместо контактного лица; иначе null"
           }
         },
         "required": [
@@ -6291,7 +6842,8 @@
               "CONFIRMED",
               "PENDING",
               "REJECTED",
-              "CANCELLED"
+              "CANCELLED",
+              "WAITLISTED"
             ]
           },
           "canRegister": {
@@ -6326,6 +6878,23 @@
           "canComment": {
             "type": "boolean",
             "description": "Могу написать в обсуждение"
+          },
+          "joinAs": {
+            "type": "string",
+            "description": "Какой статус получу, если нажму «Записаться»: CONFIRMED — сразу участник, PENDING — заявка, WAITLISTED — мест нет, встану в лист ожидания; null — записаться нельзя",
+            "enum": [
+              "CONFIRMED",
+              "PENDING",
+              "REJECTED",
+              "CANCELLED",
+              "WAITLISTED"
+            ]
+          },
+          "waitlistPosition": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Моё место в листе ожидания (1 — следующий); null — я не в листе ожидания",
+            "example": 1
           }
         },
         "required": [
@@ -6390,16 +6959,21 @@
           },
           "text": {
             "type": "string",
-            "description": "Начало текста (до 140 символов); null — сообщение удалено"
+            "description": "Начало текста (до 140 символов); null — сообщение удалено или скрыто"
           },
           "deleted": {
             "type": "boolean",
             "description": "Исходное сообщение удалено"
+          },
+          "hidden": {
+            "type": "boolean",
+            "description": "Исходное сообщение скрыто модератором"
           }
         },
         "required": [
           "author",
           "deleted",
+          "hidden",
           "id"
         ]
       },
@@ -6415,9 +6989,13 @@
             "$ref": "#/components/schemas/UserShortResponse",
             "description": "Кто написал"
           },
+          "organization": {
+            "$ref": "#/components/schemas/OrganizationShortResponse",
+            "description": "Организация, от имени которой написано (автор — её аккаунт); null — человек. Показывать её название вместо имени контактного лица"
+          },
           "text": {
             "type": "string",
-            "description": "Текст; null — сообщение удалено (показать «Сообщение удалено»)"
+            "description": "Текст; null — сообщение удалено автором или скрыто модератором"
           },
           "isOrganizer": {
             "type": "boolean",
@@ -6453,6 +7031,14 @@
           "deleted": {
             "type": "boolean",
             "description": "Удалено автором"
+          },
+          "hidden": {
+            "type": "boolean",
+            "description": "Скрыто администратором: показать «Сообщение скрыто модератором»"
+          },
+          "hiddenReason": {
+            "type": "string",
+            "description": "Причина скрытия — только администратору и автору; иначе null"
           }
         },
         "required": [
@@ -6460,10 +7046,27 @@
           "canEdit",
           "createdAt",
           "deleted",
+          "hidden",
           "id",
           "isMine",
           "isOrganizer",
           "repliesCount"
+        ]
+      },
+      "AnnouncementRequest": {
+        "type": "object",
+        "description": "Объявление организатора участникам: закрепляется вверху карточки и приходит уведомлением",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Текст",
+            "example": "Переносим начало на 20:00, встречаемся у южного входа",
+            "maxLength": 1000,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "text"
         ]
       },
       "PetFitRequest": {
@@ -6612,7 +7215,8 @@
               "CONFIRMED",
               "PENDING",
               "REJECTED",
-              "CANCELLED"
+              "CANCELLED",
+              "WAITLISTED"
             ]
           },
           "message": {
@@ -7005,7 +7609,8 @@
             "enum": [
               "PENDING",
               "APPROVED",
-              "REJECTED"
+              "REJECTED",
+              "REVISION"
             ]
           },
           "rejectReason": {
@@ -7042,6 +7647,16 @@
             "items": {
               "$ref": "#/components/schemas/FileResponse"
             }
+          },
+          "sports": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SportResponse"
+            }
+          },
+          "eventsCount": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
@@ -7153,6 +7768,22 @@
           "startAt",
           "status",
           "title"
+        ]
+      },
+      "HideCommentRequest": {
+        "type": "object",
+        "description": "Скрытие сообщения администратором",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "Причина: её увидят автор сообщения и администраторы",
+            "example": "Оскорбления",
+            "maxLength": 1000,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "reason"
         ]
       },
       "OrganizationAwardResponse": {
@@ -7347,6 +7978,14 @@
             "format": "uuid",
             "description": "Организация; null — от частного лица"
           },
+          "organizer": {
+            "$ref": "#/components/schemas/UserShortResponse",
+            "description": "Кто организует: автор мероприятия (у события организации — её аккаунт)"
+          },
+          "organization": {
+            "$ref": "#/components/schemas/OrganizationShortResponse",
+            "description": "Организация для подписи «Шахматный клуб «Ладья»»; null — от частного лица"
+          },
           "myRegistrationStatus": {
             "type": "string",
             "description": "Статус моей записи; null — не записан",
@@ -7354,7 +7993,8 @@
               "CONFIRMED",
               "PENDING",
               "REJECTED",
-              "CANCELLED"
+              "CANCELLED",
+              "WAITLISTED"
             ]
           },
           "coverUrl": {
@@ -7369,6 +8009,7 @@
           "id",
           "joinMode",
           "level",
+          "organizer",
           "participantsCount",
           "recurring",
           "sport",
@@ -7427,6 +8068,18 @@
             "description": "Сколько встреч посетил",
             "example": 14
           },
+          "hostedMeetings": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Доверие к организатору: сколько встреч уже провёл",
+            "example": 6
+          },
+          "participantsTotal": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Доверие к организатору: сколько разных людей записывались на его прошедшие встречи",
+            "example": 23
+          },
           "events": {
             "type": "array",
             "description": "Опубликованные и ещё не начавшиеся мероприятия, где человек автор; ближайшие первыми",
@@ -7446,8 +8099,10 @@
           "attendedCount",
           "events",
           "firstName",
+          "hostedMeetings",
           "id",
           "lastName",
+          "participantsTotal",
           "photos",
           "sports",
           "username"
@@ -7741,7 +8396,8 @@
               "CONFIRMED",
               "PENDING",
               "REJECTED",
-              "CANCELLED"
+              "CANCELLED",
+              "WAITLISTED"
             ]
           },
           "message": {
@@ -7768,6 +8424,12 @@
           "myNextOccurrence": {
             "$ref": "#/components/schemas/OccurrenceShortResponse",
             "description": "У серии — моё ближайшее отмеченное занятие; null — не отмечен или разовое"
+          },
+          "waitlistPosition": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Место в листе ожидания (1 — следующий); null — не в листе ожидания",
+            "example": 2
           }
         },
         "required": [
@@ -7974,6 +8636,20 @@
             "items": {
               "$ref": "#/components/schemas/AwardBadgeResponse"
             }
+          },
+          "sports": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SportResponse"
+            }
+          },
+          "hostedMeetings": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "participantsTotal": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
@@ -8067,7 +8743,12 @@
               "ORGANIZER_REMOVED",
               "QUORUM_REACHED",
               "QUORUM_LOST",
-              "OCCURRENCE_CONFIRMED"
+              "OCCURRENCE_CONFIRMED",
+              "COMMENT_CREATED",
+              "COMMENT_HIDDEN",
+              "EVENT_RESTORED",
+              "EVENT_ANNOUNCEMENT",
+              "ORGANIZATION_RETURNED"
             ]
           },
           "category": {
@@ -8164,7 +8845,8 @@
               "CONFIRMED",
               "PENDING",
               "REJECTED",
-              "CANCELLED"
+              "CANCELLED",
+              "WAITLISTED"
             ]
           },
           "message": {
@@ -8183,6 +8865,11 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "queuedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Когда встал в лист ожидания (порядок очереди); null — не в листе ожидания"
           }
         },
         "required": [
@@ -8326,7 +9013,8 @@
               "CONFIRMED",
               "PENDING",
               "REJECTED",
-              "CANCELLED"
+              "CANCELLED",
+              "WAITLISTED"
             ]
           }
         },
@@ -8400,6 +9088,24 @@
         "required": [
           "coordinates",
           "type"
+        ]
+      },
+      "CreatePermissionResponse": {
+        "type": "object",
+        "description": "Может ли текущий аккаунт создавать мероприятия: фронт рисует кнопку «Создать» по этому ответу",
+        "properties": {
+          "canCreate": {
+            "type": "boolean",
+            "description": "Можно создавать"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Почему нельзя, текст для человека; null — можно",
+            "example": "Публиковать мероприятия от организации можно только после одобрения заявки"
+          }
+        },
+        "required": [
+          "canCreate"
         ]
       },
       "DemoAccountResponse": {

@@ -20,5 +20,7 @@ public record MyRegistrationResponse(
 		@Schema(description = "Мероприятие; event.status — снято ли оно с публикации", requiredMode = REQUIRED)
 		EventSummaryResponse event,
 		@Schema(description = "У серии — моё ближайшее отмеченное занятие; null — не отмечен или разовое")
-		OccurrenceShortResponse myNextOccurrence) {
+		OccurrenceShortResponse myNextOccurrence,
+		@Schema(description = "Место в листе ожидания (1 — следующий); null — не в листе ожидания", example = "2")
+		Integer waitlistPosition) {
 }

@@ -23,8 +23,13 @@ public interface UserMapper {
 
     com.hackathon.app.domain.dto.AdminUserResponse toAdmin(AppUser user, long eventsCount, long registrationsCount);
 
-	PublicUserResponse toPublic(AppUser user, List<UserSportResponse> sports, long attendedCount,
-			List<EventSummaryResponse> events, List<FileResponse> photos);
+	PublicUserResponse toPublic(AppUser user, List<UserSportResponse> sports, long attendedCount, long hostedMeetings,
+			long participantsTotal, List<EventSummaryResponse> events, List<FileResponse> photos);
+
+	/** Ссылка на аватар: новый файл или null — убрать (сгенерированный метод null пропустил бы, поэтому вручную). */
+	default void avatar(@MappingTarget AppUser user, String avatarUrl) {
+		user.setAvatarUrl(avatarUrl);
+	}
 
 	/** Правка профиля: имя, фамилия, город, о себе. */
 	void updateProfile(@MappingTarget AppUser user, UpdateProfileRequest request);

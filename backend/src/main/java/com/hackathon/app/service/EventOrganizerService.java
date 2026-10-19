@@ -10,12 +10,15 @@ import java.util.stream.Collectors;
 import com.hackathon.app.domain.dto.OrganizerResponse;
 import com.hackathon.app.domain.entity.AppUser;
 import com.hackathon.app.domain.entity.Event;
+import com.hackathon.app.domain.entity.Organization;
 import com.hackathon.app.domain.exception.ConflictException;
 import com.hackathon.app.domain.exception.ForbiddenException;
+import com.hackathon.app.domain.mapper.OrganizationMapper;
 import com.hackathon.app.domain.mapper.OrganizerMapper;
 import com.hackathon.app.repository.AppUserRepository;
 import com.hackathon.app.repository.EventOrganizerRepository;
 import com.hackathon.app.repository.EventRepository;
+import com.hackathon.app.repository.OrganizationRepository;
 import com.hackathon.app.repository.RegistrationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -31,6 +34,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class EventOrganizerService {
 
     private final EventRepository events;
+    private final OrganizationRepository organizations;
+    private final OrganizationMapper organizationMapper;
     private final EventOrganizerRepository organizers;
     private final RegistrationRepository registrations;
     private final NotificationChanges notificationChanges;
@@ -49,9 +54,12 @@ public class EventOrganizerService {
         coOrganizers.forEach(coOrganizer -> organizerIds.add(coOrganizer.getUserId()));
         var usersById = users.findAllById(organizerIds).stream()
                 .collect(Collectors.toMap(AppUser::getId, Function.identity()));
+        var organizationByAccount = organizations.findByAccountIdIn(organizerIds).stream()
+                .collect(Collectors.toMap(Organization::getAccountId, organizationMapper::toShort));
         var result = new ArrayList<OrganizerResponse>();
-        result.add(mapper.toResponse(usersById.get(event.getAuthorId()), true));
-        coOrganizers.forEach(coOrganizer -> result.add(mapper.toResponse(usersById.get(coOrganizer.getUserId()), false)));
+        result.add(mapper.toResponse(usersById.get(event.getAuthorId()), true, organizationByAccount.get(event.getAuthorId())));
+        coOrganizers.forEach(coOrganizer -> result.add(mapper.toResponse(usersById.get(coOrganizer.getUserId()), false,
+                organizationByAccount.get(coOrganizer.getUserId()))));
         return result;
     }
 
@@ -107,7 +115,7 @@ public class EventOrganizerService {
             throw new ForbiddenException("Состав организаторов меняет только автор мероприятия");
         }
         if (!policy.canManageOrganizers(event, userId)) {
-            throw new ConflictException("Мероприятие удалено, менять организаторов нельзя");
+            throw new ConflictException(policy.manageConflictReason(event, "Мероприятие удалено, менять организаторов нельзя"));
         }
         return event;
     }

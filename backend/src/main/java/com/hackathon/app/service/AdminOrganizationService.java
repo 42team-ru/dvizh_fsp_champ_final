@@ -12,9 +12,11 @@ import com.hackathon.app.domain.dto.PageResponse;
 import com.hackathon.app.domain.entity.AppUser;
 import com.hackathon.app.domain.entity.Organization;
 import com.hackathon.app.domain.enums.OrganizationStatus;
+import com.hackathon.app.domain.exception.ConflictException;
 import com.hackathon.app.domain.mapper.OrganizationMapper;
 import com.hackathon.app.repository.AppUserRepository;
 import com.hackathon.app.repository.DbTimeRepository;
+import com.hackathon.app.repository.EventRepository;
 import com.hackathon.app.repository.OrganizationRepository;
 import com.hackathon.app.util.Strings;
 import lombok.RequiredArgsConstructor;
@@ -42,8 +44,10 @@ public class AdminOrganizationService {
 	private final DbTimeRepository dbTime;
 	private final OrganizationMapper mapper;
 	private final FileService files;
+	private final OrganizationService organizationService;
+	private final EventRepository events;
 
-	/** Новые заявки сверху. q ищет по названию без учёта регистра. Документы — только в карточке (get). */
+	/** Новые заявки сверху. q ищет по названию без учёта регистра. Документы и счётчик мероприятий — только в карточке (get). */
 	@Transactional(readOnly = true)
 	public PageResponse<AdminOrganizationResponse> list(OrganizationStatus status, String q, int page, int size) {
 		var query = Strings.blankToNull(q);
@@ -54,7 +58,8 @@ public class AdminOrganizationService {
 		var accounts = users.findAllById(result.getContent().stream().map(Organization::getAccountId).toList())
 				.stream()
 				.collect(Collectors.toMap(AppUser::getId, Function.identity()));
-		return PageResponse.of(result, o -> mapper.toAdmin(o, accounts.get(o.getAccountId()), List.of()));
+		return PageResponse.of(result, o -> mapper.toAdmin(o, accounts.get(o.getAccountId()), List.of(),
+				organizationService.sportsOf(o.getId()), 0));
 	}
 
 	@Transactional(readOnly = true)
@@ -78,6 +83,19 @@ public class AdminOrganizationService {
 		return decide(org, OrganizationStatus.REJECTED, reason, adminId);
 	}
 
+	/**
+	 * Вернуть анкету на доработку: не отказ, а просьба дополнить. Только заявку на проверке (иначе 409).
+	 * Организация видит причину, правит анкету — и она снова уходит на проверку.
+	 */
+	@Transactional
+	public AdminOrganizationResponse returnForRevision(UUID id, UUID adminId, String reason) {
+		var org = find(id);
+		if (org.getStatus() != OrganizationStatus.PENDING && org.getStatus() != OrganizationStatus.REVISION) {
+			throw new ConflictException("На доработку возвращается только заявка на проверке");
+		}
+		return decide(org, OrganizationStatus.REVISION, reason, adminId);
+	}
+
 	private AdminOrganizationResponse decide(Organization org, OrganizationStatus status, String rejectReason, UUID adminId) {
 		// Повторное решение с той же причиной ничего нового организации не сообщает.
 		boolean changed = org.getStatus() != status || !Objects.equals(org.getRejectReason(), Strings.blankToNull(rejectReason));
@@ -96,6 +114,7 @@ public class AdminOrganizationService {
 	}
 
 	private AdminOrganizationResponse toAdmin(Organization org) {
-		return mapper.toAdmin(org, users.findById(org.getAccountId()).orElse(null), files.organizationDocuments(org.getId()));
+		return mapper.toAdmin(org, users.findById(org.getAccountId()).orElse(null), files.organizationDocuments(org.getId()),
+				organizationService.sportsOf(org.getId()), events.countByOrganizationId(org.getId()));
 	}
 }

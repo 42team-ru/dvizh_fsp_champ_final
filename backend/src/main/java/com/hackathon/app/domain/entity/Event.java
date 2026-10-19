@@ -9,6 +9,7 @@ import com.hackathon.app.domain.enums.EventKind;
 import com.hackathon.app.domain.enums.EventLevel;
 import com.hackathon.app.domain.enums.EventStatus;
 import com.hackathon.app.domain.enums.JoinMode;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -158,4 +159,13 @@ public class Event extends AuditEntity {
      * Кто промодерировал (id пользователя).
      */
     private UUID moderatedById;
+    /**
+     * Объявление организатора участникам, закреплено вверху карточки; null — нет.
+     */
+    @Column(length = 1000)
+    private String announcement;
+    /**
+     * Когда опубликовано текущее объявление; null — объявления нет.
+     */
+    private Instant announcedAt;
 }

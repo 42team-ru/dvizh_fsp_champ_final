@@ -1,9 +1,12 @@
 package com.hackathon.app.rest;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 
 import com.hackathon.app.domain.dto.AddOrganizerRequest;
+import com.hackathon.app.domain.dto.AnnouncementRequest;
+import com.hackathon.app.domain.dto.CreatePermissionResponse;
 import com.hackathon.app.domain.dto.EventFilter;
 import com.hackathon.app.domain.dto.EventMapFilter;
 import com.hackathon.app.domain.dto.EventMapResponse;
@@ -27,9 +30,12 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -58,8 +64,10 @@ class EventController {
 
     @GetMapping
     @Operation(operationId = "events_list", summary = "Лента мероприятий",
-            description = "Только опубликованные, ближайшие первыми, до 100 штук. Без from — начиная с текущего момента.")
-    List<EventSummaryResponse> list(@AuthenticationPrincipal Jwt jwt, @ParameterObject EventFilter filter) {
+            description = "Только опубликованные и видимые (организация одобрена), ближайшие первыми. Без from — начиная "
+                    + "с текущего момента. Постранично: page и size (до 100); пришло меньше size — дальше пусто. "
+                    + "lat/lon/radiusKm — рядом с точкой, онлайн показывается всегда.")
+    List<EventSummaryResponse> list(@AuthenticationPrincipal Jwt jwt, @ParameterObject @Valid EventFilter filter) {
         log.info("Endpoint called: GET /api/events, userId={}, request={}", jwt.getSubject(), filter);
         var response = events.list(filter, userId(jwt));
         log.info("Endpoint response: GET /api/events, count={}", response.size());
@@ -89,6 +97,16 @@ class EventController {
         log.info("Endpoint called: GET /api/events/mine, userId={}", jwt.getSubject());
         var response = events.mine(userId(jwt), status, when, searchText, page, size);
         log.info("Endpoint response: GET /api/events/mine, count={}", response.totalElements());
+        return response;
+    }
+
+    @GetMapping("/create-permission")
+    @Operation(operationId = "events_createPermission", summary = "Могу ли я создавать мероприятия",
+            description = "Админ не создаёт; организация — только после одобрения заявки. Причина — текст для пояснения у кнопки.")
+    CreatePermissionResponse createPermission(@AuthenticationPrincipal Jwt jwt) {
+        log.info("Endpoint called: GET /api/events/create-permission, userId={}", jwt.getSubject());
+        var response = events.createPermission(userId(jwt));
+        log.info("Endpoint response: GET /api/events/create-permission, response={}", response);
         return response;
     }
 
@@ -131,6 +149,62 @@ class EventController {
         var response = events.update(id, userId(jwt), request);
         log.info("Endpoint response: PUT /api/events/{}, response={}", id, response);
         return response;
+    }
+
+    @GetMapping("/{id}/similar")
+    @Operation(operationId = "events_similar", summary = "Похожие встречи",
+            description = "Когда мест нет или заявку отклонили: ближайшие опубликованные того же вида спорта и уровня, "
+                    + "кроме этой, моих и полных.")
+    @ApiResponse(responseCode = "200", description = "OK")
+    @ApiResponse(responseCode = "404", description = "Мероприятия нет", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    List<EventSummaryResponse> similar(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,
+            @Parameter(description = "Сколько показать, 1–20") @RequestParam(defaultValue = "6") int limit) {
+        log.info("Endpoint called: GET /api/events/{}/similar, userId={}, limit={}", id, jwt.getSubject(), limit);
+        var response = events.similar(id, userId(jwt), limit);
+        log.info("Endpoint response: GET /api/events/{}/similar, count={}", id, response.size());
+        return response;
+    }
+
+    @PutMapping("/{id}/announcement")
+    @Operation(operationId = "events_announce", summary = "Опубликовать объявление участникам",
+            description = "Закрепляется вверху карточки и приходит уведомлением участникам, ожидающим решения и листу ожидания. "
+                    + "Новое заменяет прежнее. Только организатор.")
+    @ApiResponse(responseCode = "200", description = "OK")
+    @ApiResponse(responseCode = "403", description = "Не организатор", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    @ApiResponse(responseCode = "409", description = "Удалено или организация не допущена", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    EventResponse announce(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,
+            @Valid @RequestBody AnnouncementRequest request) {
+        log.info("Endpoint called: PUT /api/events/{}/announcement, userId={}, request={}", id, jwt.getSubject(), request);
+        var response = events.announce(id, userId(jwt), request.text());
+        log.info("Endpoint response: PUT /api/events/{}/announcement, announcedAt={}", id, response.announcedAt());
+        return response;
+    }
+
+    @DeleteMapping("/{id}/announcement")
+    @Operation(operationId = "events_clearAnnouncement", summary = "Снять объявление")
+    @ApiResponse(responseCode = "200", description = "OK")
+    @ApiResponse(responseCode = "403", description = "Не организатор", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    EventResponse clearAnnouncement(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+        log.info("Endpoint called: DELETE /api/events/{}/announcement, userId={}", id, jwt.getSubject());
+        var response = events.clearAnnouncement(id, userId(jwt));
+        log.info("Endpoint response: DELETE /api/events/{}/announcement", id);
+        return response;
+    }
+
+    /** Исключение из правила produces = JSON: файл календаря открывается ссылкой, а не через Orval-хук. */
+    @GetMapping(path = "/{id}/calendar.ics", produces = "text/calendar")
+    @Operation(operationId = "events_calendar", summary = "Добавить в календарь (.ics)",
+            description = "Разовое — одно занятие; серия — мои отмеченные будущие занятия, а без отметок — все будущие. "
+                    + "Приватные детали — только участникам и организатору.")
+    @ApiResponse(responseCode = "200", description = "Файл iCalendar", content = @Content(mediaType = "text/calendar"))
+    ResponseEntity<String> calendar(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+        log.info("Endpoint called: GET /api/events/{}/calendar.ics, userId={}", id, jwt.getSubject());
+        var body = events.calendar(id, userId(jwt));
+        log.info("Endpoint response: GET /api/events/{}/calendar.ics, bytes={}", id, body.length());
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment().filename("event-" + id + ".ics").build().toString())
+                .contentType(new MediaType("text", "calendar", StandardCharsets.UTF_8))
+                .body(body);
     }
 
     @PostMapping("/{id}/organizers")

@@ -12,6 +12,7 @@ import com.hackathon.app.domain.entity.EventOccurrence;
 import com.hackathon.app.domain.entity.Organization;
 import com.hackathon.app.domain.entity.Registration;
 import com.hackathon.app.domain.enums.EventStatus;
+import com.hackathon.app.domain.enums.JoinMode;
 import com.hackathon.app.domain.enums.OccurrenceStatus;
 import com.hackathon.app.domain.enums.OrganizationStatus;
 import com.hackathon.app.domain.enums.QuorumStatus;
@@ -19,6 +20,7 @@ import com.hackathon.app.domain.enums.RegistrationStatus;
 import com.hackathon.app.domain.enums.SystemRole;
 import com.hackathon.app.repository.EventOccurrenceRepository;
 import com.hackathon.app.repository.EventOrganizerRepository;
+import com.hackathon.app.repository.OrganizationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -35,8 +37,12 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class EventAccessPolicy {
 
+	/** Почему нельзя управлять мероприятием отозванной организации: и команды, и подсказки в ответах. */
+	public static final String ORGANIZATION_SUSPENDED = "Организация не допущена администратором: управлять её мероприятиями нельзя";
+
 	private final EventOrganizerRepository organizers;
 	private final EventOccurrenceRepository occurrences;
+	private final OrganizationRepository organizations;
 
 	/** Автор — владелец мероприятия: только он меняет состав организаторов. */
 	public boolean isAuthor(Event event, UUID userId) {
@@ -48,9 +54,23 @@ public class EventAccessPolicy {
 		return isAuthor(event, userId) || organizers.existsByEventIdAndUserId(event.getId(), userId);
 	}
 
-	/** Добавлять и убирать соорганизаторов может только автор, пока событие не удалено. */
+	/**
+	 * Мероприятие организации, у которой админ отозвал одобрение (или ещё не одобрил): статус читаем из БД.
+	 * Такое мероприятие не видно в выдаче, запись и управление закрыты; при повторном одобрении всё возвращается.
+	 */
+	public boolean isOrganizationSuspended(Event event) {
+		return event.getOrganizationId() != null && organizations.findById(event.getOrganizationId())
+				.map(org -> org.getStatus() != OrganizationStatus.APPROVED).orElse(true);
+	}
+
+	/** Причина 409 для команды управления: удалено или организация не допущена; deletedMessage — текст для удалённого. */
+	public String manageConflictReason(Event event, String deletedMessage) {
+		return event.getStatus() == EventStatus.DELETED ? deletedMessage : ORGANIZATION_SUSPENDED;
+	}
+
+	/** Добавлять и убирать соорганизаторов может только автор, пока событие не удалено и организация допущена. */
 	public boolean canManageOrganizers(Event event, UUID userId) {
-		return isAuthor(event, userId) && event.getStatus() != EventStatus.DELETED;
+		return isAuthor(event, userId) && event.getStatus() != EventStatus.DELETED && !isOrganizationSuspended(event);
 	}
 
 	/**
@@ -65,15 +85,19 @@ public class EventAccessPolicy {
 			return "Администратора нельзя сделать организатором";
 		}
 		if (registration != null && (registration.getStatus() == RegistrationStatus.CONFIRMED
-				|| registration.getStatus() == RegistrationStatus.PENDING)) {
+				|| registration.getStatus() == RegistrationStatus.PENDING
+				|| registration.getStatus() == RegistrationStatus.WAITLISTED)) {
 			return "Пользователь записан участником: пусть сначала отменит запись";
 		}
 		return null;
 	}
 
-	/** Управлять (редактировать, решать заявки) можно организатору, пока событие не удалено. Админ не может. */
+	/**
+	 * Управлять (редактировать, решать заявки) можно организатору, пока событие не удалено и его организация
+	 * допущена. Админ не может.
+	 */
 	public boolean canManage(Event event, UUID userId) {
-		return isOrganizer(event, userId) && event.getStatus() != EventStatus.DELETED;
+		return isOrganizer(event, userId) && event.getStatus() != EventStatus.DELETED && !isOrganizationSuspended(event);
 	}
 
 	/** onlineUrl и privateDetails видят организатор и подтверждённые участники. */
@@ -107,8 +131,12 @@ public class EventAccessPolicy {
 				OccurrenceStatus.SCHEDULED, now).map(EventOccurrence::getStartAt).orElse(null);
 	}
 
-	/** confirmedCount нужен только разовому: у серии лимит мест — на занятие, а не на вступление. */
-	public String registerBlockedReason(Event event, UUID userId, Registration myRegistration, long confirmedCount, Instant now) {
+	/**
+	 * confirmedCount нужен только разовому: у серии лимит мест — на занятие, а не на вступление.
+	 * Участником записывается только человек: админ не подменяет участников, аккаунт организации — тоже.
+	 */
+	public String registerBlockedReason(Event event, SystemRole role, UUID userId, Registration myRegistration,
+			long confirmedCount, Instant now) {
 		if (event.getStatus() == EventStatus.UNPUBLISHED) {
 			return "Запись закрыта: мероприятие снято с публикации";
 		}
@@ -117,6 +145,15 @@ public class EventAccessPolicy {
 		}
 		if (isSingleCancelled(event)) {
 			return "Запись закрыта: организатор отменил мероприятие";
+		}
+		if (isOrganizationSuspended(event)) {
+			return "Запись закрыта: организация не допущена к публикации";
+		}
+		if (role == SystemRole.ADMIN) {
+			return "Администратор не записывается на мероприятия";
+		}
+		if (role == SystemRole.ORG) {
+			return "Аккаунт организации не записывается участником";
 		}
 		if (isOrganizer(event, userId)) {
 			return "Организатор не может записаться на своё мероприятие";
@@ -138,17 +175,37 @@ public class EventAccessPolicy {
 				case REJECTED -> {
 					return "Организатор отклонил вашу заявку. Если это ошибка, свяжитесь с организатором";
 				}
+				case WAITLISTED -> {
+					return "Вы в листе ожидания: запишем автоматически, когда освободится место";
+				}
 				case CANCELLED -> {
 				} // после отмены можно записаться снова
 			}
 		}
-		if (!event.isRecurring() && event.getCapacity() != null && confirmedCount >= event.getCapacity()) {
+		// у свободного разового без мест можно встать в лист ожидания (joinAs = WAITLISTED)
+		if (isFull(event, confirmedCount) && event.getJoinMode() != JoinMode.FREE) {
 			return "Мест нет";
 		}
 		return null;
 	}
 
-	/** Отменить можно свою подтверждённую запись или заявку до начала мероприятия. Отклонённую — нельзя: иначе отмена + запись обходили бы отказ. */
+	/** Мест нет: только у разового с лимитом (у серии лимит — на занятие). */
+	public boolean isFull(Event event, long confirmedCount) {
+		return !event.isRecurring() && event.getCapacity() != null && confirmedCount >= event.getCapacity();
+	}
+
+	/**
+	 * Какой статус получит запись, если её разрешает registerBlockedReason: FREE — сразу участник или, если мест нет,
+	 * лист ожидания; REQUEST — заявка на решение организатора.
+	 */
+	public RegistrationStatus joinAs(Event event, long confirmedCount) {
+		if (event.getJoinMode() != JoinMode.FREE) {
+			return RegistrationStatus.PENDING;
+		}
+		return isFull(event, confirmedCount) ? RegistrationStatus.WAITLISTED : RegistrationStatus.CONFIRMED;
+	}
+
+	/** Отменить можно свою подтверждённую запись, заявку или место в листе ожидания до начала. Отклонённую — нельзя: иначе отмена + запись обходили бы отказ. */
 	public String cancelBlockedReason(Event event, Registration myRegistration, Instant now) {
 		if (myRegistration == null || myRegistration.getStatus() == RegistrationStatus.CANCELLED) {
 			return "Вы не записаны на это мероприятие";
@@ -164,8 +221,11 @@ public class EventAccessPolicy {
 		return null;
 	}
 
-	/** Подтвердить заявку (в том числе ранее отклонённую по ошибке) можно, пока событие опубликовано и есть места. */
-	public String approveBlockedReason(Event event, Registration registration, long confirmedCount) {
+	/**
+	 * Подтвердить заявку (в том числе ранее отклонённую по ошибке) можно, пока событие опубликовано, не началось
+	 * (у серии — пока есть будущее занятие) и есть места.
+	 */
+	public String approveBlockedReason(Event event, Registration registration, long confirmedCount, Instant now) {
 		if (registration.getStatus() == RegistrationStatus.CANCELLED) {
 			return "Участник сам отменил запись";
 		}
@@ -175,7 +235,12 @@ public class EventAccessPolicy {
 		if (isSingleCancelled(event)) {
 			return "Мероприятие отменено организатором, подтверждать заявки нельзя";
 		}
-		if (!event.isRecurring() && event.getCapacity() != null && confirmedCount >= event.getCapacity()) {
+		var upcomingStart = upcomingStart(event, now);
+		if (upcomingStart == null || !upcomingStart.isAfter(now)) {
+			return event.isRecurring() ? "Все занятия серии уже прошли, подтверждать заявки нельзя"
+					: "Мероприятие уже началось, подтверждать заявки нельзя";
+		}
+		if (isFull(event, confirmedCount)) {
 			return "Мест нет";
 		}
 		return null;
@@ -190,11 +255,14 @@ public class EventAccessPolicy {
 		return event.getStatus() == EventStatus.DELETED ? "Мероприятие удалено, обсуждение закрыто" : null;
 	}
 
-	/** Ответить можно на неудалённое сообщение этого же мероприятия, пока обсуждение открыто. */
+	/** Ответить можно на неудалённое и не скрытое сообщение этого же мероприятия, пока обсуждение открыто. */
 	public String replyBlockedReason(Event event, Comment parent) {
 		var blocked = commentBlockedReason(event);
 		if (blocked != null) {
 			return blocked;
+		}
+		if (parent.isHidden()) {
+			return "Нельзя ответить на сообщение, скрытое модератором";
 		}
 		return parent.getDeletedAt() != null ? "Нельзя ответить на удалённое сообщение" : null;
 	}
@@ -207,6 +275,9 @@ public class EventAccessPolicy {
 		if (comment.getDeletedAt() != null) {
 			return "Сообщение уже удалено";
 		}
+		if (comment.isHidden()) {
+			return "Сообщение скрыто модератором";
+		}
 		return commentBlockedReason(event);
 	}
 
@@ -216,6 +287,15 @@ public class EventAccessPolicy {
 		ids.add(event.getAuthorId());
 		organizers.findByEventIdOrderByCreatedAt(event.getId()).forEach(organizer -> ids.add(organizer.getUserId()));
 		return ids;
+	}
+
+	/** Вернуть в публикацию можно только снятое: удалённое — окончательно, опубликованное — уже в ленте. */
+	public String restoreBlockedReason(Event event) {
+		return switch (event.getStatus()) {
+			case UNPUBLISHED -> null;
+			case DELETED -> "Удалённое мероприятие восстановить нельзя";
+			case PUBLISHED -> "Мероприятие и так опубликовано";
+		};
 	}
 
 	/** Админ снимает с публикации только опубликованное: удалённое вернуть нельзя. */
@@ -237,6 +317,9 @@ public class EventAccessPolicy {
 		}
 		if (event.getStatus() == EventStatus.DELETED) {
 			return "Мероприятие удалено, отмечаться нельзя";
+		}
+		if (isOrganizationSuspended(event)) {
+			return "Организация не допущена к публикации, отмечаться нельзя";
 		}
 		if (attending) {
 			return "Вы уже отметились на это занятие";
@@ -289,7 +372,7 @@ public class EventAccessPolicy {
 		if (event.getStatus() == EventStatus.DELETED) {
 			return "Мероприятие удалено, менять занятия нельзя";
 		}
-		return null;
+		return isOrganizationSuspended(event) ? ORGANIZATION_SUSPENDED : null;
 	}
 
 	/** Отменить или перенести можно только будущее занятие, которое ещё состоится. */
@@ -316,6 +399,9 @@ public class EventAccessPolicy {
 	public String cancelOccurrenceBlockedReason(Event event, EventOccurrence occurrence, Instant now) {
 		if (event.getStatus() == EventStatus.DELETED) {
 			return "Мероприятие удалено, отменять нечего";
+		}
+		if (isOrganizationSuspended(event)) {
+			return ORGANIZATION_SUSPENDED;
 		}
 		return changeOccurrenceBlockedReason(occurrence, now);
 	}
@@ -348,6 +434,9 @@ public class EventAccessPolicy {
 		}
 		if (event.getStatus() == EventStatus.UNPUBLISHED) {
 			return "Мероприятие снято с публикации";
+		}
+		if (isOrganizationSuspended(event)) {
+			return ORGANIZATION_SUSPENDED;
 		}
 		if (occurrence.getStatus() == OccurrenceStatus.CANCELLED) {
 			return "Занятие отменено";

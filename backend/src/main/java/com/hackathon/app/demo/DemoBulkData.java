@@ -362,7 +362,7 @@ final class DemoBulkData {
                     OrganizationStatus.APPROVED, null),
             club("club.workout.vvo", "Богдан", "Приморский", "Воркаут Приморья", "Владивосток", "Воркаут",
                     "Тренировки на площадках у моря.", "@workout_primorye",
-                    OrganizationStatus.PENDING, null),
+                    OrganizationStatus.REVISION, "Уточните, на каких площадках и в какие дни проходят тренировки"),
             club("club.trail.sochi", "Камила", "Горная", "Сочи Трейл", "Сочи", "Бег",
                     "Горные трейлы и пробежки по набережной.", "@sochi_trail",
                     OrganizationStatus.APPROVED, null),

@@ -108,7 +108,7 @@ class NotificationInboxE2ETest {
      * ФЛОУ: неуспешная предметная транзакция не оставляет уведомление и задачу отправки.
      * ШАГИ: 1. Создать автора, участника и свободное событие. 2. Выполнить запись в транзакции и принудительно откатить её.
      * 3. Повторить запись обычным API.
-     * ПРОВЕРЯЕМ: после rollback у автора пусто; успешная запись создаёт ровно одно уведомление и две mock-доставки.
+     * ПРОВЕРЯЕМ: после rollback у автора пусто; успешная запись создаёт ровно одно уведомление о записи и две mock-доставки.
      * ПОЧЕМУ ВАЖНО: пользователь не должен получать сообщения о действии, которое не сохранилось в БД.
      */
     @Test void rollbackDoesNotLeakNotificationsOrOutboxTasks() {
@@ -129,7 +129,10 @@ class NotificationInboxE2ETest {
         assertThat(member.notifications().items()).isEmpty();
         assertThat(deliveries.findByUserIdAndStatusIn(member.id(), EnumSet.allOf(NotificationDeliveryStatus.class))).isEmpty();
         member.joinEvent(event.id());
-        var saved = author.notifications(); assertThat(saved.items()).hasSize(1);
-        assertThat(deliveries.findByNotificationIdIn(List.of(saved.items().getFirst().id()))).hasSize(2);
+        // у автора ещё уведомление о вопросе участника — проверяем только запись
+        var saved = author.notifications().items().stream()
+                .filter(n -> n.type() == NotificationType.REGISTRATION_CREATED).toList();
+        assertThat(saved).hasSize(1);
+        assertThat(deliveries.findByNotificationIdIn(List.of(saved.getFirst().id()))).hasSize(2);
     }
 }

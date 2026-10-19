@@ -3,6 +3,7 @@ package com.hackathon.app.domain.mapper;
 import java.util.UUID;
 
 import com.hackathon.app.domain.dto.SportResponse;
+import com.hackathon.app.domain.entity.OrganizationSport;
 import com.hackathon.app.domain.entity.Sport;
 import com.hackathon.app.util.SportImages;
 import org.mapstruct.Mapper;
@@ -17,4 +18,7 @@ public interface SportMapper {
 	/** Свой вид спорта, который пользователь ввёл в форме мероприятия. */
 	@Mapping(target = "custom", constant = "true")
 	Sport toCustom(String name, String normalizedName, String slug, UUID createdById);
+
+	/** Вид спорта в анкете организации. */
+	OrganizationSport toOrganizationSport(UUID organizationId, UUID sportId);
 }

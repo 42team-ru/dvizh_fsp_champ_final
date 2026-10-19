@@ -33,6 +33,7 @@ import com.hackathon.app.domain.enums.SystemRole;
 import com.hackathon.app.domain.mapper.UserMapper;
 import com.hackathon.app.repository.AppUserRepository;
 import com.hackathon.app.service.AchievementService;
+import com.hackathon.app.service.AdminCommentService;
 import com.hackathon.app.service.AdminEventService;
 import com.hackathon.app.service.AdminOrganizationService;
 import com.hackathon.app.service.AuthService;
@@ -124,6 +125,7 @@ public class DemoSeeder {
 	private final EventOrganizerService organizerService;
 	private final OccurrenceService occurrenceService;
 	private final AdminEventService adminEventService;
+	private final AdminCommentService adminCommentService;
 	private final UserMapper userMapper;
 	private final PasswordEncoder passwordEncoder;
 	private final Clock clock;
@@ -146,21 +148,24 @@ public class DemoSeeder {
 		// Сценарий 2: одобренный клуб, заявка на проверке (одобрить или отклонить), отказ с причиной, клуб «Хищные бобры».
 		var ladya = organization(cast.id("ladya"), new SaveOrganizationRequest("Шахматный клуб «Ладья»",
 				"Любительский шахматный клуб: турниры по выходным, занятия для начинающих и детей.", CITY,
-				Map.of(ContactType.TELEGRAM, "@ladya_krsk", ContactType.PHONE, "+7 391 200-10-10")),
+				Map.of(ContactType.TELEGRAM, "@ladya_krsk", ContactType.PHONE, "+7 391 200-10-10"),
+				List.of(), List.of("Шахматы", "Шашки")),
 				OrganizationStatus.APPROVED, null, adminId, 168, 165);
 		organization(cast.id("enisey"), new SaveOrganizationRequest("Беговое сообщество «Енисей»",
 				"Бегаем по набережной три раза в неделю, готовимся к полумарафонам вместе.", CITY,
-				Map.of(ContactType.TELEGRAM, "@enisey_run", ContactType.WEBSITE, "https://enisey-run.example.com")),
+				Map.of(ContactType.TELEGRAM, "@enisey_run", ContactType.WEBSITE, "https://enisey-run.example.com"),
+				List.of(), List.of("Бег")),
 				OrganizationStatus.PENDING, null, adminId, 2, 0);
 		organization(cast.id("yoga"), new SaveOrganizationRequest("Йога на Татышеве",
 				"Йога на свежем воздухе.", CITY,
-				Map.of(ContactType.PHONE, "+7 900 300-40-50")),
+				Map.of(ContactType.PHONE, "+7 900 300-40-50"), List.of(), List.of("Йога")),
 				OrganizationStatus.REJECTED,
 				"Добавьте описание занятий, расписание и ссылку на группу или сайт, чтобы участники понимали, куда идти",
 				adminId, 11, 10);
 		var beavers = organization(cast.id("bobry"), new SaveOrganizationRequest("ССК ВГУ «Хищные бобры»",
 				"Студенческий спортивный клуб: хоккей, баскетбол и общая физподготовка для всех желающих.", CITY,
-				Map.of(ContactType.TELEGRAM, "@predatory_beavers")),
+				Map.of(ContactType.TELEGRAM, "@predatory_beavers"), List.of(),
+				List.of("Хоккей", "Баскетбол", "Фитнес")),
 				OrganizationStatus.APPROVED, null, adminId, 88, 86);
 		// Служебный код, по которому система узнаёт клуб («Свой бобр»), через API не задаётся.
 		data.assignOrganizationCode(beavers, AchievementService.BEAVERS_ORGANIZATION_CODE);
@@ -183,6 +188,9 @@ public class DemoSeeder {
 		join(clubTournament, cast.id("dmitry"), null);
 		var notationQuestion = comment(clubTournament, cast.id("elena"), "Нужно ли уметь записывать партии?");
 		reply(clubTournament, cast.id("ladya"), "Желательно, но не обязательно: бланки и подсказку по нотации дадим на месте.", notationQuestion);
+		// Объявление организатора: закреплено в карточке, участникам и ожидающим решения пришло уведомление.
+		eventService.announce(clubTournament, cast.id("ladya"),
+				"Регистрация участников с 11:30, жеребьёвка ровно в 12:00. Опоздавшие играют со второго тура.");
 		var chessLesson = event(cast.id("ladya"), "Шахматы", new EventRequest(
 				"Открытый урок шахмат для начинающих",
 				"Разберём, как ходят фигуры, и сыграем первые партии с тренером клуба.",
@@ -219,6 +227,22 @@ public class DemoSeeder {
 		reply(football, cast.id("nikolai"), "Возьмите сменную обувь: поле искусственное.", annaQuestion);
 		reply(football, cast.id("anna"), "Спасибо! Тогда записываюсь 🙂", dmitryAnswer);
 		comment(football, cast.id("sergey"), "Кто-нибудь едет от Октябрьского моста? Могу подхватить двоих");
+		// Модерация обсуждения: реклама скрыта админом, остальное обсуждение на месте.
+		var spam = comment(football, cast.id("elena"), "Продаю абонементы в фитнес-клуб со скидкой 50%, пишите в личку!");
+		adminCommentService.hide(spam, adminId, "Реклама не по теме мероприятия");
+
+		// Лист ожидания: два места заняты, Ольга ждёт; Анна при записи тоже встанет в очередь.
+		var tableTennis = event(cast.id("sergey"), "Настольный теннис", new EventRequest(
+				"Настольный теннис: один стол на двоих",
+				"Играем на счёт до 11, меняемся после каждой партии. Стол во дворе, ракетки свои.",
+				null, null, at(2, 18, 0), at(2, 20, 0), EventFormat.OFFLINE,
+				CITY + ", улица Ленина, 113, двор", "Стол у спортивной площадки",
+				null, 56.0141, 92.8562, EventLevel.ANY, EventKind.GAME,
+				null, "Своя ракетка и мячи",
+				2, JoinMode.FREE, null, null, null));
+		join(tableTennis, cast.id("dmitry"), null);
+		join(tableTennis, cast.id("nikolai"), null);
+		join(tableTennis, cast.id("olga"), null);
 
 		// Сценарий 4: запись по заявке — автор Пётр, заявки в обоих исходах и ждущие решения.
 		var chess = event(cast.id("petr"), "Шахматы", new EventRequest(
@@ -394,7 +418,7 @@ public class DemoSeeder {
 				r.schedule(), r.minParticipants())).id();
 	}
 
-	/** Записаться: при свободной записи — сразу CONFIRMED, по заявке — PENDING. */
+	/** Записаться: при свободной записи — сразу CONFIRMED (мест нет — WAITLISTED), по заявке — PENDING. */
 	private RegistrationResponse join(UUID eventId, UUID userId, String message) {
 		return registrationService.create(eventId, userId, message);
 	}

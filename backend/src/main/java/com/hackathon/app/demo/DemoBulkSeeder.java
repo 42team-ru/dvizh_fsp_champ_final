@@ -232,6 +232,7 @@ class DemoBulkSeeder {
             int daysAgo = switch (club.status()) {
                 case APPROVED -> run.between(90, 175);
                 case REJECTED -> run.between(15, 60);
+                case REVISION -> run.between(5, 12);
                 case PENDING -> run.between(1, 6);
             };
             var signedUpAt = run.now.minus(Duration.ofDays(daysAgo)).minus(Duration.ofHours(run.between(1, 10)));
@@ -240,13 +241,15 @@ class DemoBulkSeeder {
                     city.name(), null, SystemRole.ORG, signedUpAt));
             cast.remember(account.getId(), signedUpAt);
             var organizationId = organizationService.saveMine(account.getId(),
-                    new SaveOrganizationRequest(club.name(), club.description(), city.name(), club.contacts())).id();
+                    new SaveOrganizationRequest(club.name(), club.description(), city.name(), club.contacts(),
+                            List.of(), List.of(club.sport()))).id();
             var submittedAt = signedUpAt.plus(Duration.ofHours(run.between(1, 20)));
             var reviewedAt = club.status() == OrganizationStatus.PENDING ? null
                     : submittedAt.plus(Duration.ofHours(run.between(3, 50)));
             switch (club.status()) {
                 case APPROVED -> adminOrganizationService.approve(organizationId, adminId);
                 case REJECTED -> adminOrganizationService.reject(organizationId, adminId, club.rejectReason());
+                case REVISION -> adminOrganizationService.returnForRevision(organizationId, adminId, club.rejectReason());
                 case PENDING -> {
                 }
             }

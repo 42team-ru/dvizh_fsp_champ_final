@@ -13,5 +13,7 @@ import java.util.UUID;
 public record OrganizationResponse(UUID id, String name, String description, String city,
 		Map<ContactType, String> contacts, OrganizationStatus status, String rejectReason,
 		Instant submittedAt, Instant reviewedAt, Instant createdAt, Instant updatedAt,
-		String logoUrl, List<FileResponse> documents) {
+		String logoUrl, List<FileResponse> documents,
+		/** Виды спорта организации. */
+		List<SportResponse> sports) {
 }

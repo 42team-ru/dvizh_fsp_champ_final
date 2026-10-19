@@ -14,6 +14,7 @@ import com.hackathon.app.domain.dto.OrganizationResponse;
 import com.hackathon.app.domain.dto.OrganizationShortResponse;
 import com.hackathon.app.domain.dto.PublicOrganizationResponse;
 import com.hackathon.app.domain.dto.SaveOrganizationRequest;
+import com.hackathon.app.domain.dto.SportResponse;
 import com.hackathon.app.domain.entity.AppUser;
 import com.hackathon.app.domain.entity.Organization;
 import com.hackathon.app.domain.enums.OrganizationStatus;
@@ -43,11 +44,11 @@ public interface OrganizationMapper {
 			Instant reviewedAt, UUID reviewedById);
 
 	@Mapping(target = "logoUrl", source = "organization.logoFileId", qualifiedByName = "fileUrl")
-	OrganizationResponse toResponse(Organization organization, List<FileResponse> documents);
+	OrganizationResponse toResponse(Organization organization, List<FileResponse> documents, List<SportResponse> sports);
 
 	@Mapping(target = "logoUrl", source = "organization.logoFileId", qualifiedByName = "fileUrl")
 	PublicOrganizationResponse toPublic(Organization organization, List<FileResponse> documents,
-			List<AwardBadgeResponse> awards);
+			List<AwardBadgeResponse> awards, List<SportResponse> sports, long hostedMeetings, long participantsTotal);
 
 	/** Организация месяца для ленты. */
 	@Mapping(target = "logoUrl", source = "organization.logoFileId", qualifiedByName = "fileUrl")
@@ -64,7 +65,13 @@ public interface OrganizationMapper {
 	@Mapping(target = "updatedAt", source = "organization.updatedAt")
 	@Mapping(target = "account", source = "account")
 	@Mapping(target = "logoUrl", source = "organization.logoFileId", qualifiedByName = "fileUrl")
-	AdminOrganizationResponse toAdmin(Organization organization, AppUser account, List<FileResponse> documents);
+	AdminOrganizationResponse toAdmin(Organization organization, AppUser account, List<FileResponse> documents,
+			List<SportResponse> sports, long eventsCount);
+
+	/** Логотип организации: новый файл или null — убрать (сгенерированный метод null пропустил бы, поэтому вручную). */
+	default void logo(@MappingTarget Organization organization, UUID logoFileId) {
+		organization.setLogoFileId(logoFileId);
+	}
 
 	OrganizationAccountResponse toAccount(AppUser user);
 }

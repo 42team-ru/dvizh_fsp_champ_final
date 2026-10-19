@@ -43,6 +43,7 @@ public class UserProfileService {
     private final EventFeedRepository feed;
     private final UserSportService userSports;
     private final AttendanceHistoryService history;
+    private final OrganizerTrust trust;
 
     /**
      * Сколько ближайших мероприятий показываем в профиле.
@@ -59,7 +60,9 @@ public class UserProfileService {
         var now = dbTime.now();
         var ids = feed.findIds(EventSpecifications.publishedByAuthor(id), now, null, UPCOMING_LIMIT);
         var upcoming = EventListLookups.sortedLike(events.findAllById(ids), ids);
-        return userMapper.toPublic(user, userSports.of(id), history.total(id), eventService.summaries(upcoming, viewerId), photos(id));
+        var stats = trust.ofPerson(id);
+        return userMapper.toPublic(user, userSports.of(id), history.total(id), stats.hostedMeetings(),
+                stats.participantsTotal(), eventService.summaries(upcoming, viewerId), photos(id));
     }
 
     /** Правка своего профиля: имя, фамилия, город, о себе. */
@@ -79,7 +82,7 @@ public class UserProfileService {
         var user = find(userId);
         var old = storedFiles.findByUploadedByIdAndKind(userId, FileKind.AVATAR);
         var avatar = files.store(FileKind.AVATAR, upload, userId, null, null, null);
-        user.setAvatarUrl(fileMapper.fileUrl(avatar.getId()));
+        userMapper.avatar(user, fileMapper.fileUrl(avatar.getId()));
         users.saveAndFlush(user);
         files.deleteAll(old);
         return MeResponse.of(user, pets.get(userId));
@@ -88,7 +91,7 @@ public class UserProfileService {
     @Transactional
     public MeResponse deleteAvatar(UUID userId) {
         var user = find(userId);
-        user.setAvatarUrl(null);
+        userMapper.avatar(user, null);
         users.saveAndFlush(user);
         files.deleteAll(storedFiles.findByUploadedByIdAndKind(userId, FileKind.AVATAR));
         return MeResponse.of(user, pets.get(userId));

@@ -39,5 +39,15 @@ public enum NotificationType {
     /** Кворума пока не хватает. */
     QUORUM_LOST,
     /** Организатор подтвердил занятие. */
-    OCCURRENCE_CONFIRMED
+    OCCURRENCE_CONFIRMED,
+    /** Новый вопрос в обсуждении мероприятия — организаторам. */
+    COMMENT_CREATED,
+    /** Администратор скрыл сообщение — его автору. */
+    COMMENT_HIDDEN,
+    /** Администратор вернул мероприятие в публикацию. */
+    EVENT_RESTORED,
+    /** Объявление организатора участникам. */
+    EVENT_ANNOUNCEMENT,
+    /** Анкета организации возвращена на доработку. */
+    ORGANIZATION_RETURNED
 }

@@ -1,12 +1,14 @@
 package com.hackathon.app.service;
 
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.hackathon.app.domain.dto.CreatePermissionResponse;
 import com.hackathon.app.domain.dto.EventFilter;
 import com.hackathon.app.domain.dto.EventRequest;
 import com.hackathon.app.domain.dto.EventResponse;
@@ -16,6 +18,7 @@ import com.hackathon.app.domain.dto.PageResponse;
 import com.hackathon.app.domain.entity.AppUser;
 import com.hackathon.app.domain.entity.Event;
 import com.hackathon.app.domain.enums.EventFormat;
+import com.hackathon.app.domain.enums.EventLevel;
 import com.hackathon.app.domain.enums.EventStatus;
 import com.hackathon.app.domain.enums.FileKind;
 import com.hackathon.app.domain.enums.RegistrationStatus;
@@ -34,6 +37,7 @@ import com.hackathon.app.repository.EventSpecifications;
 import com.hackathon.app.repository.MineSpecifications;
 import com.hackathon.app.repository.RegistrationRepository;
 import com.hackathon.app.repository.StoredFileRepository;
+import com.hackathon.app.util.IcsCalendar;
 import com.hackathon.app.util.Strings;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -47,6 +51,7 @@ public class EventService {
 
     static final String NOT_FOUND = "Мероприятие не найдено";
     private static final int FEED_LIMIT = 100;
+    private static final int DEFAULT_RADIUS_KM = 10;
     private static final int MAX_PHOTOS = 6;
 
     private final EventRepository events;
@@ -66,18 +71,27 @@ public class EventService {
     private final ScheduleExpander expander;
     private final NotificationChanges notificationChanges;
     private final UserSportService userSports;
+    private final WaitlistService waitlist;
+    private final NotificationSubjects notificationSubjects;
 
     /**
      * Лента: только опубликованные, у которых есть занятие в периоде (без from — ещё не начавшееся), ближайшие первыми.
-     * Серия — одна карточка с ближайшим подходящим занятием.
+     * Серия — одна карточка с ближайшим подходящим занятием. Постранично (по умолчанию первые 100).
      */
     @Transactional(readOnly = true)
     public List<EventSummaryResponse> list(EventFilter filter, UUID userId) {
         var startFrom = filter.from() != null ? filter.from() : dbTime.now();
+        if ((filter.lat() == null) != (filter.lon() == null)) {
+            throw new BadRequestException("Для поиска рядом укажите и широту, и долготу");
+        }
+        var near = filter.lat() == null ? null : new EventSpecifications.Near(filter.lat(), filter.lon(),
+                filter.radiusKm() != null ? filter.radiusKm() : DEFAULT_RADIUS_KM);
         var feedSpec = EventSpecifications.feed(Strings.blankToNull(filter.searchText()), filter.sportId(),
                 filter.level(), filter.joinMode(), filter.format(), filter.organizationId(),
-                Boolean.TRUE.equals(filter.forMe()) ? userSports.preferences(userId) : null);
-        var ids = feed.findIds(feedSpec, startFrom, filter.to(), FEED_LIMIT);
+                Boolean.TRUE.equals(filter.forMe()) ? userSports.preferences(userId) : null, near);
+        int size = filter.size() != null ? filter.size() : FEED_LIMIT;
+        int page = filter.page() != null ? filter.page() : 0;
+        var ids = feed.findIds(feedSpec, startFrom, filter.to(), size, page * size);
         return summaries(EventListLookups.sortedLike(events.findAllById(ids), ids), userId, startFrom, filter.to());
     }
 
@@ -105,23 +119,37 @@ public class EventService {
         var organization = event.getOrganizationId() != null ? organizations.find(event.getOrganizationId()) : null;
         var participants = registrations.findUsers(eventId, RegistrationStatus.CONFIRMED);
         var myRegistration = registrations.findByEventIdAndUserId(eventId, userId).orElse(null);
+        var viewerRole = users.findById(userId).map(AppUser::getSystemRole).orElse(null);
         var now = dbTime.now();
         boolean canSeePrivateDetails = policy.canSeePrivateDetails(event, userId, myRegistration);
+        var registerBlocked = policy.registerBlockedReason(event, viewerRole, userId, myRegistration, participants.size(), now);
         var viewer = mapper.toViewer(
                 myRegistration != null ? myRegistration.getStatus() : null,
-                policy.registerBlockedReason(event, userId, myRegistration, participants.size(), now),
+                registerBlocked,
                 policy.isOrganizer(event, userId),
                 policy.canManage(event, userId),
                 policy.canManageOrganizers(event, userId),
                 policy.cancelBlockedReason(event, myRegistration, now) == null,
                 canSeePrivateDetails,
-                policy.commentBlockedReason(event) == null);
+                policy.commentBlockedReason(event) == null,
+                registerBlocked == null ? policy.joinAs(event, participants.size()) : null,
+                waitlist.position(myRegistration));
         return mapper.toResponse(event, sport, author, organization, organizerService.list(event), participants,
                 participants.size(), files.eventPhotos(eventId), viewer,
                 canSeePrivateDetails ? event.getOnlineUrl() : null,
                 canSeePrivateDetails ? event.getPrivateDetails() : null,
                 occurrenceService.schedule(event), occurrenceService.next(event, now),
                 occurrenceService.single(event, userId, now));
+    }
+
+    /** Кнопка «Создать мероприятие»: то же правило, что и в create (EventAccessPolicy), — фронт его не дублирует. */
+    @Transactional(readOnly = true)
+    public CreatePermissionResponse createPermission(UUID userId) {
+        var user = users.findById(userId).filter(AppUser::isActive)
+                .orElseThrow(() -> new UnauthorizedException("Сессия недействительна, войдите заново"));
+        var organization = user.getSystemRole() == SystemRole.ORG ? organizations.forAccount(userId) : null;
+        var reason = policy.createBlockedReason(user, organization);
+        return new CreatePermissionResponse(reason == null, reason);
     }
 
     /**
@@ -166,7 +194,7 @@ public class EventService {
             throw new ForbiddenException("Редактировать мероприятие может только организатор");
         }
         if (!policy.canManage(event, userId)) {
-            throw new ConflictException("Мероприятие удалено, редактировать нельзя");
+            throw new ConflictException(policy.manageConflictReason(event, "Мероприятие удалено, редактировать нельзя"));
         }
         notificationChanges.watch(eventId, userId);
         var now = dbTime.now();
@@ -197,7 +225,105 @@ public class EventService {
                 plan != null ? event.getEndAt() : request.endAt());
         events.saveAndFlush(event);
         occurrenceService.apply(event, plan, now);
+        // лимит мест увеличили или сняли — очередь продвигается сама
+        waitlist.promote(event, now);
         return get(eventId, userId);
+    }
+
+    /**
+     * Объявление участникам (подтверждённым, ожидающим решения и в листе ожидания): закрепляется в карточке и
+     * приходит уведомлением. Новое заменяет прежнее. Только организатор (403), не у удалённого (409).
+     */
+    @Transactional
+    public EventResponse announce(UUID eventId, UUID userId, String text) {
+        var event = requireOrganizerLocked(eventId, userId, "Объявления публикует только организатор",
+                "Мероприятие удалено, объявления недоступны");
+        mapper.announce(event, text, dbTime.now());
+        events.saveAndFlush(event);
+        var recipients = new HashSet<>(registrations.findUserIds(eventId, List.of(RegistrationStatus.CONFIRMED,
+                RegistrationStatus.PENDING, RegistrationStatus.WAITLISTED)));
+        recipients.addAll(policy.organizerIds(event));
+        notificationSubjects.announcement(event, recipients, userId);
+        return get(eventId, userId);
+    }
+
+    /** Снять объявление; уведомлений нет. */
+    @Transactional
+    public EventResponse clearAnnouncement(UUID eventId, UUID userId) {
+        var event = requireOrganizerLocked(eventId, userId, "Объявления снимает только организатор",
+                "Мероприятие удалено, объявления недоступны");
+        mapper.announce(event, null, null);
+        events.saveAndFlush(event);
+        return get(eventId, userId);
+    }
+
+    /**
+     * Похожие встречи: когда мест нет или заявку отклонили, человек не упирается в тупик. Опубликованные будущие
+     * того же вида спорта и совместимого уровня, кроме этой, моих (я организатор или уже записан) и полных.
+     */
+    @Transactional(readOnly = true)
+    public List<EventSummaryResponse> similar(UUID eventId, UUID userId, int limit) {
+        var event = events.findById(eventId).orElseThrow(() -> new NoSuchElementException(NOT_FOUND));
+        var now = dbTime.now();
+        int size = Math.clamp(limit, 1, 20);
+        var level = event.getLevel() == EventLevel.ANY ? null : event.getLevel();
+        var spec = EventSpecifications.feed(null, event.getSportId(), level, null, null, null, null, null);
+        // с запасом: часть отсеется ниже как моя или полная
+        var ids = feed.findIds(spec, now, null, size * 4 + 1);
+        var candidates = EventListLookups.sortedLike(events.findAllById(ids), ids).stream()
+                .filter(candidate -> !candidate.getId().equals(eventId) && !policy.isOrganizer(candidate, userId))
+                .toList();
+        return summaries(candidates, userId).stream()
+                .filter(summary -> summary.myRegistrationStatus() == null
+                        || summary.myRegistrationStatus() == RegistrationStatus.CANCELLED)
+                .filter(summary -> summary.capacity() == null || summary.recurring()
+                        || summary.participantsCount() < summary.capacity())
+                .limit(size)
+                .toList();
+    }
+
+    /**
+     * Календарь .ics: разовое — одно занятие; серия — мои отмеченные будущие занятия, а если я не отмечался —
+     * все будущие. Отменённые не попадают. Приватные детали — только тем, кому их видно (как в карточке).
+     */
+    @Transactional(readOnly = true)
+    public String calendar(UUID eventId, UUID userId) {
+        var event = events.findById(eventId).orElseThrow(() -> new NoSuchElementException(NOT_FOUND));
+        var now = dbTime.now();
+        var myRegistration = registrations.findByEventIdAndUserId(eventId, userId).orElse(null);
+        boolean privateDetails = policy.canSeePrivateDetails(event, userId, myRegistration);
+        var scheduled = occurrenceService.calendarOccurrences(event, userId, now);
+        var location = event.getFormat() == EventFormat.ONLINE ? "Онлайн" : event.getAddress();
+        var description = new StringBuilder(Strings.blankToNull(event.getDescription()) != null ? event.getDescription() : "");
+        appendLine(description, "Что взять", event.getEquipment());
+        appendLine(description, "Требования", event.getRequirements());
+        appendLine(description, "Как найти место", event.getLocationNote());
+        if (privateDetails) {
+            appendLine(description, "Для участников", event.getPrivateDetails());
+            appendLine(description, "Ссылка", event.getOnlineUrl());
+        }
+        var entries = scheduled.stream().map(occurrence -> new IcsCalendar.Entry(occurrence.getId() + "@sport-together",
+                occurrence.getStartAt(), occurrence.getEndAt(), event.getTitle(), location,
+                description.isEmpty() ? null : description.toString())).toList();
+        return IcsCalendar.build(entries, now);
+    }
+
+    private static void appendLine(StringBuilder text, String label, String value) {
+        if (Strings.blankToNull(value) != null) {
+            text.append(text.isEmpty() ? "" : "\n").append(label).append(": ").append(value);
+        }
+    }
+
+    /** Организатор (иначе 403), мероприятие под блокировкой и управляемо (иначе 409 с причиной). */
+    private Event requireOrganizerLocked(UUID eventId, UUID userId, String forbidden, String deleted) {
+        var event = events.findByIdForUpdate(eventId).orElseThrow(() -> new NoSuchElementException(NOT_FOUND));
+        if (!policy.isOrganizer(event, userId)) {
+            throw new ForbiddenException(forbidden);
+        }
+        if (!policy.canManage(event, userId)) {
+            throw new ConflictException(policy.manageConflictReason(event, deleted));
+        }
+        return event;
     }
 
     /**
@@ -231,7 +357,7 @@ public class EventService {
             throw new ForbiddenException("Менять фото может только организатор");
         }
         if (!policy.canManage(event, userId)) {
-            throw new ConflictException("Мероприятие удалено, менять фото нельзя");
+            throw new ConflictException(policy.manageConflictReason(event, "Мероприятие удалено, менять фото нельзя"));
         }
         notificationChanges.watch(eventId, userId);
         return event;
@@ -260,7 +386,8 @@ public class EventService {
                 .map(event -> mapper.toSummary(event, lookups.sport(event), lookups.confirmed(event),
                         lookups.myStatus(event), coverByEventId.get(event.getId()), lookups.next(event),
                         lookups.occurrenceAttendees(event), lookups.scheduleDescription(event),
-                        lookups.quorumStatus(event), lookups.cancelledSingle(event)))
+                        lookups.quorumStatus(event), lookups.cancelledSingle(event), lookups.author(event),
+                        lookups.organization(event)))
                 .toList();
     }
 

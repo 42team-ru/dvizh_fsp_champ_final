@@ -14,4 +14,7 @@ public interface SportRepository extends JpaRepository<Sport, UUID> {
 	List<Sport> findByNormalizedNameContainingOrderByNameAsc(String normalizedName);
 
 	Optional<Sport> findByNormalizedName(String normalizedName);
+
+	/** Занят ли slug: «мини-футбол» и «мини футбол» — разные виды, но slug у них один. */
+	boolean existsBySlug(String slug);
 }

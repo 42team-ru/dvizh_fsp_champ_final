@@ -29,6 +29,11 @@ public class EventFeedRepository {
 	 * ближайшие первыми, не больше limit. to = null — без верхней границы.
 	 */
 	public List<UUID> findIds(Specification<Event> eventFilter, Instant from, Instant to, int limit) {
+		return findIds(eventFilter, from, to, limit, 0);
+	}
+
+	/** То же со сдвигом: страница ленты (offset — сколько пропустить). */
+	public List<UUID> findIds(Specification<Event> eventFilter, Instant from, Instant to, int limit, int offset) {
 		var criteria = em.getCriteriaBuilder();
 		var query = criteria.createTupleQuery();
 		var occurrence = query.from(EventOccurrence.class);
@@ -51,7 +56,7 @@ public class EventFeedRepository {
 				.where(conditions.toArray(jakarta.persistence.criteria.Predicate[]::new))
 				.groupBy(event.get("id"))
 				.orderBy(criteria.asc(nearestStart), criteria.asc(event.get("id")));
-		return em.createQuery(query).setMaxResults(limit).getResultList().stream()
+		return em.createQuery(query).setFirstResult(offset).setMaxResults(limit).getResultList().stream()
 				.map((Tuple row) -> row.get(0, UUID.class))
 				.toList();
 	}

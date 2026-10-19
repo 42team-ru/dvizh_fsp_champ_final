@@ -16,6 +16,9 @@ public interface OrganizationRepository extends JpaRepository<Organization, UUID
 
 	Optional<Organization> findByAccountId(UUID accountId);
 
+	/** Анкеты аккаунтов одним запросом: подписать сообщения и организаторов названием организации. */
+	java.util.List<Organization> findByAccountIdIn(java.util.Collection<UUID> accountIds);
+
 	/** С блокировкой строки: параллельные загрузки документов не превысят лимит. */
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	@Query("select o from Organization o where o.accountId = :accountId")

@@ -85,7 +85,14 @@ public interface EventMapper {
 	@Mapping(target = "description", source = "description")
 	ScheduleResponse toSchedule(Event event, List<ScheduleRuleResponse> rules, String description);
 
-	/** Админ снял с публикации или удалил: статус, причина, когда и кто. */
+	/** Объявление организатора: текст и время; null, null — снять. */
+	default void announce(@MappingTarget Event event, String announcement, Instant announcedAt) {
+		// вручную: сгенерированный метод пропустил бы null и не снял бы объявление
+		event.setAnnouncement(announcement);
+		event.setAnnouncedAt(announcedAt);
+	}
+
+	/** Админ снял с публикации, удалил или вернул в публикацию: статус, причина, когда и кто. */
 	void moderate(@MappingTarget Event event, EventStatus status, String moderationReason, Instant moderatedAt,
 			UUID moderatedById);
 
@@ -118,10 +125,12 @@ public interface EventMapper {
 	@Mapping(target = "startAt", expression = "java(nextOccurrence != null ? nextOccurrence.getStartAt() : event.getStartAt())")
 	@Mapping(target = "endAt", expression = "java(nextOccurrence != null ? nextOccurrence.getEndAt() : event.getEndAt())")
 	@Mapping(target = "occurrenceId", source = "nextOccurrence.id")
+	@Mapping(target = "organizer", source = "organizer")
+	@Mapping(target = "organization", source = "organization")
 	EventSummaryResponse toSummary(Event event, Sport sport, long participantsCount,
 			RegistrationStatus myRegistrationStatus, String coverUrl, EventOccurrence nextOccurrence,
 			Long occurrenceAttendeesCount, String scheduleDescription, QuorumStatus quorumStatus,
-			boolean cancelledByOrganizer);
+			boolean cancelledByOrganizer, AppUser organizer, Organization organization);
 
 	/** Точка на карте (GeoJSON Feature); на карту попадают только мероприятия с координатами. */
 	@Mapping(target = "type", constant = "Feature")
@@ -151,5 +160,5 @@ public interface EventMapper {
 	@Mapping(target = "canRegister", expression = "java(registerBlockedReason == null)")
 	ViewerResponse toViewer(RegistrationStatus registrationStatus, String registerBlockedReason, boolean isOrganizer,
 			boolean canManage, boolean canManageOrganizers, boolean canCancel, boolean canSeePrivateDetails,
-			boolean canComment);
+			boolean canComment, RegistrationStatus joinAs, Integer waitlistPosition);
 }

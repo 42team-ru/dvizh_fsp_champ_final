@@ -26,7 +26,7 @@ public class EventMapRepository {
 	private final JdbcClient jdbc;
 
 	/**
-	 * id опубликованных очных мероприятий, у которых точка внутри области и хоть одно занятие (SCHEDULED) начинается
+	 * id опубликованных и видимых (организация одобрена) очных мероприятий, у которых точка внутри области и хоть одно занятие (SCHEDULED) начинается
 	 * в [from, to]; серия — одна точка. Ближайшие (по подходящему занятию) первыми.
 	 * minLon больше maxLon — область пересекает 180-й меридиан, ищем в двух прямоугольниках.
 	 * Null-фильтры не применяются. forUserId — лента «Для меня»: виды спорта из профиля этого пользователя
@@ -39,6 +39,8 @@ public class EventMapRepository {
 				join event_occurrences o on o.event_id = e.id
 				  and o.status = 'SCHEDULED' and o.start_at >= :from and o.start_at <= :to
 				where e.status = 'PUBLISHED' and e.format = 'OFFLINE'
+				  and (e.organization_id is null or exists (select 1 from organizations org
+				    where org.id = e.organization_id and org.status = 'APPROVED'))
 				""");
 		if (minLon <= maxLon) {
 			sql.append(" and e.location && ST_MakeEnvelope(:minLon, :minLat, :maxLon, :maxLat, 4326)");
@@ -48,7 +50,12 @@ public class EventMapRepository {
 					   or e.location && ST_MakeEnvelope(-180, :minLat, :maxLon, :maxLat, 4326))""");
 		}
 		if (searchText != null) {
-			sql.append(" and (lower(e.title) like :pattern or lower(e.description) like :pattern)");
+			sql.append("""
+					 and (lower(e.title) like :pattern or lower(e.description) like :pattern
+					   or lower(e.address) like :pattern
+					   or exists (select 1 from sports s where s.id = e.sport_id and s.normalized_name like :sportPattern)
+					   or exists (select 1 from organizations so where so.id = e.organization_id
+					     and lower(so.name) like :pattern))""");
 		}
 		if (sportId != null) {
 			sql.append(" and e.sport_id = :sportId");
@@ -76,7 +83,9 @@ public class EventMapRepository {
 				.param("to", to.atOffset(ZoneOffset.UTC))
 				.param("limit", limit);
 		if (searchText != null) {
-			statement = statement.param("pattern", "%" + searchText.toLowerCase(Locale.ROOT) + "%");
+			var lower = searchText.toLowerCase(Locale.ROOT);
+			statement = statement.param("pattern", "%" + lower + "%")
+					.param("sportPattern", "%" + lower.replace('ё', 'е') + "%");
 		}
 		if (sportId != null) {
 			statement = statement.param("sportId", sportId);
