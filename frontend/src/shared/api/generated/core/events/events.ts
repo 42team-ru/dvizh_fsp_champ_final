@@ -33,10 +33,12 @@ import type {
   EventResponse,
   EventSummaryResponse,
   EventsAddPhotoBody,
+  EventsAddPhotoParams,
   EventsListParams,
   EventsMapParams,
   EventsMineParams,
   EventsSimilarParams,
+  FocusPoint,
   OrganizerResponse,
   PageResponseEventSummaryResponse,
   ProblemDetail
@@ -307,6 +309,113 @@ export const useEventsUpdate = <TError = ErrorType<ProblemDetail>,
         TContext
       > => {
       return useMutation(getEventsUpdateMutationOptions(options), queryClient);
+    }
+    export type eventsSetPhotoFocusResponse400 = {
+  data: ProblemDetail
+  status: 400
+}
+
+export type eventsSetPhotoFocusResponse403 = {
+  data: ProblemDetail
+  status: 403
+}
+
+;
+export type eventsSetPhotoFocusResponseError = (eventsSetPhotoFocusResponse400 | eventsSetPhotoFocusResponse403) & {
+  headers: Headers;
+};
+
+export type eventsSetPhotoFocusResponse = (eventsSetPhotoFocusResponseError)
+
+export const getEventsSetPhotoFocusUrl = (id: string,
+    fileId: string,) => {
+
+
+
+
+  return `/api/events/${id}/photos/${fileId}/focus`
+}
+
+/**
+ * @summary Точка фокуса фото: вокруг неё обрезаются превью
+ */
+export const eventsSetPhotoFocus = async (id: string,
+    fileId: string,
+    focusPoint: FocusPoint, options?: Parameters<typeof authMutator>[1]): Promise<eventsSetPhotoFocusResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return authMutator<eventsSetPhotoFocusResponse>(getEventsSetPhotoFocusUrl(id,fileId),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(focusPoint)
+  }
+);}
+
+
+
+
+
+export const getEventsSetPhotoFocusMutationKey = () => ['eventsSetPhotoFocus'] as const;
+
+export const getEventsSetPhotoFocusMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsSetPhotoFocus>>, TError,EventsSetPhotoFocusMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof eventsSetPhotoFocus>>, TError,EventsSetPhotoFocusMutationVariables, TContext> => {
+
+const mutationKey = getEventsSetPhotoFocusMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof eventsSetPhotoFocus>>, EventsSetPhotoFocusMutationVariables> = (props) => {
+          const {id,fileId,data} = props ?? {};
+
+          return  eventsSetPhotoFocus(id,fileId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type EventsSetPhotoFocusMutationResult = NonNullable<Awaited<ReturnType<typeof eventsSetPhotoFocus>>>
+    export type EventsSetPhotoFocusMutationBody = FocusPoint
+    export type EventsSetPhotoFocusMutationError = ErrorType<ProblemDetail>
+    export type EventsSetPhotoFocusMutationVariables = {id: string;fileId: string;data: FocusPoint}
+
+    /**
+ * @summary Точка фокуса фото: вокруг неё обрезаются превью
+ */
+export const useEventsSetPhotoFocus = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsSetPhotoFocus>>, TError,EventsSetPhotoFocusMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof eventsSetPhotoFocus>>,
+        TError,
+        EventsSetPhotoFocusMutationVariables,
+        TContext
+      > => {
+      return useMutation(getEventsSetPhotoFocusMutationOptions(options), queryClient);
     }
     export type eventsAnnounceResponse200 = {
   data: EventResponse
@@ -774,12 +883,20 @@ export type eventsAddPhotoResponseError = (eventsAddPhotoResponse400 | eventsAdd
 
 export type eventsAddPhotoResponse = (eventsAddPhotoResponseSuccess | eventsAddPhotoResponseError)
 
-export const getEventsAddPhotoUrl = (id: string,) => {
+export const getEventsAddPhotoUrl = (id: string,
+    params?: EventsAddPhotoParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/events/${id}/photos`
+  return stringifiedParams.length > 0 ? `/api/events/${id}/photos?${stringifiedParams}` : `/api/events/${id}/photos`
 }
 
 /**
@@ -787,13 +904,14 @@ export const getEventsAddPhotoUrl = (id: string,) => {
  * @summary Добавить фото в галерею (JPG, PNG, WebP до 5 МБ)
  */
 export const eventsAddPhoto = async (id: string,
-    eventsAddPhotoBody?: EventsAddPhotoBody, options?: Parameters<typeof authMutator>[1]): Promise<eventsAddPhotoResponse> => {
+    eventsAddPhotoBody?: EventsAddPhotoBody,
+    params?: EventsAddPhotoParams, options?: Parameters<typeof authMutator>[1]): Promise<eventsAddPhotoResponse> => {
     const formData = new FormData();
 if(eventsAddPhotoBody?.file !== undefined) {
  formData.append(`file`, eventsAddPhotoBody.file);
  }
 
-  return authMutator<eventsAddPhotoResponse>(getEventsAddPhotoUrl(id),
+  return authMutator<eventsAddPhotoResponse>(getEventsAddPhotoUrl(id,params),
   {
     ...options,
     method: 'POST'
@@ -823,9 +941,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof eventsAddPhoto>>, EventsAddPhotoMutationVariables> = (props) => {
-          const {id,data} = props ?? {};
+          const {id,data,params} = props ?? {};
 
-          return  eventsAddPhoto(id,data,requestOptions)
+          return  eventsAddPhoto(id,data,params,requestOptions)
         }
 
 
@@ -838,7 +956,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type EventsAddPhotoMutationResult = NonNullable<Awaited<ReturnType<typeof eventsAddPhoto>>>
     export type EventsAddPhotoMutationBody = EventsAddPhotoBody | undefined
     export type EventsAddPhotoMutationError = ErrorType<ProblemDetail>
-    export type EventsAddPhotoMutationVariables = {id: string;data?: EventsAddPhotoBody}
+    export type EventsAddPhotoMutationVariables = {id: string;data?: EventsAddPhotoBody;params?: EventsAddPhotoParams}
 
     /**
  * @summary Добавить фото в галерею (JPG, PNG, WebP до 5 МБ)

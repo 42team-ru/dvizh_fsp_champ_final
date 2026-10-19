@@ -1,3 +1,4 @@
+import { coverOf } from "@/entity/event/lib/cover";
 import { Link, useSearchParams } from "react-router";
 import { ArrowUpRight } from "lucide-react";
 import { useRegistrationsListForEvent } from "@/shared/api/generated/core/registrations/registrations";
@@ -46,13 +47,13 @@ function summary(e: ManagedEvent, pending: number) {
 
 function Header({ event: e, pending, tabs }: { event: ManagedEvent; pending: number; tabs: React.ReactNode }) {
   const status = EVENT_STATUS[e.status];
-  const cover = e.photos[0]?.url ?? e.sport.imageUrl;
+  const cover = coverOf(e);
   const where = e.format === "ONLINE" ? "онлайн" : e.address;
   return (
     <section className="flex flex-col gap-4 rounded-[24px] border-2 border-ink bg-card px-4 pt-5 pb-4 sm:px-5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
         <div className="flex min-w-0 flex-1 items-center gap-4">
-          <img src={cover} alt="" className="size-[72px] shrink-0 rounded-[16px] border-2 border-ink bg-mint object-cover sm:size-[88px]" />
+          <img src={cover.src} style={{ objectPosition: cover.position }} alt="" className="size-[72px] shrink-0 rounded-[16px] border-2 border-ink bg-mint object-cover sm:size-[88px]" />
           <div className="flex min-w-0 flex-col items-start gap-2">
             <h1 className="font-display text-[22px] leading-[28px] font-extrabold text-foreground sm:text-2xl sm:leading-[30px]">{e.title}</h1>
             <p className="text-sm font-bold text-foreground">

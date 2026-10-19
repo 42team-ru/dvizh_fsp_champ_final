@@ -13,5 +13,7 @@ public record SportResponse(
 		@Schema(description = "Код для URL", example = "football", requiredMode = REQUIRED) String slug,
 		@Schema(description = "Добавлен пользователем, а не из справочника", requiredMode = REQUIRED) boolean custom,
 		@Schema(description = "Иллюстрация вида спорта; у видов без своей картинки — общая",
-				example = "/api/sport-images/football.webp", requiredMode = REQUIRED) String imageUrl) {
+				example = "/api/sport-images/football.webp", requiredMode = REQUIRED) String imageUrl,
+		@Schema(description = "Точка фокуса иллюстрации — голова персонажа: превью обрезаются вокруг неё",
+				requiredMode = REQUIRED) FocusPoint imageFocus) {
 }

@@ -185,6 +185,24 @@ export interface SaveUserSportsRequest {
 }
 
 /**
+ * Точка фокуса: проценты от левого и верхнего края
+ */
+export interface FocusPoint {
+  /**
+     * По горизонтали, 0–100
+     * @minimum 0
+     * @maximum 100
+     */
+  x: number;
+  /**
+     * По вертикали, 0–100
+     * @minimum 0
+     * @maximum 100
+     */
+  y: number;
+}
+
+/**
  * Вид спорта
  */
 export interface SportResponse {
@@ -197,6 +215,8 @@ export interface SportResponse {
   custom: boolean;
   /** Иллюстрация вида спорта; у видов без своей картинки — общая */
   imageUrl: string;
+  /** Точка фокуса иллюстрации — голова персонажа: превью обрезаются вокруг неё */
+  imageFocus: FocusPoint;
 }
 
 /**
@@ -534,6 +554,8 @@ export interface FileResponse {
   contentType: string;
   /** Размер в байтах */
   size: number;
+  /** Точка фокуса для превью; null — центр */
+  focus?: FocusPoint;
 }
 
 export type OrganizationResponseContacts = {[key: string]: string};
@@ -1935,6 +1957,8 @@ export interface EventSummaryResponse {
   myRegistrationStatus?: EventSummaryResponseMyRegistrationStatus;
   /** Обложка (первое фото): /api/files/{id}; null — без фото */
   coverUrl?: string;
+  /** Точка фокуса обложки; null — центр или без фото (тогда у иллюстрации вида — sport.imageFocus) */
+  coverFocus?: FocusPoint;
 }
 
 /**
@@ -3062,6 +3086,17 @@ export const RegistrationsListForEventStatus = {
   CANCELLED: 'CANCELLED',
   WAITLISTED: 'WAITLISTED',
 } as const;
+
+export type EventsAddPhotoParams = {
+/**
+ * Точка фокуса по горизонтали, % (0–100); без неё — центр
+ */
+focusX?: number;
+/**
+ * Точка фокуса по вертикали, % (0–100)
+ */
+focusY?: number;
+};
 
 export type EventsAddPhotoBody = {
   /** Изображение */

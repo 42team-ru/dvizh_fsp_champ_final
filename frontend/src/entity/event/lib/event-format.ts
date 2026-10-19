@@ -1,3 +1,4 @@
+import { coverOf } from "./cover";
 import type { EventSummaryResponse } from "@/shared/api/generated/core/appAPI.schemas";
 import { EVENT_LEVEL_LABEL } from "@/shared/lib/statuses";
 import type { EventCardData, EventCover } from "@/widgets/event-card/ui/event-card";
@@ -35,6 +36,6 @@ export function toCardData(event: EventSummaryResponse, fallbackCover: EventCove
     going,
     total: event.capacity ?? undefined,
     tone: almostFull ? "warning" : "default",
-    cover: (event.coverUrl ?? event.sport.imageUrl) ? { photo: event.coverUrl ?? event.sport.imageUrl } : fallbackCover,
+    cover: (event.coverUrl ?? event.sport.imageUrl) ? { photo: coverOf(event).src, position: coverOf(event).position } : fallbackCover,
   };
 }
