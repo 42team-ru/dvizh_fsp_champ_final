@@ -23,13 +23,13 @@ export function formatWhen(iso: string, now = new Date()) {
 }
 
 /** Мероприятие из API → данные карточки ленты. Обложка: фото события, иначе картинка вида спорта, иначе оформление слота. */
-export function toCardData(event: EventSummaryResponse, fallbackCover: EventCover): EventCardData {
+export function toCardData(event: EventSummaryResponse, fallbackCover: EventCover, distance?: string): EventCardData {
   const going = event.occurrenceAttendeesCount ?? event.participantsCount;
   const almostFull = event.capacity != null && going / event.capacity >= 0.8;
   return {
     sport: event.sport.name,
     time: formatWhen(event.startAt),
-    distance: event.format === "ONLINE" ? "Онлайн" : event.address ?? "Место уточняется",
+    distance: distance ?? (event.format === "ONLINE" ? "Онлайн" : event.address ?? "Место уточняется"),
     title: event.title,
     place: [event.scheduleDescription, EVENT_LEVEL_LABEL[event.level]].filter(Boolean).join(" · "),
     people: Array.from({ length: Math.min(3, going) }, () => ""),

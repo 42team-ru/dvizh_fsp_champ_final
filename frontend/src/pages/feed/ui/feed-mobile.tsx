@@ -35,7 +35,6 @@ const SMALL_TONES = ["bg-photo-lilac", "bg-peach", "bg-sky", "bg-photo-mint"];
 
 /** Сколько идут: у серии — отметки на ближайшее занятие, у разового — подтверждённые записи. */
 const goingOf = (e: EventSummaryResponse) => e.occurrenceAttendeesCount ?? e.participantsCount;
-const placeOf = (e: EventSummaryResponse) => (e.format === "ONLINE" ? "Онлайн" : e.address ?? "");
 
 
 const tag =
@@ -51,8 +50,9 @@ function TopReason({ text, className }: { text: string; className?: string }) {
   );
 }
 
-function BigCard({ e, index, reason, onDismiss }: {
+function BigCard({ e, index, placeOf, reason, onDismiss }: {
   e: EventSummaryResponse;
+  placeOf: (e: EventSummaryResponse) => string;
   index: number;
   /** Только у лучших рекомендаций «Для вас». */
   reason?: string;
@@ -116,8 +116,9 @@ function BigCard({ e, index, reason, onDismiss }: {
   );
 }
 
-function SmallRow({ items, reasonOf, onDismiss }: {
+function SmallRow({ items, placeOf, reasonOf, onDismiss }: {
   items: EventSummaryResponse[];
+  placeOf: (e: EventSummaryResponse) => string;
   /** Причина лучшей рекомендации вместо места. */
   reasonOf?: (id: string) => string | undefined;
   onDismiss?: (id: string) => void;
@@ -310,8 +311,8 @@ export function FeedMobile() {
           {!list.isPending && events.length === 0 && <FeedEmpty />}
           {groups.map((group, i) => (
             <div key={group[0].id} className="flex flex-col gap-4">
-              <BigCard e={group[0]} index={i} reason={list.topReasonOf(group[0].id)} onDismiss={onDismiss} />
-              {group.length > 1 && <SmallRow items={group.slice(1)} reasonOf={list.topReasonOf} onDismiss={onDismiss} />}
+              <BigCard e={group[0]} index={i} placeOf={list.placeOf} reason={list.topReasonOf(group[0].id)} onDismiss={onDismiss} />
+              {group.length > 1 && <SmallRow items={group.slice(1)} placeOf={list.placeOf} reasonOf={list.topReasonOf} onDismiss={onDismiss} />}
             </div>
           ))}
           <Promo />

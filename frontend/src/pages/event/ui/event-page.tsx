@@ -363,7 +363,7 @@ function RouteMap({ m }: { m: EventModel }) {
       {point ? (
         <LocationPicker value={point} className="absolute inset-0 rounded-none border-0" />
       ) : (
-        <Img src="memphis1.svg" className="top-0 left-0 h-[300px] w-[620px]" />
+        <Img src="online.svg" className="top-0 left-0 h-full w-full object-cover" />
       )}
       <Badge variant="outline" className="absolute top-[18px] left-[18px] bg-card text-[13px] leading-[18px]">
         <Icon name="event/icon-route1" className="size-[14px]" />

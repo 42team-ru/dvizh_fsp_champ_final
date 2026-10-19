@@ -1,0 +1,13 @@
+<svg preserveAspectRatio="xMidYMid slice" width="620" height="300" viewBox="0 0 620 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="620" height="300" fill="#E3E0FF"/>
+<circle cx="70" cy="70" r="26" fill="#D7F3E6" stroke="#13142B" stroke-width="3"/>
+<path d="M540 40l30 52h-60z" fill="#FFD84D" stroke="#13142B" stroke-width="3" stroke-linejoin="round"/>
+<circle cx="560" cy="230" r="8" fill="#13142B"/><circle cx="582" cy="230" r="8" fill="#13142B"/><circle cx="604" cy="230" r="8" fill="#13142B"/>
+<path d="M40 210q15-14 30 0t30 0" stroke="#13142B" stroke-width="3" stroke-linecap="round"/>
+<rect x="196" y="48" width="228" height="148" rx="10" fill="#fff" stroke="#13142B" stroke-width="3"/>
+<rect x="210" y="62" width="200" height="120" rx="4" fill="#D7F3E6" stroke="#13142B" stroke-width="3"/>
+<circle cx="310" cy="122" r="26" fill="#fff" stroke="#13142B" stroke-width="3"/>
+<path d="M302 110l18 12-18 12z" fill="#13142B"/>
+<path d="M170 196h280l-14 30H184z" fill="#FFD84D" stroke="#13142B" stroke-width="3" stroke-linejoin="round"/>
+<rect x="278" y="205" width="64" height="8" rx="4" fill="#13142B"/>
+</svg>
