@@ -28,6 +28,7 @@ import type {
   NotificationPageResponse,
   NotificationPollResponse,
   NotificationSettingsResponse,
+  NotificationTypeCountResponse,
   NotificationsListParams,
   NotificationsPollParams,
   ReadNotificationsRequest,
@@ -555,6 +556,14 @@ export const getNotificationsListUrl = (params?: NotificationsListParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
+    const explodeParameters = ["types"];
+
+    if (Array.isArray(value) && explodeParameters.includes(key)) {
+      value.forEach((v) => {
+        normalizedParams.append(key, v === null ? 'null' : String(v));
+      });
+      return;
+    }
 
     if (value !== undefined) {
       normalizedParams.append(key, value === null ? 'null' : String(value))
@@ -647,6 +656,118 @@ export function useNotificationsList<TData = Awaited<ReturnType<typeof notificat
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getNotificationsListQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type notificationsUnreadCountsResponse200 = {
+  data: NotificationTypeCountResponse[]
+  status: 200
+}
+
+export type notificationsUnreadCountsResponseSuccess = (notificationsUnreadCountsResponse200) & {
+  headers: Headers;
+};
+;
+
+export type notificationsUnreadCountsResponse = (notificationsUnreadCountsResponseSuccess)
+
+export const getNotificationsUnreadCountsUrl = () => {
+
+
+
+
+  return `/api/notifications/unread-counts`
+}
+
+/**
+ * @summary Непрочитанные уведомления по типам
+ */
+export const notificationsUnreadCounts = async ( options?: Parameters<typeof authMutator>[1]): Promise<notificationsUnreadCountsResponse> => {
+
+  return authMutator<notificationsUnreadCountsResponse>(getNotificationsUnreadCountsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getNotificationsUnreadCountsQueryKey = () => {
+    return [
+    `/api/notifications/unread-counts`
+    ] as const;
+    }
+
+
+export const getNotificationsUnreadCountsQueryOptions = <TData = Awaited<ReturnType<typeof notificationsUnreadCounts>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof notificationsUnreadCounts>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getNotificationsUnreadCountsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof notificationsUnreadCounts>>> = ({ signal }) => notificationsUnreadCounts({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof notificationsUnreadCounts>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type NotificationsUnreadCountsQueryResult = NonNullable<Awaited<ReturnType<typeof notificationsUnreadCounts>>>
+export type NotificationsUnreadCountsQueryError = ErrorType<unknown>
+
+
+export function useNotificationsUnreadCounts<TData = Awaited<ReturnType<typeof notificationsUnreadCounts>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof notificationsUnreadCounts>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof notificationsUnreadCounts>>,
+          TError,
+          Awaited<ReturnType<typeof notificationsUnreadCounts>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useNotificationsUnreadCounts<TData = Awaited<ReturnType<typeof notificationsUnreadCounts>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof notificationsUnreadCounts>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof notificationsUnreadCounts>>,
+          TError,
+          Awaited<ReturnType<typeof notificationsUnreadCounts>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useNotificationsUnreadCounts<TData = Awaited<ReturnType<typeof notificationsUnreadCounts>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof notificationsUnreadCounts>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Непрочитанные уведомления по типам
+ */
+
+export function useNotificationsUnreadCounts<TData = Awaited<ReturnType<typeof notificationsUnreadCounts>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof notificationsUnreadCounts>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getNotificationsUnreadCountsQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

@@ -7,27 +7,34 @@ import { Icon } from "@/shared/components/ui/icon";
 import { Progress } from "@/shared/components/ui/progress";
 import { cn } from "cn";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
+import { Link } from "react-router";
+import { PendingDialog, PendingRow, viewOf } from "./activity-parts";
+import { ACTIVITY_TABS, type ActivityModel } from "../model/use-activity";
 
 const dir = "m-activity";
-const CHIPS = ["Все", "Заявки", "Напоминания", "Подписки"];
 
-const b = "font-extrabold";
-const dim = (t: string) => <span className="text-muted-foreground"> · {t}</span>;
 
-function Unread() {
-  return <span className="box-border size-[10px] shrink-0 rounded-[5px] border-[1.5px] border-ink bg-accent" />;
+/** Кружок «не прочитано»: нажатие помечает уведомление прочитанным; область нажатия под палец. */
+function Unread({ onRead }: { onRead(): void }) {
+  return (
+    <button type="button" onClick={onRead} aria-label="Пометить прочитанным"
+      className="-m-3 flex size-[34px] shrink-0 items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-ink">
+      <span className="box-border size-[12px] rounded-[6px] border-[1.5px] border-ink bg-accent" />
+    </button>
+  );
 }
 
 /** Строка уведомления: слева значок или аватар, текст, справа кнопка. */
 function Row({
   lead,
   action,
-  unread,
+  onRead,
   children,
 }: {
   lead: React.ReactNode;
   action?: React.ReactNode;
-  unread?: boolean;
+  /** Есть — уведомление не прочитано: справа кружок, нажатие помечает прочитанным. */
+  onRead?: () => void;
   children: React.ReactNode;
 }) {
   return (
@@ -36,7 +43,7 @@ function Row({
         {lead}
         <div className="min-w-0 flex-1 text-sm leading-5 font-medium text-foreground">{children}</div>
         {action}
-        {unread ? <Unread /> : null}
+        {onRead ? <Unread onRead={onRead} /> : null}
       </div>
     </div>
   );
@@ -55,18 +62,6 @@ function IconBox({ tone, icon }: { tone: string; icon: string }) {
   );
 }
 
-function Avatar({ i, tone }: { i: string; tone: string }) {
-  return (
-    <Disc initials={i} tone={tone} className="size-11 shrink-0" textClassName="text-[13px] leading-[normal]" />
-  );
-}
-
-const small = (label: string, w: string) => (
-  <Button variant="soft" className={cn("h-10 shrink-0 px-5 text-xs", w)}>
-    {label}
-  </Button>
-);
-
 function Label({ children }: { children: string }) {
   return (
     <p className="px-4 text-[11px] leading-[normal] font-extrabold tracking-[1.5px] text-muted-foreground">
@@ -75,7 +70,7 @@ function Label({ children }: { children: string }) {
   );
 }
 
-export function ActivityMobile() {
+export function ActivityMobile({ m }: { m: ActivityModel }) {
   return (
     <div className="relative isolate flex min-h-dvh overflow-clip flex-col gap-4 bg-background pb-[110px] lg:hidden">
       <MemphisBackground variant="mobile" seed="activity" />
@@ -95,83 +90,79 @@ export function ActivityMobile() {
         </button>
       </div>
 
-      <div className="no-scrollbar flex gap-2 overflow-x-auto px-4">
-        {CHIPS.map((c, i) => (
-          <Button
-            key={c}
-            variant={i === 0 ? "ink" : "soft"}
-            rough={false}
-            className="h-11 shrink-0 px-[18px] text-sm shadow-none"
-          >
-            {c}
-          </Button>
-        ))}
-      </div>
-
-      <Label>СЕГОДНЯ</Label>
-
-      <div className="px-4">
-        <div className="box-border flex w-full flex-col gap-3 rounded-[20px] border-2 border-ink bg-lime-soft p-[14px]">
-          <div className="flex items-start gap-3">
-            <Avatar i="ЛП" tone="bg-sky" />
-            <p className="min-w-0 flex-1 text-sm leading-5 font-medium text-foreground">
-              <span className={b}>Лера Петрова</span> хочет пойти на{" "}
-              <span className={b}>«Вечерний футбол 6×6»</span>
-              {dim("10 мин")}
-            </p>
-            <Unread />
-          </div>
-          <div className="flex gap-[10px]">
-            <Button rough={false} className="h-12 min-w-0 flex-1 px-5 text-sm">Принять</Button>
-            <Button variant="soft" rough={false} className="h-12 min-w-0 flex-1 px-5 text-sm">
-              Нет
+      <div className="no-scrollbar flex gap-2 overflow-x-auto px-4" role="tablist" aria-label="Тип активности">
+        {ACTIVITY_TABS.map((t) => {
+          const unread = m.unreadOf(t.key);
+          return (
+            <Button key={t.key} role="tab" aria-selected={m.tab === t.key} variant={m.tab === t.key ? "ink" : "soft"}
+              rough={false} className="h-11 shrink-0 gap-2 px-[18px] text-sm shadow-none" onClick={() => m.setTab(t.key)}>
+              {t.label}
+              {t.key !== "all" && unread > 0 && (
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-[10px] bg-accent px-1 text-[11px] font-extrabold text-white">{unread}</span>
+              )}
             </Button>
-          </div>
-        </div>
+          );
+        })}
       </div>
 
-      <Row
-        lead={<IconBox tone="bg-lavender-soft" icon="icon-clock" />}
-        action={small("Билет", "w-[84px]")}
-        unread
-      >
-        Через 2 часа <span className={b}>«Вечерний футбол 6×6»</span>. Сбор в 19:20 у входа
-        {dim("17:30")}
-      </Row>
-      <Row lead={<IconBox tone="bg-rose" icon="icon-heart" />}>
-        <span className={b}>Дима и ещё 5</span> оценили твою пробежку{dim("9:12")}
-      </Row>
+      {m.totalUnread > 0 && m.tab !== "requests" && (
+        <div className="px-4">
+          <Button variant="ghost" size="sm" onClick={m.markAllRead}>Отметить всё прочитанным ({m.totalUnread})</Button>
+        </div>
+      )}
 
-      <Label>ВЧЕРА</Label>
-
-      <Row lead={<Avatar i="СМ" tone="bg-sky" />} action={small("Ответить", "w-[84px]")}>
-        <span className={b}>Саша</span> ответила: «В субботу со мной?»{dim("21:04")}
-      </Row>
+      {m.tab === "requests" ? (
+        <>
+          <Label>ЖДУТ РЕШЕНИЯ ОРГАНИЗАТОРА</Label>
+          {m.pendingItems.length === 0 && !m.pending.isPending && (
+            <p className="px-4 text-sm font-medium text-muted-foreground">Заявок в ожидании нет.</p>
+          )}
+          {m.pendingItems.map((reg) => <div key={reg.id} className="px-4"><PendingRow reg={reg} /></div>)}
+        </>
+      ) : (
+        <>
+          {m.list.isPending && <p className="px-4 text-sm font-medium text-muted-foreground">Загружаем…</p>}
+          {m.list.isSuccess && m.groups.length === 0 && (
+            <p className="px-4 text-sm font-medium text-muted-foreground">Здесь пока пусто: ответы, достижения и напоминания появятся тут.</p>
+          )}
+          {m.groups.map((group) => (
+            <div key={group.label} className="flex flex-col gap-3">
+              <Label>{group.label}</Label>
+              {group.items.map((n) => {
+                const v = viewOf(n);
+                return (
+                  <Row key={n.id} onRead={n.readAt ? undefined : () => m.markRead(n)}
+                    lead={v.actor
+                      ? <Disc initials={(v.actor.firstName?.[0] ?? "") + (v.actor.lastName?.[0] ?? "")} user={v.actor} tone="bg-sky"
+                          className="size-11 shrink-0" textClassName="text-[13px] leading-[normal]" />
+                      : <IconBox tone={v.tone} icon={v.icon} />}
+                    action={
+                      <Button asChild variant="soft" className="h-10 shrink-0 px-4 text-xs">
+                        <Link to={v.href} onClick={() => m.markRead(n)}>{v.action}</Link>
+                      </Button>
+                    }>
+                    {v.text}
+                  </Row>
+                );
+              })}
+            </div>
+          ))}
+          {m.hasMore && <div className="px-4"><Button variant="soft" className="w-full" onClick={m.showMore}>Показать ещё</Button></div>}
+        </>
+      )}
 
       <div className="px-4">
-        <div className="box-border flex w-full items-center gap-3 rounded-[20px] border-2 border-ink bg-card p-[14px]">
-          <IconBox tone="bg-secondary" icon="icon-trophy" />
-          <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
-            <span className="text-sm leading-[normal] font-medium whitespace-nowrap text-foreground">
-              Новый бейдж
-            </span>
-            <Badge
-              variant="secondary"
-              className="h-auto border-[1.5px] px-[10px] py-1 text-[10px] leading-[normal] font-extrabold tracking-[1px]"
-            >
-              СЕРИЯ 7 ДНЕЙ
-            </Badge>
-            <span className="text-xs leading-[normal] font-bold whitespace-nowrap text-muted-foreground">
-              +50 монет · 20:00
-            </span>
+        <div className="box-border flex w-full items-center justify-between gap-3 rounded-[24px] border-2 border-ink bg-primary p-[18px] text-white">
+          <div className="min-w-0">
+            <span className="text-[10px] font-extrabold tracking-[1.5px] text-lilac">ЗАЯВКИ</span>
+            <p className="font-display text-[32px] leading-[normal] font-extrabold">{m.pendingTotal}</p>
+            <p className="truncate text-[13px] font-bold">{m.pendingItems[0] ? `ждёт ответа: «${m.pendingItems[0].event.title}»` : "нет заявок в ожидании"}</p>
           </div>
-          {small("Смотреть", "w-[92px]")}
+          <PendingDialog items={m.pendingItems} total={m.pendingTotal} loading={m.pending.isPending}>
+            <Button variant="secondary" className="h-10 shrink-0 px-4 text-sm">Посмотреть</Button>
+          </PendingDialog>
         </div>
       </div>
-
-      <Row lead={<Avatar i="МС" tone="bg-mint" />} action={small("В ответ", "w-[84px]")}>
-        <span className={b}>Макс Сидоров</span> подписался на тебя{dim("14:36")}
-      </Row>
 
       <div className="px-4">
         <div className="box-border flex w-full items-center gap-2 overflow-hidden rounded-[24px] border-2 border-ink bg-secondary p-[18px] shadow-[4px_4px_0_var(--ink)]">

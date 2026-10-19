@@ -11,7 +11,7 @@ import { toast } from "@/shared/lib/toast";
 import { cn } from "cn";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 import { LocationPicker } from "@/widgets/events-map/ui/location-picker";
-import { fullName, initials, type useEvent } from "../model/use-event";
+import { fullName, initials, privateNote, type useEvent } from "../model/use-event";
 
 const dir = "m-event";
 const TONES = ["bg-sky", "bg-mint", "bg-peach", "bg-secondary", "bg-lavender-soft"];
@@ -223,11 +223,12 @@ export function EventMobile({ m }: { m: EventModel }) {
               <IconRow key={f.label} icon={f.icon} label={f.label} value={`${f.value}${f.label === "КОГДА" ? ` · ${f.lines[0]}` : ""}`}
                 hint={f.label === "КОГДА" ? f.lines[1] : f.lines.filter(Boolean).join(" · ")} />
             ))}
-            {viewer.canSeePrivateDetails && (e.privateDetails || e.onlineUrl) && (
-              <p className="rounded-xl border-2 border-dashed border-ink px-3 py-2 text-xs leading-[17px] font-bold text-foreground">
-                {e.privateDetails}{e.onlineUrl && <> <a href={e.onlineUrl} className="underline">{e.onlineUrl}</a></>}
-              </p>
-            )}
+            {/* Детали для участников: сами детали или пояснение по ситуации (как на десктопе) */}
+            <p className="rounded-xl border-2 border-dashed border-ink px-3 py-2 text-xs leading-[17px] font-bold text-foreground">
+              {viewer.canSeePrivateDetails && e.format === "ONLINE" && e.onlineUrl
+                ? <>{e.privateDetails && <>{e.privateDetails} · </>}<a href={e.onlineUrl} target="_blank" rel="noreferrer" className="underline">{e.onlineUrl}</a></>
+                : privateNote(e)}
+            </p>
           </div>
         </div>
       </div>
@@ -307,12 +308,6 @@ export function EventMobile({ m }: { m: EventModel }) {
                   {e.locationNote || e.address}
                 </span>
               </div>
-              <Button asChild variant="soft" className="h-11 w-[92px] shrink-0 gap-2 px-5 text-[13px]">
-                <a href={`https://2gis.ru/geo/${point[0]},${point[1]}`} target="_blank" rel="noreferrer">
-                  <Icon name={`${dir}/icon-map`} className="size-[18px]" />
-                  Карта
-                </a>
-              </Button>
             </div>
           </Card>
         </div>

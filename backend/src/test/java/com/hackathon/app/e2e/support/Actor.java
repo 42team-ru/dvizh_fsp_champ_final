@@ -49,6 +49,9 @@ import com.hackathon.app.domain.dto.MyRegistrationResponse;
 import com.hackathon.app.domain.dto.OrganizationResponse;
 import com.hackathon.app.domain.dto.OrganizerResponse;
 import com.hackathon.app.domain.dto.PageResponse;
+import com.hackathon.app.domain.dto.RecommendationExplainResponse;
+import com.hackathon.app.domain.dto.RecommendedEventResponse;
+import com.hackathon.app.domain.dto.RecommendedOrganizationResponse;
 import com.hackathon.app.domain.dto.PublicOrganizationResponse;
 import com.hackathon.app.domain.dto.RegistrationResponse;
 import com.hackathon.app.domain.dto.SportResponse;
@@ -714,6 +717,41 @@ public class Actor {
 	public CreatePermissionResponse createPermission() {
 		return send("GET /api/events/create-permission", get("/api/events/create-permission"), null,
 				type(CreatePermissionResponse.class));
+	}
+
+	// ---------- рекомендации ----------
+
+	/** Подборка «Вам подойдёт» с параметрами (lat, lon, radiusKm, sportId, page, size). */
+	public PageResponse<RecommendedEventResponse> recommendedEvents(Map<String, String> params) {
+		var request = get("/api/recommendations/events");
+		params.forEach(request::param);
+		return send("GET /api/recommendations/events", request, null,
+				api.generic(PageResponse.class, RecommendedEventResponse.class));
+	}
+
+	/** Разбор оценки мероприятия для меня. */
+	public RecommendationExplainResponse explainRecommendation(UUID eventId) {
+		return send("GET /api/recommendations/events/" + eventId + "/explain",
+				get("/api/recommendations/events/{id}/explain", eventId), null, type(RecommendationExplainResponse.class));
+	}
+
+	/** «Не интересно» с причиной (NOT_INTERESTED, NOT_MY_SPORT, TOO_FAR, BAD_TIME). */
+	public void dismissRecommendation(UUID eventId, String reason) {
+		send("POST /api/recommendations/events/" + eventId + "/dismiss",
+				post("/api/recommendations/events/{id}/dismiss", eventId), Map.of("reason", reason), null);
+	}
+
+	/** Вернуть скрытое в подборку. */
+	public void undismissRecommendation(UUID eventId) {
+		send("DELETE /api/recommendations/events/" + eventId + "/dismiss",
+				delete("/api/recommendations/events/{id}/dismiss", eventId), null, null);
+	}
+
+	/** «Клубы для вас» с параметрами (lat, lon, limit). */
+	public List<RecommendedOrganizationResponse> recommendedOrganizations(Map<String, String> params) {
+		var request = get("/api/recommendations/organizations");
+		params.forEach(request::param);
+		return send("GET /api/recommendations/organizations", request, null, listOf(RecommendedOrganizationResponse.class));
 	}
 
 	// ---------- запасной выход ----------

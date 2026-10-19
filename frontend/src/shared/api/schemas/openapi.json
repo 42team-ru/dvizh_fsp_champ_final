@@ -53,6 +53,10 @@
       "description": "Профиль пользователя"
     },
     {
+      "name": "recommendations",
+      "description": "Персональная подборка мероприятий и клубов"
+    },
+    {
       "name": "occurrences",
       "description": "Занятия мероприятия: даты серии, отметки «приду», отмена и перенос занятий"
     },
@@ -1353,6 +1357,28 @@
         }
       }
     },
+    "/api/users/me/pet/cheer": {
+      "post": {
+        "tags": [
+          "pets"
+        ],
+        "summary": "Развеселить бобра",
+        "description": "Первый тычок или поглаживание: плохие новости до этого момента больше не портят настроение.",
+        "operationId": "pets_cheer",
+        "responses": {
+          "200": {
+            "description": "Бобр с пересчитанным настроением",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PetResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/users/me/album": {
       "post": {
         "tags": [
@@ -1569,6 +1595,86 @@
           },
           "409": {
             "description": "Мест нет, мероприятие снято или участник сам отменил",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/recommendations/events/{eventId}/dismiss": {
+      "post": {
+        "tags": [
+          "recommendations"
+        ],
+        "summary": "Не интересно",
+        "description": "Мероприятие больше не попадает в подборку. NOT_MY_SPORT — ещё и реже показывать этот вид спорта. Повтор обновляет причину.",
+        "operationId": "recommendations_dismiss",
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DismissRecommendationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Скрыто"
+          },
+          "404": {
+            "description": "Мероприятия нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "recommendations"
+        ],
+        "summary": "Вернуть скрытое в подборку",
+        "description": "Если не скрывали — ничего не происходит.",
+        "operationId": "recommendations_undismiss",
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Возвращено"
+          },
+          "404": {
+            "description": "Мероприятия нет",
             "content": {
               "application/json": {
                 "schema": {
@@ -4120,6 +4226,381 @@
         }
       }
     },
+    "/api/recommendations/organizations": {
+      "get": {
+        "tags": [
+          "recommendations"
+        ],
+        "summary": "Клубы для вас",
+        "description": "Одобренные организации со встречами в ближайшие 30 дней: по моим видам спорта (и похожим), расстоянию до их встреч (без точки — по городу), надёжности, активности, для новичка — доле встреч «для всех». Клубы, где я уже был 3+ раза, — ниже.",
+        "operationId": "recommendations_organizations",
+        "parameters": [
+          {
+            "name": "lat",
+            "in": "query",
+            "description": "Текущее место: широта (вместе с lon)",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "maximum": 90,
+              "minimum": -90
+            }
+          },
+          {
+            "name": "lon",
+            "in": "query",
+            "description": "Текущее место: долгота (вместе с lat)",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "maximum": 180,
+              "minimum": -180
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Сколько показать, 1–20",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 6,
+              "maximum": 20,
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RecommendedOrganizationResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Широта без долготы или наоборот",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/recommendations/events": {
+      "get": {
+        "tags": [
+          "recommendations"
+        ],
+        "summary": "Подборка мероприятий «Вам подойдёт»",
+        "description": "Опубликованные мероприятия с занятием в ближайшие 30 дней, лучшие сверху. Оценка складывается из вида спорта (профиль, история, похожие виды), уровня, расстояния, удобного времени, знакомых участников и организатора, надёжности, популярности, кворума и близости начала; выдача разнообразится, каждая 5-я позиция — «Попробуйте новое». Без моих, записанных, скрытых и полных. Точка отсчёта: lat/lon → домашняя точка из предпочтений → обычные места. Для аккаунтов организаций и админа — пусто.",
+        "operationId": "recommendations_events",
+        "parameters": [
+          {
+            "name": "lat",
+            "in": "query",
+            "description": "Текущее место: широта (вместе с lon); иначе — домашняя точка из предпочтений",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "description": "Текущее место: широта (вместе с lon); иначе — домашняя точка из предпочтений",
+              "example": 56.0153,
+              "maximum": 90,
+              "minimum": -90
+            },
+            "example": 56.0153
+          },
+          {
+            "name": "lon",
+            "in": "query",
+            "description": "Текущее место: долгота (вместе с lat)",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "description": "Текущее место: долгота (вместе с lat)",
+              "example": 92.8932,
+              "maximum": 180,
+              "minimum": -180
+            },
+            "example": 92.8932
+          },
+          {
+            "name": "radiusKm",
+            "in": "query",
+            "description": "Радиус в км, 1–100; по умолчанию из предпочтений",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Радиус в км, 1–100; по умолчанию из предпочтений",
+              "example": 5,
+              "maximum": 100,
+              "minimum": 1
+            },
+            "example": 5
+          },
+          {
+            "name": "sportId",
+            "in": "query",
+            "description": "Только этот вид спорта",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Только этот вид спорта"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "Начало не раньше; по умолчанию — через 30 минут от текущего момента",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Начало не раньше; по умолчанию — через 30 минут от текущего момента"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "Начало не позже; по умолчанию — 30 дней вперёд",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Начало не позже; по умолчанию — 30 дней вперёд"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Страница с нуля",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Страница с нуля",
+              "example": 0,
+              "minimum": 0
+            },
+            "example": 0
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Размер страницы 1–50; по умолчанию 20",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Размер страницы 1–50; по умолчанию 20",
+              "example": 20,
+              "maximum": 50,
+              "minimum": 1
+            },
+            "example": 20
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseRecommendedEventResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Широта без долготы или наоборот",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/recommendations/events/{eventId}/explain": {
+      "get": {
+        "tags": [
+          "recommendations"
+        ],
+        "summary": "Почему мне это рекомендовано",
+        "description": "Разбор оценки мероприятия для меня: значение, вес и вклад каждого признака, множители и попадёт ли оно в подборку (если нет — почему).",
+        "operationId": "recommendations_explain",
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "lat",
+            "in": "query",
+            "description": "Текущее место: широта (вместе с lon); иначе — домашняя точка из предпочтений",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "description": "Текущее место: широта (вместе с lon); иначе — домашняя точка из предпочтений",
+              "example": 56.0153,
+              "maximum": 90,
+              "minimum": -90
+            },
+            "example": 56.0153
+          },
+          {
+            "name": "lon",
+            "in": "query",
+            "description": "Текущее место: долгота (вместе с lat)",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "description": "Текущее место: долгота (вместе с lat)",
+              "example": 92.8932,
+              "maximum": 180,
+              "minimum": -180
+            },
+            "example": 92.8932
+          },
+          {
+            "name": "radiusKm",
+            "in": "query",
+            "description": "Радиус в км, 1–100; по умолчанию из предпочтений",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Радиус в км, 1–100; по умолчанию из предпочтений",
+              "example": 5,
+              "maximum": 100,
+              "minimum": 1
+            },
+            "example": 5
+          },
+          {
+            "name": "sportId",
+            "in": "query",
+            "description": "Только этот вид спорта",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Только этот вид спорта"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "Начало не раньше; по умолчанию — через 30 минут от текущего момента",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Начало не раньше; по умолчанию — через 30 минут от текущего момента"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "Начало не позже; по умолчанию — 30 дней вперёд",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Начало не позже; по умолчанию — 30 дней вперёд"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Страница с нуля",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Страница с нуля",
+              "example": 0,
+              "minimum": 0
+            },
+            "example": 0
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Размер страницы 1–50; по умолчанию 20",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Размер страницы 1–50; по умолчанию 20",
+              "example": 20,
+              "maximum": 50,
+              "minimum": 1
+            },
+            "example": 20
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecommendationExplainResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Широта без долготы или наоборот",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Мероприятия нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/ping": {
       "get": {
         "tags": [
@@ -4275,6 +4756,46 @@
               "type": "boolean",
               "default": false
             }
+          },
+          {
+            "name": "types",
+            "in": "query",
+            "description": "Только эти типы; пусто — все",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "REMINDER",
+                  "EVENT_CHANGED",
+                  "EVENT_UNPUBLISHED",
+                  "EVENT_DELETED",
+                  "OCCURRENCE_CANCELLED",
+                  "OCCURRENCE_RESCHEDULED",
+                  "REGISTRATION_CREATED",
+                  "REGISTRATION_CANCELLED",
+                  "REGISTRATION_APPROVED",
+                  "REGISTRATION_REJECTED",
+                  "COMMENT_REPLY",
+                  "ORGANIZATION_SUBMITTED",
+                  "ORGANIZATION_APPROVED",
+                  "ORGANIZATION_REJECTED",
+                  "ORGANIZER_ADDED",
+                  "ORGANIZER_REMOVED",
+                  "QUORUM_REACHED",
+                  "QUORUM_LOST",
+                  "OCCURRENCE_CONFIRMED",
+                  "COMMENT_CREATED",
+                  "COMMENT_HIDDEN",
+                  "EVENT_RESTORED",
+                  "EVENT_ANNOUNCEMENT",
+                  "ORGANIZATION_RETURNED",
+                  "ACHIEVEMENT_UNLOCKED"
+                ]
+              },
+              "uniqueItems": true
+            }
           }
         ],
         "responses": {
@@ -4284,6 +4805,30 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/NotificationPageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/unread-counts": {
+      "get": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Непрочитанные уведомления по типам",
+        "operationId": "notifications_unreadCounts",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NotificationTypeCountResponse"
+                  }
                 }
               }
             }
@@ -4428,7 +4973,7 @@
           "events"
         ],
         "summary": "Похожие встречи",
-        "description": "Когда мест нет или заявку отклонили: ближайшие опубликованные того же вида спорта и уровня, кроме этой, моих и полных.",
+        "description": "Когда мест нет или заявку отклонили: самые похожие опубликованные будущие встречи — по виду спорта (и похожим видам), уровню, месту, времени и составу участников, с поправкой на мой профиль. Кроме этой, моих и полных.",
         "operationId": "events_similar",
         "parameters": [
           {
@@ -5950,6 +6495,32 @@
           "reminders"
         ]
       },
+      "HomePoint": {
+        "type": "object",
+        "description": "Домашняя точка для подбора «рядом с домом»",
+        "properties": {
+          "lat": {
+            "type": "number",
+            "format": "double",
+            "description": "Широта",
+            "example": 56.0153,
+            "maximum": 90,
+            "minimum": -90
+          },
+          "lon": {
+            "type": "number",
+            "format": "double",
+            "description": "Долгота",
+            "example": 92.8932,
+            "maximum": 180,
+            "minimum": -180
+          }
+        },
+        "required": [
+          "lat",
+          "lon"
+        ]
+      },
       "SaveUserPreferencesRequest": {
         "type": "object",
         "properties": {
@@ -5995,6 +6566,10 @@
           },
           "helpers": {
             "$ref": "#/components/schemas/HelpersPreferences"
+          },
+          "home": {
+            "$ref": "#/components/schemas/HomePoint",
+            "description": "Домашняя точка для подбора «рядом с домом»; не передана — очищается"
           }
         },
         "required": [
@@ -6047,6 +6622,10 @@
           },
           "helpers": {
             "$ref": "#/components/schemas/HelpersPreferences"
+          },
+          "home": {
+            "$ref": "#/components/schemas/HomePoint",
+            "description": "Домашняя точка; null — не задана"
           }
         },
         "required": [
@@ -6372,7 +6951,8 @@
                 "REGISTRATIONS",
                 "DISCUSSIONS",
                 "ORGANIZATIONS",
-                "ORGANIZERS"
+                "ORGANIZERS",
+                "ACHIEVEMENTS"
               ]
             },
             "uniqueItems": true
@@ -6436,7 +7016,8 @@
                 "REGISTRATIONS",
                 "DISCUSSIONS",
                 "ORGANIZATIONS",
-                "ORGANIZERS"
+                "ORGANIZERS",
+                "ACHIEVEMENTS"
               ]
             },
             "uniqueItems": true
@@ -7691,6 +8272,25 @@
           "id",
           "status",
           "userId"
+        ]
+      },
+      "DismissRecommendationRequest": {
+        "type": "object",
+        "description": "Скрыть мероприятие из подборки",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "NOT_MY_SPORT — ещё и реже показывать этот вид спорта",
+            "enum": [
+              "NOT_INTERESTED",
+              "NOT_MY_SPORT",
+              "TOO_FAR",
+              "BAD_TIME"
+            ]
+          }
+        },
+        "required": [
+          "reason"
         ]
       },
       "ShopItemResponse": {
@@ -8960,6 +9560,284 @@
           }
         }
       },
+      "RecommendationReason": {
+        "type": "object",
+        "description": "Причина рекомендации",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "YOUR_SPORT",
+              "RELATED_SPORT",
+              "LEVEL_FIT",
+              "BEGINNER_FRIENDLY",
+              "NEARBY",
+              "ONLINE",
+              "GOOD_TIME",
+              "FRIENDS_GOING",
+              "KNOWN_ORGANIZER",
+              "TRUSTED_ORGANIZER",
+              "NEEDS_PEOPLE",
+              "POPULAR",
+              "SOON",
+              "NEW_SPORT",
+              "AWARDED",
+              "SAME_CITY",
+              "ACTIVE"
+            ]
+          },
+          "text": {
+            "type": "string",
+            "description": "Текст для показа как есть",
+            "example": "1,2 км от дома"
+          }
+        },
+        "required": [
+          "code",
+          "text"
+        ]
+      },
+      "RecommendedOrganizationResponse": {
+        "type": "object",
+        "description": "Рекомендованная организация",
+        "properties": {
+          "organization": {
+            "$ref": "#/components/schemas/OrganizationShortResponse"
+          },
+          "city": {
+            "type": "string",
+            "description": "Город"
+          },
+          "description": {
+            "type": "string",
+            "description": "Описание"
+          },
+          "logoUrl": {
+            "type": "string",
+            "description": "Логотип: /api/files/{id}; null — без логотипа"
+          },
+          "sports": {
+            "type": "array",
+            "description": "Виды спорта клуба",
+            "items": {
+              "$ref": "#/components/schemas/SportResponse"
+            }
+          },
+          "upcomingEvents": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Встреч в ближайшие 30 дней"
+          },
+          "hostedMeetings": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Проведено встреч"
+          },
+          "distanceKm": {
+            "type": "number",
+            "format": "double",
+            "description": "До ближайшей очной встречи клуба, км; null — неизвестно"
+          },
+          "score": {
+            "type": "number",
+            "format": "double",
+            "description": "Оценка 0–1"
+          },
+          "reasons": {
+            "type": "array",
+            "description": "1–3 главные причины",
+            "items": {
+              "$ref": "#/components/schemas/RecommendationReason"
+            }
+          }
+        },
+        "required": [
+          "hostedMeetings",
+          "organization",
+          "reasons",
+          "score",
+          "sports",
+          "upcomingEvents"
+        ]
+      },
+      "PageResponseRecommendedEventResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecommendedEventResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "RecommendedEventResponse": {
+        "type": "object",
+        "description": "Мероприятие в персональной подборке",
+        "properties": {
+          "event": {
+            "$ref": "#/components/schemas/EventSummaryResponse",
+            "description": "Карточка как в ленте"
+          },
+          "score": {
+            "type": "number",
+            "format": "double",
+            "description": "Оценка 0–1, чем больше, тем лучше подходит",
+            "example": 0.82
+          },
+          "distanceKm": {
+            "type": "number",
+            "format": "double",
+            "description": "Расстояние до места в км; null — онлайн или точка отсчёта неизвестна",
+            "example": 1.2
+          },
+          "reasons": {
+            "type": "array",
+            "description": "1–3 главные причины, самая весомая первой",
+            "items": {
+              "$ref": "#/components/schemas/RecommendationReason"
+            }
+          },
+          "discovery": {
+            "type": "boolean",
+            "description": "Слот «Попробуйте новое»: вид спорта вне моих интересов"
+          }
+        },
+        "required": [
+          "discovery",
+          "event",
+          "reasons",
+          "score"
+        ]
+      },
+      "RecommendationExplainResponse": {
+        "type": "object",
+        "description": "Разбор оценки рекомендации по признакам",
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "score": {
+            "type": "number",
+            "format": "double",
+            "description": "Итоговая оценка 0–1"
+          },
+          "baseScore": {
+            "type": "number",
+            "format": "double",
+            "description": "Взвешенная сумма признаков до множителей"
+          },
+          "levelGate": {
+            "type": "number",
+            "format": "double",
+            "description": "Множитель за сильно неподходящий уровень (1 — нет штрафа)"
+          },
+          "dismissPenalty": {
+            "type": "number",
+            "format": "double",
+            "description": "Множитель за скрытия этого вида спорта (1 — нет штрафа)"
+          },
+          "eligible": {
+            "type": "boolean",
+            "description": "Попадёт ли в подборку"
+          },
+          "excludedReason": {
+            "type": "string",
+            "description": "Почему не попадёт; null — попадёт",
+            "example": "Вы уже записаны"
+          },
+          "distanceKm": {
+            "type": "number",
+            "format": "double",
+            "description": "Расстояние в км; null — онлайн или точка отсчёта неизвестна"
+          },
+          "features": {
+            "type": "array",
+            "description": "Все признаки",
+            "items": {
+              "$ref": "#/components/schemas/RecommendationFeature"
+            }
+          },
+          "reasons": {
+            "type": "array",
+            "description": "Главные причины",
+            "items": {
+              "$ref": "#/components/schemas/RecommendationReason"
+            }
+          }
+        },
+        "required": [
+          "baseScore",
+          "dismissPenalty",
+          "eligible",
+          "eventId",
+          "features",
+          "levelGate",
+          "reasons",
+          "score"
+        ]
+      },
+      "RecommendationFeature": {
+        "type": "object",
+        "description": "Признак оценки: значение, вес и вклад",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "SPORT",
+              "LEVEL",
+              "DISTANCE",
+              "TIME",
+              "SOCIAL",
+              "ORGANIZER",
+              "TRUST",
+              "POPULARITY",
+              "QUORUM",
+              "URGENCY",
+              "ACTIVITY",
+              "BEGINNER"
+            ]
+          },
+          "value": {
+            "type": "number",
+            "format": "double",
+            "description": "Значение признака 0–1"
+          },
+          "weight": {
+            "type": "number",
+            "format": "double",
+            "description": "Вес после перераспределения; 0 — признак выключен (нет данных)"
+          },
+          "contribution": {
+            "type": "number",
+            "format": "double",
+            "description": "Вклад в оценку: value × weight"
+          }
+        },
+        "required": [
+          "code",
+          "contribution",
+          "value",
+          "weight"
+        ]
+      },
       "PingResponse": {
         "type": "object",
         "properties": {
@@ -9242,7 +10120,8 @@
               "COMMENT_HIDDEN",
               "EVENT_RESTORED",
               "EVENT_ANNOUNCEMENT",
-              "ORGANIZATION_RETURNED"
+              "ORGANIZATION_RETURNED",
+              "ACHIEVEMENT_UNLOCKED"
             ]
           },
           "category": {
@@ -9253,7 +10132,8 @@
               "REGISTRATIONS",
               "DISCUSSIONS",
               "ORGANIZATIONS",
-              "ORGANIZERS"
+              "ORGANIZERS",
+              "ACHIEVEMENTS"
             ]
           },
           "title": {
@@ -9288,6 +10168,10 @@
           "revision": {
             "type": "integer",
             "format": "int64"
+          },
+          "actor": {
+            "$ref": "#/components/schemas/UserShortResponse",
+            "description": "Кто вызвал уведомление (ответил, принял заявку); null — система"
           }
         },
         "required": [
@@ -9299,6 +10183,51 @@
           "targetPath",
           "title",
           "type"
+        ]
+      },
+      "NotificationTypeCountResponse": {
+        "type": "object",
+        "description": "Непрочитанные уведомления одного типа",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "REMINDER",
+              "EVENT_CHANGED",
+              "EVENT_UNPUBLISHED",
+              "EVENT_DELETED",
+              "OCCURRENCE_CANCELLED",
+              "OCCURRENCE_RESCHEDULED",
+              "REGISTRATION_CREATED",
+              "REGISTRATION_CANCELLED",
+              "REGISTRATION_APPROVED",
+              "REGISTRATION_REJECTED",
+              "COMMENT_REPLY",
+              "ORGANIZATION_SUBMITTED",
+              "ORGANIZATION_APPROVED",
+              "ORGANIZATION_REJECTED",
+              "ORGANIZER_ADDED",
+              "ORGANIZER_REMOVED",
+              "QUORUM_REACHED",
+              "QUORUM_LOST",
+              "OCCURRENCE_CONFIRMED",
+              "COMMENT_CREATED",
+              "COMMENT_HIDDEN",
+              "EVENT_RESTORED",
+              "EVENT_ANNOUNCEMENT",
+              "ORGANIZATION_RETURNED",
+              "ACHIEVEMENT_UNLOCKED"
+            ]
+          },
+          "unread": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Непрочитанных"
+          }
+        },
+        "required": [
+          "type",
+          "unread"
         ]
       },
       "TelegramConnectionResponse": {

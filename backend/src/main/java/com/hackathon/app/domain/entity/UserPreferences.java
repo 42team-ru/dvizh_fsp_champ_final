@@ -62,4 +62,8 @@ public class UserPreferences extends AuditEntity {
     /** Радоваться достижениям. */
     @Column(nullable = false)
     private boolean cheer;
+    /** Широта домашней точки для подбора «рядом с домом»; null — не задана (тогда и долгота null). */
+    private Double homeLat;
+    /** Долгота домашней точки; null — не задана. */
+    private Double homeLon;
 }

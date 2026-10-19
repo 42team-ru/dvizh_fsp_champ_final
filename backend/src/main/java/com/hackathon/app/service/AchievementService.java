@@ -3,6 +3,7 @@ package com.hackathon.app.service;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -11,6 +12,8 @@ import com.hackathon.app.domain.dto.AchievementResponse;
 import com.hackathon.app.domain.entity.UserAchievement;
 import com.hackathon.app.domain.enums.AchievementCode;
 import com.hackathon.app.domain.enums.LedgerKind;
+import com.hackathon.app.domain.enums.NotificationCategory;
+import com.hackathon.app.domain.enums.NotificationType;
 import com.hackathon.app.domain.mapper.EconomyMapper;
 import com.hackathon.app.repository.CoinLedgerRepository;
 import com.hackathon.app.repository.DbTimeRepository;
@@ -40,6 +43,7 @@ public class AchievementService {
 	private final ShopService shop;
 	private final EconomyMapper mapper;
 	private final DbTimeRepository time;
+	private final NotificationPublisher notifications;
 
 	/** Все шесть достижений с прогрессом; полученные — с датой. */
 	@Transactional(readOnly = true)
@@ -79,6 +83,10 @@ public class AchievementService {
 		if (code.getRewardItem() != null) {
 			shop.grant(userId, code.getRewardItem());
 		}
+		notifications.publish(List.of(new NotificationFact("achievement:" + code + ":" + userId, Set.of(userId), null,
+				NotificationType.ACHIEVEMENT_UNLOCKED, NotificationCategory.ACHIEVEMENTS,
+				"Новое достижение «" + code.getTitle() + "»", code.getDescription() + ". Награда: " + reward(code),
+				"/profile", null, null, null, null)));
 		log.info("Achievement granted: userId={}, code={}", userId, code);
 	}
 

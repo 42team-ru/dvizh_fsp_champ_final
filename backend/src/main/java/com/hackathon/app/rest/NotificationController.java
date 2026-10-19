@@ -1,6 +1,10 @@
 package com.hackathon.app.rest;
 
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import com.hackathon.app.domain.enums.NotificationType;
+import io.swagger.v3.oas.annotations.Parameter;
 import com.hackathon.app.domain.dto.*;
 import com.hackathon.app.service.*;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,10 +37,20 @@ class NotificationController {
     @GetMapping
     @Operation(operationId = "notifications_list", summary = "Свои уведомления, новые сверху")
     NotificationPageResponse list(@AuthenticationPrincipal Jwt jwt, @RequestParam(required = false) String cursor,
-            @RequestParam(defaultValue = "20") int size, @RequestParam(defaultValue = "false") boolean unreadOnly) {
-        log.info("Endpoint called: GET /api/notifications, userId={}", jwt.getSubject());
-        var response = notifications.list(userId(jwt), cursor, size, unreadOnly);
+            @RequestParam(defaultValue = "20") int size, @RequestParam(defaultValue = "false") boolean unreadOnly,
+            @Parameter(description = "Только эти типы; пусто — все") @RequestParam(required = false) Set<NotificationType> types) {
+        log.info("Endpoint called: GET /api/notifications, userId={}, types={}", jwt.getSubject(), types);
+        var response = notifications.list(userId(jwt), cursor, size, unreadOnly, types);
         log.info("Endpoint response: GET /api/notifications, count={}, revision={}", response.items().size(), response.revision());
+        return response;
+    }
+
+    @GetMapping("/unread-counts")
+    @Operation(operationId = "notifications_unreadCounts", summary = "Непрочитанные уведомления по типам")
+    List<NotificationTypeCountResponse> unreadCounts(@AuthenticationPrincipal Jwt jwt) {
+        log.info("Endpoint called: GET /api/notifications/unread-counts, userId={}", jwt.getSubject());
+        var response = notifications.unreadCounts(userId(jwt));
+        log.info("Endpoint response: GET /api/notifications/unread-counts, types={}", response.size());
         return response;
     }
 

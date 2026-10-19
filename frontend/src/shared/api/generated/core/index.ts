@@ -9,6 +9,7 @@ export * from './occurrences/occurrences';
 export * from './organizations/organizations';
 export * from './pets/pets';
 export * from './ping/ping';
+export * from './recommendations/recommendations';
 export * from './registrations/registrations';
 export * from './sports/sports';
 export * from './users/users';

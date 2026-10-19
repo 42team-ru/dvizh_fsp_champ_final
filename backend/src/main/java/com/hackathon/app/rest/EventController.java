@@ -20,6 +20,7 @@ import com.hackathon.app.domain.enums.TimeScope;
 import com.hackathon.app.service.EventMapService;
 import com.hackathon.app.service.EventOrganizerService;
 import com.hackathon.app.service.EventService;
+import com.hackathon.app.service.RecommendationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -61,6 +62,7 @@ class EventController {
     private final EventService events;
     private final EventOrganizerService organizers;
     private final EventMapService eventMap;
+    private final RecommendationService recommendations;
 
     @GetMapping
     @Operation(operationId = "events_list", summary = "Лента мероприятий",
@@ -153,14 +155,15 @@ class EventController {
 
     @GetMapping("/{id}/similar")
     @Operation(operationId = "events_similar", summary = "Похожие встречи",
-            description = "Когда мест нет или заявку отклонили: ближайшие опубликованные того же вида спорта и уровня, "
-                    + "кроме этой, моих и полных.")
+            description = "Когда мест нет или заявку отклонили: самые похожие опубликованные будущие встречи — по виду "
+                    + "спорта (и похожим видам), уровню, месту, времени и составу участников, с поправкой на мой профиль. "
+                    + "Кроме этой, моих и полных.")
     @ApiResponse(responseCode = "200", description = "OK")
     @ApiResponse(responseCode = "404", description = "Мероприятия нет", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     List<EventSummaryResponse> similar(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,
             @Parameter(description = "Сколько показать, 1–20") @RequestParam(defaultValue = "6") int limit) {
         log.info("Endpoint called: GET /api/events/{}/similar, userId={}, limit={}", id, jwt.getSubject(), limit);
-        var response = events.similar(id, userId(jwt), limit);
+        var response = recommendations.similar(id, userId(jwt), limit);
         log.info("Endpoint response: GET /api/events/{}/similar, count={}", id, response.size());
         return response;
     }

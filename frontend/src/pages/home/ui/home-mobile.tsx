@@ -11,54 +11,19 @@ import { Icon } from "@/shared/components/ui/icon";
 import { Progress } from "@/shared/components/ui/progress";
 import { RoughBorder } from "@/shared/components/ui/rough-border";
 import { cn } from "cn";
+import { Sparkles } from "lucide-react";
+import { formatWhen } from "@/entity/event/lib/event-format";
+import {
+  FOR_YOU_FEED_URL,
+  formatDistance,
+  useRecommendationPreview,
+} from "@/entity/event/model/use-recommendation-preview";
 
 const dir = "m-home";
 
-const EVENTS = [
-  {
-    sport: "БЕГ",
-    when: "Сб 9:00",
-    dist: "1,8 км",
-    title: "Пробежка вокруг Татышева",
-    place: "Остров Татышев · средний темп",
-    people: [
-      { i: "ДК", tone: "bg-sky" },
-      { i: "ЛП", tone: "bg-mint" },
-      { i: "МС", tone: "bg-peach" },
-    ],
-    going: 12,
-    total: 20,
-    tone: "bg-sky",
-  },
-  {
-    sport: "ЙОГА",
-    when: "Вс 10:00",
-    dist: "2,4 км",
-    title: "Йога на набережной",
-    place: "Набережная Енисея · любой уровень",
-    people: [
-      { i: "ЛП", tone: "bg-sky" },
-      { i: "КЕ", tone: "bg-mint" },
-    ],
-    going: 6,
-    total: 15,
-    tone: "bg-photo-mint",
-  },
-  {
-    sport: "ШАХМАТЫ",
-    when: "Сегодня 18:00",
-    dist: "0,9 км",
-    title: "Шахматы в парке",
-    place: "Центральный парк · блиц 5+3",
-    people: [
-      { i: "МС", tone: "bg-sky" },
-      { i: "ТС", tone: "bg-mint" },
-    ],
-    going: 7,
-    total: 10,
-    tone: "bg-photo-lilac",
-  },
-];
+/** Фоны карточек подборки по кругу. */
+const TONES = ["bg-sky", "bg-photo-mint", "bg-photo-lilac"];
+const DISC_TONES = ["bg-sky", "bg-mint", "bg-peach"];
 
 const POSTS = [
   {
@@ -94,12 +59,12 @@ const POSTS = [
 
 const tag = "h-auto border-[1.5px] px-[10px] py-1 text-[10px] leading-[normal] font-extrabold tracking-[1px]";
 
-function SectionHead({ title, link }: { title: string; link?: string }) {
+function SectionHead({ title, link, to = "/feed" }: { title: string; link?: string; to?: string }) {
   return (
     <div className="flex items-center justify-between px-4 leading-[normal] whitespace-nowrap">
       <h2 className="font-display text-lg font-bold text-foreground">{title}</h2>
       {link ? (
-        <Link to="/feed" className="text-[13px] font-extrabold text-primary">
+        <Link to={to} className="text-[13px] font-extrabold text-primary">
           {link}
         </Link>
       ) : null}
@@ -224,61 +189,90 @@ function Tip() {
   );
 }
 
+/** Карусель «Подобрали для тебя»: первые рекомендации, под названием — главная причина. */
 function EventScroller() {
+  const { items, isPending, isError } = useRecommendationPreview(5);
+  if (isPending) return <p className="px-4 text-base font-semibold text-muted-foreground">Подбираем встречи…</p>;
+  if (isError) return <p role="alert" className="px-4 text-base font-semibold text-destructive">Не удалось загрузить подборку.</p>;
+  if (items.length === 0) {
+    return (
+      <p className="px-4 text-base font-semibold text-muted-foreground">
+        Отметь любимые виды спорта в профиле — и Бублик подберёт встречи.
+      </p>
+    );
+  }
   return (
     <div className="no-scrollbar flex gap-3 overflow-x-auto px-4 pb-1">
-      {EVENTS.map((e) => (
-        <Card key={e.title} className="w-[290px] shrink-0 overflow-hidden rounded-[22px]">
-          <div className={cn("relative h-[120px] shrink-0 overflow-hidden", e.tone)}>
-            <img
-              src={`/${dir}/photo-decor.svg`}
-              alt=""
-              className="absolute top-0 left-0 h-[120px] w-[290px] max-w-none"
-            />
-            <Badge
-              variant="outline"
-              className={cn(tag, "absolute top-3 left-3 border-[1.5px] bg-card")}
-            >
-              {e.sport}
-            </Badge>
-            <span className="absolute top-3 right-3 rounded-pill bg-ink px-[10px] py-1 text-[11px] leading-[normal] font-extrabold tracking-[1px] whitespace-nowrap text-secondary">
-              {e.when}
-            </span>
-            <span className="absolute top-[81px] left-3 box-border flex items-center gap-1 rounded-pill border-[1.5px] border-ink bg-card py-1 pr-[10px] pl-2">
-              <Icon name={`${dir}/icon-pin1`} className="size-[13px]" />
-              <span className="text-xs leading-[normal] font-bold text-foreground">{e.dist}</span>
-            </span>
-          </div>
-          <div className="flex flex-col gap-2 p-[14px]">
-            <p className="font-display text-[15px] leading-[21px] font-bold text-foreground">
-              {e.title}
-            </p>
-            <p className="text-[13px] leading-[18px] font-medium text-muted-foreground">
-              {e.place}
-            </p>
-            <div className="flex items-center gap-2 whitespace-nowrap">
-              <span className="flex items-center">
-                {e.people.map((p, i) => (
-                  <Disc
-                    key={p.i}
-                    initials={p.i}
-                    tone={p.tone}
-                    className={cn("size-7", i < e.people.length - 1 && "mr-[-8px]")}
-                    textClassName="text-xs leading-[normal]"
-                  />
-                ))}
+      {items.map((item, index) => {
+        const e = item.event;
+        const going = e.occurrenceAttendeesCount ?? e.participantsCount;
+        const total = e.capacity ?? undefined;
+        const dist = e.format === "ONLINE" ? "Онлайн" : formatDistance(item.distanceKm);
+        return (
+          <Card key={e.id} className="relative w-[290px] shrink-0 overflow-hidden rounded-[22px]">
+            <Link to={`/events/${e.id}`} aria-label={e.title} className="absolute inset-0 z-10" />
+            <div className={cn("relative h-[120px] shrink-0 overflow-hidden", TONES[index % TONES.length])}>
+              {e.coverUrl ? (
+                <img src={e.coverUrl} alt="" className="absolute inset-0 size-full object-cover" />
+              ) : (
+                <img
+                  src={`/${dir}/photo-decor.svg`}
+                  alt=""
+                  className="absolute top-0 left-0 h-[120px] w-[290px] max-w-none"
+                />
+              )}
+              <Badge
+                variant="outline"
+                className={cn(tag, "absolute top-3 left-3 border-[1.5px] bg-card")}
+              >
+                {e.sport.name.toUpperCase()}
+              </Badge>
+              <span className="absolute top-3 right-3 rounded-pill bg-ink px-[10px] py-1 text-[11px] leading-[normal] font-extrabold tracking-[1px] whitespace-nowrap text-secondary">
+                {formatWhen(e.startAt)}
               </span>
-              <span className="text-[13px] leading-[normal] font-bold text-foreground">
-                Идут {e.going} из {e.total}
-              </span>
-              <span className="ml-auto text-xs leading-[normal] font-extrabold text-muted-foreground">
-                осталось {e.total - e.going}
-              </span>
+              {dist && (
+                <span className="absolute top-[81px] left-3 box-border flex items-center gap-1 rounded-pill border-[1.5px] border-ink bg-card py-1 pr-[10px] pl-2">
+                  <Icon name={`${dir}/icon-pin1`} className="size-[13px]" />
+                  <span className="text-xs leading-[normal] font-bold text-foreground">{dist}</span>
+                </span>
+              )}
             </div>
-            <Progress value={(e.going / e.total) * 100} className="bg-card" />
-          </div>
-        </Card>
-      ))}
+            <div className="flex flex-col gap-2 p-[14px]">
+              <p className="truncate font-display text-[15px] leading-[21px] font-bold text-foreground">
+                {e.title}
+              </p>
+              <p className="flex items-center gap-1 text-[13px] leading-[18px] font-semibold text-primary">
+                <Sparkles className="size-[14px] shrink-0" aria-hidden />
+                <span className="truncate">{item.reasons[0]?.text ?? e.address ?? ""}</span>
+              </p>
+              <div className="flex items-center gap-2 whitespace-nowrap">
+                {going > 0 && (
+                  <span className="flex items-center">
+                    {Array.from({ length: Math.min(3, going) }, (_, i) => (
+                      <Disc
+                        key={i}
+                        initials=""
+                        tone={DISC_TONES[i]}
+                        className={cn("size-7", i < Math.min(3, going) - 1 && "mr-[-8px]")}
+                        textClassName="text-xs leading-[normal]"
+                      />
+                    ))}
+                  </span>
+                )}
+                <span className="text-[13px] leading-[normal] font-bold text-foreground">
+                  {total ? `Идут ${going} из ${total}` : going > 0 ? `Идут ${going}` : "Будь первым"}
+                </span>
+                {total && (
+                  <span className="ml-auto text-xs leading-[normal] font-extrabold text-muted-foreground">
+                    осталось {Math.max(0, total - going)}
+                  </span>
+                )}
+              </div>
+              {total && <Progress value={(going / total) * 100} className="bg-card" />}
+            </div>
+          </Card>
+        );
+      })}
     </div>
   );
 }
@@ -356,7 +350,7 @@ export function HomeMobile() {
       </div>
       <NextTicket />
       <Tip />
-      <SectionHead title="Другие события" link="Все" />
+      <SectionHead title="Подобрали для тебя" link="Все" to={FOR_YOU_FEED_URL} />
       <EventScroller />
       <SectionHead title="Друзья в движении" />
       <Posts />

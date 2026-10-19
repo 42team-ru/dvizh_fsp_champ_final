@@ -500,6 +500,92 @@ export const usePetsRename = <TError = ErrorType<ProblemDetail>,
       > => {
       return useMutation(getPetsRenameMutationOptions(options), queryClient);
     }
+    export type petsCheerResponse200 = {
+  data: PetResponse
+  status: 200
+}
+
+export type petsCheerResponseSuccess = (petsCheerResponse200) & {
+  headers: Headers;
+};
+;
+
+export type petsCheerResponse = (petsCheerResponseSuccess)
+
+export const getPetsCheerUrl = () => {
+
+
+
+
+  return `/api/users/me/pet/cheer`
+}
+
+/**
+ * Первый тычок или поглаживание: плохие новости до этого момента больше не портят настроение.
+ * @summary Развеселить бобра
+ */
+export const petsCheer = async ( options?: Parameters<typeof authMutator>[1]): Promise<petsCheerResponse> => {
+
+  return authMutator<petsCheerResponse>(getPetsCheerUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getPetsCheerMutationKey = () => ['petsCheer'] as const;
+
+export const getPetsCheerMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof petsCheer>>, TError,void, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof petsCheer>>, TError,void, TContext> => {
+
+const mutationKey = getPetsCheerMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof petsCheer>>, void> = () => {
+
+
+          return  petsCheer(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PetsCheerMutationResult = NonNullable<Awaited<ReturnType<typeof petsCheer>>>
+
+    export type PetsCheerMutationError = ErrorType<unknown>
+
+
+    /**
+ * @summary Развеселить бобра
+ */
+export const usePetsCheer = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof petsCheer>>, TError,void, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof petsCheer>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getPetsCheerMutationOptions(options), queryClient);
+    }
     export type petsBuyResponse200 = {
   data: ShopItemResponse
   status: 200

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import { EventMobile } from "./event-mobile";
-import { fullName, initials, useEvent } from "../model/use-event";
+import { fullName, initials, privateNote, useEvent } from "../model/use-event";
 import { AppHeader } from "@/widgets/app-header/ui/app-header";
 import { LocationPicker } from "@/widgets/events-map/ui/location-picker";
 import { Disc } from "@/shared/components/ui/disc";
@@ -171,16 +171,18 @@ function TicketHero({ m }: { m: EventModel }) {
           КОНТРОЛЬ
         </span>
         <span className="absolute top-[14px] right-[26px] text-[10px] font-extrabold tracking-[1px] text-foreground">
-          № 0124
+          № {e.id.slice(0, 4).toUpperCase()}
         </span>
-        {/* штамп организатора: запись подтверждена */}
-        <div className="pointer-events-none absolute top-[220px] left-[34px] h-[66px] w-[178px] rotate-[9deg] text-primary">
-          <img src="/event/stamp-admitted.svg" alt="" className="absolute inset-0 size-full max-w-none" />
-          <p className="absolute inset-x-0 top-3 text-center font-display text-[20px] font-extrabold">ДОПУЩЕН</p>
-          <p className="absolute inset-x-0 top-10 text-center text-[9px] font-extrabold tracking-[1px]">
-            орг. Дима К. · 18.10
-          </p>
-        </div>
+        {/* штамп организатора: только пока моя запись подтверждена — после «Отменить» пропадает */}
+        {e.viewer.registrationStatus === "CONFIRMED" && (
+          <div className="pointer-events-none absolute top-[220px] left-[34px] h-[66px] w-[178px] rotate-[9deg] text-primary">
+            <img src="/event/stamp-admitted.svg" alt="" className="absolute inset-0 size-full max-w-none" />
+            <p className="absolute inset-x-0 top-3 text-center font-display text-[20px] font-extrabold">ДОПУЩЕН</p>
+            <p className="absolute inset-x-0 top-10 truncate px-3 text-center text-[9px] font-extrabold tracking-[1px]">
+              орг. {e.organization?.name ?? `${e.author.firstName} ${e.author.lastName?.[0] ?? ""}.`} · {new Date(e.startAt).toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit" })}
+            </p>
+          </div>
+        )}
         <div className="relative h-[143px] w-[242px]">
           <Eyebrow className="text-foreground">УЧАСТНИКИ</Eyebrow>
           <p className="absolute top-[14px] left-0 font-display text-[54px] leading-[67px] font-extrabold text-foreground">
@@ -235,9 +237,7 @@ function TicketHero({ m }: { m: EventModel }) {
 function About({ m }: { m: EventModel }) {
   const e = m.event!;
   const take = (e.equipment ?? "").split(/[,\n;]/).map((t) => t.trim()).filter(Boolean).slice(0, 4);
-  const note = e.viewer.canSeePrivateDetails && e.privateDetails
-    ? e.privateDetails
-    : "Запишись — и здесь появятся детали для участников";
+  const note = privateNote(e);
   return (
     <Card className="absolute top-0 left-0 h-[286.5px] w-[701px] overflow-hidden">
       <h2 className="absolute top-7 left-7 font-display text-[22px] leading-[27px] font-bold text-foreground">
@@ -343,11 +343,6 @@ function RouteMap({ m }: { m: EventModel }) {
           <Icon name="event/icon-pin1" className="size-[14px]" />
           <span className="truncate">{e.locationNote || e.address || "Ссылка появится после записи"}</span>
         </Badge>
-        {point && (
-          <Button asChild variant="soft" className="h-10 shrink-0 px-[18px] text-sm leading-[19px]">
-            <a href={`https://2gis.ru/geo/${point[0]},${point[1]}`} target="_blank" rel="noreferrer">Открыть карту</a>
-          </Button>
-        )}
       </div>
     </Card>
   );

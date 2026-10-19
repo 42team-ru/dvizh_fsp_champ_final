@@ -16,13 +16,13 @@ import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 import { Link } from "react-router";
 import { cn } from "cn";
 import { useState } from "react";
-import { useEventsList } from "@/shared/api/generated/core/events/events";
 import type { EventSummaryResponse, EventsListParams } from "@/shared/api/generated/core/appAPI.schemas";
 import { toCardData, formatWhen } from "@/entity/event/lib/event-format";
-import { FEED_CHIPS, useFeedFilters, type FeedChip } from "@/entity/event/model/use-feed-filters";
+import { FEED_CHIPS, FOR_YOU_CHIP, useFeedFilters, type FeedChip } from "@/entity/event/model/use-feed-filters";
+import { useFeedEvents } from "@/entity/event/model/use-feed-events";
 import { EventsMap, type MapFilters } from "@/widgets/events-map/ui/events-map";
 import { FeedExtraFilters } from "@/widgets/feed-filters/ui/feed-extra-filters";
-import { LayoutGrid, Map as MapIcon } from "lucide-react";
+import { LayoutGrid, Map as MapIcon, Sparkles } from "lucide-react";
 
 /** Узор заполняет обложку любого размера: карточки тянутся вместе с сеткой. */
 const ART = (n: string) => ({ src: `/feed/${n}.svg`, className: "inset-0 size-full object-cover" });
@@ -64,12 +64,13 @@ function FilterBar({ chip, onChip, more, extraCount, onMore, count, view, onView
         {FEED_CHIPS.map((label) => (
           <Button
             key={label}
-            variant={label === chip ? "ink" : "soft"}
+            variant={label === chip ? (label === FOR_YOU_CHIP ? "default" : "ink") : label === FOR_YOU_CHIP ? "accent" : "soft"}
             size="chip"
             aria-pressed={label === chip}
             onClick={() => onChip(label)}
             className={label === chip ? "hover:translate-x-0 hover:translate-y-0" : undefined}
           >
+            {label === FOR_YOU_CHIP && <Sparkles className="size-4" aria-hidden />}
             {label}
           </Button>
         ))}
@@ -197,12 +198,17 @@ function CtaCard({ className }: { className?: string }) {
 }
 
 /** Карточка события из ленты по индексу; обложка-заглушка — по тому же слоту. */
-function Slot({ events, i, ...props }: { events: EventSummaryResponse[] | undefined; i: number } & Omit<
-  React.ComponentProps<typeof EventCard>, "event" | "href"
->) {
+function Slot({ events, i, reasonOf, ...props }: {
+  events: EventSummaryResponse[] | undefined;
+  i: number;
+  /** У рекомендаций под названием — главная причина «почему вам это». */
+  reasonOf?: (id: string) => string | undefined;
+} & Omit<React.ComponentProps<typeof EventCard>, "event" | "href">) {
   const event = events?.[i];
   if (!event) return null;
-  return <EventCard href={`/events/${event.id}`} event={toCardData(event, SLOT_COVERS[i % SLOT_COVERS.length])} {...props} />;
+  const data = toCardData(event, SLOT_COVERS[i % SLOT_COVERS.length]);
+  const reason = reasonOf?.(event.id);
+  return <EventCard href={`/events/${event.id}`} event={reason ? { ...data, place: reason } : data} {...props} />;
 }
 
 /** Карта понимает не все фильтры ленты: формат и «Для меня» ей не передаём (на карте только очные). */
@@ -213,8 +219,8 @@ export default function FeedPage() {
   const filters = useFeedFilters();
   const [view, setView] = useState<"list" | "map">("list");
   const [more, setMore] = useState(false);
-  const list = useEventsList(filters.params, { query: { enabled: filters.ready } });
-  const events = list.data?.status === 200 ? list.data.data : undefined;
+  const list = useFeedEvents(filters.params, filters);
+  const { events, reasonOf } = list;
   return (
     <>
     <FeedMobile />
@@ -237,21 +243,21 @@ export default function FeedPage() {
           {list.isError && <p role="alert" className="text-lg font-semibold text-destructive">Не удалось загрузить ленту.</p>}
           {/* Ряды — отдельные сетки: если событий мало, пустеет конец ряда, а не съезжает раскладка. */}
           <div className="grid grid-cols-12 gap-5">
-            <Slot events={events} i={0} size="lg" className="col-span-6" />
+            <Slot reasonOf={reasonOf} events={events} i={0} size="lg" className="col-span-6" />
             {/* В стопках обложки 2:1, чтобы ряд не вытягивал большую карточку и соседей в квадрат. */}
             <div className="col-span-3 flex flex-col gap-5">
-              <Slot events={events} i={1} coverClassName="aspect-[2/1]" className="grow" />
-              <Slot events={events} i={2} titleLines={2} coverClassName="aspect-[2/1]" className="grow" />
+              <Slot reasonOf={reasonOf} events={events} i={1} coverClassName="aspect-[2/1]" className="grow" />
+              <Slot reasonOf={reasonOf} events={events} i={2} titleLines={2} coverClassName="aspect-[2/1]" className="grow" />
             </div>
             <div className="col-span-3 flex flex-col gap-5">
-              <Slot events={events} i={3} coverClassName="aspect-[2/1]" className="grow" />
+              <Slot reasonOf={reasonOf} events={events} i={3} coverClassName="aspect-[2/1]" className="grow" />
               <NearbyPeople />
             </div>
           </div>
           <div className="grid grid-cols-12 gap-5">
-            <Slot events={events} i={4} className="col-span-4" />
-            <Slot events={events} i={5} className="col-span-4" />
-            <Slot events={events} i={6} className="col-span-4" />
+            <Slot reasonOf={reasonOf} events={events} i={4} className="col-span-4" />
+            <Slot reasonOf={reasonOf} events={events} i={5} className="col-span-4" />
+            <Slot reasonOf={reasonOf} events={events} i={6} className="col-span-4" />
           </div>
           <div className="grid grid-cols-12 gap-5">
             {events?.[7] && <BikeCard event={events[7]} className="col-span-7" />}

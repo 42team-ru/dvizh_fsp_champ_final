@@ -73,4 +73,21 @@ app:
       token: ${TELEGRAM_BOT_TOKEN:}
       username: ${TELEGRAM_BOT_USERNAME:}
       webhook-secret: ${TELEGRAM_WEBHOOK_SECRET:}
+  recommendations:
+    # Подбор мероприятий и клубов; формулы и смысл весов — docs/recommendations.md
+    half-life-days: 45      # история вдвое «легче» через столько дней
+    horizon-days: 30        # насколько вперёд подбираем
+    discovery-every: 5      # каждая 5-я позиция — «Попробуйте новое»
+    mmr-lambda: 0.75        # 1 — только оценка, меньше — разнообразнее
+    weights:
+      sport: 0.30
+      distance: 0.15
+      level: 0.12
+      time: 0.12
+      social: 0.08
+      organizer: 0.08
+      trust: 0.05
+      popularity: 0.04
+      quorum: 0.03
+      urgency: 0.03
   cors-allowed-origins: ${CORS_ORIGINS:http://localhost:5173}

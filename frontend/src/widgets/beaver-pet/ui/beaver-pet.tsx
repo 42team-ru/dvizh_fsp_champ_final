@@ -37,10 +37,12 @@ type Props = {
   followCursor?: boolean;
   className?: string;
   onClick?: () => void;
+  /** Первый контакт (тычок или поглаживание): хозяин развеселил бобра — сохранить это на сервере. */
+  onCheer?: () => void;
 };
 
 /** Анимированный маскот-бобр. Настроение, наряд и активность задаются пропсами, движение считает beaver-rig. */
-export function BeaverPet({ mood = "idle", outfit = {}, activity = "none", followCursor = true, className, onClick, say, sayHref, speechContainer, extraArts, ref: handleRef }: Props) {
+export function BeaverPet({ mood = "idle", outfit = {}, activity = "none", followCursor = true, className, onClick, say, sayHref, speechContainer, extraArts, onCheer, ref: handleRef }: Props) {
   const instanceId = useId();
   const svgPrefix = `beaver-${instanceId.replace(/[^a-zA-Z0-9_-]/g, (char) => `_${char.codePointAt(0)!.toString(16)}_`)}`;
   const scopedSvg = useMemo(() => scopeSvgIds(beaverSvg, svgPrefix, baseReferenceIds), [svgPrefix]);
@@ -48,6 +50,8 @@ export function BeaverPet({ mood = "idle", outfit = {}, activity = "none", follo
   const rig = useRef<BeaverRig | null>(null);
   const [speechVisible, setSpeechVisible] = useState(false);
   const interacted = useRef(false);
+  const onCheerRef = useRef(onCheer);
+  onCheerRef.current = onCheer;
   const outfitKey = JSON.stringify(outfit);
   // Вещи от админа рисуются по каталогу; встроенные знает сам гардероб.
   const catalog = usePetsCatalog({ query: { staleTime: 5 * 60_000 } });
@@ -68,6 +72,7 @@ export function BeaverPet({ mood = "idle", outfit = {}, activity = "none", follo
       interacted.current = true;
       setSpeechVisible(false);
       rig.current?.setMood("idle");
+      onCheerRef.current?.();
     });
     return () => rig.current?.destroy();
   }, [followCursor]);

@@ -12,4 +12,9 @@ public record PageResponse<T>(List<T> items, int page, int size, long totalEleme
 		return new PageResponse<>(page.getContent().stream().map(mapper).toList(), page.getNumber(), page.getSize(),
 				page.getTotalElements(), page.getTotalPages());
 	}
+
+	/** Страница уже посчитанного в памяти списка (например, ранжированной подборки). */
+	public static <T> PageResponse<T> slice(List<T> items, int page, int size, long totalElements) {
+		return new PageResponse<>(items, page, size, totalElements, (int) ((totalElements + size - 1) / size));
+	}
 }

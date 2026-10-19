@@ -16,6 +16,24 @@ export const initials = (u: Pick<UserShortResponse, "firstName" | "lastName" | "
 export const fullName = (u: Pick<UserShortResponse, "firstName" | "lastName" | "username">) =>
   [u.firstName, u.lastName].filter(Boolean).join(" ") || u.username;
 
+/**
+ * Что показать в блоке «детали для участников»: сами детали, если они видны и заполнены, иначе понятное
+ * объяснение по ситуации — участник, организатор, заявка ждёт решения, записаться нельзя или можно.
+ */
+export function privateNote(event: EventResponse): string {
+  const v = event.viewer;
+  const details = [event.privateDetails, event.format === "ONLINE" ? event.onlineUrl : undefined].filter(Boolean).join(" · ");
+  if (v.canSeePrivateDetails) {
+    if (details) return details;
+    return v.isOrganizer
+      ? "Деталей для участников нет — добавьте точное место или ссылку на чат в событии"
+      : "Вы участник. Организатор не оставил доп. деталей — вопросы задавайте в обсуждении";
+  }
+  if (v.registrationStatus === "PENDING") return "Заявка на рассмотрении — детали появятся после одобрения";
+  if (!v.canRegister) return "Детали видят только участники встречи";
+  return "Запишись — и здесь появятся детали для участников";
+}
+
 /** Факты для шапки-билета: когда, где, запись. */
 function facts(event: EventResponse) {
   const start = new Date(event.nextOccurrence?.startAt ?? event.startAt);

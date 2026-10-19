@@ -20,6 +20,9 @@ import org.mapstruct.MappingTarget;
 @Mapper(config = MappingConfig.class)
 public interface PetMapper {
 
+	/** Запомнить, когда бобра развеселили. */
+	void cheer(@MappingTarget AppUser user, java.time.Instant petCheeredAt);
+
 	/** Сменить только имя, сохранив остальные поля аккаунта. */
 	void rename(@MappingTarget AppUser user, String petName);
 

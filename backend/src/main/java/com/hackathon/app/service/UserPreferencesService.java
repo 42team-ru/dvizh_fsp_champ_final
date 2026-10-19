@@ -18,7 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Хранение предпочтений; подбор событий и уровни UserSport не меняются. */
+/** Хранение предпочтений; их читает подбор мероприятий (RecommendationSignals), уровни UserSport не меняются. */
 @Service
 @RequiredArgsConstructor
 public class UserPreferencesService {
@@ -34,7 +34,7 @@ public class UserPreferencesService {
         return preferences.findByUserId(userId).map(mapper::toResponse).orElseGet(() ->
                 new UserPreferencesResponse(SportLevel.AMATEUR,
                         List.of(DayOfWeek.TUESDAY, DayOfWeek.THURSDAY, DayOfWeek.SATURDAY),
-                        Daytime.EVENING, 5, new HelpersPreferences(true, true, false)));
+                        Daytime.EVENING, 5, new HelpersPreferences(true, true, false), null));
     }
 
     @Transactional

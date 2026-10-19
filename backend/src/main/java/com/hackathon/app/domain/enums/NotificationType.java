@@ -49,5 +49,7 @@ public enum NotificationType {
     /** Объявление организатора участникам. */
     EVENT_ANNOUNCEMENT,
     /** Анкета организации возвращена на доработку. */
-    ORGANIZATION_RETURNED
+    ORGANIZATION_RETURNED,
+    /** Получено достижение. */
+    ACHIEVEMENT_UNLOCKED
 }

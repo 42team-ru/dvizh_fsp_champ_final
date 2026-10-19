@@ -167,8 +167,8 @@ public class ScheduleDescriptions {
 		return String.join(", ", items.subList(0, items.size() - 1)) + " и " + items.getLast();
 	}
 
-	/** 1 день, 2 дня, 5 дней, 21 день. */
-	private static String plural(int n, String one, String few, String many) {
+	/** Форма слова по числу: 1 день, 2 дня, 5 дней, 21 день. */
+	public static String plural(int n, String one, String few, String many) {
 		int mod100 = n % 100;
 		int mod10 = n % 10;
 		if (mod100 >= 11 && mod100 <= 14) {

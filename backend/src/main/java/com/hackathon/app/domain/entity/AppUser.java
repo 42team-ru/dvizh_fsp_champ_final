@@ -50,6 +50,8 @@ public class AppUser {
     /** Имя питомца; null — имя по умолчанию «Бублик». */
     @Column(length = 30)
     private String petName;
+    /** Когда хозяин развеселил бобра; плохие новости до этого момента не портят настроение. null — ни разу. */
+    private Instant petCheeredAt;
     /** Баланс монет: кэш суммы журнала coin_ledger. */
     private int coins;
 }
