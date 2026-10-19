@@ -1,0 +1,66 @@
+/* Метки событий на карте 2ГИС RasterJS (DG.divIcon). Цвета — токены дизайна, обводка и жёсткая тень как в Memphis. */
+.map-pin-host { background: none; border: none; }
+.map-pin {
+  display: flex;
+  position: relative;
+  flex-direction: column;
+  align-items: flex-start;
+  transform: translate(-50%, -100%);
+  margin-top: -6px;
+  max-width: 140px;
+  padding: 4px 10px;
+  border: 2px solid var(--ink);
+  border-radius: 14px;
+  background: var(--card);
+  color: var(--foreground);
+  box-shadow: 3px 3px 0 var(--ink);
+  font-family: inherit;
+  line-height: 1.15;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.map-pin::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -7px;
+  width: 10px;
+  height: 10px;
+  background: inherit;
+  border-right: 2px solid var(--ink);
+  border-bottom: 2px solid var(--ink);
+  transform: translateX(-50%) rotate(45deg);
+}
+.map-pin__sport { max-width: 116px; overflow: hidden; text-overflow: ellipsis; font-size: 13px; font-weight: 800; }
+.map-pin__time { font-size: 12px; font-weight: 700; opacity: 0.75; }
+.map-pin--mine { background: var(--secondary); }
+.map-pin--active { background: var(--primary); color: var(--primary-foreground); z-index: 2; }
+.map-pin:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+
+.map-cluster {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  box-shadow: 3px 3px 0 var(--ink);
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* Точка места на мини-карте формы и карточки события. */
+.map-dot {
+  display: block;
+  width: 22px;
+  height: 22px;
+  transform: translate(-50%, -50%);
+  border: 3px solid var(--ink);
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 3px 3px 0 var(--ink);
+}

@@ -1,6 +1,10 @@
 import { PetNameEditor } from "@/features/rename-pet/ui/pet-name-editor";
 import { useState } from "react";
 import { useAttendance } from "./use-attendance";
+import { useProfile } from "../model/use-profile";
+import { useWardrobe } from "../model/use-wardrobe";
+import { EditProfileDialog } from "@/features/edit-profile/ui/edit-profile-dialog";
+import { Link } from "react-router";
 import { MyBeaverPet } from "@/widgets/beaver-pet/ui/my-beaver-pet";
 import { ProfileMobile } from "./profile-mobile";
 import { AppHeader } from "@/widgets/app-header/ui/app-header";
@@ -13,18 +17,8 @@ import { RoughBorder } from "@/shared/components/ui/rough-border";
 import { cn } from "cn";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 
-const STATS = [
-  { value: "48", label: "тренировок", tone: "bg-card" },
-  { value: "312", label: "километров", tone: "bg-card" },
-  { value: "12", label: "дней подряд", tone: "bg-secondary" },
-];
-
-/** Километры по дням октября; `accent` — лучшие дни, `0` — пустые. */
-const BARS: { h: number; accent?: boolean }[] = [
-  { h: 25 }, { h: 2 }, { h: 34.5 }, { h: 39 }, { h: 2 }, { h: 56.5, accent: true }, { h: 19 },
-  { h: 2 }, { h: 30 }, { h: 33 }, { h: 2 }, { h: 63, accent: true }, { h: 22 }, { h: 2 },
-  { h: 38 }, { h: 2 }, { h: 27.5 }, { h: 47.5, accent: true }, { h: 2 },
-];
+const STAT_TONES = ["bg-card", "bg-card", "bg-secondary"];
+const SPORT_TONES = ["bg-lavender-soft", "bg-sky-soft", "bg-lime-soft"];
 
 /** Ширины полос штрихкода: чёрная, пробел, чёрная, пробел… */
 const BARCODE = [
@@ -32,26 +26,17 @@ const BARCODE = [
   4, 2, 2, 3, 3, 2, 1, 2, 5, 3, 2, 2, 1, 3, 3, 2,
 ];
 
-const WARDROBE = [
-  { name: "Кепка", art: "memphis3", left: 0, state: "worn", tone: "bg-peach" },
-  { name: "Шарф", art: "memphis4", left: 132, state: "owned", tone: "bg-card" },
-  { name: "Кроссовки", art: "memphis5", left: 264.5, price: 90, tone: "bg-card" },
-  { name: "Очки", art: "memphis6", left: 396.5, price: 50, tone: "bg-card" },
-  { name: "Худи", art: "memphis7", left: 529, price: 120, tone: "bg-card" },
-] as const;
-
-const BADGES = [
-  { title: "Первые 100 км", icon: "icon-trophy", tone: "bg-secondary", left: 0, top: 0 },
-  { title: "Серия 7 дней", icon: "icon-flame", tone: "bg-peach", left: 254, top: 0 },
-  { title: "Ранняя пташка", icon: "icon-sun", tone: "bg-lavender-soft", left: 508, top: 0 },
-  { title: "Организатор", icon: "icon-star", tone: "bg-sky-soft", left: 0, top: 74 },
-];
+const WARDROBE_ART = ["memphis3", "memphis4", "memphis5", "memphis6", "memphis7"];
+const WARDROBE_LEFT = [0, 132, 264.5, 396.5, 529];
+const BADGE_POS = [{ left: 0, top: 0 }, { left: 254, top: 0 }, { left: 508, top: 0 }, { left: 0, top: 74 }];
 
 function Img({ name, className }: { name: string; className?: string }) {
   return <img src={`/profile/${name}`} alt="" className={cn("absolute max-w-none", className)} />;
 }
 
 function Passport() {
+  const p = useProfile();
+  const maxDay = Math.max(1, ...p.days);
   return (
     <Card className="absolute top-0 left-0 h-[626px] w-[495px] overflow-hidden rounded-[28px] p-[2px] shadow-hard">
       <div className="flex h-14 w-[calc(100%+4px)] shrink-0 items-center justify-between bg-ink px-[26px]">
@@ -59,7 +44,7 @@ function Passport() {
           ЦИФРОВОЙ ПАСПОРТ · СПОРТ РЯДОМ
         </span>
         <span className="w-[79px] text-xs leading-[17px] font-extrabold tracking-[1px] whitespace-nowrap text-secondary">
-          № SR-0048
+          {p.passportNumber}
         </span>
       </div>
 
@@ -68,41 +53,35 @@ function Passport() {
 
         <div className="relative flex h-[168px] w-[439px] gap-[22px]">
           <div className="relative flex h-[168px] w-[140px] shrink-0 items-center justify-center rounded-[20px] border-2 border-ink bg-sky">
-            <span className="font-display text-[48px] leading-[60px] font-extrabold text-foreground">
-              АС
-            </span>
-            <Badge
-              variant="secondary"
-              className="absolute top-[146px] left-[95px] h-[26px] text-[13px] leading-[18px]"
-            >
-              Ур. 7
-            </Badge>
+            {p.user?.avatarUrl
+              ? <img src={p.user.avatarUrl} alt="" className="size-full rounded-[18px] object-cover" />
+              : <span className="font-display text-[48px] leading-[60px] font-extrabold text-foreground">{p.initials}</span>}
           </div>
           <div className="relative h-[161px] w-[221px]">
             <Eyebrow>ИМЯ</Eyebrow>
             <h1 className="absolute top-[18px] left-0 w-[224px] font-display text-[34px] leading-[37.5px] font-extrabold text-foreground">
-              Аня
+              {p.firstName}
               <br />
-              Соколова
+              {p.lastName}
             </h1>
             <p className="absolute top-[104px] left-0 text-sm leading-[19px] font-semibold whitespace-nowrap text-muted-foreground">
-              @anya.runs · Красноярск
+              {p.handle}
             </p>
             <div className="absolute top-[135px] left-0 flex gap-[6px]">
-              <Badge className="bg-lavender-soft text-foreground">Бег</Badge>
-              <Badge className="bg-sky-soft text-foreground">Йога</Badge>
-              <Badge className="bg-lime-soft text-foreground">Вело</Badge>
+              {p.sports.slice(0, 3).map((s, i) => (
+                <Badge key={s.sport.id} className={cn(SPORT_TONES[i], "text-foreground")}>{s.sport.name}</Badge>
+              ))}
             </div>
           </div>
         </div>
 
         <div className="relative flex h-[86px] w-[439px] gap-[10px]">
-          {STATS.map((s) => (
+          {p.stats.map((s, i) => (
             <div
               key={s.label}
               className={cn(
                 "relative h-[86px] w-[139.5px] shrink-0 rounded-2xl border-2 border-transparent",
-                s.tone
+                STAT_TONES[i]
               )}
             >
               <p className="absolute top-[14px] left-[14px] font-display text-[28px] leading-[35px] font-extrabold text-foreground">
@@ -117,23 +96,24 @@ function Passport() {
         </div>
 
         <div className="relative h-[122px] w-[439px] shrink-0 rounded-2xl border-2 border-ink bg-background">
-          <Eyebrow className="absolute top-[14px] left-4 leading-[15px]">ОКТЯБРЬ · КМ В ДЕНЬ</Eyebrow>
+          <Eyebrow className="absolute top-[14px] left-4 leading-[15px]">{p.month} · ПОСЕЩЕНИЯ ПО ДНЯМ</Eyebrow>
           <span className="absolute top-[14px] right-[16px] text-xs leading-[17px] font-extrabold text-foreground">
-            68 км
+            {p.monthTotal}
           </span>
           <div className="absolute top-[41px] left-4 flex h-[63px] w-[403px] items-end gap-[5px]">
-            {BARS.map((b, i) => (
+            {p.days.slice(-19).map((count, i) => (
               <span
                 key={i}
+                title={String(count)}
                 className={cn(
                   "w-[16.5px] shrink-0 rounded-t-[4px] border",
-                  b.h === 2
+                  count === 0
                     ? "border-track bg-track"
-                    : b.accent
+                    : count === maxDay
                       ? "border-ink bg-secondary"
                       : "border-ink bg-primary"
                 )}
-                style={{ height: b.h }}
+                style={{ height: count === 0 ? 2 : Math.max(8, (count / maxDay) * 63) }}
               />
             ))}
           </div>
@@ -151,13 +131,15 @@ function Passport() {
               ))}
             </div>
             <p className="absolute top-12 left-0 font-mono text-xs leading-[14px] font-medium tracking-[1px] whitespace-nowrap text-foreground">
-              P&lt;RUS&lt;SOKOLOVA&lt;&lt;ANYA&lt;&lt;0048
+              {p.mrz}
             </p>
           </div>
-          <Button variant="soft" className="h-10 px-[18px] text-sm leading-[19px]">
-            <Icon name="profile/icon-edit" className="size-[18px]" />
-            Править
-          </Button>
+          <EditProfileDialog user={p.user}>
+            <Button variant="soft" className="h-10 px-[18px] text-sm leading-[19px]">
+              <Icon name="profile/icon-edit" className="size-[18px]" />
+              Править
+            </Button>
+          </EditProfileDialog>
         </div>
       </div>
     </Card>
@@ -177,14 +159,7 @@ function Pet() {
       <div className="flex h-[326px] w-[367px] shrink-0 flex-col items-start gap-2 px-[28px] py-4">
         <div className="w-full min-w-0 shrink-0">
           <Eyebrow>ТВОЙ ПИТОМЕЦ</Eyebrow>
-          <PetNameEditor>
-            <div className="flex items-center justify-end gap-2">
-              <Badge variant="secondary" className="h-[38px] gap-[6px] border-2 px-[14px] text-[15px] font-extrabold">
-                <Icon name="profile/icon-coin" className="size-[18px]" />
-                150
-              </Badge>
-            </div>
-          </PetNameEditor>
+          <PetNameEditor />
         </div>
 
       </div>
@@ -257,78 +232,72 @@ function BadgeTile({
 }
 
 function Achievements() {
+  const { achievements } = useProfile();
+  const unlocked = achievements.filter((a) => a.unlocked);
+  const next = achievements.find((a) => !a.unlocked);
   return (
     <Card className="absolute top-[646px] left-[412px] h-[235px] w-[804px] overflow-hidden">
       <h2 className="absolute top-6 left-6 font-display text-[22px] leading-[27px] font-bold text-foreground">
         Достижения
       </h2>
       <span className="absolute top-8 left-[726.5px] text-[13px] leading-[18px] font-bold whitespace-nowrap text-muted-foreground">
-        12 из 30
+        {unlocked.length} из {achievements.length}
       </span>
       <div className="absolute top-[69px] left-6 h-[138px] w-[752px]">
-        {BADGES.map((b) => (
+        {unlocked.slice(0, 4).map((b, i) => (
           <BadgeTile
             key={b.title}
             title={b.title}
             icon={b.icon}
             tone={b.tone}
-            style={{ left: b.left, top: b.top }}
+            style={BADGE_POS[i]}
           />
         ))}
-        <BadgeTile
-          title="Марафон · пробеги 42 км за раз"
-          icon="icon-lock"
-          locked
-          className="top-[74px] left-[254px]"
-        />
+        {next && (
+          <BadgeTile
+            title={`Следующее · ${next.title}`}
+            icon="icon-lock"
+            locked
+            className="top-[74px] left-[254px]"
+          />
+        )}
       </div>
     </Card>
   );
 }
 
 function Wardrobe() {
+  const { worn } = useWardrobe();
+  const cards = worn.length > 0 ? worn.slice(0, 5) : [{ slot: "Пока ничего не надето", item: "Гардероб" }];
   return (
     <Card className="absolute top-[350px] left-[515px] h-[276px] w-[701px] overflow-hidden">
       <h2 className="absolute top-6 left-6 font-display text-[22px] leading-[27px] font-bold text-foreground">
         Гардероб
       </h2>
       <span className="absolute top-8 left-[453px] text-[13px] leading-[18px] font-semibold whitespace-nowrap text-muted-foreground">
-        Монеты — за тренировки и бейджи
+        Что сейчас надето на бобре
       </span>
       <div className="absolute top-[69px] left-6 h-[179px] w-[649px]">
-        {WARDROBE.map((w) => (
+        {cards.map((w, i) => (
           <div
-            key={w.name}
+            key={w.slot}
             className={cn(
               "absolute top-0 h-[179px] w-[120px] rounded-[18px] border-2 border-ink",
-              w.tone
+              i === 0 ? "bg-peach" : "bg-card"
             )}
-            style={{ left: w.left }}
+            style={{ left: WARDROBE_LEFT[i] }}
           >
-            <Img name={`${w.art}.svg`} className="top-[14px] left-[32px] size-[52px]" />
-            <p className="absolute inset-x-0 top-[72px] text-center text-sm leading-[19px] font-extrabold text-foreground">
-              {w.name}
+            <Img name={`${WARDROBE_ART[i]}.svg`} className="top-[14px] left-[32px] size-[52px]" />
+            <p className="absolute inset-x-1 top-[72px] line-clamp-1 text-center text-sm leading-[19px] font-extrabold text-foreground" title={w.item}>
+              {w.item}
             </p>
-            {"price" in w ? (
-              <p className="absolute inset-x-0 top-[97px] flex items-center justify-center gap-1 text-[13px] leading-[18px] font-extrabold text-foreground">
-                <Icon name="profile/icon-coin1" className="size-[15px]" />
-                {w.price}
-              </p>
-            ) : (
-              <p className="absolute inset-x-0 top-[97px] text-center text-xs leading-[17px] font-bold text-muted-foreground">
-                {w.state === "worn" ? "Надета" : "Куплено"}
-              </p>
-            )}
+            <p className="absolute inset-x-1 top-[97px] line-clamp-1 text-center text-xs leading-[17px] font-bold text-muted-foreground">
+              {w.slot}
+            </p>
             <div className="absolute inset-x-0 top-[124px] flex justify-center">
-              {"state" in w && w.state === "worn" ? (
-                <Button variant="ink" className="h-9 px-4 text-[13px] leading-[18px]">
-                  Снять
-                </Button>
-              ) : (
-                <Button variant="soft" className="h-9 px-4 text-[13px] leading-[18px]">
-                  {"price" in w ? "Купить" : "Надеть"}
-                </Button>
-              )}
+              <Button asChild variant="soft" className="h-9 px-4 text-[13px] leading-[18px]">
+                <Link to="/pet">Сменить</Link>
+              </Button>
             </div>
           </div>
         ))}

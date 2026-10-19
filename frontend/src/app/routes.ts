@@ -12,6 +12,7 @@ export default [
   route("profile", "routes/profile.tsx"),
   route("activity", "routes/activity.tsx"),
   route("onboarding", "routes/onboarding.tsx"),
+  route("events/new", "routes/event-create.tsx"),
   route("events/:id", "routes/event.tsx"),
   route("pet", "routes/pet.tsx"),
   ...prefix("/auth", [

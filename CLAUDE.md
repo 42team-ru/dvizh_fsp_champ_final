@@ -58,10 +58,10 @@ cd backend && ./gradlew postgresTest  # смоук миграций на нас�
 |---|---|
 | `AppUser` (`users`) | есть в шаблоне; добавить `bio?`, `avatarUrl?`, `city?` |
 | `Sport` | `id`, `name`, `normalizedName` (unique), `slug`, `custom` (boolean), `createdById?`, `createdAt` |
-| `UserSport` | `userId`, `sportId`, `level?` (`BEGINNER \| AMATEUR \| ADVANCED \| PRO`) |
+| `UserSport` | `userId`, `sportId`, `level?` (`BEGINNER \| AMATEUR \| PRO`) |
 | `Organization` | `id`, `accountId` (unique, аккаунт роли ORG), `name`, `description`, `city?`, `contacts` (`Map<ContactType, String>`, таблица `organization_contacts`; `ContactType = PHONE \| EMAIL \| TELEGRAM \| VK \| WHATSAPP \| MAX \| WEBSITE`, минимум один, формат проверяет сервис), `status` (`PENDING \| APPROVED \| REJECTED`), `rejectReason?`, `submittedAt`, `reviewedAt?`, `reviewedById?` |
 | `OrganizationSport` | `organizationId`, `sportId` |
-| `Event` | `id`, `title`, `description`, `sportId`, `authorId`, `organizationId?` (если создано от организации), `startAt`, `endAt?`, `format` (`OFFLINE \| ONLINE`), `address?`, `locationNote?`, `onlineUrl?`, `lat?`, `lon?` (обязательны для OFFLINE, у ONLINE не хранятся; рядом в БД вычисляемая PostGIS-точка `location`), `level` (`ANY \| BEGINNER \| AMATEUR \| ADVANCED \| PRO`), `kind?` (тренировка, игра, встреча, любительский турнир), `requirements?`, `equipment?`, `capacity?`, `joinMode` (`FREE \| REQUEST`), `privateDetails?`, `status` (`PUBLISHED \| UNPUBLISHED \| DELETED`), `moderationReason?`, `moderatedAt?`, `moderatedById?`, `createdAt`, `updatedAt` |
+| `Event` | `id`, `title`, `description`, `sportId`, `authorId`, `organizationId?` (если создано от организации), `startAt`, `endAt?`, `format` (`OFFLINE \| ONLINE`), `address?`, `locationNote?`, `onlineUrl?`, `lat?`, `lon?` (обязательны для OFFLINE, у ONLINE не хранятся; рядом в БД вычисляемая PostGIS-точка `location`), `level` (`ANY \| BEGINNER \| AMATEUR \| PRO`), `kind?` (тренировка, игра, встреча, любительский турнир), `requirements?`, `equipment?`, `capacity?`, `joinMode` (`FREE \| REQUEST`), `privateDetails?`, `status` (`PUBLISHED \| UNPUBLISHED \| DELETED`), `moderationReason?`, `moderatedAt?`, `moderatedById?`, `createdAt`, `updatedAt` |
 | `Event` (кворум) | + `minParticipants?` — «состоится, если наберём N», не больше `capacity` |
 | `Event` (серия) | + `recurring`, `timeZone` (IANA), `seriesStartDate`, `seriesEndDate`; у серии `startAt/endAt` — первое занятие, `capacity` — на каждое занятие |
 | `EventScheduleRule` (`event_schedule_rules`) | `id`, `eventId`, `sortOrder`, `firstStart` (`LocalDateTime`, местное время серии = DTSTART), `durationMinutes`, `rrule` (RFC 5545, без `RRULE:`) |
@@ -74,7 +74,7 @@ cd backend && ./gradlew postgresTest  # смоук миграций на нас�
 - Удаление событий мягкое (`status = DELETED`): записавшиеся видят, что произошло.
 - Счётчик «записались 8 из 16» не храним: считаем подтверждённые записи одним запросом по списку `eventId`.
 - `privateDetails` (точное место, ссылка на внешний чат) и `onlineUrl` видят только подтверждённые участники и организатор.
-- Уровень: в UI пять вариантов (Любой, Новичок, Любитель, Опытный, Профи), поэтому в enum есть `ADVANCED`.
+- Уровень: в UI пять вариантов (Любой, Новичок, Любитель, Профи).
 
 ## Бизнес-правила (инварианты)
 
