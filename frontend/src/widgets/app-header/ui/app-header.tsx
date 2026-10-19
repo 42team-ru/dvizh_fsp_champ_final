@@ -20,15 +20,18 @@ const NAV = [
 const iconFolder = (current: string, key: string) =>
   current !== "cabinet" ? current : key === "home" ? "feed" : "home";
 
-/** `wide` — контейнер 1440px, как у ленты; остальные страницы 1280px. Вкладка «Кабинет» — только организаторам. */
-export function AppHeader({ current = "home", wide }: { current?: "home" | "feed" | "profile" | "activity" | "cabinet"; wide?: boolean }) {
+/**
+ * Шапка одна и та же на всех страницах: ширина контейнера не зависит от страницы, шапка прилипает к верху —
+ * при переходах ничего не прыгает. Вкладка «Кабинет» — только организаторам.
+ */
+export function AppHeader({ current = "home" }: { current?: "home" | "feed" | "profile" | "activity" | "cabinet" }) {
   const cabinet = useCabinetAccess();
   const nav = useNavAccess();
   const items = NAV.filter((item) =>
     (item.key !== "activity" || nav.showActivity) && (item.key !== "profile" || nav.showProfile));
   return (
-    <header className="box-border h-[76px] border-b-2 border-ink bg-background">
-      <div className={`mx-auto flex h-full w-full ${wide ? "max-w-[1440px]" : "max-w-[1280px]"} items-center px-8`}>
+    <header className="sticky top-0 z-40 box-border h-[76px] border-b-2 border-ink bg-background">
+      <div className="mx-auto flex h-full w-full max-w-[1280px] items-center px-8">
         <Link to="/" aria-label="Движ — на главную">
           <BrandPlate className="gap-[10px]">
             <img src="/icon.svg" alt="" className="size-10 shrink-0" />

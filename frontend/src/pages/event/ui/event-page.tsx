@@ -1,5 +1,6 @@
 import { MessageCircleQuestion } from "lucide-react";
 import { EmptyState } from "@/shared/components/ui/empty-state";
+import { WavingBeaver } from "@/widgets/beaver-pet/ui/waving-beaver";
 import { useState } from "react";
 import { CancelledStamp } from "@/shared/components/ui/cancelled-stamp";
 import { Link } from "react-router";
@@ -75,7 +76,7 @@ function TopBar({ m }: { m: EventModel }) {
         </Link>
       </Button>
       <div className="flex h-10 w-[148px] items-start">
-        <Button variant="soft" className="h-10 shrink-0 px-[18px] text-sm leading-[19px]" disabled={!e} onClick={() => setShareOpen(true)}>
+        <Button variant="soft" className="h-10 shrink-0 px-[18px] text-sm leading-[19px]" disabled={!e || Boolean(m.moderated)} onClick={() => setShareOpen(true)}>
           <Icon name="event/icon-share" className="size-[18px]" />
           Поделиться
         </Button>
@@ -174,7 +175,7 @@ function TicketHero({ m }: { m: EventModel }) {
         <span className="absolute top-[14px] right-[26px] text-[10px] font-extrabold tracking-[1px] text-foreground">
           № {e.id.slice(0, 4).toUpperCase()}
         </span>
-        <QrCode path={`/events/${e.id}`} label="QR-код: страница встречи" className="absolute top-[46px] right-[26px] z-10 size-[68px]" />
+        {!m.moderated && <QrCode path={`/events/${e.id}`} label="QR-код: страница встречи" className="absolute top-[46px] right-[26px] z-10 size-[68px]" />}
         {/* штамп организатора: только пока моя запись подтверждена — после «Отменить» пропадает */}
         {(e.status !== "PUBLISHED" || e.singleOccurrence?.status === "CANCELLED") && (
           <CancelledStamp big className="top-[220px] left-[34px] h-[66px] w-[178px] rotate-[9deg]" />
@@ -244,7 +245,8 @@ function About({ m }: { m: EventModel }) {
   const take = (e.equipment ?? "").split(/[,\n;]/).map((t) => t.trim()).filter(Boolean).slice(0, 4);
   const note = privateNote(e);
   return (
-    <Card className="relative min-h-[286.5px] shrink-0 gap-4 p-7">
+    // текст — в левой половине карточки, правую занимает бобр хозяина, который машет зрителю
+    <Card className="relative min-h-[330px] shrink-0 gap-4 p-7 pr-[calc(50%+12px)]">
       <h2 className="font-display text-[22px] leading-[27px] font-bold text-foreground">
         О встрече
       </h2>
@@ -253,10 +255,10 @@ function About({ m }: { m: EventModel }) {
           {rejectedText(e.viewer.decisionReason)}. Вы не участник этой встречи — посмотрите другие в ленте.
         </p>
       )}
-      <p className="max-w-[513px] whitespace-pre-wrap break-words text-base leading-[25.5px] font-medium text-foreground">
+      <p className="whitespace-pre-wrap break-words text-base leading-[25.5px] font-medium text-foreground">
         {e.description || "Организатор не добавил описание — спросите в обсуждении."}
       </p>
-      <div className="grid grid-cols-[minmax(0,1fr)_200px] items-start gap-5 pr-[122px]">
+      <div className="flex flex-col items-start gap-3">
         {e.requirements && (
           <div className="flex flex-col gap-1">
             <Eyebrow>ТРЕБОВАНИЯ</Eyebrow>
@@ -265,9 +267,10 @@ function About({ m }: { m: EventModel }) {
             </p>
           </div>
         )}
-        <div className="relative col-start-2 rounded-[18px] border-2 border-ink bg-card px-4 py-2">
+        <div className="relative rounded-[18px] border-2 border-ink bg-card px-4 py-2">
           <p className="break-words text-sm leading-[20.5px] font-semibold text-foreground">{note}</p>
-          <span aria-hidden className="absolute top-[19px] -right-3 box-border size-5 border-r-2 border-b-2 border-ink bg-card" />
+          {/* хвостик облачка: квадрат, повёрнутый углом к бобру, — облачко «говорит» бобр */}
+          <span aria-hidden className="absolute top-1/2 -right-[11px] box-border size-5 -translate-y-1/2 -rotate-45 rounded-br-[4px] border-r-2 border-b-2 border-ink bg-card" />
         </div>
       </div>
       {take.length > 0 && (
@@ -282,7 +285,9 @@ function About({ m }: { m: EventModel }) {
           </div>
         </>
       )}
-      <Img src="wave.png" className="pointer-events-none right-7 bottom-0 h-[118px] w-[114px] object-cover" />
+      <div className="absolute right-4 bottom-2 w-[calc(50%-24px)]">
+        <WavingBeaver />
+      </div>
     </Card>
   );
 }

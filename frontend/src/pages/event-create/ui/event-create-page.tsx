@@ -121,7 +121,7 @@ export default function EventCreatePage() {
   return (
     <div className="relative isolate min-h-dvh overflow-clip bg-background pb-[110px] lg:pb-12">
       <MemphisBackground seed="feed" />
-      <div className="hidden lg:block"><AppHeader current="feed" /></div>
+      <div className="sticky top-0 z-40 hidden lg:block"><AppHeader current="feed" /></div>
       <main className="mx-auto flex w-full max-w-[880px] flex-col gap-5 px-4 pt-8 lg:px-8">
         <h1 className="font-display text-[32px] leading-10 font-extrabold lg:text-[40px] lg:leading-[50px]">Новое событие</h1>
         {blocked && (

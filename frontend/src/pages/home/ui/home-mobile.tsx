@@ -1,5 +1,6 @@
 import { Compass } from "lucide-react";
 import { EmptyState } from "@/shared/components/ui/empty-state";
+import { MyBeaverBadge } from "@/widgets/beaver-pet/ui/my-beaver-badge";
 import { DismissButton, useDismissRecommendation } from "@/features/dismiss-recommendation/ui/dismiss-button";
 import { Link } from "react-router";
 import { BrandPlate } from "@/shared/components/ui/brand-plate";
@@ -181,7 +182,7 @@ function Tip() {
     <div className="px-4">
       <div className="box-border flex w-full flex-col gap-3 rounded-[22px] border-2 border-ink bg-sky-soft p-[14px]">
         <div className="flex items-center gap-3">
-          <img src={`/${dir}/img.png`} alt="" className="size-16 shrink-0 object-contain" />
+          <MyBeaverBadge className="size-16 shrink-0" />
           <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
             <span className="text-[10px] leading-[normal] font-extrabold tracking-[1.2px] whitespace-nowrap text-primary">
               БУБЛИК ПОДСКАЗЫВАЕТ

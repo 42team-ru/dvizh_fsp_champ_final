@@ -93,6 +93,9 @@ function mouthPath(m: number) {
 }
 
 const rand = (a: number, b: number) => a + Math.random() * (b - a);
+/** Центр тени на земле (как у #shadow в beaver.svg). */
+const SHADOW_CENTER = [190, 524] as const;
+
 const rot = (deg: number, [x, y]: readonly number[]) => `rotate(${deg.toFixed(2)} ${x} ${y})`;
 const scaleAt = (sx: number, sy: number, [x, y]: readonly number[]) =>
   `translate(${x} ${y}) scale(${sx.toFixed(4)} ${sy.toFixed(4)}) translate(${-x} ${-y})`;
@@ -149,6 +152,10 @@ export function createBeaverRig(root: HTMLElement, followCursor: boolean, onInte
     wiggle: spring(300, 0.3),
     blush: spring(90, 0.8), anger: spring(260, 0.3), steam: spring(80, 0.8), sleep: spring(60, 0.9),
   };
+
+  // Тень лежит на земле: выносим её из прыгающей группы, иначе она подлетает вместе с бобром.
+  const shadow = root.querySelector<SVGEllipseElement>("#shadow");
+  if (shadow && el.inner && shadow.parentNode === el.inner) el.inner.before(shadow);
 
   // Лапа у подбородка должна быть поверх головы, поэтому её узел временно переносится выше.
   const armLHome = el.armL ? { parent: el.armL.parentNode, next: el.armL.nextSibling } : null;
@@ -408,6 +415,10 @@ export function createBeaverRig(root: HTMLElement, followCursor: boolean, onInte
 
     const sq = 1 + s.squash.x;
     el.inner?.setAttribute("transform", `translate(0 ${hopY.toFixed(2)}) ${scaleAt(1 / Math.sqrt(sq) - stretch * 0.5, sq + stretch, PIVOT.ground)}`);
+    // как у мяча: чем выше бобр, тем тень меньше и бледнее; у земли — полная
+    const lift = clamp01(-hopY / 34);
+    shadow?.setAttribute("transform", scaleAt(1 - 0.4 * lift, 1 - 0.25 * lift, SHADOW_CENTER));
+    shadow?.setAttribute("opacity", (0.18 * (1 - 0.5 * lift)).toFixed(3));
     el.torso?.setAttribute("transform", `${rot(s.wiggle.x, PIVOT.torso)} ${scaleAt(1 + breath * 0.007, 1 + breath * 0.02, PIVOT.torso)}`);
     el.head?.setAttribute("transform", `translate(0 ${s.headY.x.toFixed(2)}) ${rot(s.headRot.x, PIVOT.head)}`);
     el.earL?.setAttribute("transform", rot(s.earL.x, PIVOT.earLeft));
