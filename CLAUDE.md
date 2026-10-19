@@ -46,7 +46,7 @@ cd backend && ./gradlew postgresTest  # смоук миграций на нас�
 
 Стиль новых сущностей (образец: `Event`, `Registration`, `Sport`; `AppUser` и `RefreshToken` из шаблона остаются как есть):
 - первичный ключ `UUID`, генерирует Hibernate: `@GeneratedValue(strategy = GenerationType.UUID)`;
-- `createdAt`/`updatedAt` — в базовом `entity.AuditEntity` (`@MappedSuperclass`, `@CreationTimestamp`/`@UpdateTimestamp`), сущность от него наследуется; время — `Instant`;
+- `createdAt`/`updatedAt` — в базовом `domain.entity.AuditEntity` (`@MappedSuperclass`, `@CreationTimestamp`/`@UpdateTimestamp`), сущность от него наследуется; время — `Instant`;
 - текущее время для бизнес-проверок («уже началось», `decidedAt`) — у базы: `DbTimeRepository.now()`, а не `Clock`;
 - `@Table` только с `name`; уникальность и индексы — в миграциях;
 - над каждым полем и значением enum — однострочный Javadoc, что это;
@@ -59,9 +59,10 @@ cd backend && ./gradlew postgresTest  # смоук миграций на нас�
 | `AppUser` (`users`) | есть в шаблоне; добавить `bio?`, `avatarUrl?`, `city?` |
 | `Sport` | `id`, `name`, `normalizedName` (unique), `slug`, `custom` (boolean), `createdById?`, `createdAt` |
 | `UserSport` | `userId`, `sportId`, `level?` (`BEGINNER \| AMATEUR \| ADVANCED \| PRO`) |
-| `Organization` | `id`, `accountId` (unique, аккаунт роли ORG), `name`, `description`, `city?`, `website?`, `contacts`, `status` (`PENDING \| APPROVED \| REJECTED`), `rejectReason?`, `submittedAt`, `reviewedAt?`, `reviewedById?` |
+| `Organization` | `id`, `accountId` (unique, аккаунт роли ORG), `name`, `description`, `city?`, `contacts` (`Map<ContactType, String>`, таблица `organization_contacts`; `ContactType = PHONE \| EMAIL \| TELEGRAM \| VK \| WHATSAPP \| MAX \| WEBSITE`, минимум один, формат проверяет сервис), `status` (`PENDING \| APPROVED \| REJECTED`), `rejectReason?`, `submittedAt`, `reviewedAt?`, `reviewedById?` |
 | `OrganizationSport` | `organizationId`, `sportId` |
 | `Event` | `id`, `title`, `description`, `sportId`, `authorId`, `organizationId?` (если создано от организации), `startAt`, `endAt?`, `format` (`OFFLINE \| ONLINE`), `address?`, `locationNote?`, `onlineUrl?`, `lat?`, `lon?`, `level` (`ANY \| BEGINNER \| AMATEUR \| ADVANCED \| PRO`), `kind?` (тренировка, игра, встреча, любительский турнир), `requirements?`, `equipment?`, `capacity?`, `joinMode` (`FREE \| REQUEST`), `privateDetails?`, `status` (`PUBLISHED \| UNPUBLISHED \| DELETED`), `moderationReason?`, `moderatedAt?`, `moderatedById?`, `createdAt`, `updatedAt` |
+| `EventOrganizer` (`event_organizers`) | `id`, `eventId`, `userId`, `addedById`, unique (`eventId`, `userId`) — соорганизаторы: правят событие и решают заявки наравне с автором, состав меняет только автор |
 | `Registration` | `id`, `eventId`, `userId`, unique (`eventId`, `userId`), `status` (`CONFIRMED \| PENDING \| REJECTED \| CANCELLED`), `message?` (сопроводительное к заявке), `decisionReason?`, `decidedAt?`, `decidedById?`, `createdAt` |
 | `Comment` | `id`, `eventId`, `authorId`, `text`, `createdAt`, `hidden` (модерация сообщений — доп. фича, пока не делаем) |
 
@@ -77,10 +78,11 @@ cd backend && ./gradlew postgresTest  # смоук миграций на нас�
 1. **Свой вид спорта.** В форме события выбирают вид из справочника или вводят свой. Сервер нормализует название (trim, схлопнуть пробелы, нижний регистр, ё → е), ищет `Sport` по `normalizedName` и при отсутствии создаёт новый с `custom = true` в той же транзакции.
 2. **Публикация от организации** разрешена только при `Organization.status = APPROVED`. Для PENDING и REJECTED API отвечает 403, в UI кнопка неактивна с пояснением. Повторной модерации событий одобренной организации нет: событие публикуется сразу.
 3. **Публичная страница организации** (`GET /api/organizations/{id}`) отдаётся только при APPROVED, иначе 404.
+3а. **Анкета организации.** Отдельного шага «отправить» нет: `PUT /api/organizations/me` и есть заявка. Первая анкета и правка после отказа → PENDING; правка PENDING или APPROVED статус не меняет. Админ может пересмотреть решение в любую сторону (одобрить отклонённую, отклонить одобренную); отказ всегда с причиной. `/api/organizations/me` доступен только аккаунту ORG (иначе 403), без анкеты — 404.
 4. **Запись на событие:**
     - событие должно быть PUBLISHED и не начавшимся, иначе 409;
     - FREE → запись сразу CONFIRMED; REQUEST → PENDING;
-    - решение по заявке (CONFIRMED или REJECTED) принимает только автор события; для события организации — аккаунт этой организации. Админ заявки участников не рассматривает;
+    - решение по заявке (CONFIRMED или REJECTED) принимает организатор: автор события или его соорганизатор (`EventOrganizer`); для события организации — ещё и аккаунт этой организации. Админ заявки участников не рассматривает и соорганизатором быть не может;
     - организатор не может записаться на своё событие (409);
     - повторная запись не создаёт дубль: строка `Registration` переиспользуется (после CANCELLED можно записаться снова);
     - если задан `capacity` и мест нет — 409 «Мест нет»;
@@ -106,12 +108,12 @@ cd backend && ./gradlew postgresTest  # смоук миграций на нас�
 | Тег | Эндпоинты (operationId) |
 |---|---|
 | `sports` | `GET /api/sports?query=` (`sports_search`) |
-| `events` | `GET /api/events` с фильтрами `q, sportId, from, to, level, joinMode, format` (`events_list`) · `GET /api/events/{id}` с блоком `viewer` (`events_get`) · `POST /api/events` (`events_create`) · `PUT /api/events/{id}` (`events_update`) · `GET /api/events/mine` (`events_mine`) |
+| `events` | `GET /api/events` с фильтрами `searchText, sportId, from, to, level, joinMode, format` (`events_list`) · `GET /api/events/{id}` с блоком `viewer` (`events_get`) · `POST /api/events` (`events_create`) · `PUT /api/events/{id}` (`events_update`) · `GET /api/events/mine` — где я автор или соорганизатор (`events_mine`) · `POST /api/events/{id}/organizers` (`events_addOrganizer`) · `DELETE /api/events/{id}/organizers/{userId}` (`events_removeOrganizer`) |
 | `registrations` | `POST /api/events/{id}/registrations` (`registrations_create`) · `DELETE /api/events/{id}/registrations/me` (`registrations_cancel`) · `GET /api/events/{id}/registrations` — участники и заявки для организатора (`registrations_listForEvent`) · `POST /api/registrations/{id}/approve` (`registrations_approve`) · `POST /api/registrations/{id}/reject` (`registrations_reject`) · `GET /api/registrations/mine` (`registrations_mine`) |
 | `comments` | `GET /api/events/{id}/comments` (`comments_list`) · `POST /api/events/{id}/comments` (`comments_create`) |
-| `organizations` | `GET /api/organizations/me` (`organizations_me`) · `PUT /api/organizations/me` — анкета (`organizations_saveMine`) · `POST /api/organizations/me/submit` (`organizations_submit`) · `GET /api/organizations/{id}` — публичная, только APPROVED (`organizations_get`) |
+| `organizations` | `GET /api/organizations/me` (`organizations_me`) · `PUT /api/organizations/me` — анкета (`organizations_saveMine`) · `GET /api/organizations/{id}` — публичная, только APPROVED (`organizations_get`) |
 | `users` | `GET /api/users/{id}` — публичный профиль организатора (`users_get`) |
-| `admin` | `GET /api/admin/stats` (`admin_stats`) · `GET /api/admin/organizations?status=&q=` (`admin_listOrganizations`) · `POST /api/admin/organizations/{id}/approve` · `…/reject` с причиной (`admin_approveOrganization`, `admin_rejectOrganization`) · `GET /api/admin/events?q=&status=` (`admin_listEvents`) · `POST /api/admin/events/{id}/unpublish` · `DELETE /api/admin/events/{id}` с причиной (`admin_unpublishEvent`, `admin_deleteEvent`) |
+| `admin` | `GET /api/admin/stats` (`admin_stats`) · `GET /api/admin/organizations?status=&searchText=&page=&size=` — страница `PageResponse` (`admin_listOrganizations`) · `GET /api/admin/organizations/{id}` (`admin_getOrganization`) · `POST /api/admin/organizations/{id}/approve` · `…/reject` с причиной (`admin_approveOrganization`, `admin_rejectOrganization`) · `GET /api/admin/events?searchText=&status=` (`admin_listEvents`) · `POST /api/admin/events/{id}/unpublish` · `DELETE /api/admin/events/{id}` с причиной (`admin_unpublishEvent`, `admin_deleteEvent`) |
 
 - `/api/admin/**` закрывается в `SecurityConfig` через `hasRole("ADMIN")`. Остальные проверки прав — в сервисах.
 - Ошибки идут через `ApiExceptionHandler` (ProblemDetail): `NoSuchElementException` → 404, `UnauthorizedException` → 401, `ConflictException` → 409. **Добавить `ForbiddenException` → 403.**
@@ -152,7 +154,7 @@ cd backend && ./gradlew postgresTest  # смоук миграций на нас�
 
 ## Демо-данные
 
-Создаются в `DemoService.seed()` при старте, только при `DEMO_MODE=true`. Сид идемпотентный: существующее не трогаем, недостающее создаём. Аккаунты `admin`, `ivan`, `maria` из шаблона заменяются на проектные. Даты событий задаются от `clock.instant()` («послезавтра в 19:00»), чтобы демо не устаревало. Полный сброс: `docker compose down -v`.
+Создаются в `DemoSeeder.seed()` при старте, только при `DEMO_MODE=true` (кнопки входа отдаёт `DemoService`). Сид идемпотентный: аккаунт ищется по логину, мероприятие — по автору и названию; существующее не трогаем, недостающее создаём. Аккаунты: `admin`, `anna`, `petr`, `olga` (кнопками на входе) и массовка `dmitry`, `elena`, `sergey`, `nikolai`. Даты событий задаются от `clock.instant()` («послезавтра в 19:00»), чтобы демо не устаревало. Полный сброс: `docker compose down -v`.
 
 - Пользователи: Анна (новичок), Пётр (любитель, автор события «по заявке»), Ольга (пенсионерка, любит зарядку), ещё 3–5 человек для заполненных списков участников.
 - Организации: шахматный клуб «Ладья» — APPROVED, с событиями; беговое сообщество «Енисей» — PENDING, для проверки одобрения; «Йога на Татышеве» — REJECTED, с причиной.
@@ -178,7 +180,8 @@ cd backend && ./gradlew postgresTest  # смоук миграций на нас�
 
 ## Структура бэкенда
 
-Пакеты по слоям в `com.hackathon.app`: `rest`, `service`, `repository`, `entity`, `dto`, `mapper`, `util`, `config`, `exception` (подробно в `docs/architecture.md`).
+Пакеты по слоям в `com.hackathon.app`: `rest`, `service`, `repository`, `domain` (внутри `entity`, `enums`, `dto`, `mapper`, `exception`), `util`, `config` (подробно в `docs/architecture.md`).
+- Enum-ы модели — отдельные файлы в `domain.enums`, а не вложенные в сущность или DTO; если имя общее — с префиксом сущности (`EventStatus`, `RegistrationStatus`, `OrganizationStatus`).
 - **Заполнение полей — только в `mapper`** (MapStruct, `@Mapper(config = MappingConfig.class)`): сервис решает (статус, время, права) и передаёт значения в маппер, сеттеров в сервисах нет. Поля без источника пропускаются без `ignore = true`, каждая строка проходит через `util.Strings.blankToNull`.
 - `util` — статические утилиты (`@UtilityClass`, методы помечать `static` явно, иначе MapStruct внедряет класс как бин).
 - Логи в контроллерах на английском: `Endpoint called: <METHOD> <путь>, userId=..., request=...` и `Endpoint response: <METHOD> <путь>, response=...`.
@@ -216,7 +219,7 @@ cd backend && ./gradlew postgresTest  # смоук миграций на нас�
 | Кто | Бэкенд | Фронт |
 |---|---|---|
 | Вася | `Event*`, `Registration*`, `Sport*`, `EventAccessPolicy` | лента, карточка события, создание, мои записи, управление заявками |
-| Максим | `Organization*`, `Admin*`, `Comment*`, `users`/auth, `DemoService` | регистрация с типом аккаунта, кабинет и страница организации, админка, обсуждение, шапка |
+| Максим | `Organization*`, `Admin*`, `Comment*`, `users`/auth, `DemoService`, `DemoSeeder` (организации и комментарии) | регистрация с типом аккаунта, кабинет и страница организации, админка, обсуждение, шапка |
 
 Общие файлы меняем коротким PR или договорившись голосом:
 - `AppUser` и `SystemRole`, `SecurityConfig`, `ApiExceptionHandler`;
@@ -258,7 +261,7 @@ cd backend && ./gradlew postgresTest  # смоук миграций на нас�
 **Баланс: не слишком мало, но и не слишком много.** Каждый тест стоит времени на каждом запуске и в CI.
 - На фичу: один сквозной сценарий «счастливого пути» + один на ошибки и границы + при необходимости 1–2 теста на неочевидные ветки (безопасность, права, гонки). Ориентир 2–4 теста на фичу.
 - Сценарий покрывает флоу целиком (регистрация → вход → me → refresh → logout), а не «по тесту на метод». Если тест можно удалить, и ни один сценарий не потеряет покрытия, — удалить.
-- Не писать тесты на геттеры, простые маппинги, конфиги и «contextLoads». **Демо-режим (`DemoService`, `DemoController`, кнопки быстрого входа) тестами не покрываем.**
+- Не писать тесты на геттеры, простые маппинги, конфиги и «contextLoads». **Демо-режим (`DemoService`, `DemoSeeder`, `DemoController`, кнопки быстрого входа) тестами не покрываем.**
 - Если фича вообще не имеет ветвлений и риска (прокидывание данных), теста может не быть.
 
 **Комментарий перед каждым тестом обязателен, подробный.** Javadoc-блок на русском с четырьмя частями:

@@ -2,7 +2,7 @@ package com.hackathon.app.rest;
 
 import java.util.List;
 
-import com.hackathon.app.dto.DemoAccountResponse;
+import com.hackathon.app.domain.dto.DemoAccountResponse;
 import com.hackathon.app.service.DemoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

@@ -3,10 +3,13 @@ package com.hackathon.app.rest;
 import java.util.List;
 import java.util.UUID;
 
-import com.hackathon.app.dto.EventFilter;
-import com.hackathon.app.dto.EventRequest;
-import com.hackathon.app.dto.EventResponse;
-import com.hackathon.app.dto.EventSummaryResponse;
+import com.hackathon.app.domain.dto.AddOrganizerRequest;
+import com.hackathon.app.domain.dto.EventFilter;
+import com.hackathon.app.domain.dto.EventRequest;
+import com.hackathon.app.domain.dto.EventResponse;
+import com.hackathon.app.domain.dto.EventSummaryResponse;
+import com.hackathon.app.domain.dto.OrganizerResponse;
+import com.hackathon.app.service.EventOrganizerService;
 import com.hackathon.app.service.EventService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -22,6 +25,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -39,6 +43,7 @@ import org.springframework.web.bind.annotation.RestController;
 class EventController {
 
     private final EventService events;
+    private final EventOrganizerService organizers;
 
     @GetMapping
     @Operation(operationId = "events_list", summary = "Лента мероприятий",
@@ -96,6 +101,35 @@ class EventController {
         log.info("Endpoint called: PUT /api/events/{}, userId={}, request={}", id, jwt.getSubject(), request);
         var response = events.update(id, userId(jwt), request);
         log.info("Endpoint response: PUT /api/events/{}, response={}", id, response);
+        return response;
+    }
+
+    @PostMapping("/{id}/organizers")
+    @Operation(operationId = "events_addOrganizer", summary = "Добавить соорганизатора",
+            description = "Только автор. Соорганизатор правит мероприятие и решает заявки наравне с автором. Возвращает новый состав.")
+    @ApiResponse(responseCode = "403", description = "Не автор", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    @ApiResponse(responseCode = "404", description = "Мероприятия или пользователя нет", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    @ApiResponse(responseCode = "409", description = "Уже организатор, администратор, записан участником или мероприятие удалено",
+            content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    List<OrganizerResponse> addOrganizer(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,
+                                         @Valid @RequestBody AddOrganizerRequest request) {
+        log.info("Endpoint called: POST /api/events/{}/organizers, userId={}, request={}", id, jwt.getSubject(), request);
+        var response = organizers.add(id, userId(jwt), request.login());
+        log.info("Endpoint response: POST /api/events/{}/organizers, response={}", id, response);
+        return response;
+    }
+
+    @DeleteMapping("/{id}/organizers/{userId}")
+    @Operation(operationId = "events_removeOrganizer", summary = "Убрать соорганизатора",
+            description = "Автор убирает любого соорганизатора, соорганизатор может выйти сам. Автора убрать нельзя. Возвращает новый состав.")
+    @ApiResponse(responseCode = "403", description = "Не автор и не сам соорганизатор", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    @ApiResponse(responseCode = "404", description = "Мероприятия нет или пользователь не организатор", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    @ApiResponse(responseCode = "409", description = "Это автор или мероприятие удалено", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    List<OrganizerResponse> removeOrganizer(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,
+                                            @PathVariable("userId") UUID organizerId) {
+        log.info("Endpoint called: DELETE /api/events/{}/organizers/{}, userId={}", id, organizerId, jwt.getSubject());
+        var response = organizers.remove(id, userId(jwt), organizerId);
+        log.info("Endpoint response: DELETE /api/events/{}/organizers/{}, response={}", id, organizerId, response);
         return response;
     }
 

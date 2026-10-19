@@ -6,15 +6,18 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.hackathon.app.dto.EventRegistrationResponse;
-import com.hackathon.app.dto.MyRegistrationResponse;
-import com.hackathon.app.dto.RegistrationResponse;
-import com.hackathon.app.entity.AppUser;
-import com.hackathon.app.entity.Event;
-import com.hackathon.app.entity.Registration;
-import com.hackathon.app.exception.ConflictException;
-import com.hackathon.app.exception.ForbiddenException;
-import com.hackathon.app.mapper.RegistrationMapper;
+import com.hackathon.app.domain.dto.EventRegistrationResponse;
+import com.hackathon.app.domain.dto.EventSummaryResponse;
+import com.hackathon.app.domain.dto.MyRegistrationResponse;
+import com.hackathon.app.domain.dto.RegistrationResponse;
+import com.hackathon.app.domain.entity.AppUser;
+import com.hackathon.app.domain.entity.Event;
+import com.hackathon.app.domain.entity.Registration;
+import com.hackathon.app.domain.enums.JoinMode;
+import com.hackathon.app.domain.enums.RegistrationStatus;
+import com.hackathon.app.domain.exception.ConflictException;
+import com.hackathon.app.domain.exception.ForbiddenException;
+import com.hackathon.app.domain.mapper.RegistrationMapper;
 import com.hackathon.app.repository.AppUserRepository;
 import com.hackathon.app.repository.DbTimeRepository;
 import com.hackathon.app.repository.EventRepository;
@@ -45,20 +48,21 @@ public class RegistrationService {
      */
     @Transactional
     public RegistrationResponse create(UUID eventId, UUID userId, String message) {
-        var e = events.findByIdForUpdate(eventId).orElseThrow(() -> new NoSuchElementException(EventService.NOT_FOUND));
-        var my = registrations.findByEventIdAndUserId(eventId, userId).orElse(null);
+        var event = events.findByIdForUpdate(eventId)
+                .orElseThrow(() -> new NoSuchElementException(EventService.NOT_FOUND));
+        var myRegistration = registrations.findByEventIdAndUserId(eventId, userId).orElse(null);
         var now = dbTime.now();
-        var confirmed = registrations.countByEventIdAndStatus(eventId, Registration.Status.CONFIRMED);
-        var blocked = policy.registerBlockedReason(e, userId, my, confirmed, now);
-        if (blocked != null) {
-            throw new ConflictException(blocked);
+        var confirmedCount = registrations.countByEventIdAndStatus(eventId, RegistrationStatus.CONFIRMED);
+        var blockedReason = policy.registerBlockedReason(event, userId, myRegistration, confirmedCount, now);
+        if (blockedReason != null) {
+            throw new ConflictException(blockedReason);
         }
-        boolean free = e.getJoinMode() == Event.JoinMode.FREE;
-        var status = free ? Registration.Status.CONFIRMED : Registration.Status.PENDING;
-        var decidedAt = free ? now : null;
-        var registration = my == null
+        boolean freeJoin = event.getJoinMode() == JoinMode.FREE;
+        var status = freeJoin ? RegistrationStatus.CONFIRMED : RegistrationStatus.PENDING;
+        var decidedAt = freeJoin ? now : null;
+        var registration = myRegistration == null
                 ? mapper.toRegistration(eventId, userId, status, message, decidedAt)
-                : mapper.rejoin(my, status, message, decidedAt);
+                : mapper.rejoin(myRegistration, status, message, decidedAt);
         try {
             return mapper.toResponse(registrations.saveAndFlush(registration));
         } catch (DataIntegrityViolationException _) { // двойной клик: unique(event_id, user_id)
@@ -71,35 +75,38 @@ public class RegistrationService {
      */
     @Transactional
     public RegistrationResponse cancel(UUID eventId, UUID userId) {
-        var e = events.findById(eventId).orElseThrow(() -> new NoSuchElementException(EventService.NOT_FOUND));
-        var my = registrations.findByEventIdAndUserId(eventId, userId)
+        var event = events.findById(eventId).orElseThrow(() -> new NoSuchElementException(EventService.NOT_FOUND));
+        var myRegistration = registrations.findByEventIdAndUserId(eventId, userId)
                 .orElseThrow(() -> new NoSuchElementException("Вы не записаны на это мероприятие"));
-        if (my.getStatus() == Registration.Status.CANCELLED) {
-            return mapper.toResponse(my);
+        if (myRegistration.getStatus() == RegistrationStatus.CANCELLED) {
+            return mapper.toResponse(myRegistration);
         }
         var now = dbTime.now();
-        var blocked = policy.cancelBlockedReason(e, my, now);
-        if (blocked != null) {
-            throw new ConflictException(blocked);
+        var blockedReason = policy.cancelBlockedReason(event, myRegistration, now);
+        if (blockedReason != null) {
+            throw new ConflictException(blockedReason);
         }
-        return mapper.toResponse(registrations.saveAndFlush(mapper.cancel(my, now, userId)));
+        return mapper.toResponse(registrations.saveAndFlush(mapper.cancel(myRegistration, now, userId)));
     }
 
     /**
      * Участники и заявки — только организатору; status — необязательный фильтр.
      */
     @Transactional(readOnly = true)
-    public List<EventRegistrationResponse> listForEvent(UUID eventId, UUID userId, Registration.Status status) {
-        var e = events.findById(eventId).orElseThrow(() -> new NoSuchElementException(EventService.NOT_FOUND));
-        if (!policy.isOrganizer(e, userId)) {
+    public List<EventRegistrationResponse> listForEvent(UUID eventId, UUID userId, RegistrationStatus status) {
+        var event = events.findById(eventId).orElseThrow(() -> new NoSuchElementException(EventService.NOT_FOUND));
+        if (!policy.isOrganizer(event, userId)) {
             throw new ForbiddenException("Заявки видит только организатор");
         }
-        var list = status == null
+        var eventRegistrations = status == null
                 ? registrations.findByEventIdOrderByCreatedAt(eventId)
                 : registrations.findByEventIdAndStatusOrderByCreatedAt(eventId, status);
-        var usersById = users.findAllById(list.stream().map(Registration::getUserId).toList()).stream()
+        var participantIds = eventRegistrations.stream().map(Registration::getUserId).toList();
+        var usersById = users.findAllById(participantIds).stream()
                 .collect(Collectors.toMap(AppUser::getId, Function.identity()));
-        return list.stream().map(r -> mapper.toEventRegistration(r, usersById.get(r.getUserId()))).toList();
+        return eventRegistrations.stream()
+                .map(registration -> mapper.toEventRegistration(registration, usersById.get(registration.getUserId())))
+                .toList();
     }
 
     /**
@@ -107,16 +114,17 @@ public class RegistrationService {
      */
     @Transactional
     public RegistrationResponse approve(UUID registrationId, UUID userId) {
-        var reg = managed(registrationId, userId);
-        if (reg.registration().getStatus() == Registration.Status.CONFIRMED) {
-            return mapper.toResponse(reg.registration());
+        var managed = managed(registrationId, userId);
+        if (managed.registration().getStatus() == RegistrationStatus.CONFIRMED) {
+            return mapper.toResponse(managed.registration());
         }
-        var confirmed = registrations.countByEventIdAndStatus(reg.event().getId(), Registration.Status.CONFIRMED);
-        var blocked = policy.approveBlockedReason(reg.event(), reg.registration(), confirmed);
-        if (blocked != null) {
-            throw new ConflictException(blocked);
+        var confirmedCount = registrations.countByEventIdAndStatus(managed.event().getId(),
+                RegistrationStatus.CONFIRMED);
+        var blockedReason = policy.approveBlockedReason(managed.event(), managed.registration(), confirmedCount);
+        if (blockedReason != null) {
+            throw new ConflictException(blockedReason);
         }
-        return decide(reg.registration(), Registration.Status.CONFIRMED, null, userId);
+        return decide(managed.registration(), RegistrationStatus.CONFIRMED, null, userId);
     }
 
     /**
@@ -124,12 +132,12 @@ public class RegistrationService {
      */
     @Transactional
     public RegistrationResponse reject(UUID registrationId, UUID userId, String reason) {
-        var reg = managed(registrationId, userId);
-        var blocked = policy.rejectBlockedReason(reg.registration());
-        if (blocked != null) {
-            throw new ConflictException(blocked);
+        var managed = managed(registrationId, userId);
+        var blockedReason = policy.rejectBlockedReason(managed.registration());
+        if (blockedReason != null) {
+            throw new ConflictException(blockedReason);
         }
-        return decide(reg.registration(), Registration.Status.REJECTED, reason, userId);
+        return decide(managed.registration(), RegistrationStatus.REJECTED, reason, userId);
     }
 
     /**
@@ -137,28 +145,34 @@ public class RegistrationService {
      */
     @Transactional(readOnly = true)
     public List<MyRegistrationResponse> mine(UUID userId) {
-        var list = registrations.findByUserIdOrderByCreatedAtDesc(userId);
-        var eventsById = eventService.summaries(events.findAllById(list.stream().map(Registration::getEventId).toList()), userId)
-                .stream().collect(Collectors.toMap(s -> s.id(), Function.identity()));
-        return list.stream().map(r -> mapper.toMine(r, eventsById.get(r.getEventId()))).toList();
+        var myRegistrations = registrations.findByUserIdOrderByCreatedAtDesc(userId);
+        var eventIds = myRegistrations.stream().map(Registration::getEventId).toList();
+        var eventsById = eventService.summaries(events.findAllById(eventIds), userId).stream()
+                .collect(Collectors.toMap(EventSummaryResponse::id, Function.identity()));
+        return myRegistrations.stream()
+                .map(registration -> mapper.toMine(registration, eventsById.get(registration.getEventId())))
+                .toList();
     }
 
-    private RegistrationResponse decide(Registration registration, Registration.Status status, String reason, UUID userId) {
-        return mapper.toResponse(registrations.saveAndFlush(mapper.decide(registration, status, reason, dbTime.now(), userId)));
+    private RegistrationResponse decide(Registration registration, RegistrationStatus status, String reason,
+                                        UUID userId) {
+        var decided = mapper.decide(registration, status, reason, dbTime.now(), userId);
+        return mapper.toResponse(registrations.saveAndFlush(decided));
     }
 
-    private record Managed(Registration registration, Event event) {
+    private record ManagedRegistration(Registration registration, Event event) {
     }
 
     /**
      * Заявка + её мероприятие под блокировкой; решать может только организатор (админ — нет, правило 7).
      */
-    private Managed managed(UUID registrationId, UUID userId) {
-        var reg = registrations.findById(registrationId).orElseThrow(() -> new NoSuchElementException("Заявка не найдена"));
-        var e = events.findByIdForUpdate(reg.getEventId()).orElseThrow();
-        if (!policy.canManage(e, userId)) {
+    private ManagedRegistration managed(UUID registrationId, UUID userId) {
+        var registration = registrations.findById(registrationId)
+                .orElseThrow(() -> new NoSuchElementException("Заявка не найдена"));
+        var event = events.findByIdForUpdate(registration.getEventId()).orElseThrow();
+        if (!policy.canManage(event, userId)) {
             throw new ForbiddenException("Решение по заявке принимает только организатор");
         }
-        return new Managed(reg, e);
+        return new ManagedRegistration(registration, event);
     }
 }

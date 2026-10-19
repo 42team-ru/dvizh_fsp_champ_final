@@ -10,3 +10,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create-drop
+
+app:
+  storage:
+    type: memory   # файлы в памяти: тестам не нужен MinIO

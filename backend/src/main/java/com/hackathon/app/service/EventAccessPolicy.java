@@ -3,9 +3,16 @@ package com.hackathon.app.service;
 import java.time.Instant;
 import java.util.UUID;
 
-import com.hackathon.app.entity.AppUser;
-import com.hackathon.app.entity.Event;
-import com.hackathon.app.entity.Registration;
+import com.hackathon.app.domain.entity.AppUser;
+import com.hackathon.app.domain.entity.Event;
+import com.hackathon.app.domain.entity.Organization;
+import com.hackathon.app.domain.entity.Registration;
+import com.hackathon.app.domain.enums.EventStatus;
+import com.hackathon.app.domain.enums.OrganizationStatus;
+import com.hackathon.app.domain.enums.RegistrationStatus;
+import com.hackathon.app.domain.enums.SystemRole;
+import com.hackathon.app.repository.EventOrganizerRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
@@ -14,33 +21,73 @@ import org.springframework.stereotype.Component;
  * Методы *BlockedReason возвращают текст для человека или null, если действие разрешено.
  */
 @Component
+@RequiredArgsConstructor
 public class EventAccessPolicy {
 
-	/** Организатор — автор события. TODO: для события организации — ещё и аккаунт этой организации. */
-	public boolean isOrganizer(Event event, UUID userId) {
+	private final EventOrganizerRepository organizers;
+
+	/** Автор — владелец мероприятия: только он меняет состав организаторов. */
+	public boolean isAuthor(Event event, UUID userId) {
 		return event.getAuthorId().equals(userId);
+	}
+
+	/** Организатор — автор или соорганизатор. TODO: для события организации — ещё и аккаунт этой организации. */
+	public boolean isOrganizer(Event event, UUID userId) {
+		return isAuthor(event, userId) || organizers.existsByEventIdAndUserId(event.getId(), userId);
+	}
+
+	/** Добавлять и убирать соорганизаторов может только автор, пока событие не удалено. */
+	public boolean canManageOrganizers(Event event, UUID userId) {
+		return isAuthor(event, userId) && event.getStatus() != EventStatus.DELETED;
+	}
+
+	/**
+	 * Кого можно сделать соорганизатором. Админ не может (он не решает заявки, правило 7);
+	 * записанный участник — сначала пусть отменит запись, иначе он займёт место и будет решать свою же заявку.
+	 */
+	public String addOrganizerBlockedReason(Event event, AppUser user, Registration registration) {
+		if (isOrganizer(event, user.getId())) {
+			return "Пользователь уже организатор этого мероприятия";
+		}
+		if (user.getSystemRole() == SystemRole.ADMIN) {
+			return "Администратора нельзя сделать организатором";
+		}
+		if (registration != null && (registration.getStatus() == RegistrationStatus.CONFIRMED
+				|| registration.getStatus() == RegistrationStatus.PENDING)) {
+			return "Пользователь записан участником: пусть сначала отменит запись";
+		}
+		return null;
 	}
 
 	/** Управлять (редактировать, решать заявки) можно организатору, пока событие не удалено. Админ не может. */
 	public boolean canManage(Event event, UUID userId) {
-		return isOrganizer(event, userId) && event.getStatus() != Event.Status.DELETED;
+		return isOrganizer(event, userId) && event.getStatus() != EventStatus.DELETED;
 	}
 
 	/** onlineUrl и privateDetails видят организатор и подтверждённые участники. */
-	public boolean canSeePrivateDetails(Event event, UUID userId, Registration my) {
-		return isOrganizer(event, userId) || (my != null && my.getStatus() == Registration.Status.CONFIRMED);
+	public boolean canSeePrivateDetails(Event event, UUID userId, Registration myRegistration) {
+		return isOrganizer(event, userId) || (myRegistration != null && myRegistration.getStatus() == RegistrationStatus.CONFIRMED);
 	}
 
-	/** Админ не создаёт события ни от своего, ни от чужого имени. TODO: ORG — только при Organization.status = APPROVED. */
-	public String createBlockedReason(AppUser user) {
-		return user.getSystemRole() == AppUser.SystemRole.ADMIN ? "Администратор не создаёт мероприятия" : null;
+	/**
+	 * Админ не создаёт события ни от своего, ни от чужого имени. Аккаунт организации публикует
+	 * только после одобрения заявки; organization — его анкета (null, если ещё не заполнена).
+	 */
+	public String createBlockedReason(AppUser user, Organization organization) {
+		return switch (user.getSystemRole()) {
+			case ADMIN -> "Администратор не создаёт мероприятия";
+			case ORG -> organization == null || organization.getStatus() != OrganizationStatus.APPROVED
+					? "Публиковать мероприятия от организации можно только после одобрения заявки"
+					: null;
+			case USER -> null;
+		};
 	}
 
-	public String registerBlockedReason(Event event, UUID userId, Registration my, long confirmed, Instant now) {
-		if (event.getStatus() == Event.Status.UNPUBLISHED) {
+	public String registerBlockedReason(Event event, UUID userId, Registration myRegistration, long confirmedCount, Instant now) {
+		if (event.getStatus() == EventStatus.UNPUBLISHED) {
 			return "Запись закрыта: мероприятие снято с публикации";
 		}
-		if (event.getStatus() == Event.Status.DELETED) {
+		if (event.getStatus() == EventStatus.DELETED) {
 			return "Запись закрыта: мероприятие удалено";
 		}
 		if (isOrganizer(event, userId)) {
@@ -49,8 +96,8 @@ public class EventAccessPolicy {
 		if (!event.getStartAt().isAfter(now)) {
 			return "Мероприятие уже началось, запись закрыта";
 		}
-		if (my != null) {
-			switch (my.getStatus()) {
+		if (myRegistration != null) {
+			switch (myRegistration.getStatus()) {
 				case CONFIRMED -> {
 					return "Вы уже записаны на это мероприятие";
 				}
@@ -65,18 +112,18 @@ public class EventAccessPolicy {
 				} // после отмены можно записаться снова
 			}
 		}
-		if (event.getCapacity() != null && confirmed >= event.getCapacity()) {
+		if (event.getCapacity() != null && confirmedCount >= event.getCapacity()) {
 			return "Мест нет";
 		}
 		return null;
 	}
 
 	/** Отменить можно свою подтверждённую запись или заявку до начала мероприятия. Отклонённую — нельзя: иначе отмена + запись обходили бы отказ. */
-	public String cancelBlockedReason(Event event, Registration my, Instant now) {
-		if (my == null || my.getStatus() == Registration.Status.CANCELLED) {
+	public String cancelBlockedReason(Event event, Registration myRegistration, Instant now) {
+		if (myRegistration == null || myRegistration.getStatus() == RegistrationStatus.CANCELLED) {
 			return "Вы не записаны на это мероприятие";
 		}
-		if (my.getStatus() == Registration.Status.REJECTED) {
+		if (myRegistration.getStatus() == RegistrationStatus.REJECTED) {
 			return "Заявка отклонена организатором, отменять нечего";
 		}
 		if (!event.getStartAt().isAfter(now)) {
@@ -86,20 +133,20 @@ public class EventAccessPolicy {
 	}
 
 	/** Подтвердить заявку (в том числе ранее отклонённую по ошибке) можно, пока событие опубликовано и есть места. */
-	public String approveBlockedReason(Event event, Registration registration, long confirmed) {
-		if (registration.getStatus() == Registration.Status.CANCELLED) {
+	public String approveBlockedReason(Event event, Registration registration, long confirmedCount) {
+		if (registration.getStatus() == RegistrationStatus.CANCELLED) {
 			return "Участник сам отменил запись";
 		}
-		if (event.getStatus() != Event.Status.PUBLISHED) {
+		if (event.getStatus() != EventStatus.PUBLISHED) {
 			return "Мероприятие снято с публикации, подтверждать заявки нельзя";
 		}
-		if (event.getCapacity() != null && confirmed >= event.getCapacity()) {
+		if (event.getCapacity() != null && confirmedCount >= event.getCapacity()) {
 			return "Мест нет";
 		}
 		return null;
 	}
 
 	public String rejectBlockedReason(Registration registration) {
-		return registration.getStatus() == Registration.Status.CANCELLED ? "Участник сам отменил запись" : null;
+		return registration.getStatus() == RegistrationStatus.CANCELLED ? "Участник сам отменил запись" : null;
 	}
 }

@@ -2,11 +2,11 @@ package com.hackathon.app.rest;
 
 import java.util.UUID;
 
-import com.hackathon.app.dto.AvailabilityCheckResponse;
-import com.hackathon.app.dto.LoginRequest;
-import com.hackathon.app.dto.MeResponse;
-import com.hackathon.app.dto.RegisterRequest;
-import com.hackathon.app.dto.UserResponse;
+import com.hackathon.app.domain.dto.AvailabilityCheckResponse;
+import com.hackathon.app.domain.dto.LoginRequest;
+import com.hackathon.app.domain.dto.MeResponse;
+import com.hackathon.app.domain.dto.RegisterRequest;
+import com.hackathon.app.domain.dto.UserResponse;
 import com.hackathon.app.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

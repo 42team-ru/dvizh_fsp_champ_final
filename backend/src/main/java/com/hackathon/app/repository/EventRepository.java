@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import com.hackathon.app.entity.Event;
+import com.hackathon.app.domain.entity.Event;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -18,5 +18,13 @@ public interface EventRepository extends JpaRepository<Event, UUID>, JpaSpecific
 	@Query("select e from Event e where e.id = :id")
 	Optional<Event> findByIdForUpdate(UUID id);
 
-	List<Event> findByAuthorIdOrderByStartAtDesc(UUID authorId);
+	/** Для идемпотентного демо-сида: такое мероприятие у автора уже есть. */
+	boolean existsByAuthorIdAndTitle(UUID authorId, String title);
+
+	/** Где я автор или соорганизатор. */
+	@Query("""
+			select e from Event e
+			where e.authorId = :userId or e.id in (select o.eventId from EventOrganizer o where o.userId = :userId)
+			order by e.startAt desc""")
+	List<Event> findOrganizedBy(UUID userId);
 }

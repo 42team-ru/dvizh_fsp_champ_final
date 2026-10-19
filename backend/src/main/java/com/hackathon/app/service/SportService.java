@@ -4,10 +4,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
-import com.hackathon.app.dto.SportResponse;
-import com.hackathon.app.entity.Sport;
-import com.hackathon.app.exception.BadRequestException;
-import com.hackathon.app.mapper.SportMapper;
+import com.hackathon.app.domain.dto.SportResponse;
+import com.hackathon.app.domain.entity.Sport;
+import com.hackathon.app.domain.exception.BadRequestException;
+import com.hackathon.app.domain.mapper.SportMapper;
 import com.hackathon.app.repository.SportRepository;
 import com.hackathon.app.util.Strings;
 import lombok.RequiredArgsConstructor;

@@ -5,8 +5,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import com.hackathon.app.entity.AppUser;
-import com.hackathon.app.entity.Registration;
+import com.hackathon.app.domain.entity.AppUser;
+import com.hackathon.app.domain.entity.Registration;
+import com.hackathon.app.domain.enums.RegistrationStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -28,20 +29,20 @@ public interface RegistrationRepository extends JpaRepository<Registration, UUID
 
 	List<Registration> findByEventIdOrderByCreatedAt(UUID eventId);
 
-	List<Registration> findByEventIdAndStatusOrderByCreatedAt(UUID eventId, Registration.Status status);
+	List<Registration> findByEventIdAndStatusOrderByCreatedAt(UUID eventId, RegistrationStatus status);
 
-	long countByEventIdAndStatus(UUID eventId, Registration.Status status);
+	long countByEventIdAndStatus(UUID eventId, RegistrationStatus status);
 
 	/** Счётчик «записались N из M» для списка одним запросом, а не по запросу на мероприятие. */
 	@Query("""
 			select r.eventId as eventId, count(r) as count from Registration r
 			where r.eventId in :eventIds and r.status = :status
 			group by r.eventId""")
-	List<EventCount> countByEventIds(Collection<UUID> eventIds, Registration.Status status);
+	List<EventCount> countByEventIds(Collection<UUID> eventIds, RegistrationStatus status);
 
 	@Query("""
 			select u from Registration r join AppUser u on u.id = r.userId
 			where r.eventId = :eventId and r.status = :status
 			order by r.createdAt""")
-	List<AppUser> findUsers(UUID eventId, Registration.Status status);
+	List<AppUser> findUsers(UUID eventId, RegistrationStatus status);
 }

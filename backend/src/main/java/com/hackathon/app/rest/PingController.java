@@ -2,7 +2,7 @@ package com.hackathon.app.rest;
 
 import java.time.Instant;
 
-import com.hackathon.app.dto.PingResponse;
+import com.hackathon.app.domain.dto.PingResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
