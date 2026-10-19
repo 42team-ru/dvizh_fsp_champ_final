@@ -71,7 +71,7 @@ export function EmptyState({
 }: {
   kind: EmptyKind;
   title: string;
-  text: string;
+  text?: string;
   children?: ReactNode;
 }) {
   const art = EMPTY_ART[kind];
@@ -81,7 +81,7 @@ export function EmptyState({
         <img src={`${IMG}/${art.img}`} alt="" className="size-full object-contain" />
       </div>
       <p className="font-display text-[17px] leading-[22px] font-extrabold text-foreground">{title}</p>
-      <p className="text-[13px] leading-[19px] font-medium text-muted-foreground">{text}</p>
+      {text && <p className="text-[13px] leading-[19px] font-medium text-muted-foreground">{text}</p>}
       {children}
     </div>
   );

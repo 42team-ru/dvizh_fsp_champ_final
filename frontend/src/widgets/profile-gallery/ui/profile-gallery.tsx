@@ -62,7 +62,7 @@ export function ProfileGallery({
       </Button>
     </EmptyState>
   ) : (
-    <EmptyState kind="later" title="Пока нет фото" text="Загляни позже — папки появятся после первых занятий." />
+    <EmptyState kind="later" title="Нет фото" />
   );
 
   const action = !mine ? null : tab === "about" ? (
@@ -155,7 +155,7 @@ export function ProfileGallery({
         <AlbumPhotosView owner={owner} sportId={sportId} sort={sort} folderCounts={folderCounts} empty={empty} />
       ) : tab === "about" ? (
         about.photos.length === 0 && !mine ? (
-          <EmptyState kind="later" title="Пока нет фото" text="Человек ещё не добавил фото о себе." />
+          <EmptyState kind="later" title="Нет фото" />
         ) : (
           <AboutPhotos photos={about.photos} owner={mine} busy={about.busy} onAdd={about.pick}
             onOpen={about.setPreview} onRemove={about.setRemoving} />
