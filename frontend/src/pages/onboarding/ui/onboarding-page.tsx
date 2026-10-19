@@ -1,4 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
+import { getUsersMyPreferencesQueryKey, useUsersSaveMyPreferences } from "@/shared/api/generated/core/users/users";
+import { toPreferences } from "../model/to-preferences";
 import { getPetsGetMineQueryKey, usePetsRename } from "@/shared/api/generated/core/pets/pets";
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
@@ -9,6 +11,7 @@ import {
   INITIAL_DATA,
   StepDone,
   StepLevel,
+  StepHome,
   StepPet,
   StepSports,
   StepWelcome,
@@ -16,7 +19,7 @@ import {
 } from "./onboarding-steps";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 
-const STEPS = 5;
+const STEPS = 6;
 
 function Logo() {
   return (
@@ -32,7 +35,7 @@ function Logo() {
 function Progress({ step }: { step: number }) {
   return (
     <div
-      className="absolute top-[34px] left-[484px] flex items-center gap-2"
+      className="absolute top-[34px] left-[456px] flex items-center gap-2"
       role="progressbar"
       aria-valuemin={1}
       aria-valuemax={STEPS}
@@ -66,8 +69,15 @@ export default function OnboardingPage() {
       onSuccess: () => queryClient.invalidateQueries({ queryKey: getPetsGetMineQueryKey() }),
     },
   });
+  const savePreferences = useUsersSaveMyPreferences({
+    mutation: {
+      onSuccess: () => queryClient.invalidateQueries({ queryKey: getUsersMyPreferencesQueryKey() }),
+    },
+  });
   const finish = (to: string) => {
     rename.mutate({ data: { name: data.petName } });
+    // Предпочтения сохраняем, если человек дошёл до шага с ними; без дней сервер отклонит PUT.
+    if (step >= 3 && data.days.length > 0) savePreferences.mutate({ data: toPreferences(data) });
     navigate(to);
   };
 
@@ -104,15 +114,16 @@ export default function OnboardingPage() {
           </button>
         ) : (
           <span className="absolute top-[29px] left-[1162px] text-sm leading-[normal] font-extrabold text-muted-foreground">
-            Шаг 5 из 5
+            Шаг {STEPS} из {STEPS}
           </span>
         )}
 
         {step === 1 && <StepWelcome />}
         {step === 2 && <StepSports data={data} update={update} />}
         {step === 3 && <StepLevel data={data} update={update} />}
-        {step === 4 && <StepPet data={data} update={update} />}
-        {step === 5 && <StepDone onFind={() => finish("/feed")} onHome={() => finish("/")} />}
+        {step === 4 && <StepHome data={data} update={update} />}
+        {step === 5 && <StepPet data={data} update={update} />}
+        {step === 6 && <StepDone onFind={() => finish("/feed")} onHome={() => finish("/")} />}
 
         {step < STEPS ? (
           <>
