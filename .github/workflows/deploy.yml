@@ -58,6 +58,9 @@ jobs:
 
       # jar и фронта (`build/client`) собираем параллельно, прямо на раннере (с кэшем)
       - name: Build jar and dist
+        env:   # ключ карты 2ГИС попадает в сборку фронта; задаётся в Settings → Secrets → Actions
+          VITE_2GIS_KEY: ${{ secrets.VITE_2GIS_KEY }}
+          VITE_2GIS_STYLE_ID: ${{ secrets.VITE_2GIS_STYLE_ID }}
         run: |
           (cd backend && ./gradlew bootJar -x test --console=plain) &
           (cd frontend && yarn install --frozen-lockfile && VITE_BACKEND_URL="" yarn build) &

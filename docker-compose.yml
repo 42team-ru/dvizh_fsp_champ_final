@@ -66,6 +66,9 @@ services:
     build:
       context: .
       dockerfile: frontend/Dockerfile
+      args:   # ключ карты 2ГИС из корневого .env; без него карта не загрузится, остальное работает
+        VITE_2GIS_KEY: ${VITE_2GIS_KEY:-}
+        VITE_2GIS_STYLE_ID: ${VITE_2GIS_STYLE_ID:-}
     restart: unless-stopped
     environment:
       DOMAIN: ${DOMAIN:-:80}   # домен -> автоматический HTTPS (нужны PORT=80 и HTTPS_PORT=443)
