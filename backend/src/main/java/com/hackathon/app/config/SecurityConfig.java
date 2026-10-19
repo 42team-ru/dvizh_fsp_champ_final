@@ -54,6 +54,7 @@ public class SecurityConfig {
 				.requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/refresh", "/api/auth/logout",
 						"/api/auth/users/check/**", "/api/demo/**", "/api/ping").permitAll()
 				.requestMatchers("/actuator/health/**", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+				.requestMatchers("/api/admin/**").hasRole("ADMIN")
 				.requestMatchers("/api/**").authenticated()
 				.anyRequest().permitAll())
 			.oauth2ResourceServer(rs -> rs

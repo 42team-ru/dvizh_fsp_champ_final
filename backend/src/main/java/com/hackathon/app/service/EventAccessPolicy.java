@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import com.hackathon.app.entity.AppUser;
 import com.hackathon.app.entity.Event;
+import com.hackathon.app.entity.Organization;
 import com.hackathon.app.entity.Registration;
 import com.hackathon.app.repository.EventOrganizerRepository;
 import lombok.RequiredArgsConstructor;
@@ -64,9 +65,18 @@ public class EventAccessPolicy {
 		return isOrganizer(event, userId) || (myRegistration != null && myRegistration.getStatus() == Registration.Status.CONFIRMED);
 	}
 
-	/** Админ не создаёт события ни от своего, ни от чужого имени. TODO: ORG — только при Organization.status = APPROVED. */
-	public String createBlockedReason(AppUser user) {
-		return user.getSystemRole() == AppUser.SystemRole.ADMIN ? "Администратор не создаёт мероприятия" : null;
+	/**
+	 * Админ не создаёт события ни от своего, ни от чужого имени. Аккаунт организации публикует
+	 * только после одобрения заявки; organization — его анкета (null, если ещё не заполнена).
+	 */
+	public String createBlockedReason(AppUser user, Organization organization) {
+		return switch (user.getSystemRole()) {
+			case ADMIN -> "Администратор не создаёт мероприятия";
+			case ORG -> organization == null || organization.getStatus() != Organization.Status.APPROVED
+					? "Публиковать мероприятия от организации можно только после одобрения заявки"
+					: null;
+			case USER -> null;
+		};
 	}
 
 	public String registerBlockedReason(Event event, UUID userId, Registration myRegistration, long confirmedCount, Instant now) {

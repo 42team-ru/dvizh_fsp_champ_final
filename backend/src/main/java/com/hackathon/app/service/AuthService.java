@@ -63,7 +63,9 @@ public class AuthService {
 		user.setFirstName(r.firstName().trim());
 		user.setLastName(r.lastName().trim());
 		user.setActive(true);
-		user.setSystemRole(AppUser.SystemRole.USER);
+		user.setSystemRole(r.accountType() == RegisterRequest.AccountType.ORG
+				? AppUser.SystemRole.ORG
+				: AppUser.SystemRole.USER);
 		user.setAuthProvider(AppUser.AuthProvider.LOCAL);
 		user.setCreatedAt(dbTimeRepository.now());
 		try {

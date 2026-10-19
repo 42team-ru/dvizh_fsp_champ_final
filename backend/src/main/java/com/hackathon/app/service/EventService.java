@@ -49,6 +49,7 @@ public class EventService {
     private final DbTimeRepository dbTime;
     private final EventAccessPolicy policy;
     private final EventMapper mapper;
+    private final OrganizationService organizations;
 
     /**
      * Лента: только опубликованные и ещё не начавшиеся (если from не задан), ближайшие первыми.
@@ -97,19 +98,23 @@ public class EventService {
     }
 
     /**
-     * Публикуется сразу. Админ не создаёт (403). Свой вид спорта создаётся в этой же транзакции.
+     * Публикуется сразу. Админ не создаёт (403); аккаунт организации — только после одобрения (403),
+     * и событие привязывается к его организации. Свой вид спорта создаётся в этой же транзакции.
      */
     @Transactional
     public EventResponse create(UUID userId, EventRequest request) {
         var user = users.findById(userId).filter(AppUser::isActive)
                 .orElseThrow(() -> new UnauthorizedException("Сессия недействительна, войдите заново"));
-        var blocked = policy.createBlockedReason(user);
+        var organization = user.getSystemRole() == AppUser.SystemRole.ORG ? organizations.forAccount(userId) : null;
+        var blocked = policy.createBlockedReason(user, organization);
         if (blocked != null) {
             throw new ForbiddenException(blocked);
         }
         validate(request);
         var sport = sportService.resolve(request.sportId(), request.sportName(), userId);
-        var saved = events.saveAndFlush(mapper.toEntity(request, userId, sport.getId()));
+        var entity = mapper.toEntity(request, userId, sport.getId());
+        entity.setOrganizationId(organization != null ? organization.getId() : null);
+        var saved = events.saveAndFlush(entity);
         return get(saved.getId(), userId);
     }
 

@@ -19,7 +19,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class AppUser {
 
-	public enum SystemRole { USER, ADMIN }
+	public enum SystemRole { USER, ORG, ADMIN }
 
 	public enum AuthProvider { LOCAL, YANDEX, GITHUB }
 
