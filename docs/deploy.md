@@ -15,6 +15,8 @@ Push в `main` запускает `.github/workflows/deploy.yml`:
 - Gradle: build cache и configuration cache (`backend/gradle.properties`) плюс `setup-gradle` в CI.
 
 ## Что нужно один раз
+> **Сейчас автодеплой выключен:** сервер обновляется вручную командой `make deploy` из одной папки (`docs/dev-faq.md`, «Как задеплоить обновление»). Ниже — как устроен деплой через Actions, если включить его переменной `AUTO_DEPLOY=true`.
+
 Секреты и переменные репозитория (GitHub → Settings → Secrets and variables → Actions):
 
 | Имя | Тип | Что это |
@@ -23,6 +25,7 @@ Push в `main` запускает `.github/workflows/deploy.yml`:
 | `VPS_USER` | secret | пользователь SSH (должен уметь `docker`) |
 | `VPS_SSH_KEY` | secret | приватный ключ целиком, без пароля (passphrase) |
 | `VPS_DIR` | variable, необязательно | папка на сервере, по умолчанию `/opt/app` |
+| `AUTO_DEPLOY` | variable | `true` — деплоить после каждого пуша в `main`; без неё CI только собирает и тестирует |
 | `VITE_2GIS_KEY` | secret | ключ карты 2ГИС: фронт собирается в CI, Vite вшивает ключ в сборку. Без него карта не загрузится, остальное работает |
 | `VITE_2GIS_STYLE_ID` | secret, необязательно | свой стиль карты из редактора 2ГИС |
 

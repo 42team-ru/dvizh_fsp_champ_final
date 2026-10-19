@@ -4,7 +4,7 @@
 Везде ниже сервер: Ubuntu/Debian, команды выполняются на нём по SSH, если не сказано иное. `/opt/app` — папка деплоя по умолчанию.
 
 ## Содержание
-- [Как задеплоить обновление](#как-задеплоить-обновление)
+- [Как задеплоить обновление](#как-задеплоить-обновление) (всё в одной папке, `make deploy`, GitHub по SSH)
 - [Как поменять сервер, на который деплоит GitHub Actions](#как-поменять-сервер-на-который-деплоит-github-actions)
 - [Как поднять проект на другом сервере вручную (без GitHub Actions)](#как-поднять-проект-на-другом-сервере-вручную-без-github-actions)
 - [Как откатиться на прошлую версию](#как-откатиться-на-прошлую-версию)
@@ -18,8 +18,64 @@
 ---
 
 ## Как задеплоить обновление
-Запушить в `main`. Всё остальное делает GitHub Actions (вкладка Actions → CI/CD). Вручную перезапустить без нового коммита: `gh workflow run "CI/CD"`.
+Сервер живёт **в одной папке** `/opt/app/source`: это клон репозитория, рядом его `.env`, а корневой `docker-compose.yml` сам собирает бэк и фронт (с ключом карты 2ГИС из того же `.env`). Обновить сервер — одна команда с вашего компьютера:
+
+```bash
+make deploy        # ssh на VPS_HOST → cd VPS_DIR/source → make prod (VPS_HOST и VPS_DIR из корневого .env)
+```
+
+Или на самом сервере в `/opt/app/source`: `make prod` (git pull + пересборка + перезапуск с ожиданием готовности), `make prod-logs`, `make prod-down` (данные сохраняются).
 Проверка: `curl https://ваш-домен/api/ping` должен вернуть `{"status":"ok",...}`.
+
+Автодеплой GitHub Actions выключен (иначе он поднимал бы старый стек в `/opt/app` поверх этого): сборка и тесты в CI идут, деплоя нет. Вернуть — переменная репозитория `AUTO_DEPLOY=true` (и обратный переезд на образы из GHCR, см. ниже).
+
+### Переезд в одну папку (один раз)
+
+Старый вариант: `/opt/app/docker-compose.yml` (образы из CI) + `/opt/app/source` для ручной сборки. База при переезде сохраняется: том `app_pgdata` тот же, если оставить имя проекта `app`.
+
+```bash
+sudo apt install -y make                      # если make нет
+cd /opt/app/source && git pull --ff-only origin main
+cp /opt/app/.env .env                         # тот же DB_PASSWORD, S3_SECRET_KEY, JWT_SECRET!
+cat >> .env <<'ENV'
+COMPOSE_PROJECT_NAME=app
+PORT=80
+HTTPS_PORT=443
+DEMO_MODE=true
+VITE_2GIS_KEY=ключ_2гис
+ENV
+# проверить, что DOMAIN в .env прежний; строки IMAGE и TAG больше не нужны (не мешают)
+mkdir -p data && cp -a /opt/app/data/caddy data/            # сертификаты HTTPS
+cd /opt/app && docker compose down                           # БЕЗ -v: остановить старый стек, база остаётся
+docker volume create app_miniodata                           # файлы MinIO: раньше папка, теперь том
+docker run --rm -v /opt/app/data/minio:/from -v app_miniodata:/to alpine cp -a /from/. /to/
+cd /opt/app/source && make prod
+```
+
+Если что-то пошло не так — вернуть старое: `cd /opt/app/source && docker compose down`, затем `cd /opt/app && docker compose up -d`.
+
+### GitHub на сервере по SSH (вместо токена в git pull)
+
+Токен в `git pull` вводить не нужно: он остаётся в истории терминала. Достаточно ключа только на чтение этого репозитория (deploy key):
+
+```bash
+ssh-keygen -t ed25519 -C "server-deploy" -f ~/.ssh/github -N ""
+cat ~/.ssh/github.pub        # скопировать
+```
+GitHub → репозиторий → Settings → **Deploy keys** → Add deploy key → вставить, галочку «Allow write access» не ставить.
+
+```bash
+cat >> ~/.ssh/config <<'CFG'
+Host github.com
+  IdentityFile ~/.ssh/github
+  IdentitiesOnly yes
+CFG
+ssh -T git@github.com                        # «Hi …! You've successfully authenticated»
+cd /opt/app/source && git remote set-url origin git@github.com:42team-ru/project_template.git
+git pull --ff-only origin main               # теперь без логина и пароля
+```
+
+Для `make deploy` с вашего компьютера нужен обычный SSH-доступ к серверу (`ssh VPS_HOST` без пароля — свой ключ в `~/.ssh/authorized_keys` сервера) и `VPS_HOST` в корневом `.env`.
 
 ## Как поменять сервер, на который деплоит GitHub Actions
 Деплой определяют три секрета репозитория, поэтому «поменять сервер» значит подготовить новый сервер и обновить секреты. Код менять не нужно.

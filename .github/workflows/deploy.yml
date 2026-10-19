@@ -14,7 +14,9 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  DEPLOY: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+  # Автодеплой выключен: сервер обновляется вручную `make deploy` (всё в одной папке, docs/dev-faq.md).
+  # Включить обратно — переменная репозитория AUTO_DEPLOY=true (Settings → Secrets and variables → Actions → Variables).
+  DEPLOY: ${{ vars.AUTO_DEPLOY == 'true' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
 
 jobs:
   test:

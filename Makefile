@@ -1,4 +1,4 @@
-.PHONY: hooks scan junk clean dev dev-down back front logs postman
+.PHONY: hooks scan junk clean dev dev-down back front logs postman deploy prod prod-logs prod-down
 dev:           ## Postgres для разработки (один раз, остаётся работать); бэк и фронт запускайте отдельно: make back / make front
 	node scripts/dev.mjs
 dev-down:      ## Остановить БД разработки (данные сохраняются)
@@ -11,6 +11,17 @@ postman:       ## Проверка сценариев приёмки через 
 	npx --yes newman@6 run postman/acceptance.postman_collection.json -e postman/local.postman_environment.json --env-var baseUrl=$${URL:-http://localhost:8080}
 logs:
 	@. ./.env && ssh $$VPS_HOST "cd $${VPS_DIR:-/opt/app} && docker compose logs -f --tail=100"
+
+# --- Сервер: всё в одной папке (/opt/app/source — клон репозитория, .env рядом). Подробно: docs/dev-faq.md
+deploy:        ## С вашего компьютера: обновить сервер одной командой (VPS_HOST и VPS_DIR из корневого .env)
+	@. ./.env && ssh $$VPS_HOST "cd $${VPS_DIR:-/opt/app}/source && make prod"
+prod:          ## На сервере: подтянуть main, пересобрать бэк и фронт, перезапустить и дождаться готовности
+	git pull --ff-only origin main
+	docker compose up -d --build --remove-orphans --wait --wait-timeout 600
+prod-logs:     ## На сервере: логи всех сервисов
+	docker compose logs -f --tail=100
+prod-down:     ## На сервере: остановить (данные базы и файлов сохраняются)
+	docker compose down
 hooks:         ## Включить git-хуки проверки коммитов (один раз после клона)
 	git config core.hooksPath .githooks
 scan:          ## Отчёт: подписи агентов и мат в истории и коде
