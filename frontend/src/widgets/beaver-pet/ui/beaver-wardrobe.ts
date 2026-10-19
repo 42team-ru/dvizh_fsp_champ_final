@@ -14,7 +14,7 @@ export type ShirtId = "football" | "running" | "training" | "judo" | "hockey" | 
 export type BottomId = "swimshorts" | "hockeypants";
 export type NeckId = "medal" | "whistle";
 /** Активность — предмет в лапах или рядом и движение с ним. */
-export type BeaverActivity = "none" | "juggle" | "dribble" | "lift" | "chess" | "ski" | "hockey" | "esports";
+export type BeaverActivity = "none" | "juggle" | "dribble" | "lift" | "chess" | "ski" | "hockey" | "esports" | "programming";
 
 export type BeaverOutfit = {
   hat?: HatId;
@@ -424,17 +424,27 @@ const swimshorts = () => `
   </g><use href="#body-line"/>`;
 
 /** Ноутбук стоит на столике за бобром, экран обращён к зрителю. */
-function gamingLaptop() {
-  return `<g id="gaming-laptop">
-    <path d="M405 521 L411 468 H423 L420 521 M551 521 L539 468 H551 L566 521" fill="#93552C" ${line(4)}/>
-    <path d="M382 465 H571 V481 H382 Z" fill="#C4874F" ${line(4)}/>
-    <path d="M398 360 Q398 353 405 353 H546 Q553 353 553 360 V443 H398 Z" fill="#3B4652" ${line(4.5)}/>
-    <rect x="407" y="363" width="137" height="68" rx="3" fill="#1E2B3C"/>
+function laptop(screen: "game" | "code") {
+  const content = screen === "code" ? `
+    <g id="laptop-code" font-family="monospace" font-size="11" font-weight="700">
+      <circle cx="417" cy="369" r="2" fill="#E0463B"/><circle cx="425" cy="369" r="2" fill="#F4C431"/><circle cx="433" cy="369" r="2" fill="#3FA45B"/>
+      <text x="415" y="387" fill="#65D7E8">for (auto x : a) {</text>
+      <text x="423" y="401" fill="#F4EBDD">sum += x;</text>
+      <text x="415" y="415" fill="#65D7E8">}</text>
+      <path d="M462 423 L465 426 L470 420" fill="none" stroke="#71DF95" stroke-width="2"/>
+      <text x="476" y="427" font-size="8" fill="#71DF95">Accepted</text>
+    </g>` : `
     <path d="M415 418 L444 386 L467 407 L490 379 L535 418 Z" fill="#174B96"/>
     <path d="M418 383 H439 M418 390 H429 M508 373 H532" stroke="#65D7E8" stroke-width="3" stroke-linecap="round"/>
     <path d="M464 386 Q453 385 450 397 L445 414 Q444 422 452 422 L465 412 H487 L500 422 Q508 422 507 414 L502 397 Q499 385 488 386 Z" fill="#C9D2DA" ${line(3)}/>
     <path d="M458 395 V407 M452 401 H464" stroke="${OUT}" stroke-width="3"/>
-    <circle cx="490" cy="397" r="3" fill="#D8402F"/><circle cx="497" cy="404" r="3" fill="#3FA45B"/>
+    <circle cx="490" cy="397" r="3" fill="#D8402F"/><circle cx="497" cy="404" r="3" fill="#3FA45B"/>`;
+  return `<g id="${screen === "code" ? "programming-laptop" : "gaming-laptop"}">
+    <path d="M405 521 L411 468 H423 L420 521 M551 521 L539 468 H551 L566 521" fill="#93552C" ${line(4)}/>
+    <path d="M382 465 H571 V481 H382 Z" fill="#C4874F" ${line(4)}/>
+    <path d="M398 360 Q398 353 405 353 H546 Q553 353 553 360 V443 H398 Z" fill="#3B4652" ${line(4.5)}/>
+    <rect x="407" y="363" width="137" height="68" rx="3" fill="#1E2B3C"/>
+    ${content}
     <path d="M398 443 H553 L565 461 Q566 467 556 467 H394 Q384 467 386 461 Z" fill="#8A949E" ${line(4)}/>
     <path d="M408 449 H544 M404 455 H548" stroke="#3B4652" stroke-width="3" stroke-linecap="round"/>
     <path d="M458 459 H492" stroke="#C9D2DA" stroke-width="4" stroke-linecap="round"/>
@@ -443,8 +453,8 @@ function gamingLaptop() {
 }
 
 const hockeyEquipment = () => `<g id="hockey-equipment">
-  <ellipse id="puck-shadow" cx="478" cy="524" rx="27" ry="6" fill="#2A1A12" opacity="0.15"/>
-  <g id="prop-puck" transform="translate(478 492)">
+  <ellipse id="puck-shadow" cx="478" cy="525" rx="27" ry="6" fill="#2A1A12" opacity="0.15"/>
+  <g id="prop-puck" transform="translate(478 510)">
     <path d="M-25 -6 V5 C-25 18 25 18 25 5 V-6 Z" fill="#3B4652" ${line(4)}/>
     <ellipse cy="-6" rx="25" ry="8" fill="#1E2B3C" ${line(4)}/>
     <path d="M-17 6 Q0 13 17 6" fill="none" stroke="#8A949E" stroke-width="2.5" stroke-linecap="round"/>
@@ -454,7 +464,8 @@ const hockeyEquipment = () => `<g id="hockey-equipment">
 const ACTIVITY: Record<BeaverActivity, () => SlotContent> = {
   none: () => ({}),
   hockey: () => ({ "slot-scene": hockeyEquipment() }),
-  esports: () => ({ "slot-scene": gamingLaptop() }),
+  esports: () => ({ "slot-scene": laptop("game") }),
+  programming: () => ({ "slot-scene": laptop("code") }),
   juggle: () => ({
     "slot-scene": `
       <ellipse id="ball-shadow" cx="478" cy="524" rx="43" ry="7" fill="#2A1A12" opacity="0.18"/>

@@ -24,6 +24,7 @@ const LOOKS: Look[] = [
   { label: "Лыжи", outfit: { hat: "beanie", eyewear: "sunglasses", shirt: "training" }, activity: "ski" },
   { label: "Хоккей", outfit: { shirt: "hockey", hat: "helmet", bottom: "hockeypants" }, activity: "hockey" },
   { label: "Киберспорт", outfit: { shirt: "training", hat: "headphones" }, activity: "esports" },
+  { label: "Спортивное программирование", outfit: { shirt: "training" }, activity: "programming" },
   { label: "Фиджитал", outfit: { shirt: "running", hat: "headphones", neck: "medal" }, activity: "esports" },
   ...Object.entries(HOCKEY_CLUBS).map(([id, club]): Look => ({ label: `ХК ${club.label}`, outfit: { shirt: id as HockeyClubId, hat: "helmet", bottom: "hockeypants" }, activity: "hockey" })),
   ...Object.entries(CLUBS).map(([id, club]): Look => ({ label: club.label, outfit: { shirt: id as ClubId }, activity: "juggle" })),
@@ -59,7 +60,8 @@ const ACTIVITIES: { value: BeaverActivity; label: string }[] = [
   { value: "none", label: "Без инвентаря" }, { value: "juggle", label: "Футбольный мяч" },
   { value: "dribble", label: "Баскетбольный мяч" }, { value: "lift", label: "Гантели" },
   { value: "chess", label: "Шахматная доска и фигуры" }, { value: "ski", label: "Лыжи и палки" },
-  { value: "hockey", label: "Летающая шайба" }, { value: "esports", label: "Игровой ноутбук" },
+  { value: "programming", label: "Ноутбук с кодом" },
+  { value: "hockey", label: "Скользящая шайба" }, { value: "esports", label: "Игровой ноутбук" },
 ];
 const button = (active: boolean) =>
   `rounded-xl border px-4 py-2 text-base transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${active ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:bg-muted"}`;

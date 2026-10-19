@@ -247,13 +247,13 @@ export function createBeaverRig(root: HTMLElement, followCursor: boolean): Beave
     }
 
     if (activity === "hockey" && el.puck) {
-      // Шайба летает туда-обратно рядом, за бобром; тень скользит по земле.
+      // Шайба скользит туда-обратно по льду, оставаясь на одной высоте.
       const phase = (2 * Math.PI * actT) / 2.4;
       const x = 478 + 65 * Math.sin(phase);
-      const y = 492 - 10 * Math.sin(phase * 2);
+      const y = 510;
       el.puck.setAttribute("transform", `translate(${x.toFixed(2)} ${y.toFixed(2)})`);
       el.puckShadow?.setAttribute("cx", x.toFixed(2));
-      el.puckShadow?.setAttribute("opacity", (0.15 - (492 - y) * 0.002).toFixed(3));
+      el.puckShadow?.setAttribute("opacity", "0.15");
     }
 
     if (loop) raf = requestAnimationFrame((n) => frame(n));
