@@ -23,6 +23,7 @@ public class UserProfileService {
 	private final StoredFileRepository storedFiles;
 	private final FileService files;
 	private final FileMapper fileMapper;
+	private final PetService pets;
 
 	/** Новый аватар заменяет прежний: старый файл удаляется. */
 	@Transactional
@@ -33,7 +34,7 @@ public class UserProfileService {
 		user.setAvatarUrl(fileMapper.fileUrl(avatar.getId()));
 		users.saveAndFlush(user);
 		files.deleteAll(old);
-		return MeResponse.of(user);
+		return MeResponse.of(user, pets.get(userId));
 	}
 
 	@Transactional
@@ -42,7 +43,7 @@ public class UserProfileService {
 		user.setAvatarUrl(null);
 		users.saveAndFlush(user);
 		files.deleteAll(storedFiles.findByUploadedByIdAndKind(userId, FileKind.AVATAR));
-		return MeResponse.of(user);
+		return MeResponse.of(user, pets.get(userId));
 	}
 
 	private AppUser find(UUID userId) {

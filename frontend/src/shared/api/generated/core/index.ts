@@ -5,6 +5,7 @@ export * from './demo/demo';
 export * from './events/events';
 export * from './files/files';
 export * from './organizations/organizations';
+export * from './pets/pets';
 export * from './ping/ping';
 export * from './registrations/registrations';
 export * from './sports/sports';

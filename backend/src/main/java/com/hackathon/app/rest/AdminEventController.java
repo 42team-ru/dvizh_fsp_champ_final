@@ -9,6 +9,7 @@ import com.hackathon.app.domain.dto.PageResponse;
 import com.hackathon.app.domain.enums.EventStatus;
 import com.hackathon.app.service.AdminEventService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -40,10 +41,13 @@ class AdminEventController {
     private final AdminEventService admin;
 
     @GetMapping("/stats")
-    @Operation(operationId = "admin_stats", summary = "Счётчики для дашборда")
-    AdminStatsResponse stats(@AuthenticationPrincipal Jwt jwt) {
-        log.info("Endpoint called: GET /api/admin/stats, userId={}", jwt.getSubject());
-        var response = admin.stats();
+    @Operation(operationId = "admin_stats", summary = "Счётчики для дашборда",
+            description = "signupsByDay — сколько присоединилось по дням (например, 10 октября — 12), дни по Красноярску.")
+    AdminStatsResponse stats(@AuthenticationPrincipal Jwt jwt,
+                             @Parameter(description = "За сколько последних дней график регистраций (1–366)")
+                             @RequestParam(defaultValue = "30") int days) {
+        log.info("Endpoint called: GET /api/admin/stats, userId={}, days={}", jwt.getSubject(), days);
+        var response = admin.stats(days);
         log.info("Endpoint response: GET /api/admin/stats, response={}", response);
         return response;
     }

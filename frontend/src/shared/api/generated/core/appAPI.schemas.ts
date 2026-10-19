@@ -5,6 +5,23 @@
  * Платформа совместных спортивных активностей. Ошибки — ProblemDetail (RFC 9457), текст для человека в поле detail.
  * OpenAPI spec version: v1
  */
+/**
+ * Код слота → код вещи. Чтобы снять вещь, не передавайте слот (null тоже снимает)
+ */
+export type PetRequestOutfit = {[key: string]: string};
+
+/**
+ * Полная замена образа бобра
+ */
+export interface PetRequest {
+  /** Настроение */
+  mood: string;
+  /** Инвентарь; none — без инвентаря */
+  activity: string;
+  /** Код слота → код вещи. Чтобы снять вещь, не передавайте слот (null тоже снимает) */
+  outfit: PetRequestOutfit;
+}
+
 export type ProblemDetailProperties = {[key: string]: unknown};
 
 export interface ProblemDetail {
@@ -14,6 +31,14 @@ export interface ProblemDetail {
   detail?: string;
   instance?: string;
   properties?: ProblemDetailProperties;
+}
+
+/**
+ * Надеть вещь в один слот или снять её
+ */
+export interface PetEquipRequest {
+  /** Код вещи из этого слота; null — снять (настроение станет idle, инвентарь — none) */
+  item?: string;
 }
 
 export type SaveOrganizationRequestContacts = {[key: string]: string};
@@ -610,6 +635,66 @@ export interface LoginRequest {
   password: string;
 }
 
+/**
+ * Новый слот одежды бобра (атрибут)
+ */
+export interface PetSlotRequest {
+  /**
+     * Код: латиница в нижнем регистре, цифры, дефис; потом не меняется
+     * @minLength 1
+     * @pattern [a-z][a-z0-9-]{1,39}
+     */
+  code: string;
+  /**
+     * Подпись
+     * @minLength 0
+     * @maxLength 100
+     */
+  label: string;
+}
+
+/**
+ * Вещь бобра в каталоге
+ */
+export interface PetItemResponse {
+  /** Код вещи — его передают в образе */
+  id: string;
+  /** Подпись */
+  label: string;
+  /** Картинка вещи, добавленной админом (/api/files/{id}); null — встроенная, её рисует фронт */
+  imageUrl?: string;
+  /** Встроенная (рисует фронт) */
+  builtIn: boolean;
+}
+
+/**
+ * MOOD — поле mood, ACTIVITY — поле activity, OUTFIT — ключ в outfit
+ */
+export type PetSlotResponseKind = typeof PetSlotResponseKind[keyof typeof PetSlotResponseKind];
+
+
+export const PetSlotResponseKind = {
+  MOOD: 'MOOD',
+  ACTIVITY: 'ACTIVITY',
+  OUTFIT: 'OUTFIT',
+} as const;
+
+/**
+ * Слот бобра с вещами
+ */
+export interface PetSlotResponse {
+  /** Код слота: mood, activity или ключ в outfit */
+  id: string;
+  /** Подпись */
+  label: string;
+  /** MOOD — поле mood, ACTIVITY — поле activity, OUTFIT — ключ в outfit */
+  kind: PetSlotResponseKind;
+  /** Встроенный слот */
+  builtIn: boolean;
+  /** Вещи по порядку */
+  items: PetItemResponse[];
+}
+
 export interface RejectOrganizationRequest {
   /**
      * @minLength 0
@@ -665,6 +750,23 @@ export interface ModerateEventRequest {
      * @maxLength 1000
      */
   reason: string;
+}
+
+/**
+ * Надетое: код слота → код вещи. Пустой слот отсутствует в объекте
+ */
+export type PetResponseOutfit = {[key: string]: string};
+
+/**
+ * Образ бобра: коды вещей из каталога. Без сохранённых настроек — {mood: idle, activity: none, outfit: {}}
+ */
+export interface PetResponse {
+  /** Настроение */
+  mood: string;
+  /** Инвентарь; none — без инвентаря */
+  activity: string;
+  /** Надетое: код слота → код вещи. Пустой слот отсутствует в объекте */
+  outfit: PetResponseOutfit;
 }
 
 /**
@@ -818,6 +920,13 @@ export interface MyRegistrationResponse {
 export interface PingResponse {
   status?: string;
   time?: string;
+}
+
+/**
+ * Каталог бобра: слоты по порядку конструктора, в каждом — вещи
+ */
+export interface PetCatalogResponse {
+  slots: PetSlotResponse[];
 }
 
 export type PublicOrganizationResponseContacts = {[key: string]: string};
@@ -1007,6 +1116,17 @@ export interface MeResponse {
   bio?: string;
   avatarUrl?: string;
   city?: string;
+  pet?: PetResponse;
+}
+
+/**
+ * Значение за день
+ */
+export interface DailyCountResponse {
+  /** День (по Красноярску) */
+  date: string;
+  /** Сколько за этот день */
+  count: number;
 }
 
 /**
@@ -1031,6 +1151,8 @@ export interface AdminStatsResponse {
   registrationsPending: number;
   /** Комментариев */
   comments: number;
+  /** Сколько присоединилось по дням (регистрации), старые дни сначала, дни без регистраций — с нулём */
+  signupsByDay: DailyCountResponse[];
 }
 
 export interface PageResponseAdminOrganizationResponse {
@@ -1185,6 +1307,22 @@ export type EventsAddPhotoBody = {
   file: Blob | File;
 };
 
+export type AdminCreatePetItemParams = {
+/**
+ * Код: латиница в нижнем регистре, цифры, дефис
+ */
+code: string;
+/**
+ * Подпись
+ */
+label: string;
+};
+
+export type AdminCreatePetItemBody = {
+  /** Картинка вещи */
+  file: Blob | File;
+};
+
 export type SportsSearchParams = {
 /**
  * Часть названия
@@ -1268,6 +1406,13 @@ username: string;
 
 export type AuthCheckEmailParams = {
 email: string;
+};
+
+export type AdminStatsParams = {
+/**
+ * За сколько последних дней график регистраций (1–366)
+ */
+days?: number;
 };
 
 export type AdminListOrganizationsParams = {

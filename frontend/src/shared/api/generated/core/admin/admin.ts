@@ -25,13 +25,19 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AdminCreatePetItemBody,
+  AdminCreatePetItemParams,
   AdminListEventsParams,
   AdminListOrganizationsParams,
   AdminOrganizationResponse,
+  AdminStatsParams,
   AdminStatsResponse,
   ModerateEventRequest,
   PageResponseAdminEventResponse,
   PageResponseAdminOrganizationResponse,
+  PetItemResponse,
+  PetSlotRequest,
+  PetSlotResponse,
   ProblemDetail,
   RejectOrganizationRequest
 } from '../appAPI.schemas';
@@ -59,7 +65,231 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   return result;
 };
 
-export type adminRejectOrganizationResponse200 = {
+export type adminCreatePetSlotResponse201 = {
+  data: PetSlotResponse
+  status: 201
+}
+
+export type adminCreatePetSlotResponse409 = {
+  data: ProblemDetail
+  status: 409
+}
+
+export type adminCreatePetSlotResponseSuccess = (adminCreatePetSlotResponse201) & {
+  headers: Headers;
+};
+export type adminCreatePetSlotResponseError = (adminCreatePetSlotResponse409) & {
+  headers: Headers;
+};
+
+export type adminCreatePetSlotResponse = (adminCreatePetSlotResponseSuccess | adminCreatePetSlotResponseError)
+
+export const getAdminCreatePetSlotUrl = () => {
+
+
+
+
+  return `/api/admin/pets/slots`
+}
+
+/**
+ * Например «Перчатки». Появится в outfit под своим кодом.
+ * @summary Добавить слот одежды (атрибут)
+ */
+export const adminCreatePetSlot = async (petSlotRequest: PetSlotRequest, options?: Parameters<typeof authMutator>[1]): Promise<adminCreatePetSlotResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return authMutator<adminCreatePetSlotResponse>(getAdminCreatePetSlotUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(petSlotRequest)
+  }
+);}
+
+
+
+
+
+export const getAdminCreatePetSlotMutationKey = () => ['adminCreatePetSlot'] as const;
+
+export const getAdminCreatePetSlotMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminCreatePetSlot>>, TError,AdminCreatePetSlotMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminCreatePetSlot>>, TError,AdminCreatePetSlotMutationVariables, TContext> => {
+
+const mutationKey = getAdminCreatePetSlotMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminCreatePetSlot>>, AdminCreatePetSlotMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  adminCreatePetSlot(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminCreatePetSlotMutationResult = NonNullable<Awaited<ReturnType<typeof adminCreatePetSlot>>>
+    export type AdminCreatePetSlotMutationBody = PetSlotRequest
+    export type AdminCreatePetSlotMutationError = ErrorType<ProblemDetail>
+    export type AdminCreatePetSlotMutationVariables = {data: PetSlotRequest}
+
+    /**
+ * @summary Добавить слот одежды (атрибут)
+ */
+export const useAdminCreatePetSlot = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminCreatePetSlot>>, TError,AdminCreatePetSlotMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adminCreatePetSlot>>,
+        TError,
+        AdminCreatePetSlotMutationVariables,
+        TContext
+      > => {
+      return useMutation(getAdminCreatePetSlotMutationOptions(options), queryClient);
+    }
+    export type adminCreatePetItemResponse201 = {
+  data: PetItemResponse
+  status: 201
+}
+
+export type adminCreatePetItemResponse400 = {
+  data: ProblemDetail
+  status: 400
+}
+
+export type adminCreatePetItemResponse404 = {
+  data: ProblemDetail
+  status: 404
+}
+
+export type adminCreatePetItemResponse409 = {
+  data: ProblemDetail
+  status: 409
+}
+
+export type adminCreatePetItemResponseSuccess = (adminCreatePetItemResponse201) & {
+  headers: Headers;
+};
+export type adminCreatePetItemResponseError = (adminCreatePetItemResponse400 | adminCreatePetItemResponse404 | adminCreatePetItemResponse409) & {
+  headers: Headers;
+};
+
+export type adminCreatePetItemResponse = (adminCreatePetItemResponseSuccess | adminCreatePetItemResponseError)
+
+export const getAdminCreatePetItemUrl = (slot: string,
+    params: AdminCreatePetItemParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/pets/slots/${slot}/items?${stringifiedParams}` : `/api/admin/pets/slots/${slot}/items`
+}
+
+/**
+ * Картинка (PNG, WebP или JPG до 5 МБ) сохраняется в S3.
+ * @summary Добавить вещь с картинкой
+ */
+export const adminCreatePetItem = async (slot: string,
+    params: AdminCreatePetItemParams,
+    adminCreatePetItemBody?: AdminCreatePetItemBody, options?: Parameters<typeof authMutator>[1]): Promise<adminCreatePetItemResponse> => {
+    const formData = new FormData();
+if(adminCreatePetItemBody?.file !== undefined) {
+ formData.append(`file`, adminCreatePetItemBody.file);
+ }
+
+  return authMutator<adminCreatePetItemResponse>(getAdminCreatePetItemUrl(slot,params),
+  {
+    ...options,
+    method: 'POST'
+    ,
+    body: formData
+  }
+);}
+
+
+
+
+
+export const getAdminCreatePetItemMutationKey = () => ['adminCreatePetItem'] as const;
+
+export const getAdminCreatePetItemMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminCreatePetItem>>, TError,AdminCreatePetItemMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminCreatePetItem>>, TError,AdminCreatePetItemMutationVariables, TContext> => {
+
+const mutationKey = getAdminCreatePetItemMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminCreatePetItem>>, AdminCreatePetItemMutationVariables> = (props) => {
+          const {slot,params,data} = props ?? {};
+
+          return  adminCreatePetItem(slot,params,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminCreatePetItemMutationResult = NonNullable<Awaited<ReturnType<typeof adminCreatePetItem>>>
+    export type AdminCreatePetItemMutationBody = AdminCreatePetItemBody | undefined
+    export type AdminCreatePetItemMutationError = ErrorType<ProblemDetail>
+    export type AdminCreatePetItemMutationVariables = {slot: string;params: AdminCreatePetItemParams;data?: AdminCreatePetItemBody}
+
+    /**
+ * @summary Добавить вещь с картинкой
+ */
+export const useAdminCreatePetItem = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminCreatePetItem>>, TError,AdminCreatePetItemMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adminCreatePetItem>>,
+        TError,
+        AdminCreatePetItemMutationVariables,
+        TContext
+      > => {
+      return useMutation(getAdminCreatePetItemMutationOptions(options), queryClient);
+    }
+    export type adminRejectOrganizationResponse200 = {
   data: AdminOrganizationResponse
   status: 200
 }
@@ -362,20 +592,28 @@ export type adminStatsResponseSuccess = (adminStatsResponse200) & {
 
 export type adminStatsResponse = (adminStatsResponseSuccess)
 
-export const getAdminStatsUrl = () => {
+export const getAdminStatsUrl = (params?: AdminStatsParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/admin/stats`
+  return stringifiedParams.length > 0 ? `/api/admin/stats?${stringifiedParams}` : `/api/admin/stats`
 }
 
 /**
+ * signupsByDay — сколько присоединилось по дням (например, 10 октября — 12), дни по Красноярску.
  * @summary Счётчики для дашборда
  */
-export const adminStats = async ( options?: Parameters<typeof authMutator>[1]): Promise<adminStatsResponse> => {
+export const adminStats = async (params?: AdminStatsParams, options?: Parameters<typeof authMutator>[1]): Promise<adminStatsResponse> => {
 
-  return authMutator<adminStatsResponse>(getAdminStatsUrl(),
+  return authMutator<adminStatsResponse>(getAdminStatsUrl(params),
   {
     ...options,
     method: 'GET'
@@ -388,23 +626,23 @@ export const adminStats = async ( options?: Parameters<typeof authMutator>[1]): 
 
 
 
-export const getAdminStatsQueryKey = () => {
+export const getAdminStatsQueryKey = (params?: AdminStatsParams,) => {
     return [
-    `/api/admin/stats`
+    `/api/admin/stats`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getAdminStatsQueryOptions = <TData = Awaited<ReturnType<typeof adminStats>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminStats>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+export const getAdminStatsQueryOptions = <TData = Awaited<ReturnType<typeof adminStats>>, TError = ErrorType<unknown>>(params?: AdminStatsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminStats>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getAdminStatsQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getAdminStatsQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof adminStats>>> = ({ signal }) => adminStats({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof adminStats>>> = ({ signal }) => adminStats(params, { signal, ...requestOptions });
 
 
 
@@ -418,7 +656,7 @@ export type AdminStatsQueryError = ErrorType<unknown>
 
 
 export function useAdminStats<TData = Awaited<ReturnType<typeof adminStats>>, TError = ErrorType<unknown>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminStats>>, TError, TData>> & Pick<
+ params: undefined |  AdminStatsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminStats>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof adminStats>>,
           TError,
@@ -428,7 +666,7 @@ export function useAdminStats<TData = Awaited<ReturnType<typeof adminStats>>, TE
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useAdminStats<TData = Awaited<ReturnType<typeof adminStats>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminStats>>, TError, TData>> & Pick<
+ params?: AdminStatsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminStats>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof adminStats>>,
           TError,
@@ -438,7 +676,7 @@ export function useAdminStats<TData = Awaited<ReturnType<typeof adminStats>>, TE
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useAdminStats<TData = Awaited<ReturnType<typeof adminStats>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminStats>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ params?: AdminStatsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminStats>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -446,11 +684,11 @@ export function useAdminStats<TData = Awaited<ReturnType<typeof adminStats>>, TE
  */
 
 export function useAdminStats<TData = Awaited<ReturnType<typeof adminStats>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminStats>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ params?: AdminStatsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminStats>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getAdminStatsQueryOptions(options)
+  const queryOptions = getAdminStatsQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -812,7 +1050,95 @@ export function useAdminListEvents<TData = Awaited<ReturnType<typeof adminListEv
 
 
 
-export type adminDeleteEventResponse404 = {
+export type adminDeletePetItemResponse204 = {
+  data: void
+  status: 204
+}
+
+export type adminDeletePetItemResponseSuccess = (adminDeletePetItemResponse204) & {
+  headers: Headers;
+};
+;
+
+export type adminDeletePetItemResponse = (adminDeletePetItemResponseSuccess)
+
+export const getAdminDeletePetItemUrl = (slot: string,
+    item: string,) => {
+
+
+
+
+  return `/api/admin/pets/slots/${slot}/items/${item}`
+}
+
+/**
+ * Снимается со всех бобров, картинка удаляется из S3. Встроенные — 409.
+ * @summary Удалить добавленную вещь
+ */
+export const adminDeletePetItem = async (slot: string,
+    item: string, options?: Parameters<typeof authMutator>[1]): Promise<adminDeletePetItemResponse> => {
+
+  return authMutator<adminDeletePetItemResponse>(getAdminDeletePetItemUrl(slot,item),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getAdminDeletePetItemMutationKey = () => ['adminDeletePetItem'] as const;
+
+export const getAdminDeletePetItemMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminDeletePetItem>>, TError,AdminDeletePetItemMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminDeletePetItem>>, TError,AdminDeletePetItemMutationVariables, TContext> => {
+
+const mutationKey = getAdminDeletePetItemMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminDeletePetItem>>, AdminDeletePetItemMutationVariables> = (props) => {
+          const {slot,item} = props ?? {};
+
+          return  adminDeletePetItem(slot,item,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminDeletePetItemMutationResult = NonNullable<Awaited<ReturnType<typeof adminDeletePetItem>>>
+
+    export type AdminDeletePetItemMutationError = ErrorType<unknown>
+    export type AdminDeletePetItemMutationVariables = {slot: string;item: string}
+
+    /**
+ * @summary Удалить добавленную вещь
+ */
+export const useAdminDeletePetItem = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminDeletePetItem>>, TError,AdminDeletePetItemMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adminDeletePetItem>>,
+        TError,
+        AdminDeletePetItemMutationVariables,
+        TContext
+      > => {
+      return useMutation(getAdminDeletePetItemMutationOptions(options), queryClient);
+    }
+    export type adminDeleteEventResponse404 = {
   data: ProblemDetail
   status: 404
 }

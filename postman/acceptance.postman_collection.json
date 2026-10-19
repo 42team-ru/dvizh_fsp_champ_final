@@ -424,7 +424,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Футбол Postman {{suffix}}\",\n  \"description\": \"Создано Postman-проверкой\",\n  \"sportId\": \"{{footballId}}\",\n  \"startAt\": \"{{startAt}}\",\n  \"endAt\": \"{{endAt}}\",\n  \"format\": \"OFFLINE\",\n  \"address\": \"Красноярск, остров Татышев\",\n  \"locationNote\": \"У главного входа\",\n  \"level\": \"AMATEUR\",\n  \"kind\": \"GAME\",\n  \"requirements\": \"Хорошее настроение\",\n  \"equipment\": \"Форма, вода\",\n  \"capacity\": 1,\n  \"joinMode\": \"FREE\",\n  \"privateDetails\": \"Чат: https://t.me/postman_check\"\n}",
+              "raw": "{\n  \"title\": \"Футбол Postman {{suffix}}\",\n  \"description\": \"Создано Postman-проверкой\",\n  \"sportId\": \"{{footballId}}\",\n  \"startAt\": \"{{startAt}}\",\n  \"endAt\": \"{{endAt}}\",\n  \"format\": \"OFFLINE\",\n  \"address\": \"Красноярск, остров Татышев\",\n  \"locationNote\": \"У главного входа\",\n  \"lat\": 56.0275,\n  \"lon\": 92.9301,\n  \"level\": \"AMATEUR\",\n  \"kind\": \"GAME\",\n  \"requirements\": \"Хорошее настроение\",\n  \"equipment\": \"Форма, вода\",\n  \"capacity\": 1,\n  \"joinMode\": \"FREE\",\n  \"privateDetails\": \"Чат: https://t.me/postman_check\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -475,7 +475,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Сапсёрфинг Postman {{suffix}}\",\n  \"description\": \"Создано Postman-проверкой\",\n  \"sportName\": \"  Сапсёрфинг   {{suffix}} \",\n  \"startAt\": \"{{startAt}}\",\n  \"endAt\": \"{{endAt}}\",\n  \"format\": \"OFFLINE\",\n  \"address\": \"Красноярск, остров Татышев\",\n  \"locationNote\": \"У главного входа\",\n  \"level\": \"AMATEUR\",\n  \"kind\": \"GAME\",\n  \"requirements\": \"Хорошее настроение\",\n  \"equipment\": \"Форма, вода\",\n  \"capacity\": 10,\n  \"joinMode\": \"REQUEST\",\n  \"privateDetails\": \"Чат: https://t.me/postman_check\"\n}",
+              "raw": "{\n  \"title\": \"Сапсёрфинг Postman {{suffix}}\",\n  \"description\": \"Создано Postman-проверкой\",\n  \"sportName\": \"  Сапсёрфинг   {{suffix}} \",\n  \"startAt\": \"{{startAt}}\",\n  \"endAt\": \"{{endAt}}\",\n  \"format\": \"OFFLINE\",\n  \"address\": \"Красноярск, остров Татышев\",\n  \"locationNote\": \"У главного входа\",\n  \"lat\": 56.0275,\n  \"lon\": 92.9301,\n  \"level\": \"AMATEUR\",\n  \"kind\": \"GAME\",\n  \"requirements\": \"Хорошее настроение\",\n  \"equipment\": \"Форма, вода\",\n  \"capacity\": 10,\n  \"joinMode\": \"REQUEST\",\n  \"privateDetails\": \"Чат: https://t.me/postman_check\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -882,7 +882,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Рано {{suffix}}\",\n  \"description\": \"Создано Postman-проверкой\",\n  \"sportId\": \"{{footballId}}\",\n  \"startAt\": \"{{startAt}}\",\n  \"endAt\": \"{{endAt}}\",\n  \"format\": \"OFFLINE\",\n  \"address\": \"Красноярск, остров Татышев\",\n  \"locationNote\": \"У главного входа\",\n  \"level\": \"AMATEUR\",\n  \"kind\": \"GAME\",\n  \"requirements\": \"Хорошее настроение\",\n  \"equipment\": \"Форма, вода\",\n  \"capacity\": 10,\n  \"joinMode\": \"FREE\",\n  \"privateDetails\": \"Чат: https://t.me/postman_check\"\n}",
+              "raw": "{\n  \"title\": \"Рано {{suffix}}\",\n  \"description\": \"Создано Postman-проверкой\",\n  \"sportId\": \"{{footballId}}\",\n  \"startAt\": \"{{startAt}}\",\n  \"endAt\": \"{{endAt}}\",\n  \"format\": \"OFFLINE\",\n  \"address\": \"Красноярск, остров Татышев\",\n  \"locationNote\": \"У главного входа\",\n  \"lat\": 56.0275,\n  \"lon\": 92.9301,\n  \"level\": \"AMATEUR\",\n  \"kind\": \"GAME\",\n  \"requirements\": \"Хорошее настроение\",\n  \"equipment\": \"Форма, вода\",\n  \"capacity\": 10,\n  \"joinMode\": \"FREE\",\n  \"privateDetails\": \"Чат: https://t.me/postman_check\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1161,7 +1161,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Админ {{suffix}}\",\n  \"description\": \"Создано Postman-проверкой\",\n  \"sportId\": \"{{footballId}}\",\n  \"startAt\": \"{{startAt}}\",\n  \"endAt\": \"{{endAt}}\",\n  \"format\": \"OFFLINE\",\n  \"address\": \"Красноярск, остров Татышев\",\n  \"locationNote\": \"У главного входа\",\n  \"level\": \"AMATEUR\",\n  \"kind\": \"GAME\",\n  \"requirements\": \"Хорошее настроение\",\n  \"equipment\": \"Форма, вода\",\n  \"capacity\": 10,\n  \"joinMode\": \"FREE\",\n  \"privateDetails\": \"Чат: https://t.me/postman_check\"\n}",
+              "raw": "{\n  \"title\": \"Админ {{suffix}}\",\n  \"description\": \"Создано Postman-проверкой\",\n  \"sportId\": \"{{footballId}}\",\n  \"startAt\": \"{{startAt}}\",\n  \"endAt\": \"{{endAt}}\",\n  \"format\": \"OFFLINE\",\n  \"address\": \"Красноярск, остров Татышев\",\n  \"locationNote\": \"У главного входа\",\n  \"lat\": 56.0275,\n  \"lon\": 92.9301,\n  \"level\": \"AMATEUR\",\n  \"kind\": \"GAME\",\n  \"requirements\": \"Хорошее настроение\",\n  \"equipment\": \"Форма, вода\",\n  \"capacity\": 10,\n  \"joinMode\": \"FREE\",\n  \"privateDetails\": \"Чат: https://t.me/postman_check\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1516,7 +1516,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Турнир клуба Postman {{suffix}}\",\n  \"description\": \"Создано Postman-проверкой\",\n  \"sportId\": \"{{footballId}}\",\n  \"startAt\": \"{{startAt}}\",\n  \"endAt\": \"{{endAt}}\",\n  \"format\": \"OFFLINE\",\n  \"address\": \"Красноярск, остров Татышев\",\n  \"locationNote\": \"У главного входа\",\n  \"level\": \"AMATEUR\",\n  \"kind\": \"GAME\",\n  \"requirements\": \"Хорошее настроение\",\n  \"equipment\": \"Форма, вода\",\n  \"capacity\": 20,\n  \"joinMode\": \"FREE\",\n  \"privateDetails\": \"Чат: https://t.me/postman_check\"\n}",
+              "raw": "{\n  \"title\": \"Турнир клуба Postman {{suffix}}\",\n  \"description\": \"Создано Postman-проверкой\",\n  \"sportId\": \"{{footballId}}\",\n  \"startAt\": \"{{startAt}}\",\n  \"endAt\": \"{{endAt}}\",\n  \"format\": \"OFFLINE\",\n  \"address\": \"Красноярск, остров Татышев\",\n  \"locationNote\": \"У главного входа\",\n  \"lat\": 56.0275,\n  \"lon\": 92.9301,\n  \"level\": \"AMATEUR\",\n  \"kind\": \"GAME\",\n  \"requirements\": \"Хорошее настроение\",\n  \"equipment\": \"Форма, вода\",\n  \"capacity\": 20,\n  \"joinMode\": \"FREE\",\n  \"privateDetails\": \"Чат: https://t.me/postman_check\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -3600,7 +3600,1338 @@
       ]
     },
     {
-      "name": "7. Сессия",
+      "name": "7. Бобр",
+      "description": "Бобр-маскот: образ по умолчанию, сохранение целиком и по слоту, валидация без частичных изменений, чтение чужого. Админ добавляет слот (атрибут) и вещь с картинкой в S3; пользователь сразу надевает её; удалённая вещь пропадает с бобра и из S3. Дашборд: сколько присоединилось по дням.",
+      "item": [
+        {
+          "name": "Новый пользователь: бобр по умолчанию",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me/pet",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me",
+                "pet"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      pm.test(\"idle, none, ничего не надето\", () => pm.expect(pm.response.json()).to.eql({ mood: \"idle\", activity: \"none\", outfit: {} }));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Каталог: все встроенные вещи",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pets/catalog",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pets",
+                "catalog"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      const slots = Object.fromEntries(pm.response.json().slots.map(s => [s.id, s]));",
+                  "      const ids = slot => slots[slot].items.map(i => i.id);",
+                  "      pm.test(\"Слоты контракта на месте\", () => [\"mood\", \"activity\", \"shirt\", \"hat\", \"eyewear\", \"neck\", \"bottom\"].forEach(s => pm.expect(slots).to.have.property(s)));",
+                  "      pm.test(\"Девять хоккейных клубов и футболка ФСП\", () => {",
+                  "          pm.expect(ids(\"shirt\").filter(i => i.startsWith(\"hc-\"))).to.have.length(9);",
+                  "          pm.expect(ids(\"shirt\")).to.include(\"programming\");",
+                  "          pm.expect(ids(\"activity\")).to.include.members([\"none\", \"programming\", \"hockey\"]);",
+                  "      });",
+                  "      pm.test(\"Встроенные — без картинки (их рисует фронт)\", () => slots.hat.items.filter(i => i.builtIn).forEach(i => pm.expect(i.imageUrl).to.be.null));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Сохранить хоккейный образ",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me/pet",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me",
+                "pet"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mood\": \"happy\",\n  \"activity\": \"hockey\",\n  \"outfit\": {\n    \"shirt\": \"hc-sokol\",\n    \"hat\": \"helmet\",\n    \"bottom\": \"hockeypants\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      pm.test(\"200 и тот же образ\", () => {",
+                  "          pm.response.to.have.status(200);",
+                  "          pm.expect(pm.response.json()).to.eql({ mood: \"happy\", activity: \"hockey\", outfit: { shirt: \"hc-sokol\", hat: \"helmet\", bottom: \"hockeypants\" } });",
+                  "      });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Неизвестная вещь — 400",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me/pet",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me",
+                "pet"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mood\": \"sad\",\n  \"activity\": \"none\",\n  \"outfit\": {\n    \"shirt\": \"hc-unknown\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400: Нет вещи «hc-unknown» в слоте «Одежда»\", () => {",
+                  "    pm.response.to.have.status(400);",
+                  "    pm.expect(pm.response.json().detail).to.eql(\"Нет вещи «hc-unknown» в слоте «Одежда»\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "«none» в одежде — 400",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me/pet",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me",
+                "pet"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mood\": \"sad\",\n  \"activity\": \"none\",\n  \"outfit\": {\n    \"hat\": \"none\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400: Пустая вещь в слоте «Головной убор»: чтобы снять, не передавайте слот\", () => {",
+                  "    pm.response.to.have.status(400);",
+                  "    pm.expect(pm.response.json().detail).to.eql(\"Пустая вещь в слоте «Головной убор»: чтобы снять, не передавайте слот\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Без настроения — 400 по-русски",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me/pet",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me",
+                "pet"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"activity\": \"none\",\n  \"outfit\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400: Укажите настроение\", () => {",
+                  "    pm.response.to.have.status(400);",
+                  "    pm.expect(pm.response.json().detail).to.eql(\"Укажите настроение\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "После ошибок образ не испорчен (и есть в /auth/me)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      pm.test(\"Хоккейный образ на месте\", () => pm.expect(pm.response.json().pet).to.eql({ mood: \"happy\", activity: \"hockey\", outfit: { shirt: \"hc-sokol\", hat: \"helmet\", bottom: \"hockeypants\" } }));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Сменить головной убор (один слот)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me/pet/slots/hat",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me",
+                "pet",
+                "slots",
+                "hat"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"item\": \"headphones\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      const pet = pm.response.json();",
+                  "      pm.test(\"На голове наушники, остальное не тронуто\", () => pm.expect(pet.outfit).to.eql({ shirt: \"hc-sokol\", hat: \"headphones\", bottom: \"hockeypants\" }));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Снять головной убор",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me/pet/slots/hat",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me",
+                "pet",
+                "slots",
+                "hat"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"item\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"hat пропал\", () => pm.expect(pm.response.json().outfit).to.not.have.property(\"hat\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Неизвестный слот — 404",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me/pet/slots/tail",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me",
+                "pet",
+                "slots",
+                "tail"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"item\": \"bow\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"404: Слот «tail» не найден\", () => {",
+                  "    pm.response.to.have.status(404);",
+                  "    pm.expect(pm.response.json().detail).to.eql(\"Слот «tail» не найден\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Футболка + наушники + ноутбук — можно",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me/pet",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me",
+                "pet"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mood\": \"thinking\",\n  \"activity\": \"programming\",\n  \"outfit\": {\n    \"shirt\": \"football\",\n    \"hat\": \"headphones\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Вход: Вера",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{userC}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Вход Вера: 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Вера смотрит бобра Бориса",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{userBId}}/pet",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "{{userBId}}",
+                "pet"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      const pet = pm.response.json();",
+                  "      pm.test(\"Образ Бориса\", () => pm.expect(pet).to.eql({ mood: \"thinking\", activity: \"programming\", outfit: { shirt: \"football\", hat: \"headphones\" } }));",
+                  "      pm.test(\"Без данных аккаунта\", () => pm.expect(Object.keys(pet)).to.eql([\"mood\", \"activity\", \"outfit\"]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Нет пользователя — 404",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/00000000-0000-0000-0000-000000000000/pet",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "00000000-0000-0000-0000-000000000000",
+                "pet"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Не админ добавляет слот — 403",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/pets/slots",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "pets",
+                "slots"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"nope\",\n  \"label\": \"Нельзя\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"403\", () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Вход: Админ",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{adminUsername}}\",\n  \"password\": \"{{demoPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Вход Админ: 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Админ: новый слот (атрибут)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/pets/slots",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "pets",
+                "slots"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"pm-{{suffix}}\",\n  \"label\": \"Слот Postman\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      pm.test(\"201\", () => pm.response.to.have.status(201));",
+                  "      const slot = pm.response.json();",
+                  "      pm.test(\"Слот одежды, не встроенный, пока пустой\", () => {",
+                  "          pm.expect(slot.kind).to.eql(\"OUTFIT\");",
+                  "          pm.expect(slot.builtIn).to.be.false;",
+                  "          pm.expect(slot.items).to.eql([]);",
+                  "      });",
+                  "      pm.collectionVariables.set(\"petSlot\", slot.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Такой слот уже есть — 409",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/pets/slots",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "pets",
+                "slots"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"pm-{{suffix}}\",\n  \"label\": \"Повтор\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"409\", () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Админ: вещь с картинкой (в S3)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/pets/slots/{{petSlot}}/items",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "pets",
+                "slots",
+                "{{petSlot}}",
+                "items"
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "code",
+                  "type": "text",
+                  "value": "pm-item"
+                },
+                {
+                  "key": "label",
+                  "type": "text",
+                  "value": "Вещь Postman"
+                },
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "postman/fixtures/pet-item.png"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      pm.test(\"201\", () => pm.response.to.have.status(201));",
+                  "      const item = pm.response.json();",
+                  "      pm.test(\"Добавленная, с картинкой\", () => {",
+                  "          pm.expect(item.id).to.eql(\"pm-item\");",
+                  "          pm.expect(item.builtIn).to.be.false;",
+                  "          pm.expect(item.imageUrl).to.match(/^\\/api\\/files\\//);",
+                  "      });",
+                  "      pm.collectionVariables.set(\"petItemImagePath\", item.imageUrl.slice(1)); // без ведущего «/»: путь склеивается с baseUrl"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Картинка вещи отдаётся из S3",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{petItemImagePath}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{petItemImagePath}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      pm.test(\"200 image/png\", () => {",
+                  "          pm.response.to.have.status(200);",
+                  "          pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"image/png\");",
+                  "      });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Вещь без картинки — 400",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/pets/slots/{{petSlot}}/items",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "pets",
+                "slots",
+                "{{petSlot}}",
+                "items"
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "code",
+                  "type": "text",
+                  "value": "no-file"
+                },
+                {
+                  "key": "label",
+                  "type": "text",
+                  "value": "Без файла"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400: Выберите файл для загрузки\", () => {",
+                  "    pm.response.to.have.status(400);",
+                  "    pm.expect(pm.response.json().detail).to.eql(\"Выберите файл для загрузки\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Вещь в настроение — 400",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/pets/slots/mood/items",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "pets",
+                "slots",
+                "mood",
+                "items"
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "code",
+                  "type": "text",
+                  "value": "angry"
+                },
+                {
+                  "key": "label",
+                  "type": "text",
+                  "value": "Злой"
+                },
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "postman/fixtures/pet-item.png"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400: Настроения рисует фронт: новые вещи добавляются в одежду и инвентарь\", () => {",
+                  "    pm.response.to.have.status(400);",
+                  "    pm.expect(pm.response.json().detail).to.eql(\"Настроения рисует фронт: новые вещи добавляются в одежду и инвентарь\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Встроенную вещь удалить нельзя — 409",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/pets/slots/hat/items/cap",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "pets",
+                "slots",
+                "hat",
+                "items",
+                "cap"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"409: Встроенную вещь удалить нельзя: её рисует фронт\", () => {",
+                  "    pm.response.to.have.status(409);",
+                  "    pm.expect(pm.response.json().detail).to.eql(\"Встроенную вещь удалить нельзя: её рисует фронт\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Дашборд: сколько присоединилось по дням",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/stats?days=7",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "stats"
+              ],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "7"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      const days = pm.response.json().signupsByDay;",
+                  "      // сегодня по Красноярску (UTC+7)",
+                  "      const today = new Date(Date.now() + 7 * 3600 * 1000).toISOString().slice(0, 10);",
+                  "      pm.test(\"7 дней, последний — сегодня\", () => {",
+                  "          pm.expect(days).to.have.length(7);",
+                  "          pm.expect(days[6].date).to.eql(today);",
+                  "      });",
+                  "      pm.test(\"Сегодня присоединились пользователи этого прогона\", () => pm.expect(days[6].count).to.be.at.least(4));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Вход: Борис",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{userB}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Вход Борис: 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Надеть новую вещь в новый слот",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me/pet/slots/{{petSlot}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me",
+                "pet",
+                "slots",
+                "{{petSlot}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"item\": \"pm-item\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      const pet = pm.response.json();",
+                  "      pm.test(\"Вещь из админки надета сразу\", () => pm.expect(pet.outfit[pm.collectionVariables.get(\"petSlot\")]).to.eql(\"pm-item\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Вход: Админ",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{adminUsername}}\",\n  \"password\": \"{{demoPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Вход Админ: 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Админ удаляет вещь",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/pets/slots/{{petSlot}}/items/pm-item",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "pets",
+                "slots",
+                "{{petSlot}}",
+                "items",
+                "pm-item"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Картинка удалена из S3",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{petItemImagePath}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{petItemImagePath}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Вход: Борис",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{userB}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Вход Борис: 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Удалённой вещи нет ни в каталоге, ни на бобре",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pets/catalog",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pets",
+                "catalog"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      const slot = pm.response.json().slots.find(s => s.id === pm.collectionVariables.get(\"petSlot\"));",
+                  "      pm.test(\"Слот пуст\", () => pm.expect(slot.items).to.eql([]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "…и с бобра вещь снята",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me/pet",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me",
+                "pet"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Слота нет в outfit\", () => pm.expect(pm.response.json().outfit).to.not.have.property(pm.collectionVariables.get(\"petSlot\")));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "8. Сессия",
       "description": "me → refresh → logout: после выхода API снова отвечает 401.",
       "item": [
         {

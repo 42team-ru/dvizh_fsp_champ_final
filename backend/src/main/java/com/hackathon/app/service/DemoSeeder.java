@@ -1,6 +1,7 @@
 package com.hackathon.app.service;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -56,9 +57,12 @@ public class DemoSeeder {
 	private static final ZoneId CITY_ZONE = ZoneId.of("Asia/Krasnoyarsk");
 	private static final String CITY = "Красноярск";
 
-	/** Демо-аккаунт; onLoginPage — показывать кнопкой на странице входа (массовка для списков участников — нет). */
+	/**
+	 * Демо-аккаунт; onLoginPage — показывать кнопкой на странице входа (массовка для списков участников — нет);
+	 * daysAgo — сколько дней назад зарегистрировался, чтобы у проекта была история.
+	 */
 	record Account(String username, String firstName, String lastName, SystemRole role, String bio,
-			boolean onLoginPage) {
+			boolean onLoginPage, int daysAgo) {
 
 		String email() {
 			return username + "@demo.local";
@@ -66,21 +70,21 @@ public class DemoSeeder {
 	}
 
 	static final List<Account> ACCOUNTS = List.of(
-			new Account("admin", "Администратор", "Платформы", SystemRole.ADMIN, null, true),
+			new Account("admin", "Администратор", "Платформы", SystemRole.ADMIN, null, true, 200),
 			new Account("anna", "Анна", "Смирнова", SystemRole.USER,
-					"Только начинаю: хочу бегать по утрам и попробовать что-то новое", true),
+					"Только начинаю: хочу бегать по утрам и попробовать что-то новое", true, 21),
 			new Account("petr", "Пётр", "Волков", SystemRole.USER,
-					"Играю в шахматы с детства, по выходным — футбол", true),
+					"Играю в шахматы с детства, по выходным — футбол", true, 140),
 			new Account("olga", "Ольга", "Морозова", SystemRole.USER,
-					"На пенсии, каждое утро делаю зарядку и зову соседей", true),
-			new Account("dmitry", "Дмитрий", "Орлов", SystemRole.USER, "Футбол и бег", false),
-			new Account("elena", "Елена", "Кузнецова", SystemRole.USER, "Бегаю полумарафоны", false),
-			new Account("sergey", "Сергей", "Белов", SystemRole.USER, "Волейбол, футбол, шахматы", false),
-			new Account("nikolai", "Николай", "Лебедев", SystemRole.USER, "Привёз петанк из Франции", false),
+					"На пенсии, каждое утро делаю зарядку и зову соседей", true, 95),
+			new Account("dmitry", "Дмитрий", "Орлов", SystemRole.USER, "Футбол и бег", false, 160),
+			new Account("elena", "Елена", "Кузнецова", SystemRole.USER, "Бегаю полумарафоны", false, 120),
+			new Account("sergey", "Сергей", "Белов", SystemRole.USER, "Волейбол, футбол, шахматы", false, 180),
+			new Account("nikolai", "Николай", "Лебедев", SystemRole.USER, "Привёз петанк из Франции", false, 75),
 			// аккаунты организаций: имя и фамилия — контактное лицо
-			new Account("ladya", "Игорь", "Савельев", SystemRole.ORG, null, true),
-			new Account("enisey", "Марина", "Соколова", SystemRole.ORG, null, true),
-			new Account("yoga", "Светлана", "Ким", SystemRole.ORG, null, false));
+			new Account("ladya", "Игорь", "Савельев", SystemRole.ORG, null, true, 170),
+			new Account("enisey", "Марина", "Соколова", SystemRole.ORG, null, true, 3),
+			new Account("yoga", "Светлана", "Ким", SystemRole.ORG, null, false, 12));
 
 	private final DemoProperties props;
 	private final AppUserRepository users;
@@ -91,6 +95,8 @@ public class DemoSeeder {
 	private final SportService sportService;
 	private final OrganizationService organizationService;
 	private final AdminOrganizationService adminOrganizationService;
+	private final DemoPetSeeder demoPets;
+	private final DemoBulkSeeder demoBulk;
 	private final UserMapper userMapper;
 	private final CommentMapper commentMapper;
 	private final EventMapper eventMapper;
@@ -251,6 +257,12 @@ public class DemoSeeder {
 					now, ids.get("admin"));
 			events.save(volleyball);
 		}
+
+		// Бобр: коллекционные вещи с картинками в S3, новый слот «Перчатки», готовые образы.
+		demoPets.seed(ids);
+
+		// Живой проект: сотни людей в 12 городах, клубы, мероприятия, записи и обсуждения за полгода.
+		demoBulk.seed(ids);
 	}
 
 	/** Логин → id; недостающие аккаунты создаются с общим демо-паролем. */
@@ -260,7 +272,8 @@ public class DemoSeeder {
 			var existing = users.findByUsernameIgnoreCaseOrEmailIgnoreCase(account.username(), account.email());
 			var user = existing.orElseGet(() -> users.save(userMapper.toLocalUser(UUID.randomUUID(),
 					account.username(), account.email(), passwordEncoder.encode(props.password()),
-					account.firstName(), account.lastName(), CITY, account.bio(), account.role(), clock.instant())));
+					account.firstName(), account.lastName(), CITY, account.bio(), account.role(),
+					clock.instant().minus(Duration.ofDays(account.daysAgo())))));
 			ids.put(account.username(), user.getId());
 		}
 		return ids;

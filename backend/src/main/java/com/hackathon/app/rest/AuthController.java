@@ -8,6 +8,7 @@ import com.hackathon.app.domain.dto.MeResponse;
 import com.hackathon.app.domain.dto.RegisterRequest;
 import com.hackathon.app.domain.dto.UserResponse;
 import com.hackathon.app.service.AuthService;
+import com.hackathon.app.service.PetService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
@@ -39,6 +40,7 @@ class AuthController {
 
 	private final AuthService auth;
 	private final AuthCookies cookies;
+	private final PetService pets;
 
 	@PostMapping("/register")
 	@Operation(operationId = "auth_register")
@@ -76,7 +78,8 @@ class AuthController {
 	@GetMapping("/me")
 	@Operation(operationId = "auth_me")
 	MeResponse me(@AuthenticationPrincipal Jwt jwt) {
-		return MeResponse.of(auth.me(UUID.fromString(jwt.getSubject())));
+		var user = auth.me(UUID.fromString(jwt.getSubject()));
+		return MeResponse.of(user, pets.get(user.getId()));
 	}
 
 	@GetMapping("/users/check/username")

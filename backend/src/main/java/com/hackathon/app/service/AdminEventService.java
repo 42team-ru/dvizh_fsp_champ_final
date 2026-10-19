@@ -1,5 +1,7 @@
 package com.hackathon.app.service;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
@@ -8,6 +10,7 @@ import java.util.stream.Collectors;
 
 import com.hackathon.app.domain.dto.AdminEventResponse;
 import com.hackathon.app.domain.dto.AdminStatsResponse;
+import com.hackathon.app.domain.dto.DailyCountResponse;
 import com.hackathon.app.domain.dto.PageResponse;
 import com.hackathon.app.domain.entity.AppUser;
 import com.hackathon.app.domain.entity.Event;
@@ -42,6 +45,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminEventService {
 
     private static final int MAX_PAGE_SIZE = 100;
+    private static final int MAX_STATS_DAYS = 366;
+    /** Платформа для Красноярска: «10 октября» на графике — красноярские сутки. */
+    private static final ZoneId CITY_ZONE = ZoneId.of("Asia/Krasnoyarsk");
 
     private final EventRepository events;
     private final RegistrationRepository registrations;
@@ -97,8 +103,20 @@ public class AdminEventService {
         return moderate(findForUpdate(eventId), EventStatus.DELETED, reason, adminId);
     }
 
+    /**
+     * Счётчики и регистрации по дням за последние days дней, включая сегодня (по Красноярску).
+     */
     @Transactional(readOnly = true)
-    public AdminStatsResponse stats() {
+    public AdminStatsResponse stats(int days) {
+        var period = Math.clamp(days, 1, MAX_STATS_DAYS);
+        var today = LocalDate.ofInstant(dbTime.now(), CITY_ZONE);
+        var firstDay = today.minusDays(period - 1L);
+        var signupsByDate = users.findCreatedAtSince(firstDay.atStartOfDay(CITY_ZONE).toInstant()).stream()
+                .collect(Collectors.groupingBy(createdAt -> LocalDate.ofInstant(createdAt, CITY_ZONE),
+                        Collectors.counting()));
+        var signupsByDay = firstDay.datesUntil(today.plusDays(1))
+                .map(day -> new DailyCountResponse(day, signupsByDate.getOrDefault(day, 0L)))
+                .toList();
         return new AdminStatsResponse(
                 users.count(),
                 organizations.countByStatus(OrganizationStatus.PENDING),
@@ -108,7 +126,8 @@ public class AdminEventService {
                 events.countByStatus(EventStatus.DELETED),
                 registrations.countByStatus(RegistrationStatus.CONFIRMED),
                 registrations.countByStatus(RegistrationStatus.PENDING),
-                comments.count());
+                comments.count(),
+                signupsByDay);
     }
 
     /** Под блокировкой строки: снятие не разминётся с параллельной записью на последнее место. */
