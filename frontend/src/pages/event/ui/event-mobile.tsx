@@ -307,12 +307,6 @@ export function EventMobile({ m }: { m: EventModel }) {
                   {e.locationNote || e.address}
                 </span>
               </div>
-              <Button asChild variant="soft" className="h-11 w-[92px] shrink-0 gap-2 px-5 text-[13px]">
-                <a href={`https://2gis.ru/geo/${point[0]},${point[1]}`} target="_blank" rel="noreferrer">
-                  <Icon name={`${dir}/icon-map`} className="size-[18px]" />
-                  Карта
-                </a>
-              </Button>
             </div>
           </Card>
         </div>

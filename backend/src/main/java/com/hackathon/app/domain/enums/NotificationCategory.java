@@ -13,5 +13,7 @@ public enum NotificationCategory {
     /** Проверка организаций. */
     ORGANIZATIONS,
     /** Состав организаторов. */
-    ORGANIZERS
+    ORGANIZERS,
+    /** Полученные достижения. */
+    ACHIEVEMENTS
 }

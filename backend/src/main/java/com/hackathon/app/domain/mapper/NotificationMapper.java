@@ -13,7 +13,9 @@ public interface NotificationMapper {
     Notification notification(UUID userId, UUID actorId, NotificationType type, NotificationCategory category,
             String dedupKey, String title, String body, String targetPath, UUID eventId, UUID occurrenceId,
             UUID organizationId, Instant expectedStartAt, long revision);
-    NotificationResponse response(Notification notification);
+    @Mapping(target = "id", source = "notification.id")
+    @Mapping(target = "actor", source = "actor")
+    NotificationResponse response(Notification notification, UserShortResponse actor);
     NotificationInbox inbox(UUID userId, long revision);
     default void revision(@MappingTarget NotificationInbox inbox, long revision) {
         inbox.setRevision(revision);

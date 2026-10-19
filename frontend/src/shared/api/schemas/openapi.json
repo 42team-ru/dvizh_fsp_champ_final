@@ -4734,6 +4734,46 @@
               "type": "boolean",
               "default": false
             }
+          },
+          {
+            "name": "types",
+            "in": "query",
+            "description": "Только эти типы; пусто — все",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "REMINDER",
+                  "EVENT_CHANGED",
+                  "EVENT_UNPUBLISHED",
+                  "EVENT_DELETED",
+                  "OCCURRENCE_CANCELLED",
+                  "OCCURRENCE_RESCHEDULED",
+                  "REGISTRATION_CREATED",
+                  "REGISTRATION_CANCELLED",
+                  "REGISTRATION_APPROVED",
+                  "REGISTRATION_REJECTED",
+                  "COMMENT_REPLY",
+                  "ORGANIZATION_SUBMITTED",
+                  "ORGANIZATION_APPROVED",
+                  "ORGANIZATION_REJECTED",
+                  "ORGANIZER_ADDED",
+                  "ORGANIZER_REMOVED",
+                  "QUORUM_REACHED",
+                  "QUORUM_LOST",
+                  "OCCURRENCE_CONFIRMED",
+                  "COMMENT_CREATED",
+                  "COMMENT_HIDDEN",
+                  "EVENT_RESTORED",
+                  "EVENT_ANNOUNCEMENT",
+                  "ORGANIZATION_RETURNED",
+                  "ACHIEVEMENT_UNLOCKED"
+                ]
+              },
+              "uniqueItems": true
+            }
           }
         ],
         "responses": {
@@ -4743,6 +4783,30 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/NotificationPageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/unread-counts": {
+      "get": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Непрочитанные уведомления по типам",
+        "operationId": "notifications_unreadCounts",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NotificationTypeCountResponse"
+                  }
                 }
               }
             }
@@ -6865,7 +6929,8 @@
                 "REGISTRATIONS",
                 "DISCUSSIONS",
                 "ORGANIZATIONS",
-                "ORGANIZERS"
+                "ORGANIZERS",
+                "ACHIEVEMENTS"
               ]
             },
             "uniqueItems": true
@@ -6929,7 +6994,8 @@
                 "REGISTRATIONS",
                 "DISCUSSIONS",
                 "ORGANIZATIONS",
-                "ORGANIZERS"
+                "ORGANIZERS",
+                "ACHIEVEMENTS"
               ]
             },
             "uniqueItems": true
@@ -10032,7 +10098,8 @@
               "COMMENT_HIDDEN",
               "EVENT_RESTORED",
               "EVENT_ANNOUNCEMENT",
-              "ORGANIZATION_RETURNED"
+              "ORGANIZATION_RETURNED",
+              "ACHIEVEMENT_UNLOCKED"
             ]
           },
           "category": {
@@ -10043,7 +10110,8 @@
               "REGISTRATIONS",
               "DISCUSSIONS",
               "ORGANIZATIONS",
-              "ORGANIZERS"
+              "ORGANIZERS",
+              "ACHIEVEMENTS"
             ]
           },
           "title": {
@@ -10078,6 +10146,10 @@
           "revision": {
             "type": "integer",
             "format": "int64"
+          },
+          "actor": {
+            "$ref": "#/components/schemas/UserShortResponse",
+            "description": "Кто вызвал уведомление (ответил, принял заявку); null — система"
           }
         },
         "required": [
@@ -10089,6 +10161,51 @@
           "targetPath",
           "title",
           "type"
+        ]
+      },
+      "NotificationTypeCountResponse": {
+        "type": "object",
+        "description": "Непрочитанные уведомления одного типа",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "REMINDER",
+              "EVENT_CHANGED",
+              "EVENT_UNPUBLISHED",
+              "EVENT_DELETED",
+              "OCCURRENCE_CANCELLED",
+              "OCCURRENCE_RESCHEDULED",
+              "REGISTRATION_CREATED",
+              "REGISTRATION_CANCELLED",
+              "REGISTRATION_APPROVED",
+              "REGISTRATION_REJECTED",
+              "COMMENT_REPLY",
+              "ORGANIZATION_SUBMITTED",
+              "ORGANIZATION_APPROVED",
+              "ORGANIZATION_REJECTED",
+              "ORGANIZER_ADDED",
+              "ORGANIZER_REMOVED",
+              "QUORUM_REACHED",
+              "QUORUM_LOST",
+              "OCCURRENCE_CONFIRMED",
+              "COMMENT_CREATED",
+              "COMMENT_HIDDEN",
+              "EVENT_RESTORED",
+              "EVENT_ANNOUNCEMENT",
+              "ORGANIZATION_RETURNED",
+              "ACHIEVEMENT_UNLOCKED"
+            ]
+          },
+          "unread": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Непрочитанных"
+          }
+        },
+        "required": [
+          "type",
+          "unread"
         ]
       },
       "TelegramConnectionResponse": {

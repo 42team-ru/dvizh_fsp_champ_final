@@ -519,6 +519,7 @@ export const SaveNotificationSettingsRequestCategoriesItem = {
   DISCUSSIONS: 'DISCUSSIONS',
   ORGANIZATIONS: 'ORGANIZATIONS',
   ORGANIZERS: 'ORGANIZERS',
+  ACHIEVEMENTS: 'ACHIEVEMENTS',
 } as const;
 
 export interface SaveNotificationSettingsRequest {
@@ -561,6 +562,7 @@ export const NotificationSettingsResponseCategoriesItem = {
   DISCUSSIONS: 'DISCUSSIONS',
   ORGANIZATIONS: 'ORGANIZATIONS',
   ORGANIZERS: 'ORGANIZERS',
+  ACHIEVEMENTS: 'ACHIEVEMENTS',
 } as const;
 
 export interface NotificationSettingsResponse {
@@ -2336,6 +2338,7 @@ export const NotificationResponseType = {
   EVENT_RESTORED: 'EVENT_RESTORED',
   EVENT_ANNOUNCEMENT: 'EVENT_ANNOUNCEMENT',
   ORGANIZATION_RETURNED: 'ORGANIZATION_RETURNED',
+  ACHIEVEMENT_UNLOCKED: 'ACHIEVEMENT_UNLOCKED',
 } as const;
 
 export type NotificationResponseCategory = typeof NotificationResponseCategory[keyof typeof NotificationResponseCategory];
@@ -2348,6 +2351,7 @@ export const NotificationResponseCategory = {
   DISCUSSIONS: 'DISCUSSIONS',
   ORGANIZATIONS: 'ORGANIZATIONS',
   ORGANIZERS: 'ORGANIZERS',
+  ACHIEVEMENTS: 'ACHIEVEMENTS',
 } as const;
 
 export interface NotificationResponse {
@@ -2364,6 +2368,8 @@ export interface NotificationResponse {
   createdAt: string;
   readAt?: string;
   revision: number;
+  /** Кто вызвал уведомление (ответил, принял заявку); null — система */
+  actor?: UserShortResponse;
 }
 
 export interface NotificationPageResponse {
@@ -2371,6 +2377,46 @@ export interface NotificationPageResponse {
   nextCursor?: string;
   unreadCount: number;
   revision: number;
+}
+
+export type NotificationTypeCountResponseType = typeof NotificationTypeCountResponseType[keyof typeof NotificationTypeCountResponseType];
+
+
+export const NotificationTypeCountResponseType = {
+  REMINDER: 'REMINDER',
+  EVENT_CHANGED: 'EVENT_CHANGED',
+  EVENT_UNPUBLISHED: 'EVENT_UNPUBLISHED',
+  EVENT_DELETED: 'EVENT_DELETED',
+  OCCURRENCE_CANCELLED: 'OCCURRENCE_CANCELLED',
+  OCCURRENCE_RESCHEDULED: 'OCCURRENCE_RESCHEDULED',
+  REGISTRATION_CREATED: 'REGISTRATION_CREATED',
+  REGISTRATION_CANCELLED: 'REGISTRATION_CANCELLED',
+  REGISTRATION_APPROVED: 'REGISTRATION_APPROVED',
+  REGISTRATION_REJECTED: 'REGISTRATION_REJECTED',
+  COMMENT_REPLY: 'COMMENT_REPLY',
+  ORGANIZATION_SUBMITTED: 'ORGANIZATION_SUBMITTED',
+  ORGANIZATION_APPROVED: 'ORGANIZATION_APPROVED',
+  ORGANIZATION_REJECTED: 'ORGANIZATION_REJECTED',
+  ORGANIZER_ADDED: 'ORGANIZER_ADDED',
+  ORGANIZER_REMOVED: 'ORGANIZER_REMOVED',
+  QUORUM_REACHED: 'QUORUM_REACHED',
+  QUORUM_LOST: 'QUORUM_LOST',
+  OCCURRENCE_CONFIRMED: 'OCCURRENCE_CONFIRMED',
+  COMMENT_CREATED: 'COMMENT_CREATED',
+  COMMENT_HIDDEN: 'COMMENT_HIDDEN',
+  EVENT_RESTORED: 'EVENT_RESTORED',
+  EVENT_ANNOUNCEMENT: 'EVENT_ANNOUNCEMENT',
+  ORGANIZATION_RETURNED: 'ORGANIZATION_RETURNED',
+  ACHIEVEMENT_UNLOCKED: 'ACHIEVEMENT_UNLOCKED',
+} as const;
+
+/**
+ * Непрочитанные уведомления одного типа
+ */
+export interface NotificationTypeCountResponse {
+  type: NotificationTypeCountResponseType;
+  /** Непрочитанных */
+  unread: number;
 }
 
 export interface TelegramConnectionResponse {
@@ -3116,7 +3162,42 @@ export type NotificationsListParams = {
 cursor?: string;
 size?: number;
 unreadOnly?: boolean;
+/**
+ * Только эти типы; пусто — все
+ */
+types?: NotificationsListTypesItem[];
 };
+
+export type NotificationsListTypesItem = typeof NotificationsListTypesItem[keyof typeof NotificationsListTypesItem];
+
+
+export const NotificationsListTypesItem = {
+  REMINDER: 'REMINDER',
+  EVENT_CHANGED: 'EVENT_CHANGED',
+  EVENT_UNPUBLISHED: 'EVENT_UNPUBLISHED',
+  EVENT_DELETED: 'EVENT_DELETED',
+  OCCURRENCE_CANCELLED: 'OCCURRENCE_CANCELLED',
+  OCCURRENCE_RESCHEDULED: 'OCCURRENCE_RESCHEDULED',
+  REGISTRATION_CREATED: 'REGISTRATION_CREATED',
+  REGISTRATION_CANCELLED: 'REGISTRATION_CANCELLED',
+  REGISTRATION_APPROVED: 'REGISTRATION_APPROVED',
+  REGISTRATION_REJECTED: 'REGISTRATION_REJECTED',
+  COMMENT_REPLY: 'COMMENT_REPLY',
+  ORGANIZATION_SUBMITTED: 'ORGANIZATION_SUBMITTED',
+  ORGANIZATION_APPROVED: 'ORGANIZATION_APPROVED',
+  ORGANIZATION_REJECTED: 'ORGANIZATION_REJECTED',
+  ORGANIZER_ADDED: 'ORGANIZER_ADDED',
+  ORGANIZER_REMOVED: 'ORGANIZER_REMOVED',
+  QUORUM_REACHED: 'QUORUM_REACHED',
+  QUORUM_LOST: 'QUORUM_LOST',
+  OCCURRENCE_CONFIRMED: 'OCCURRENCE_CONFIRMED',
+  COMMENT_CREATED: 'COMMENT_CREATED',
+  COMMENT_HIDDEN: 'COMMENT_HIDDEN',
+  EVENT_RESTORED: 'EVENT_RESTORED',
+  EVENT_ANNOUNCEMENT: 'EVENT_ANNOUNCEMENT',
+  ORGANIZATION_RETURNED: 'ORGANIZATION_RETURNED',
+  ACHIEVEMENT_UNLOCKED: 'ACHIEVEMENT_UNLOCKED',
+} as const;
 
 export type NotificationsPollParams = {
 /**
