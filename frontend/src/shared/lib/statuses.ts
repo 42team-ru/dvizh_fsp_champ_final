@@ -58,6 +58,37 @@ export const EVENT_STATUS: Record<string, { label: string; tone: string }> = {
   DELETED: { label: "Удалено", tone: "bg-salmon" },
 };
 
+/** Каналы связи организации: подпись и пример формата (формат проверяет сервер). */
+export const CONTACT_TYPES: { key: string; label: string; placeholder: string }[] = [
+  { key: "PHONE", label: "Телефон", placeholder: "+7 900 123-45-67" },
+  { key: "TELEGRAM", label: "Telegram", placeholder: "@club или https://t.me/club" },
+  { key: "EMAIL", label: "Почта", placeholder: "club@example.ru" },
+  { key: "VK", label: "ВКонтакте", placeholder: "https://vk.com/club" },
+  { key: "WHATSAPP", label: "WhatsApp", placeholder: "+7 900 123-45-67" },
+  { key: "MAX", label: "MAX", placeholder: "https://max.ru/... или телефон" },
+  { key: "WEBSITE", label: "Сайт", placeholder: "https://club.ru" },
+];
+
+/** Что означает статус заявки для самой организации: заголовок и пояснение в кабинете. */
+export const ORGANIZATION_STATUS_HINT: Record<string, { title: string; text: string }> = {
+  PENDING: {
+    title: "Заявка на проверке",
+    text: "Администратор рассматривает анкету. До допуска страница клуба скрыта, публиковать мероприятия нельзя.",
+  },
+  APPROVED: {
+    title: "Клуб допущен",
+    text: "Публичная страница открыта, мероприятия публикуются сразу, без повторной модерации.",
+  },
+  REJECTED: {
+    title: "Заявка отклонена",
+    text: "Исправьте анкету по причине ниже и сохраните — заявка уйдёт на повторную проверку.",
+  },
+  REVISION: {
+    title: "Нужна доработка",
+    text: "Администратор вернул анкету. Поправьте её по комментарию и сохраните — заявка снова уйдёт на проверку.",
+  },
+};
+
 /** Статус допуска организации. */
 export const ORGANIZATION_STATUS: Record<string, { label: string; tone: string }> = {
   APPROVED: { label: "допущена", tone: "bg-lime-soft" },

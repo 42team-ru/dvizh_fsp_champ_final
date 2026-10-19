@@ -5,7 +5,7 @@ import { getCommentsListQueryKey, useCommentsCreate, useCommentsList } from "@/s
 import { useRegistrationsCancel, useRegistrationsCreate } from "@/shared/api/generated/core/registrations/registrations";
 import type { EventResponse, UserShortResponse } from "@/shared/api/generated/core/appAPI.schemas";
 import { EVENT_KIND_LABEL, EVENT_LEVEL_LABEL, FORMAT_LABEL, JOIN_MODE_LABEL, REGISTRATION_STATUS } from "@/shared/lib/statuses";
-import { plural } from "@/pages/profile/model/use-profile";
+import { plural } from "@/shared/lib/plural";
 
 const WEEKDAYS = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
 const MONTHS = ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
@@ -30,15 +30,33 @@ export function privateNote(event: EventResponse): string {
       : "Вы участник. Организатор не оставил доп. деталей — вопросы задавайте в обсуждении";
   }
   if (v.registrationStatus === "PENDING") return "Заявка на рассмотрении — детали появятся после одобрения";
+  if (v.registrationStatus === "REJECTED") return "Детали видят только участники встречи";
   if (!v.canRegister) return "Детали видят только участники встречи";
   return "Запишись — и здесь появятся детали для участников";
 }
+
+/**
+ * Короткое название места для крупной строки билета: без уточнения в скобках и без города в начале.
+ * «Красноярск, Метрополь, деловой центр (…)» → «Метрополь»; «Красноярск, улица Ленина, 113» → «улица Ленина».
+ */
+export function placeName(address?: string) {
+  const parts = (address ?? "").replace(/\s*\([^)]*\)/g, "").split(",").map((p) => p.trim()).filter(Boolean);
+  return parts[1] ?? parts[0] ?? "Адрес";
+}
+
+/** Строка статуса отклонённой заявки с причиной организатора, если она есть. */
+export const rejectedText = (reason?: string) => `Заявка отклонена${reason ? `: «${reason}»` : ""}`;
 
 /** Факты для шапки-билета: когда, где, запись. */
 function facts(event: EventResponse) {
   const start = new Date(event.nextOccurrence?.startAt ?? event.startAt);
   const endIso = event.nextOccurrence?.endAt ?? event.endAt;
-  const days = Math.ceil((start.getTime() - Date.now()) / 86_400_000);
+  // считаем календарные дни, а не сутки: встреча завтра в 19:00 — «завтра», даже если до неё 30 часов
+  const today = new Date();
+  const days = Math.round(
+    (new Date(start.getFullYear(), start.getMonth(), start.getDate()).getTime() -
+      new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime()) / 86_400_000,
+  );
   const when = days <= 0 ? "сегодня" : days === 1 ? "завтра" : `через ${days} ${plural(days, ["день", "дня", "дней"])}`;
   return [
     {
@@ -48,7 +66,7 @@ function facts(event: EventResponse) {
     },
     {
       icon: "icon-pin", label: "ГДЕ",
-      value: event.format === "ONLINE" ? FORMAT_LABEL.ONLINE : event.address?.split(",").slice(-1)[0]?.trim() || "Адрес",
+      value: event.format === "ONLINE" ? FORMAT_LABEL.ONLINE : placeName(event.address),
       lines: event.format === "ONLINE" ? ["ссылка — после записи", ""] : [event.address ?? "", event.locationNote ?? ""],
     },
     {

@@ -2,7 +2,8 @@ import { useState } from "react";
 import { CancelledStamp } from "@/shared/components/ui/cancelled-stamp";
 import { Link } from "react-router";
 import { EventMobile } from "./event-mobile";
-import { fullName, initials, privateNote, useEvent } from "../model/use-event";
+import { fullName, initials, privateNote, rejectedText, useEvent } from "../model/use-event";
+import { plural } from "@/shared/lib/plural";
 import { AppHeader } from "@/widgets/app-header/ui/app-header";
 import { LocationPicker } from "@/widgets/events-map/ui/location-picker";
 import { Disc } from "@/shared/components/ui/disc";
@@ -86,7 +87,8 @@ function TopBar({ m }: { m: EventModel }) {
 function RegisterAction({ m, className, hintClassName }: { m: EventModel; className: string; hintClassName: string }) {
   const viewer = m.event!.viewer;
   const active = viewer.registrationStatus === "CONFIRMED" || viewer.registrationStatus === "PENDING";
-  const hint = m.actionError ?? (m.status && active ? m.status.label : viewer.canRegister
+  const rejected = viewer.registrationStatus === "REJECTED";
+  const hint = m.actionError ?? (rejected ? rejectedText(viewer.decisionReason) : m.status && active ? m.status.label : viewer.canRegister
     ? (m.event!.joinMode === "REQUEST" ? "Организатор рассмотрит заявку" : "Отменить можно в любой момент")
     : viewer.registerBlockedReason ?? (viewer.isOrganizer ? "Вы организатор" : ""));
   return (
@@ -100,7 +102,7 @@ function RegisterAction({ m, className, hintClassName }: { m: EventModel; classN
           {m.event!.joinMode === "REQUEST" ? "Подать заявку" : "Записаться"}
         </Button>
       )}
-      <p role={m.actionError ? "alert" : undefined} className={hintClassName}>{hint}</p>
+      <p role={m.actionError ? "alert" : undefined} title={hint} className={hintClassName}>{hint}</p>
     </>
   );
 }
@@ -150,12 +152,12 @@ function TicketHero({ m }: { m: EventModel }) {
                 <Icon name={`event/${f.icon}`} className="size-4" />
                 <Eyebrow>{f.label}</Eyebrow>
               </div>
-              <p className="absolute top-[23px] left-5 w-[175px] truncate font-display text-[19px] leading-6 font-bold text-foreground">
+              <p title={f.value} className="absolute top-[23px] left-5 w-[175px] truncate font-display text-[19px] leading-6 font-bold text-foreground">
                 {f.value}
               </p>
               <p className="absolute top-[51px] left-5 w-[175px] text-[13px] leading-[18px] font-semibold text-muted-foreground">
-                <span className="block truncate">{f.lines[0]}</span>
-                <span className="block truncate">{f.lines[1]}</span>
+                <span title={f.lines[0]} className="block truncate">{f.lines[0]}</span>
+                <span title={f.lines[1]} className="block truncate">{f.lines[1]}</span>
               </p>
             </div>
           ))}
@@ -221,7 +223,7 @@ function TicketHero({ m }: { m: EventModel }) {
             </p>
           ) : (
             <RegisterAction m={m} className="h-[54px] w-[242px] px-7 text-base leading-[22px]"
-              hintClassName="absolute top-[64px] left-0 w-full truncate text-center text-xs leading-[17px] font-semibold text-foreground" />
+              hintClassName="absolute top-[60px] left-0 line-clamp-2 w-full text-center text-xs leading-[15px] font-bold text-foreground" />
           )}
         </div>
       </div>
@@ -244,14 +246,22 @@ function About({ m }: { m: EventModel }) {
       <h2 className="font-display text-[22px] leading-[27px] font-bold text-foreground">
         О встрече
       </h2>
+      {e.viewer.registrationStatus === "REJECTED" && (
+        <p role="status" className="max-w-[560px] rounded-[14px] border-2 border-ink bg-salmon px-4 py-3 text-[15px] font-bold text-foreground">
+          {rejectedText(e.viewer.decisionReason)}. Вы не участник этой встречи — посмотрите другие в ленте.
+        </p>
+      )}
       <p className="max-w-[513px] whitespace-pre-wrap break-words text-base leading-[25.5px] font-medium text-foreground">
         {e.description || "Организатор не добавил описание — спросите в обсуждении."}
       </p>
       <div className="grid grid-cols-[minmax(0,1fr)_200px] items-start gap-5 pr-[122px]">
         {e.requirements && (
-          <p className="whitespace-pre-wrap break-words text-base leading-[25.5px] font-medium text-muted-foreground">
-            {e.requirements}
-          </p>
+          <div className="flex flex-col gap-1">
+            <Eyebrow>ТРЕБОВАНИЯ</Eyebrow>
+            <p className="whitespace-pre-wrap break-words text-base leading-[25.5px] font-medium text-foreground">
+              {e.requirements}
+            </p>
+          </div>
         )}
         <div className="relative col-start-2 rounded-[18px] border-2 border-ink bg-card px-4 py-2">
           <p className="break-words text-sm leading-[20.5px] font-semibold text-foreground">{note}</p>
@@ -315,12 +325,23 @@ function Organizer({ m }: { m: EventModel }) {
           </div>
         ))}
       </div>
-      <Button asChild variant="soft" className="absolute top-[173px] left-[22px] w-[447px]">
-        <a href="#event-chat">
-          <Icon name="event/icon-plus1" className="size-[18px]" />
-          Задать вопрос организатору
-        </a>
-      </Button>
+      {e.viewer.canManage ? (
+        <Button asChild variant="ink" className="absolute top-[173px] left-[22px] w-[447px]">
+          <Link to={`/my/events/${e.id}/manage`}>Управлять: участники и заявки</Link>
+        </Button>
+      ) : (
+        <Button asChild variant="soft" className="absolute top-[173px] left-[22px] w-[447px]">
+          <a href="#event-chat">
+            <Icon name="event/icon-plus1" className="size-[18px]" />
+            Задать вопрос организатору
+          </a>
+        </Button>
+      )}
+      {e.organization && (
+        <Link to={`/orgs/${e.organization.id}`} className="absolute top-[233px] left-[22px] text-sm font-extrabold text-primary underline">
+          Страница организации →
+        </Link>
+      )}
     </Card>
   );
 }
@@ -370,7 +391,7 @@ function Chat({ m }: { m: EventModel }) {
           <Icon name="event/icon-chat" className="size-[22px]" />
           <h2 className="font-display text-[22px] leading-[27px] font-bold text-foreground">Обсуждение</h2>
         </div>
-        <span className="text-[13px] leading-[18px] font-bold text-muted-foreground">{m.comments.length} сообщений</span>
+        <span className="text-[13px] leading-[18px] font-bold text-muted-foreground">{m.comments.length} {plural(m.comments.length, ["сообщение", "сообщения", "сообщений"])}</span>
       </div>
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-2">
         {m.comments.length === 0 && (

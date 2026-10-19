@@ -35,5 +35,7 @@ public record ViewerResponse(
 				+ "WAITLISTED — мест нет, встану в лист ожидания; null — записаться нельзя")
 		RegistrationStatus joinAs,
 		@Schema(description = "Моё место в листе ожидания (1 — следующий); null — я не в листе ожидания", example = "1")
-		Integer waitlistPosition) {
+		Integer waitlistPosition,
+		@Schema(description = "Причина отказа организатора, если моя заявка отклонена; иначе null", example = "Группа укомплектована")
+		String decisionReason) {
 }

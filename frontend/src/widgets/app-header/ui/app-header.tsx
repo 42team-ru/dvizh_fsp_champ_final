@@ -5,6 +5,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Icon } from "@/shared/components/ui/icon";
 import { AccountMenu } from "@/features/auth/sign-out/ui/account-menu";
 import { useCabinetAccess } from "@/entity/user/model/use-cabinet-access";
+import { useUser } from "@/entity/user/model/use-user";
 import { BriefcaseBusiness } from "lucide-react";
 import { SearchPalette } from "@/widgets/search-palette/ui/search-palette";
 
@@ -22,6 +23,7 @@ const iconFolder = (current: string, key: string) =>
 /** `wide` — контейнер 1440px, как у ленты; остальные страницы 1280px. Вкладка «Кабинет» — только организаторам. */
 export function AppHeader({ current = "home", wide }: { current?: "home" | "feed" | "profile" | "activity" | "cabinet"; wide?: boolean }) {
   const cabinet = useCabinetAccess();
+  const { user } = useUser();
   return (
     <header className="box-border h-[76px] border-b-2 border-ink bg-background">
       <div className={`mx-auto flex h-full w-full ${wide ? "max-w-[1440px]" : "max-w-[1280px]"} items-center px-8`}>
@@ -70,12 +72,15 @@ export function AppHeader({ current = "home", wide }: { current?: "home" | "feed
         <div className="ml-auto flex shrink-0 items-center gap-3">
           <SearchPalette />
 
-          <Button asChild className="shrink-0">
-            <Link to="/events/new">
-              <Icon name="icon-plus" className="size-[18px]" />
-              Создать
-            </Link>
-          </Button>
+          {/* админ событий не создаёт (правило 7) */}
+          {user && user.systemRole !== "ADMIN" && (
+            <Button asChild className="shrink-0">
+              <Link to="/events/new">
+                <Icon name="icon-plus" className="size-[18px]" />
+                Создать
+              </Link>
+            </Button>
+          )}
 
           <AccountMenu />
         </div>

@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:8080",
+      "url": "http://localhost:8090",
       "description": "Generated server url"
     }
   ],
@@ -7930,6 +7930,11 @@
             "format": "int32",
             "description": "Моё место в листе ожидания (1 — следующий); null — я не в листе ожидания",
             "example": 1
+          },
+          "decisionReason": {
+            "type": "string",
+            "description": "Причина отказа организатора, если моя заявка отклонена; иначе null",
+            "example": "Группа укомплектована"
           }
         },
         "required": [

@@ -5,6 +5,7 @@ import { useUser } from "@/entity/user/model/use-user";
 import { useCabinetAccess } from "@/entity/user/model/use-cabinet-access";
 import { UserAvatar } from "@/shared/components/ui/user-avatar";
 import { useSignOut } from "../model/use-sign-out";
+import { handle } from "@/shared/lib/handle";
 
 const ROLE: Record<string, string> = { USER: "участник", ORG: "организация", ADMIN: "администратор" };
 const item =
@@ -33,7 +34,7 @@ export function AccountMenu() {
             <div className="min-w-0">
               <p className="truncate text-[15px] font-extrabold text-foreground">{name}</p>
               <p className="truncate text-[13px] font-medium text-muted-foreground">
-                @{user?.username}{user?.systemRole ? ` · ${ROLE[user.systemRole] ?? user.systemRole}` : ""}
+                {handle(user?.username)}{user?.systemRole ? ` · ${ROLE[user.systemRole] ?? user.systemRole}` : ""}
               </p>
             </div>
           </div>

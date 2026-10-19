@@ -132,7 +132,9 @@ public class EventService {
                 canSeePrivateDetails,
                 policy.commentBlockedReason(event) == null,
                 registerBlocked == null ? policy.joinAs(event, participants.size()) : null,
-                waitlist.position(myRegistration));
+                waitlist.position(myRegistration),
+                myRegistration != null && myRegistration.getStatus() == RegistrationStatus.REJECTED
+                        ? myRegistration.getDecisionReason() : null);
         return mapper.toResponse(event, sport, author, organization, organizerService.list(event), participants,
                 participants.size(), files.eventPhotos(eventId), viewer,
                 canSeePrivateDetails ? event.getOnlineUrl() : null,

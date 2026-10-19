@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import { Icon } from "@/shared/components/ui/icon";
 import { cn } from "cn";
+import { useUser } from "@/entity/user/model/use-user";
 
 export type MobileTab = "home" | "feed" | "activity" | "profile";
 
@@ -17,6 +18,9 @@ const TABS = [
  */
 export function MobileTabBar({ current }: { current: MobileTab }) {
   const dir = `m-${current}`;
+  const { user } = useUser();
+  /** Админ событий не создаёт (правило 7): плюс в центре только у USER и ORG. */
+  const canCreate = Boolean(user) && user?.systemRole !== "ADMIN";
   const tab = (t: (typeof TABS)[number]) => {
     const active = t.key === current;
     return (
@@ -60,13 +64,13 @@ export function MobileTabBar({ current }: { current: MobileTab }) {
         {tab(TABS[0])}
         {tab(TABS[1])}
         <div className="relative">
-          <Link
+          {canCreate && <Link
             to="/events/new"
             aria-label="Создать событие"
             className="absolute top-[-28px] left-1/2 box-border flex size-[58px] -translate-x-1/2 items-center justify-center rounded-[29px] border-2 border-ink bg-primary shadow-hard-sm"
           >
             <Icon name={`${dir}/icon-plus`} className="size-[26px]" />
-          </Link>
+          </Link>}
         </div>
         {tab(TABS[2])}
         {tab(TABS[3])}

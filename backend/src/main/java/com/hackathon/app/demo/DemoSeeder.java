@@ -101,7 +101,7 @@ public class DemoSeeder {
 			new Account("anna", "Анна", "Смирнова", SystemRole.USER,
 					"Только начинаю: хочу бегать по утрам и попробовать что-то новое", true, 21),
 			new Account("petr", "Пётр", "Волков", SystemRole.USER,
-					"Играю в шахматы с детства, по выходным — футбол", false, 140),
+					"Играю в шахматы с детства, по выходным — футбол", true, 140),
 			new Account("olga", "Ольга", "Морозова", SystemRole.USER,
 					"На пенсии, каждое утро делаю зарядку и зову соседей", false, 95),
 			new Account("dmitry", "Дмитрий", "Орлов", SystemRole.USER, "Футбол и бег", false, 160),

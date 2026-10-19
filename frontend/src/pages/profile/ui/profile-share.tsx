@@ -3,6 +3,7 @@ import { ShareDialog, SharePassport } from "@/features/share-link/ui/share-dialo
 import { Button } from "@/shared/components/ui/button";
 import { Icon } from "@/shared/components/ui/icon";
 import { cn } from "cn";
+import { handle } from "@/shared/lib/handle";
 
 type ProfileUser = { id?: string; firstName?: string | null; lastName?: string | null; username?: string | null };
 
@@ -19,7 +20,7 @@ export function ProfileShare({ user, className }: { user?: ProfileUser | null; c
       </Button>
       <ShareDialog open={open} onOpenChange={setOpen} path={`/users/${user.id}`} title="Ссылка на профиль"
         description="Наведите камеру на паспорт — откроется профиль на сайте.">
-        <SharePassport path={`/users/${user.id}`} name={name} handle={user.username ? `@${user.username}` : undefined} />
+        <SharePassport path={`/users/${user.id}`} name={name} handle={user.username ? handle(user.username) : undefined} />
       </ShareDialog>
     </>
   );

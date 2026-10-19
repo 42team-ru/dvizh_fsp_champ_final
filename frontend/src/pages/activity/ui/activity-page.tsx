@@ -14,6 +14,7 @@ import { Progress } from "@/shared/components/ui/progress";
 import { cn } from "cn";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 import { QrCode } from "@/shared/components/ui/qr-code";
+import { plural } from "@/shared/lib/plural";
 
 const XS = "h-9 px-4 text-[13px] leading-[18px]";
 const MONTHS = ["ЯНВ", "ФЕВ", "МАР", "АПР", "МАЙ", "ИЮН", "ИЮЛ", "АВГ", "СЕН", "ОКТ", "НОЯ", "ДЕК"];
@@ -67,7 +68,7 @@ function FilterBar({ m }: { m: ActivityModel }) {
       {m.totalUnread > 0 && (
         <button type="button" onClick={m.markAllRead} title="Отметить всё прочитанным"
           className="absolute top-3 right-0">
-          <Badge variant="accent" className="text-[13px] leading-[18px] text-white">{m.totalUnread} новых · прочитать</Badge>
+          <Badge variant="accent" className="text-[13px] leading-[18px] text-white">{m.totalUnread} {plural(m.totalUnread, ["новое", "новых", "новых"])} · прочитать</Badge>
         </button>
       )}
     </div>

@@ -11,14 +11,15 @@ interface DemoAccountsProps {
   disabled?: boolean;
 }
 
-/** Какие демо-аккаунты показываем и как подписываем: админ, два пользователя (один из них организует события), организатор. */
+/** Какие демо-аккаунты показываем и как подписываем: админ, пользователи и два клуба — допущенный и на проверке. */
 const DEMO_PICK: { username: string; label: string }[] = [
-  { username: "admin", label: "админ" },
+  { username: "admin", label: "администратор" },
   { username: "anna", label: "пользователь" },
   { username: "petr", label: "пользователь · организатор" },
-  { username: "ladya", label: "организатор" },
+  { username: "ladya", label: "клуб «Ладья» · допущен" },
+  { username: "enisey", label: "клуб «Енисей» · заявка на проверке" },
 ];
-const TONES = ["bg-sky", "bg-mint", "bg-accent"];
+const TONES = ["bg-sky", "bg-mint", "bg-accent", "bg-lavender-soft"];
 
 /**
  * Быстрый вход для демо-режима. Бэкенд отдаёт список аккаунтов только при DEMO_MODE=true;

@@ -12,6 +12,7 @@ import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 import { LocationPicker } from "@/widgets/events-map/ui/location-picker";
 import { fullName, initials, privateNote, type useEvent } from "../model/use-event";
 import { QrCode } from "@/shared/components/ui/qr-code";
+import { plural } from "@/shared/lib/plural";
 import { EventShare } from "./event-share";
 
 const dir = "m-event";
@@ -85,7 +86,7 @@ function MobileChat({ m }: { m: EventModel }) {
     <Card className="gap-[10px] rounded-[22px] p-[18px]">
       <div className="flex items-center justify-between leading-[normal] font-bold whitespace-nowrap">
         <h2 className="font-display text-[17px] text-foreground">Обсуждение</h2>
-        <span className="text-[13px] text-muted-foreground">{m.comments.length} сообщений</span>
+        <span className="text-[13px] text-muted-foreground">{m.comments.length} {plural(m.comments.length, ["сообщение", "сообщения", "сообщений"])}</span>
       </div>
       {m.comments.length === 0 && <p className="text-[13px] font-medium text-muted-foreground">Спросите о месте или снаряжении — организатор ответит здесь.</p>}
       {m.comments.map((c, i) => (
@@ -192,10 +193,21 @@ export function EventMobile({ m }: { m: EventModel }) {
               Организатор{e.author.city ? ` · ${e.author.city}` : ""}
             </span>
           </div>
-          <Button asChild variant="soft" className="h-10 w-[112px] shrink-0 px-5 text-xs">
-            <a href="#event-chat-mobile">Спросить</a>
-          </Button>
+          {viewer.canManage ? (
+            <Button asChild variant="ink" className="h-10 w-[112px] shrink-0 px-5 text-xs">
+              <Link to={`/my/events/${e.id}/manage`}>Управлять</Link>
+            </Button>
+          ) : (
+            <Button asChild variant="soft" className="h-10 w-[112px] shrink-0 px-5 text-xs">
+              <a href="#event-chat-mobile">Спросить</a>
+            </Button>
+          )}
         </div>
+        {e.organization && (
+          <Link to={`/orgs/${e.organization.id}`} className="mt-2 inline-block text-sm font-extrabold text-primary underline">
+            Страница организации →
+          </Link>
+        )}
       </div>
 
       <div className="px-4">
@@ -280,7 +292,12 @@ export function EventMobile({ m }: { m: EventModel }) {
           <p className="text-sm leading-[21px] font-medium text-foreground">
             {e.description || "Организатор не добавил описание — спросите в обсуждении."}
           </p>
-          {e.requirements && <p className="text-sm leading-[21px] font-medium text-muted-foreground">{e.requirements}</p>}
+          {e.requirements && (
+            <>
+              <Eyebrow className="text-[10px] tracking-[1.2px]">ТРЕБОВАНИЯ</Eyebrow>
+              <p className="text-sm leading-[21px] font-medium text-foreground">{e.requirements}</p>
+            </>
+          )}
           {take.length > 0 && (
             <>
               <Eyebrow className="text-[10px] tracking-[1.2px]">ЧТО ВЗЯТЬ</Eyebrow>
@@ -352,9 +369,13 @@ export function EventMobile({ m }: { m: EventModel }) {
 
       <div className="fixed inset-x-0 bottom-0 z-40 flex h-[100px] items-center justify-between gap-3 border-t-2 border-ink bg-card px-4 pt-3 pb-[26px] lg:hidden">
         <div className="flex min-w-0 flex-col gap-[2px] leading-[normal] font-bold">
-          <span className="truncate font-display text-[17px] text-foreground">{m.status && active ? m.status.label : m.joinLabel}</span>
-          <span className="truncate text-xs text-accent">
-            {m.actionError ?? (m.moderated ? "Запись закрыта" : !viewer.canRegister && !active
+          <span className="truncate font-display text-[17px] text-foreground">
+            {viewer.registrationStatus === "REJECTED" ? "Заявка отклонена" : m.status && active ? m.status.label : m.joinLabel}
+          </span>
+          <span className="line-clamp-2 text-xs text-accent">
+            {m.actionError ?? (m.moderated ? "Запись закрыта"
+              : viewer.registrationStatus === "REJECTED" ? (viewer.decisionReason ? `Причина: «${viewer.decisionReason}»` : "Организатор отклонил заявку")
+              : !viewer.canRegister && !active
               ? viewer.registerBlockedReason ?? (viewer.isOrganizer ? "Вы организатор" : "")
               : free != null ? `осталось ${free} мест` : "мест без лимита")}
           </span>

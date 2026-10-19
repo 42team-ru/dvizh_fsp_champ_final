@@ -17,6 +17,8 @@ import {
 } from "@/entity/event/model/use-recommendation-preview";
 import type { RecommendedEventResponse } from "@/shared/api/generated/core/appAPI.schemas";
 import { QrCode } from "@/shared/components/ui/qr-code";
+import { useUser } from "@/entity/user/model/use-user";
+import { calendarUrl, routeUrl, ticketDay, untilStart, useNextTicket } from "@/entity/event/model/use-next-ticket";
 
 /** Обложки карточек подборки, если у события нет своего фото. */
 const COVERS = [
@@ -70,60 +72,67 @@ function SectionHeading({
   );
 }
 
+/** Герой главной: ближайшая встреча пользователя или приглашение найти/создать свою. */
 function Hero() {
+  const { user, next, isLoading } = useNextTicket();
+  const name = user?.firstName ?? "";
+  const e = next?.event;
+  const canCreate = user?.systemRole !== "ADMIN";
   return (
     <section className="relative box-border h-[330px] overflow-hidden rounded-[28px] border-2 border-ink bg-primary">
       <img src="/home/memphis.svg" alt="" className="absolute top-0 left-0 h-[330px] w-[1216px] max-w-none" />
 
-      <div className="absolute top-[44px] left-[44px] w-[600px]">
+      <div className="absolute top-[44px] left-[44px] w-[700px]">
         <p className="text-[15px] leading-[21px] font-bold text-white opacity-90">
-          Привет, Аня! Дальше у тебя
+          Привет{name ? `, ${name}` : ""}! {e ? (next.role === "organizer" ? "Ты ведёшь" : "Дальше у тебя") : isLoading ? "" : "Ближайших встреч пока нет"}
         </p>
-        <h1 className="mt-[6px] font-display text-[52px] leading-[54.5px] font-extrabold tracking-[-1px] text-white">
-          Вечерний
-          <br />
-          футбол 6×6
+        <h1 className="mt-[6px] line-clamp-2 font-display text-[52px] leading-[54.5px] font-extrabold tracking-[-1px] text-white">
+          {e ? e.title : isLoading ? "…" : "Найди компанию для спорта"}
         </h1>
-        <div className="mt-[26px] flex gap-2">
-          <Badge variant="outline" className="text-[13px] leading-[18px]">
-            <Icon name="icon-clock" className="size-[14px]" />
-            19:30
-          </Badge>
-          <Badge variant="outline" className="text-[13px] leading-[18px]">
-            <Icon name="icon-pin" className="size-[14px]" />
-            Стадион «Локомотив»
-          </Badge>
-          <Badge variant="outline" className="text-[13px] leading-[18px]">
-            <Icon name="icon-route" className="size-[14px]" />
-            3,2 км
-          </Badge>
-        </div>
+        {e && next && (
+          <div className="mt-[26px] flex max-w-[700px] gap-2">
+            <Badge variant="outline" className="text-[13px] leading-[18px]">
+              <Icon name="icon-clock" className="size-[14px]" />
+              {ticketDay(next.startAt)}
+            </Badge>
+            <Badge variant="outline" className="min-w-0 text-[13px] leading-[18px]">
+              <Icon name="icon-pin" className="size-[14px]" />
+              <span className="truncate">{e.format === "ONLINE" ? "Онлайн" : e.address ?? "Место уточняется"}</span>
+            </Badge>
+          </div>
+        )}
         <div className="mt-[26px] flex gap-3">
-          <Button variant="secondary" size="lg" rough>
-            Открыть билет
-          </Button>
-          <Button variant="clear" size="lg" rough={{ color: "white" }}>
-            <Icon name="icon-arrow" className="size-[18px]" />
-            Другие события
+          {e ? (
+            <Button asChild variant="secondary" size="lg" rough>
+              <Link to={next!.role === "organizer" ? `/my/events/${e.id}/manage` : `/events/${e.id}`}>
+                {next!.role === "organizer" ? "Управлять" : "Открыть билет"}
+              </Link>
+            </Button>
+          ) : canCreate && !isLoading ? (
+            <Button asChild variant="secondary" size="lg" rough>
+              <Link to="/events/new">Создать встречу</Link>
+            </Button>
+          ) : null}
+          <Button asChild variant="clear" size="lg" rough={{ color: "white" }}>
+            <Link to="/feed">
+              <Icon name="icon-arrow" className="size-[18px]" />
+              {e ? "Другие события" : "Смотреть ленту"}
+            </Link>
           </Button>
         </div>
       </div>
 
-      <article className="absolute top-[42px] left-[800px] box-border h-[244px] w-[356px] overflow-hidden rounded-[22px] border-2 border-ink bg-card p-0 shadow-hard">
+      {e && next && <article className="absolute top-[42px] left-[800px] box-border h-[244px] w-[356px] overflow-hidden rounded-[22px] border-2 border-ink bg-card p-0 shadow-hard">
         <div className="relative h-[118px] w-[352px] shrink-0 overflow-hidden border-b-2 border-ink">
           <div className="absolute inset-x-0 top-0 h-[116px] bg-orange">
-            <img
-              src="/home/memphis1.svg"
-              alt=""
-              className="absolute top-[-74px] left-0 h-[264px] w-[352px] max-w-none"
-            />
+            <img src={e.coverUrl ?? e.sport.imageUrl} alt="" className="size-full object-cover" />
           </div>
           <div className="absolute inset-x-0 top-0 h-[116px] bg-gradient-to-b from-transparent from-40% to-[rgba(22,24,31,0.55)]" />
           <Badge variant="outline" className="absolute top-3 left-[14px]">
-            Футбол
+            {e.sport.name}
           </Badge>
           <p className="absolute top-[91px] left-4 text-[11px] leading-[15px] font-extrabold tracking-[1.5px] text-white">
-            БИЛЕТ № 0119
+            БИЛЕТ № {e.id.slice(0, 4).toUpperCase()}
           </p>
         </div>
         <div className="relative flex h-[122px] w-[352px] shrink-0">
@@ -131,28 +140,37 @@ function Hero() {
             <div>
               <Eyebrow>КОГДА</Eyebrow>
               <p className="mt-1 font-display text-[17px] leading-[21px] font-bold text-foreground">
-                Сегодня, 19:30
+                {ticketDay(next.startAt)}
               </p>
             </div>
-            <div>
-              <Eyebrow>СБОР</Eyebrow>
-              <p className="mt-[2px] text-sm leading-[19px] font-bold text-foreground">
-                19:20 у входа на стадион
+            <div className="min-w-0">
+              <Eyebrow>{e.locationNote ? "КАК НАЙТИ" : "ДО НАЧАЛА"}</Eyebrow>
+              <p className="mt-[2px] truncate text-sm leading-[19px] font-bold text-foreground">
+                {e.locationNote ?? untilStart(next.startAt)}
               </p>
             </div>
           </div>
           <div className="absolute top-3 left-[252px] h-[98px] w-[2px] border-l-2 border-dashed border-ink" />
           <span className="absolute top-[-11px] left-[241px] box-border size-[22px] rounded-[11px] border-2 border-ink bg-card" />
           <div className="flex w-[104px] items-center justify-center">
-            <QrCode path="/feed" label="QR-код: лента встреч" className="size-[76px]" />
+            <QrCode path={`/events/${e.id}`} label="QR-код: страница встречи" className="size-[76px]" />
           </div>
         </div>
-      </article>
+      </article>}
     </section>
   );
 }
 
+/** Подсказка Бублика по ближайшей встрече: добавить в календарь и построить маршрут. Без встречи — куда пойти дальше. */
 function Tip() {
+  const { user, next, isLoading } = useNextTicket();
+  if (isLoading || user?.systemRole === "ADMIN") return null;
+  const e = next?.event;
+  const text = e
+    ? `${ticketDay(next!.startAt)} — «${e.title}». Добавь в календарь, чтобы не забыть`
+    : user?.systemRole === "ORG"
+      ? "Опубликуй встречу клуба — она сразу появится в ленте"
+      : "Расскажи, чем любишь заниматься, — подберу встречи рядом";
   return (
     <Card className="relative h-[104px] flex-row items-center gap-5 bg-mint-soft pr-[26px] pl-[152px]">
       <img
@@ -160,17 +178,31 @@ function Tip() {
         alt=""
         className="pointer-events-none absolute top-[-30px] left-[18px] h-[128px] w-[124px] max-w-none object-cover"
       />
-      <div className="w-[738.5px] shrink-0">
+      <div className="min-w-0 flex-1">
         <Eyebrow>БУБЛИК ПОДСКАЗЫВАЕТ</Eyebrow>
-        <p className="mt-[6px] font-display text-[18px] leading-[23.5px] font-bold whitespace-nowrap text-foreground">
-          Выходить пора в 19:00 — до стадиона 25 минут пешком
-        </p>
+        <p className="mt-[6px] truncate font-display text-[18px] leading-[23.5px] font-bold text-foreground">{text}</p>
       </div>
-      <Button variant="ink" rough>
-        <Icon name="icon-bell1" className="size-[18px]" />
-        Напомнить
-      </Button>
-      <Button variant="soft" rough={false}>Не надо</Button>
+      {e ? (
+        <>
+          <Button asChild variant="ink" rough>
+            <a href={calendarUrl(e.id)} download>
+              <Icon name="icon-bell1" className="size-[18px]" />
+              В календарь
+            </a>
+          </Button>
+          {e.format === "OFFLINE" && e.address && (
+            <Button asChild variant="soft" rough={false}>
+              <a href={routeUrl(e.address)} target="_blank" rel="noreferrer">Как добраться</a>
+            </Button>
+          )}
+        </>
+      ) : (
+        <Button asChild variant="ink" rough>
+          <Link to={user?.systemRole === "ORG" ? "/events/new" : "/onboarding"}>
+            {user?.systemRole === "ORG" ? "Создать встречу" : "Выбрать интересы"}
+          </Link>
+        </Button>
+      )}
     </Card>
   );
 }
@@ -254,6 +286,7 @@ function Recommendations() {
 }
 
 export default function HomePage() {
+  const { user } = useUser();
   return (
     <>
     <HomeMobile />
@@ -266,9 +299,14 @@ export default function HomePage() {
         <div className="mt-2">
           <Tip />
         </div>
-        <SectionHeading title="Подобрали для тебя" hint="по интересам, месту и времени" linkLabel="Все рекомендации"
-          to={FOR_YOU_FEED_URL} />
-        <Recommendations />
+        {/* подборка строится только для участников: у клуба и админа она всегда пустая */}
+        {user?.systemRole === "USER" && (
+          <>
+            <SectionHeading title="Подобрали для тебя" hint="по интересам, месту и времени" linkLabel="Все рекомендации"
+              to={FOR_YOU_FEED_URL} />
+            <Recommendations />
+          </>
+        )}
       </main>
       </div>
     </div>

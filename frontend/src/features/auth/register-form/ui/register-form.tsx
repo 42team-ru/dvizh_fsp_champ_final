@@ -1,3 +1,4 @@
+import { useStore } from "@tanstack/react-form";
 import { useRegisterForm } from "../model/useRegisterForm";
 import {
   CITIES,
@@ -13,6 +14,11 @@ import { Checkbox } from "@/shared/components/ui/checkbox";
 import { getFirstFieldError } from "@/shared/lib/form-errors";
 import { cn } from "cn";
 
+const ACCOUNT_TYPES = [
+  { value: "USER", title: "Я занимаюсь спортом", hint: "Ищу компанию и встречи" },
+  { value: "ORG", title: "Я представляю клуб", hint: "Клуб, секция, сообщество" },
+] as const;
+
 export default function RegisterForm() {
   const {
     form,
@@ -21,6 +27,7 @@ export default function RegisterForm() {
     showPassword,
     setShowPassword,
   } = useRegisterForm();
+  const accountType = useStore(form.store, (state) => state.values.accountType);
 
   return (
     <>
@@ -36,7 +43,9 @@ export default function RegisterForm() {
             Регистрация
           </h1>
           <p className="text-sm font-medium text-muted-foreground">
-            Шаг 1 из 2 · дальше знакомство с Бубликом
+            {accountType === "ORG"
+              ? "Шаг 1 из 2 · дальше анкета клуба для допуска"
+              : "Шаг 1 из 2 · дальше знакомство с Бубликом"}
           </p>
         </div>
 
@@ -44,11 +53,41 @@ export default function RegisterForm() {
           {(isSubmitting) => (
             <>
               <form.Field
+                name="accountType"
+                children={(field) => (
+                  <div role="radiogroup" aria-label="Тип аккаунта" className="grid grid-cols-2 gap-2">
+                    {ACCOUNT_TYPES.map((t) => {
+                      const active = field.state.value === t.value;
+                      return (
+                        <button
+                          key={t.value}
+                          type="button"
+                          role="radio"
+                          aria-checked={active}
+                          disabled={isSubmitting}
+                          onClick={() => field.handleChange(t.value)}
+                          className={cn(
+                            "flex flex-col items-start gap-0.5 rounded-[14px] border-2 border-ink px-4 py-3 text-left transition-colors",
+                            active ? "bg-secondary shadow-hard-sm" : "bg-card hover:bg-muted"
+                          )}
+                        >
+                          <span className="text-[15px] leading-5 font-extrabold text-foreground">
+                            {active ? "✓ " : ""}{t.title}
+                          </span>
+                          <span className="text-xs leading-4 font-semibold text-muted-foreground">{t.hint}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              />
+
+              <form.Field
                 name="name"
                 children={(field) => (
                   <AuthTextInput
                     name={field.name}
-                    label="Имя"
+                    label={accountType === "ORG" ? "Контактное лицо: имя и фамилия" : "Имя и фамилия"}
                     value={field.state.value}
                     placeholder="Анна Соколова"
                     onBlur={field.handleBlur}
