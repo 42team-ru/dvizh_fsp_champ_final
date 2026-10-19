@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { MyBeaverPet } from "@/widgets/beaver-pet/ui/my-beaver-pet";
 import { MobileTabBar } from "@/widgets/mobile-shell/ui/mobile-tab-bar";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
@@ -130,11 +132,12 @@ function Passport() {
 }
 
 function Pet() {
+  const [speechContainer, setSpeechContainer] = useState<HTMLDivElement | null>(null);
   return (
     <div className="px-4">
       <div className="box-border flex w-full flex-col gap-3 rounded-[26px] border-2 border-ink bg-sky p-[18px] shadow-[4px_4px_0_var(--ink)]">
         <div className="flex items-center gap-3">
-          <img src={`/${dir}/img.png`} alt="" className="size-28 shrink-0 object-contain" />
+          <MyBeaverPet speechContainer={speechContainer} className="size-28 shrink-0 [&_.beaver-pet]:h-full [&_svg]:h-full" />
           <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
             <Eyebrow className={cn(small, "text-foreground")}>ТВОЙ ПИТОМЕЦ</Eyebrow>
             <p className="font-display text-[22px] leading-[normal] font-extrabold whitespace-nowrap text-foreground">
@@ -149,11 +152,7 @@ function Pet() {
             </span>
           </div>
         </div>
-        <div className="box-border flex rounded-2xl border-2 border-ink bg-card px-[14px] py-3">
-          <p className="flex-1 text-[13px] leading-[18px] font-bold text-foreground">
-            Ещё одна тренировка на этой неделе — и тебе дадут 30 монет на обновки!
-          </p>
-        </div>
+        <div ref={setSpeechContainer} className="relative h-[72.5px] w-full" />
         {[
           { label: "Энергия", value: "4 из 5", pct: 80 },
           { label: "Стиль", value: "1 из 5", pct: 20 },

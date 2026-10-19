@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { MyBeaverPet } from "@/widgets/beaver-pet/ui/my-beaver-pet";
 import { ProfileMobile } from "./profile-mobile";
 import { AppHeader } from "@/widgets/app-header/ui/app-header";
 import { Badge } from "@/shared/components/ui/badge";
@@ -162,11 +164,12 @@ function Passport() {
 }
 
 function Pet() {
+  const [speechContainer, setSpeechContainer] = useState<HTMLDivElement | null>(null);
   return (
     <Card className="absolute top-0 left-[515px] h-[330px] w-[701px] flex-row items-start overflow-hidden rounded-[28px] bg-sky-soft p-[2px]">
       <div className="relative h-[326px] w-[330px] shrink-0 overflow-hidden border-r-2 border-ink bg-sky">
         <Img name="memphis1.svg" className="top-0 left-0 size-[330px]" />
-        <Img name="wave.png" className="top-[42px] left-[26px] h-[276px] w-[268px] object-cover" />
+        <MyBeaverPet speechContainer={speechContainer} className="absolute top-[18px] left-[12px] h-[300px] w-[300px] [&_.beaver-pet]:h-full [&_svg]:h-full" />
       </div>
       <div className="flex h-[326px] w-[367px] shrink-0 flex-col items-start justify-between px-[28px] py-[26px]">
         <div className="flex h-[82px] w-[311px] items-start justify-between">
@@ -188,11 +191,7 @@ function Pet() {
           </Badge>
         </div>
 
-        <div className="relative h-[72.5px] w-[311px] rounded-tl-[4px] rounded-tr-[18px] rounded-br-[18px] rounded-bl-[18px] border-2 border-ink bg-card">
-          <p className="absolute top-[14px] left-4 w-[272px] text-sm leading-[20.5px] font-semibold text-foreground">
-            Ещё одна тренировка на этой неделе — и тебе дадут 30 монет на обновки!
-          </p>
-        </div>
+        <div ref={setSpeechContainer} className="relative h-[72.5px] w-[311px]" />
 
         <div className="flex h-20 w-[311px] flex-col gap-3">
           {[

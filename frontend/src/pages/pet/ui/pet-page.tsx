@@ -1,5 +1,6 @@
-import { useRef } from "react";
-import { useSearchParams } from "react-router";
+import { useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { getPetsGetMineQueryKey, usePetsGetMine, usePetsSaveMine } from "@/shared/api/generated/core/pets/pets";
 import { BeaverPet, type BeaverMood, type BeaverPetHandle } from "@/widgets/beaver-pet/ui/beaver-pet";
 import { CLUBS, type ClubId } from "@/widgets/beaver-pet/ui/beaver-clubs";
 import { HOCKEY_CLUBS, type HockeyClubId } from "@/widgets/beaver-pet/ui/beaver-hockey-clubs";
@@ -36,7 +37,7 @@ const LOOKS: Look[] = [
 ];
 
 type Option = { value: string; label: string };
-// Ключи одновременно задают категории гардероба и параметры ссылки на образ.
+// Независимые категории гардероба.
 const WARDROBE = {
   shirt: { label: "Одежда", options: [
     { value: "football", label: "Футбольная форма" }, { value: "running", label: "Беговая майка" },
@@ -84,33 +85,37 @@ function Choice({ label, value, options, onChange }: { label: string; value: str
 }
 
 export default function PetPage() {
-  const [params, setParams] = useSearchParams();
   const pet = useRef<BeaverPetHandle>(null);
-  // Из URL берётся только базовое настроение (для ссылок и скриншотов); кнопки ниже играют эмоцию и сбрасывают её.
-  const mood = MOODS.find((m) => m.value === params.get("mood"))?.value ?? "idle";
-  const look = LOOKS.find((l) => l.label === (params.get("look") ?? "Футбол")) ?? LOOKS[0];
-  const outfit = { ...look.outfit };
-  for (const field of FIELDS) {
-    const value = params.get(field);
-    if (value === "none") delete outfit[field];
-    else if (WARDROBE[field].options.some((option) => option.value === value)) {
-      // Значение проверено по опциям именно этой категории.
-      Object.assign(outfit, { [field]: value });
+  const query = usePetsGetMine();
+  const queryClient = useQueryClient();
+  const current = query.data?.data;
+  const [draft, setDraft] = useState<Pick<Look, "outfit" | "activity"> | null>(null);
+  const save = usePetsSaveMine({ mutation: {
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: getPetsGetMineQueryKey() }),
+  } });
+  const outfit = draft?.outfit ?? (current?.outfit as BeaverOutfit | undefined) ?? {};
+  const activity = draft?.activity ?? (current?.activity as BeaverActivity | undefined) ?? "none";
+  const mood = current?.mood ?? "idle";
+  const persist = (next: Pick<Look, "outfit" | "activity">) => {
+    setDraft(next);
+    save.mutate({ data: { activity: next.activity, outfit: { ...next.outfit } } });
+  };
+  const update = (key: keyof BeaverOutfit | "activity", value: string) => {
+    if (key === "activity") {
+      persist({ outfit, activity: value as BeaverActivity });
+      return;
     }
-  }
-  const activity = ACTIVITIES.find((a) => a.value === params.get("activity"))?.value ?? look.activity;
-  const customized = FIELDS.some((field) => params.has(field)) || params.has("activity");
-  const update = (key: string, value: string) => setParams((previous) => {
-    const next = new URLSearchParams(previous);
-    next.set(key, value);
-    return next;
-  }, { replace: true, preventScrollReset: true });
-  const setLook = (label: string) => setParams((previous) => {
-    const next = new URLSearchParams(previous);
-    for (const field of [...FIELDS, "activity"]) next.delete(field);
-    next.set("look", label);
-    return next;
-  }, { replace: true, preventScrollReset: true });
+    const next = { ...outfit };
+    if (value === "none") delete next[key];
+    else Object.assign(next, { [key]: value });
+    persist({ outfit: next, activity });
+  };
+  const setLook = (label: string) => {
+    const look = LOOKS.find((item) => item.label === label);
+    if (look) persist({ outfit: look.outfit, activity: look.activity });
+  };
+  const matchesLook = (look: Look) => activity === look.activity && FIELDS.every((key) => outfit[key] === look.outfit[key]);
+  const disabled = query.isPending || query.isError || save.isPending;
 
   return (
     <main className="mx-auto min-h-dvh max-w-5xl px-4 py-8 sm:px-8">
@@ -121,7 +126,10 @@ export default function PetPage() {
       <div className="grid items-start gap-8 md:grid-cols-2">
         <div className="md:sticky md:top-6">
           <div className="rounded-[3rem] bg-[#F6EEE4] px-2 pb-5 pt-8 sm:px-4">
-            <BeaverPet ref={pet} mood={mood} outfit={outfit} activity={activity} className="cursor-pointer" />
+            {query.isPending ? <div className="aspect-square animate-pulse rounded-3xl bg-white/40" role="status" aria-label="Загружаем питомца" /> :
+              <BeaverPet ref={pet} mood={query.isError ? "idle" : mood} outfit={outfit} activity={activity}
+                say={query.isError ? undefined : current?.status?.message}
+                sayHref={current?.status?.eventId ? `/events/${current.status.eventId}` : undefined} /> }
           </div>
           <p className="mt-4 text-center text-sm text-muted-foreground">
             Ткни в нос, голову, живот, хвост или лапу — каждый раз своя реакция. Поводи мышкой туда-сюда по голове — бобр зажмурится от удовольствия. Только не затыкай его.
@@ -134,21 +142,26 @@ export default function PetPage() {
           </fieldset>
         </div>
         <div className="space-y-7">
-          <fieldset>
+          <div role="status" aria-live="polite" className="min-h-7 text-base font-medium">
+            {query.isPending ? "Загружаем образ…" : query.isError ? "Не удалось загрузить питомца." : save.isPending ? "Сохраняем…" : save.isError ? "Не удалось сохранить образ." : "Сохранено"}
+            {query.isError && <button type="button" onClick={() => void query.refetch()} className="ml-3 underline">Повторить загрузку</button>}
+            {save.isError && <button type="button" onClick={() => persist({ outfit, activity })} className="ml-3 underline">Повторить сохранение</button>}
+          </div>
+          <fieldset disabled={disabled} className="disabled:opacity-60">
             <legend className="mb-3 text-lg font-semibold">Готовые образы</legend>
             <div className="flex flex-wrap gap-2">
-              {LOOKS.map((l) => <button key={l.label} type="button" aria-pressed={!customized && look.label === l.label} onClick={() => setLook(l.label)} className={button(!customized && look.label === l.label)}>{l.label}</button>)}
+              {LOOKS.map((l) => <button key={l.label} type="button" aria-pressed={matchesLook(l)} onClick={() => setLook(l.label)} className={button(matchesLook(l))}>{l.label}</button>)}
             </div>
           </fieldset>
-          <fieldset>
+          <fieldset disabled={disabled} className="disabled:opacity-60">
             <legend className="mb-3 text-lg font-semibold">Отдельные элементы</legend>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2">
               {FIELDS.map((field) => <Choice key={field} label={WARDROBE[field].label} value={outfit[field] ?? "none"} options={[{ value: "none", label: "Без элемента" }, ...WARDROBE[field].options]} onChange={(value) => update(field, value)} />)}
               <Choice label="Инвентарь" value={activity} options={ACTIVITIES} onChange={(value) => update("activity", value)} />
             </div>
           </fieldset>
-          <button type="button" onClick={() => setLook("Без всего")} className="text-sm underline underline-offset-4">Снять все вещи и убрать инвентарь</button>
-          <p className="text-sm text-muted-foreground">Образ сохраняется в ссылке — её можно скопировать и открыть снова.</p>
+          <button type="button" disabled={disabled} onClick={() => setLook("Без всего")} className="text-sm underline underline-offset-4">Снять все вещи и убрать инвентарь</button>
+          <p className="text-sm text-muted-foreground">Одежда и инвентарь сохраняются в профиле. Эмоции проигрываются один раз.</p>
         </div>
       </div>
     </main>

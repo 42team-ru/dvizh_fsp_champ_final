@@ -112,7 +112,7 @@ export type BeaverRig = {
   destroy(): void;
 };
 
-export function createBeaverRig(root: HTMLElement, followCursor: boolean): BeaverRig {
+export function createBeaverRig(root: HTMLElement, followCursor: boolean, onInteraction?: () => void): BeaverRig {
   const q = (sel: string) => root.querySelector<SVGGElement>(sel);
   const el = {
     inner: q("#beaver-inner"), torso: q("#torso"), head: q("#head"), tail: q("#tail"),
@@ -202,6 +202,7 @@ export function createBeaverRig(root: HTMLElement, followCursor: boolean): Beave
       lastStroke = { x: e.clientX, y: e.clientY };
       strokeAt = now;
       if (strokeDist > 500) {
+        onInteraction?.();
         startReaction("bliss", { ms: 900 });
         strokeDist = 400;
       }
@@ -527,10 +528,12 @@ export function createBeaverRig(root: HTMLElement, followCursor: boolean): Beave
       startReaction(m, { hop: m === "happy", ...(ms ? { ms } : {}), ...opts });
     },
     poke(target) {
+      const wasSleeping = reaction?.mood === "sleep" || baseMood === "sleep";
+      onInteraction?.();
       const now = performance.now();
       lastInteraction = now;
       // Спящего тычок будит: вздрагивает и удивляется.
-      if (reaction?.mood === "sleep" || baseMood === "sleep") {
+      if (wasSleeping) {
         startReaction("surprised", { ms: 1400, hop: true });
         return;
       }
