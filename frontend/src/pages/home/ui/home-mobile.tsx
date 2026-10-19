@@ -1,7 +1,10 @@
+import { MyBeaverBadge } from "@/widgets/beaver-pet/ui/my-beaver-badge";
 import { DismissButton, useDismissRecommendation } from "@/features/dismiss-recommendation/ui/dismiss-button";
 import { Link } from "react-router";
 import { BrandPlate } from "@/shared/components/ui/brand-plate";
 import { useUser } from "@/entity/user/model/use-user";
+import { useNavAccess } from "@/entity/user/model/use-nav-access";
+import { AccountMenu } from "@/features/auth/sign-out/ui/account-menu";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 import { MobileTabBar } from "@/widgets/mobile-shell/ui/mobile-tab-bar";
 import { Badge } from "@/shared/components/ui/badge";
@@ -19,10 +22,8 @@ import {
   useRecommendationPreview,
 } from "@/entity/event/model/use-recommendation-preview";
 import { QrCode } from "@/shared/components/ui/qr-code";
+import { calendarUrl, routeUrl, ticketDay, untilStart, useNextTicket } from "@/entity/event/model/use-next-ticket";
 import { LeaveTipMobile } from "@/widgets/leave-tip/ui/leave-tip";
-import { nextStartOf, untilLabel, useNextTicket } from "@/entity/event/model/use-next-ticket";
-import { useUnreadNotifications } from "@/entity/notification/model/use-unread-notifications";
-import type { MyRegistrationResponse } from "@/shared/api/generated/core/appAPI.schemas";
 
 const dir = "m-home";
 
@@ -48,7 +49,7 @@ function SectionHead({ title, link, to = "/feed" }: { title: string; link?: stri
 
 function AppBar() {
   const { user } = useUser();
-  const unread = useUnreadNotifications().total;
+  const nav = useNavAccess();
   return (
     <div className="flex h-16 shrink-0 items-center justify-between px-4">
       <BrandPlate>
@@ -58,46 +59,60 @@ function AppBar() {
         </span>
       </BrandPlate>
       <div className="flex items-center gap-2">
-        <Link
-          to="/activity"
-          aria-label={unread > 0 ? `Активность: ${unread} непрочитанных` : "Активность"}
-          className="relative box-border flex size-11 items-center justify-center rounded-[22px] border-2 border-ink bg-card"
-        >
-          <Icon name={`${dir}/icon-bell`} className="size-5" />
-          {unread > 0 && <span className="absolute top-[6px] left-6 box-border size-3 rounded-[6px] border-[1.5px] border-ink bg-accent" />}
-        </Link>
-        <Link to="/profile" aria-label="Профиль">
-          <Disc
-            user={user}
-            initials={`${user?.firstName?.[0] ?? ""}${user?.lastName?.[0] ?? ""}` || "?"}
-            tone="bg-sky"
-            className="size-11"
-            textClassName="text-xs leading-[normal]"
-          />
-        </Link>
+        {nav.showActivity && (
+          <Link
+            to="/activity"
+            aria-label="Активность"
+            className="relative box-border flex size-11 items-center justify-center rounded-[22px] border-2 border-ink bg-card"
+          >
+            <Icon name={`${dir}/icon-bell`} className="size-5" />
+            {nav.unread > 0 && <span className="absolute top-[6px] left-6 box-border size-3 rounded-[6px] border-[1.5px] border-ink bg-accent" />}
+          </Link>
+        )}
+        {nav.showProfile ? (
+          <Link to="/profile" aria-label="Профиль">
+            <Disc
+              user={user}
+              initials={`${user?.firstName?.[0] ?? ""}${user?.lastName?.[0] ?? ""}`.toUpperCase() || "?"}
+              tone="bg-sky"
+              className="size-11"
+              textClassName="text-xs leading-[normal]"
+            />
+          </Link>
+        ) : (
+          <AccountMenu />
+        )}
       </div>
     </div>
   );
 }
 
-/** Ближайшая подтверждённая встреча билетом; без записей — приглашение подобрать встречу. */
-function NextTicket({ ticket }: { ticket?: MyRegistrationResponse }) {
-  if (!ticket) {
+/** Ближайшая встреча; без неё — приглашение в ленту или создать свою. */
+function NextTicket() {
+  const { user, next, isLoading } = useNextTicket();
+  const e = next?.event;
+  if (isLoading) return null;
+  if (!e || !next) {
     return (
       <div className="px-4">
-        <div className="box-border flex w-full flex-col gap-3 rounded-[26px] border-2 border-ink bg-primary p-5 shadow-[4px_4px_0_var(--ink)]">
-          <p className="font-display text-[22px] leading-7 font-extrabold text-white">Найди компанию на неделю</p>
-          <p className="text-sm leading-[normal] font-medium text-lilac">Подберём встречи по твоим интересам и району.</p>
+        <div className="box-border flex flex-col gap-3 rounded-[26px] border-2 border-ink bg-primary p-5 shadow-[4px_4px_0_var(--ink)]">
+          <p className="font-display text-[22px] leading-7 font-extrabold text-white">Найди компанию для спорта</p>
+          <p className="text-sm font-medium text-lilac">
+            {user?.systemRole === "ADMIN" ? "Все события платформы — в ленте." : "Запишись на встречу — здесь появится твой билет."}
+          </p>
           <Button asChild variant="secondary" className="h-12 w-full px-5 shadow-none">
-            <Link to={FOR_YOU_FEED_URL}>Подобрать встречу</Link>
+            <Link to="/feed">Смотреть ленту</Link>
           </Button>
+          {user?.systemRole !== "ADMIN" && (
+            <Button asChild variant="soft" rough={false} className="h-12 w-full px-5">
+              <Link to="/events/new">Создать встречу</Link>
+            </Button>
+          )}
         </div>
       </div>
     );
   }
-  const e = ticket.event;
-  const start = nextStartOf(ticket);
-  const place = e.format === "ONLINE" ? "Онлайн" : e.address ?? e.locationNote ?? "Место уточняется";
+  const organizer = next.role === "organizer";
   return (
     <div className="px-4">
       <div className="box-border w-full overflow-hidden rounded-[26px] border-2 border-ink bg-primary shadow-[4px_4px_0_var(--ink)]">
@@ -107,20 +122,20 @@ function NextTicket({ ticket }: { ticket?: MyRegistrationResponse }) {
               <span className="truncate">{e.sport.name.toUpperCase()}</span>
             </Badge>
             <span className="text-[13px] leading-[normal] font-bold whitespace-nowrap text-lilac">
-              {untilLabel(start)}
+              {untilStart(next.startAt)}
             </span>
           </div>
-          <p className="font-display text-[22px] leading-7 font-extrabold text-white">
-            {e.title}
-          </p>
+          <p className="line-clamp-2 font-display text-[22px] leading-7 font-extrabold text-white">{e.title}</p>
           <div className="flex min-w-0 items-center gap-[6px]">
             <Icon name={`${dir}/icon-pin`} className="size-4 shrink-0" />
             <span className="truncate text-sm leading-[normal] font-medium text-lilac">
-              {place}
+              {e.format === "ONLINE" ? "Онлайн" : e.address ?? "Место уточняется"}
             </span>
           </div>
           <Button asChild variant="secondary" className="h-12 w-full px-5 shadow-none">
-            <Link to={`/events/${e.id}`}>Открыть билет</Link>
+            <Link to={organizer ? `/my/events/${e.id}/manage` : `/events/${e.id}`}>
+              {organizer ? "Управлять" : "Открыть билет"}
+            </Link>
           </Button>
         </div>
         <div className="relative h-[22px] bg-card">
@@ -136,16 +151,14 @@ function NextTicket({ ticket }: { ticket?: MyRegistrationResponse }) {
           <div className="flex min-w-0 flex-1 flex-col gap-[10px] leading-[normal] font-extrabold">
             <div className="flex flex-col gap-[2px]">
               <span className="text-[10px] tracking-[1px] text-muted-foreground">КОГДА</span>
-              <span className="truncate text-sm text-foreground">{formatWhen(start)}</span>
+              <span className="text-sm text-foreground">{ticketDay(next.startAt)}</span>
             </div>
-            <div className="flex min-w-0 flex-col gap-[2px]">
-              <span className="text-[10px] tracking-[1px] text-muted-foreground">
-                {e.format === "ONLINE" ? "ФОРМАТ" : e.locationNote ? "СБОР" : "ГДЕ"}
-              </span>
-              <span className="truncate text-sm text-foreground">
-                {e.format === "ONLINE" ? "Онлайн, ссылка в карточке" : e.locationNote ?? place}
-              </span>
-            </div>
+            {e.locationNote && (
+              <div className="flex min-w-0 flex-col gap-[2px]">
+                <span className="text-[10px] tracking-[1px] text-muted-foreground">КАК НАЙТИ</span>
+                <span className="truncate text-sm text-foreground">{e.locationNote}</span>
+              </div>
+            )}
           </div>
           <div className="flex flex-col items-center gap-1">
             <QrCode path={`/events/${e.id}`} label="QR-код: страница встречи" className="size-[63px]" />
@@ -153,6 +166,40 @@ function NextTicket({ ticket }: { ticket?: MyRegistrationResponse }) {
               № {e.id.slice(0, 4).toUpperCase()}
             </span>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Подсказка по ближайшей встрече: календарь и маршрут — настоящие ссылки. */
+function Tip() {
+  const { user, next, isLoading } = useNextTicket();
+  const e = next?.event;
+  if (isLoading || !e || user?.systemRole === "ADMIN") return null;
+  return (
+    <div className="px-4">
+      <div className="box-border flex w-full flex-col gap-3 rounded-[22px] border-2 border-ink bg-sky-soft p-[14px]">
+        <div className="flex items-center gap-3">
+          <MyBeaverBadge className="size-16 shrink-0" />
+          <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
+            <span className="text-[10px] leading-[normal] font-extrabold tracking-[1.2px] whitespace-nowrap text-primary">
+              БУБЛИК ПОДСКАЗЫВАЕТ
+            </span>
+            <span className="text-sm leading-[19px] font-bold text-foreground">
+              Добавь встречу в календарь, чтобы не забыть
+            </span>
+          </div>
+        </div>
+        <div className="flex gap-[10px]">
+          <Button asChild className="h-12 min-w-0 flex-1 px-5 text-sm">
+            <a href={calendarUrl(e.id)} download>В календарь</a>
+          </Button>
+          {e.format === "OFFLINE" && e.address && (
+            <Button asChild variant="soft" rough={false} className="h-12 min-w-0 flex-1 px-5 text-sm">
+              <a href={routeUrl(e.address)} target="_blank" rel="noreferrer">Маршрут</a>
+            </Button>
+          )}
         </div>
       </div>
     </div>
@@ -251,20 +298,27 @@ function EventScroller() {
 }
 
 export function HomeMobile() {
-  const { user } = useUser();
-  const { ticket, isPending } = useNextTicket();
+  const { user, next } = useNextTicket();
   return (
     <div className="relative isolate flex min-h-dvh flex-col gap-4 overflow-hidden bg-background pb-[110px] lg:hidden">
       <MemphisBackground variant="mobile" />
       <AppBar />
-      <div className="flex flex-col gap-[2px] px-4 pt-1 leading-[normal] whitespace-nowrap">
+      <div className="flex flex-col gap-[2px] px-4 pt-1 leading-[normal]">
         <h1 className="font-display text-[26px] font-extrabold text-foreground">Привет{user?.firstName ? `, ${user.firstName}` : ""}!</h1>
-        {!isPending && <p className="text-[15px] font-medium text-muted-foreground">{ticket ? "Дальше у тебя" : "Ближайших встреч пока нет"}</p>}
+        {next && (
+          <p className="text-[15px] font-medium text-muted-foreground">
+            {next.role === "organizer" ? "Ты ведёшь" : "Дальше у тебя"}
+          </p>
+        )}
       </div>
-      {!isPending && <NextTicket ticket={ticket} />}
-      <LeaveTipMobile />
-      <SectionHead title="Подобрали для тебя" link="Все" to={FOR_YOU_FEED_URL} />
-      <EventScroller />
+      <NextTicket />
+      <LeaveTipMobile fallback={<Tip />} />
+      {user?.systemRole === "USER" && (
+        <>
+          <SectionHead title="Подобрали для тебя" link="Все" to={FOR_YOU_FEED_URL} />
+          <EventScroller />
+        </>
+      )}
       <MobileTabBar current="home" />
     </div>
   );

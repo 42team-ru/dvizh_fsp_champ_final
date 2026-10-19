@@ -195,7 +195,7 @@ export default function FeedPage() {
     <FeedMobile />
     <div className="relative isolate hidden min-h-dvh overflow-clip bg-background lg:block">
       <MemphisBackground seed="feed" />
-      <AppHeader current="feed" wide />
+      <AppHeader current="feed" />
       <main className="mx-auto flex w-full max-w-[1440px] flex-col gap-7 px-8 pt-8 pb-12">
         <FilterBar chip={filters.chip} onChip={filters.setChip} more={more} extraCount={filters.extraCount}
           onMore={() => setMore((m) => !m)} count={events?.length} view={view} onView={setView} />

@@ -10,6 +10,7 @@ import { cn } from "cn";
 import { CAPTION_MAX, IMG, coverTone, dateShort, dateTime, imageUrl } from "../lib/gallery";
 import { useRefreshGallery } from "../model/use-album";
 import { Counter, FieldLabel, RoundButton, SportPill } from "./parts";
+import { handle } from "@/shared/lib/handle";
 
 export type GalleryOwner = {
   id: string;
@@ -148,7 +149,7 @@ function ViewerBody({
             <div className="flex min-w-0 flex-col gap-[2px]">
               <DialogTitle className="truncate text-[15px] font-extrabold text-foreground">{name}</DialogTitle>
               <DialogDescription className="truncate text-xs font-medium text-muted-foreground">
-                {owner.username ? `@${owner.username} · ` : ""}
+                {owner.username ? `${handle(owner.username)} · ` : ""}
                 {dateTime(photo.createdAt)}
               </DialogDescription>
             </div>

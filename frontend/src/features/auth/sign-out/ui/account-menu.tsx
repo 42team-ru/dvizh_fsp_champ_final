@@ -5,6 +5,7 @@ import { useUser } from "@/entity/user/model/use-user";
 import { useCabinetAccess } from "@/entity/user/model/use-cabinet-access";
 import { UserAvatar } from "@/shared/components/ui/user-avatar";
 import { useSignOut } from "../model/use-sign-out";
+import { handle } from "@/shared/lib/handle";
 
 const ROLE: Record<string, string> = { USER: "участник", ORG: "организация", ADMIN: "администратор" };
 const item =
@@ -33,14 +34,16 @@ export function AccountMenu() {
             <div className="min-w-0">
               <p className="truncate text-[15px] font-extrabold text-foreground">{name}</p>
               <p className="truncate text-[13px] font-medium text-muted-foreground">
-                @{user?.username}{user?.systemRole ? ` · ${ROLE[user.systemRole] ?? user.systemRole}` : ""}
+                {handle(user?.username)}{user?.systemRole ? ` · ${ROLE[user.systemRole] ?? user.systemRole}` : ""}
               </p>
             </div>
           </div>
           <DropdownMenu.Separator className="mx-2 my-1 h-0.5 bg-track" />
-          <DropdownMenu.Item asChild className={item}>
-            <Link to="/profile"><User className="size-[18px]" strokeWidth={2.4} />Профиль</Link>
-          </DropdownMenu.Item>
+          {user?.systemRole === "USER" && (
+            <DropdownMenu.Item asChild className={item}>
+              <Link to="/profile"><User className="size-[18px]" strokeWidth={2.4} />Профиль</Link>
+            </DropdownMenu.Item>
+          )}
           {cabinet.allowed && (
             <DropdownMenu.Item asChild className={item}>
               <Link to="/my/events"><BriefcaseBusiness className="size-[18px]" strokeWidth={2.4} />Кабинет</Link>

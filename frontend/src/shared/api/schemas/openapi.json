@@ -8244,6 +8244,11 @@
             "format": "int32",
             "description": "Моё место в листе ожидания (1 — следующий); null — я не в листе ожидания",
             "example": 1
+          },
+          "decisionReason": {
+            "type": "string",
+            "description": "Причина отказа организатора, если моя заявка отклонена; иначе null",
+            "example": "Группа укомплектована"
           }
         },
         "required": [
@@ -9261,6 +9266,16 @@
           "locationNote": {
             "type": "string",
             "description": "Как найти место"
+          },
+          "lat": {
+            "type": "number",
+            "format": "double",
+            "description": "Широта; у онлайн-мероприятия null"
+          },
+          "lon": {
+            "type": "number",
+            "format": "double",
+            "description": "Долгота; у онлайн-мероприятия null"
           },
           "level": {
             "type": "string",

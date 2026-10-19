@@ -9,6 +9,7 @@ import {
 } from "@/entity/notification/model/use-unread-notifications";
 import { useRegistrationsMine } from "@/shared/api/generated/core/registrations/registrations";
 import type { NotificationResponse, NotificationsListTypesItem, RegistrationsMineStatus } from "@/shared/api/generated/core/appAPI.schemas";
+import { useUser } from "@/entity/user/model/use-user";
 
 /** Вкладки ленты активности: каждая — свой набор типов уведомлений. */
 export type ActivityTab = "all" | "replies" | "achievements" | "reminders";
@@ -57,19 +58,24 @@ export function shortTime(iso: string) {
  */
 export function useActivity() {
   const cache = useQueryClient();
+  const { user } = useUser();
+  /** Достижения, напоминания, мои заявки и билеты есть только у участника; клубу остаются ответы в обсуждениях. */
+  const participant = user?.systemRole === "USER";
+  const tabs = participant ? ACTIVITY_TABS : ACTIVITY_TABS.filter((t) => t.key === "all" || t.key === "replies");
   const [tab, setTabState] = useState<ActivityTab>("all");
   const [size, setSize] = useState(STEP);
   const [plansTab, setPlansTab] = useState<PlansTab>("going");
-  const types = ACTIVITY_TABS.find((t) => t.key === tab)?.types;
+  // у клуба «Все» и «Ответы» — одно и то же: вопросы и ответы в обсуждениях
+  const types = participant ? ACTIVITY_TABS.find((t) => t.key === tab)?.types : REPLY_TYPES;
 
   const unread = useUnreadNotifications();
   const list = useNotificationsList({ types, size }, {
     query: { placeholderData: keepPreviousData, refetchInterval: 30_000 },
   });
-  const pending = useRegistrationsMine({ status: "PENDING", when: "UPCOMING", size: 2 });
-  const going = useRegistrationsMine({ status: "CONFIRMED", when: "UPCOMING", size: 2 });
+  const pending = useRegistrationsMine({ status: "PENDING", when: "UPCOMING", size: 2 }, { query: { enabled: participant } });
+  const going = useRegistrationsMine({ status: "CONFIRMED", when: "UPCOMING", size: 2 }, { query: { enabled: participant } });
   /** Отменённые организатором или снятые: будущих занятий у них нет, поэтому в UPCOMING не попадают. */
-  const confirmed = useRegistrationsMine({ status: "CONFIRMED", size: 20 });
+  const confirmed = useRegistrationsMine({ status: "CONFIRMED", size: 20 }, { query: { enabled: participant } });
 
   const page = list.data?.status === 200 ? list.data.data : undefined;
   const items: NotificationResponse[] = page?.items ?? [];
@@ -82,7 +88,8 @@ export function useActivity() {
   const goingItems = [...(going.data?.status === 200 ? going.data.data.items ?? [] : []), ...cancelledItems].slice(0, 2);
   const goingTotal = going.data?.status === 200 ? going.data.data.totalElements ?? goingItems.length : 0;
 
-  const unreadOf = (key: ActivityTab) => unread.unreadOf(ACTIVITY_TABS.find((t) => t.key === key)?.types ?? []);
+  const unreadOf = (key: ActivityTab) =>
+    unread.unreadOf((participant ? ACTIVITY_TABS.find((t) => t.key === key)?.types : REPLY_TYPES) ?? []);
 
   // Лента по дням: «СЕГОДНЯ», «ВЧЕРА», дальше датой.
   const groups: { label: string; items: NotificationResponse[] }[] = [];
@@ -101,10 +108,12 @@ export function useActivity() {
   const readAll = useNotificationsReadAll({ mutation: { onSuccess: refresh } });
 
   return {
+    participant,
+    tabs,
     tab,
     setTab: (next: ActivityTab) => { setTabState(next); setSize(STEP); },
     unreadOf,
-    totalUnread: unread.total,
+    totalUnread: participant ? unread.total : unread.unreadOf(REPLY_TYPES),
     list,
     groups,
     hasMore: page?.nextCursor != null && size < 100,

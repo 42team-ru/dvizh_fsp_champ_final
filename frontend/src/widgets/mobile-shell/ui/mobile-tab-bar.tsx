@@ -1,25 +1,36 @@
 import { Link } from "react-router";
+import { BriefcaseBusiness } from "lucide-react";
 import { Icon } from "@/shared/components/ui/icon";
 import { cn } from "cn";
-import { useUnreadNotifications } from "@/entity/notification/model/use-unread-notifications";
+import { useNavAccess } from "@/entity/user/model/use-nav-access";
+import { useCabinetAccess } from "@/entity/user/model/use-cabinet-access";
 
 export type MobileTab = "home" | "feed" | "activity" | "profile";
 
-const TABS = [
-  { key: "home", to: "/", label: "Главная", icon: "icon-home" },
-  { key: "feed", to: "/feed", label: "Лента", icon: "icon-grid" },
-  { key: "activity", to: "/activity", label: "Активность", icon: "icon-bell" },
-  { key: "profile", to: "/profile", label: "Профиль", icon: "icon-user" },
-] as const;
+type Tab = { key: string; to: string; label: string; icon?: string; count?: number };
 
 /**
  * Нижняя навигация мобильной версии. Иконки активного и неактивного состояния лежат
  * в папке экрана (`public/m-<экран>`), поэтому `current` выбирает и подсветку, и папку.
+ * Набор вкладок зависит от роли: клубу вместо «Профиля» — «Кабинет», админу — только главная и лента.
  */
 export function MobileTabBar({ current }: { current: MobileTab }) {
   const dir = `m-${current}`;
-  const unread = useUnreadNotifications().total;
-  const tab = (t: (typeof TABS)[number]) => {
+  const nav = useNavAccess();
+  const cabinet = useCabinetAccess();
+
+  const left: Tab[] = [
+    { key: "home", to: "/", label: "Главная", icon: "icon-home" },
+    { key: "feed", to: "/feed", label: "Лента", icon: "icon-grid" },
+  ];
+  const right: Tab[] = [
+    ...(nav.showActivity ? [{ key: "activity", to: "/activity", label: "Активность", icon: "icon-bell", count: nav.unread }] : []),
+    ...(nav.showProfile
+      ? [{ key: "profile", to: "/profile", label: "Профиль", icon: "icon-user" }]
+      : cabinet.isOrg ? [{ key: "profile", to: "/my/events", label: "Кабинет" }] : []),
+  ];
+
+  const tab = (t: Tab) => {
     const active = t.key === current;
     return (
       <Link
@@ -34,11 +45,10 @@ export function MobileTabBar({ current }: { current: MobileTab }) {
             active && "border-2 border-ink bg-secondary"
           )}
         >
-          <Icon name={`${dir}/${t.icon}`} className="size-5" />
-          {t.key === "activity" && unread > 0 ? (
-            <span aria-label={`${unread} непрочитанных`}
-              className="absolute top-[-4px] left-8 box-border flex h-[18px] min-w-[18px] items-center justify-center rounded-[9px] border-[1.5px] border-ink bg-accent px-[3px] text-[10px] leading-[normal] font-extrabold text-white">
-              {unread > 99 ? "99+" : unread}
+          {t.icon ? <Icon name={`${dir}/${t.icon}`} className="size-5" /> : <BriefcaseBusiness className="size-5" strokeWidth={2.2} />}
+          {t.count ? (
+            <span className="absolute top-[-4px] left-8 box-border flex h-[18px] min-w-[18px] items-center justify-center rounded-[9px] border-[1.5px] border-ink bg-accent px-0.5 text-[10px] leading-[normal] font-extrabold text-white">
+              {t.count > 99 ? "99+" : t.count}
             </span>
           ) : null}
         </span>
@@ -59,20 +69,24 @@ export function MobileTabBar({ current }: { current: MobileTab }) {
       aria-label="Основное меню"
       className="fixed inset-x-0 bottom-0 z-40 border-t-2 border-ink bg-card pb-[max(16px,env(safe-area-inset-bottom))] lg:hidden"
     >
-      <div className="mx-auto grid max-w-[480px] grid-cols-5 px-0 pt-2">
-        {tab(TABS[0])}
-        {tab(TABS[1])}
-        <div className="relative">
-          <Link
-            to="/events/new"
-            aria-label="Создать событие"
-            className="absolute top-[-28px] left-1/2 box-border flex size-[58px] -translate-x-1/2 items-center justify-center rounded-[29px] border-2 border-ink bg-primary shadow-hard-sm"
-          >
-            <Icon name={`${dir}/icon-plus`} className="size-[26px]" />
-          </Link>
-        </div>
-        {tab(TABS[2])}
-        {tab(TABS[3])}
+      <div
+        className="mx-auto grid max-w-[480px] px-0 pt-2"
+        style={{ gridTemplateColumns: `repeat(${left.length + right.length + (nav.canCreate ? 1 : 0)}, minmax(0, 1fr))` }}
+      >
+        {left.map(tab)}
+        {/* админ событий не создаёт (правило 7): плюс в центре только у участника и клуба */}
+        {nav.canCreate && (
+          <div className="relative">
+            <Link
+              to="/events/new"
+              aria-label="Создать событие"
+              className="absolute top-[-28px] left-1/2 box-border flex size-[58px] -translate-x-1/2 items-center justify-center rounded-[29px] border-2 border-ink bg-primary shadow-hard-sm"
+            >
+              <Icon name={`${dir}/icon-plus`} className="size-[26px]" />
+            </Link>
+          </div>
+        )}
+        {right.map(tab)}
       </div>
     </nav>
   );

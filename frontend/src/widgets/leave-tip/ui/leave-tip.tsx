@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { Bus, Car, Footprints, type LucideIcon } from "lucide-react";
 import { TRAVEL_HOW, useLeaveTip, type LeaveTipModel } from "@/entity/event/model/use-leave-tip";
@@ -6,6 +7,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
 import { Eyebrow } from "@/shared/components/ui/eyebrow";
 import { Icon } from "@/shared/components/ui/icon";
+import { MyBeaverBadge } from "@/widgets/beaver-pet/ui/my-beaver-badge";
 import { cn } from "cn";
 
 const ICONS: Record<TravelOptionResponse["mode"], LucideIcon> = { WALK: Footprints, BUS: Bus, CAR: Car, NONE: Footprints };
@@ -105,18 +107,15 @@ function Actions({ m, state, className, buttonClassName }: {
   );
 }
 
-/** «Бублик подсказывает» на главной, компьютер. */
-export function LeaveTip() {
+/** «Бублик подсказывает» на главной, компьютер; `fallback` — когда о дороге сказать нечего (клуб, нет встречи, «Не надо»). */
+export function LeaveTip({ fallback }: { fallback?: ReactNode }) {
   const m = useLeaveTip();
   const v = view(m);
-  if (!v) return null;
+  if (m.loading) return null;
+  if (!v) return fallback ?? null;
   return (
     <Card className="relative min-h-[104px] flex-row items-center gap-5 bg-mint-soft py-4 pr-[26px] pl-[152px]">
-      <img
-        src="/home/wave.png"
-        alt=""
-        className="pointer-events-none absolute top-[-30px] left-[18px] h-[128px] w-[124px] max-w-none object-cover"
-      />
+      <MyBeaverBadge className="absolute top-[-22px] left-[14px] h-[118px] w-[132px]" />
       <div className="flex min-w-0 flex-1 flex-col gap-[6px]">
         <Eyebrow>БУБЛИК ПОДСКАЗЫВАЕТ</Eyebrow>
         <p className="font-display text-[18px] leading-[23.5px] font-bold text-foreground">{v.headline}</p>
@@ -129,15 +128,16 @@ export function LeaveTip() {
 }
 
 /** «Бублик подсказывает» на главной, телефон. */
-export function LeaveTipMobile() {
+export function LeaveTipMobile({ fallback }: { fallback?: ReactNode }) {
   const m = useLeaveTip();
   const v = view(m);
-  if (!v) return null;
+  if (m.loading) return null;
+  if (!v) return fallback ?? null;
   return (
     <div className="px-4">
       <div className="box-border flex w-full flex-col gap-3 rounded-[22px] border-2 border-ink bg-sky-soft p-[14px]">
         <div className="flex items-center gap-3">
-          <img src="/m-home/img.png" alt="" className="size-16 shrink-0 object-contain" />
+          <MyBeaverBadge className="size-16 shrink-0" />
           <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
             <span className="text-[10px] leading-[normal] font-extrabold tracking-[1.2px] whitespace-nowrap text-primary">
               БУБЛИК ПОДСКАЗЫВАЕТ

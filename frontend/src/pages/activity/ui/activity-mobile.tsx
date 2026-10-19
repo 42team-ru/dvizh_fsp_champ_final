@@ -5,12 +5,12 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Disc } from "@/shared/components/ui/disc";
 import { Icon } from "@/shared/components/ui/icon";
-import { Progress } from "@/shared/components/ui/progress";
 import { cn } from "cn";
+import { MyEventsMap } from "@/widgets/events-map/ui/my-events-map";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 import { Link } from "react-router";
 import { PendingRow, PlansDialog, PlansSwitch, TicketRow, viewOf } from "./activity-parts";
-import { ACTIVITY_TABS, type ActivityModel } from "../model/use-activity";
+import { type ActivityModel } from "../model/use-activity";
 
 const dir = "m-activity";
 
@@ -93,7 +93,7 @@ export function ActivityMobile({ m }: { m: ActivityModel }) {
       </div>
 
       <div className="no-scrollbar flex gap-2 overflow-x-auto px-4" role="tablist" aria-label="Тип активности">
-        {ACTIVITY_TABS.map((t) => {
+        {m.tabs.map((t) => {
           const unread = m.unreadOf(t.key);
           return (
             <Button key={t.key} role="tab" aria-selected={m.tab === t.key} variant={m.tab === t.key ? "ink" : "soft"}
@@ -117,7 +117,9 @@ export function ActivityMobile({ m }: { m: ActivityModel }) {
       <>
           {m.list.isPending && <p className="px-4 text-sm font-medium text-muted-foreground">Загружаем…</p>}
           {m.list.isSuccess && m.groups.length === 0 && (
-            <p className="px-4 text-sm font-medium text-muted-foreground">Здесь пока пусто: ответы, достижения и напоминания появятся тут.</p>
+            <p className="px-4 text-sm font-medium text-muted-foreground">{m.participant
+              ? "Здесь пока пусто: ответы, достижения и напоминания появятся тут."
+              : "Здесь пока пусто: вопросы участников в обсуждениях появятся тут."}</p>
           )}
           {m.groups.map((group) => (
             <div key={group.label} className="flex flex-col gap-3">
@@ -144,7 +146,7 @@ export function ActivityMobile({ m }: { m: ActivityModel }) {
           {m.hasMore && <div className="px-4"><Button variant="soft" className="w-full" onClick={m.showMore}>Показать ещё</Button></div>}
       </>
 
-      <div className="px-4">
+      {m.participant && <div className="px-4">
         <div className="box-border flex w-full flex-col gap-3 rounded-[24px] border-2 border-ink bg-card p-[14px]">
           <div className="no-scrollbar overflow-x-auto">
             <PlansSwitch tab={m.plansTab} totals={totals} onChange={m.setPlansTab} />
@@ -168,23 +170,14 @@ export function ActivityMobile({ m }: { m: ActivityModel }) {
             <Button variant="secondary" className="h-11 w-full text-sm">Смотреть все</Button>
           </PlansDialog>
         </div>
-      </div>
+      </div>}
 
       <div className="px-4">
-        <div className="box-border flex w-full items-center gap-2 overflow-hidden rounded-[24px] border-2 border-ink bg-secondary p-[18px] shadow-[4px_4px_0_var(--ink)]">
-          <div className="flex min-w-0 flex-1 flex-col items-start gap-[6px] text-foreground">
-            <span className="text-[10px] leading-[normal] font-extrabold tracking-[1.5px] whitespace-nowrap">
-              ЦЕЛЬ НЕДЕЛИ
-            </span>
-            <span className="font-display text-[32px] leading-[normal] font-extrabold whitespace-nowrap">
-              4 / 5
-            </span>
-            <span className="text-[13px] leading-[normal] font-bold whitespace-nowrap">
-              ещё одна — и цель закрыта
-            </span>
-            <Progress value={80} className="w-[170px] bg-card" />
-          </div>
-          <img src="/m-home/img.png" alt="" className="h-28 w-[104px] shrink-0 object-contain" />
+        <div className="box-border flex w-full flex-col overflow-hidden rounded-[24px] border-2 border-ink bg-card shadow-[4px_4px_0_var(--ink)]">
+          <span className="px-[18px] pt-[14px] pb-2 text-[10px] leading-[normal] font-extrabold tracking-[1.5px] text-foreground">
+            МОИ ВСТРЕЧИ НА КАРТЕ
+          </span>
+          <MyEventsMap className="h-[260px] w-full border-t-2 border-ink" />
         </div>
       </div>
 

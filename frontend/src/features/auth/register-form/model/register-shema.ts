@@ -28,6 +28,7 @@ const password = z
 export { email as registerEmailSchema, username as registerUsernameSchema };
 
 export const registerSchema = z.object({
+  accountType: z.enum(["USER", "ORG"]),
   name,
   email,
   password,

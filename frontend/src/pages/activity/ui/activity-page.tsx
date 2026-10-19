@@ -2,7 +2,7 @@ import { NotificationSettingsButton } from "@/features/notification-settings/ui/
 import { Link } from "react-router";
 import { ActivityMobile } from "./activity-mobile";
 import { PendingRow, PlansDialog, PlansSwitch, TicketRow, viewOf } from "./activity-parts";
-import { ACTIVITY_TABS, useActivity, type ActivityModel } from "../model/use-activity";
+import { useActivity, type ActivityModel } from "../model/use-activity";
 import { AppHeader } from "@/widgets/app-header/ui/app-header";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
@@ -10,15 +10,13 @@ import { Card } from "@/shared/components/ui/card";
 import { Disc } from "@/shared/components/ui/disc";
 import { Eyebrow } from "@/shared/components/ui/eyebrow";
 import { Icon } from "@/shared/components/ui/icon";
-import { Progress } from "@/shared/components/ui/progress";
 import { cn } from "cn";
+import { MyEventsMap } from "@/widgets/events-map/ui/my-events-map";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
+import { plural } from "@/shared/lib/plural";
 
 const XS = "h-9 px-4 text-[13px] leading-[18px]";
 
-function Img({ src, className }: { src: string; className?: string }) {
-  return <img src={`/activity/${src}`} alt="" className={cn("absolute max-w-none", className)} />;
-}
 
 /** Кружок «не прочитано»: нажатие помечает уведомление прочитанным. Область нажатия больше самой точки. */
 function Dot({ onRead }: { onRead(): void }) {
@@ -45,7 +43,7 @@ function FilterBar({ m }: { m: ActivityModel }) {
         Активность
       </h1>
       <div className="absolute top-[6px] left-[327.5px] flex gap-2" role="tablist" aria-label="Тип активности">
-        {ACTIVITY_TABS.map((t) => {
+        {m.tabs.map((t) => {
           const active = m.tab === t.key;
           const unread = m.unreadOf(t.key);
           return (
@@ -74,7 +72,9 @@ function Feed({ m }: { m: ActivityModel }) {
             {m.list.isPending && <p className="text-[15px] font-medium text-muted-foreground">Загружаем…</p>}
             {m.list.isError && <p role="alert" className="text-[15px] font-medium text-destructive">Не удалось загрузить активность.</p>}
             {m.list.isSuccess && m.groups.length === 0 && (
-              <p className="text-[15px] font-medium text-muted-foreground">Здесь пока пусто. Ответы в обсуждениях, новые достижения и напоминания о встречах появятся тут.</p>
+              <p className="text-[15px] font-medium text-muted-foreground">{m.participant
+                ? "Здесь пока пусто. Ответы в обсуждениях, новые достижения и напоминания о встречах появятся тут."
+                : "Здесь пока пусто. Вопросы участников в обсуждениях ваших мероприятий появятся тут."}</p>
             )}
             {m.groups.map((group) => (
               <section key={group.label} className="flex flex-col gap-[10px]">
@@ -143,22 +143,14 @@ function Plans({ m }: { m: ActivityModel }) {
   );
 }
 
-function Goal() {
+/** Карта моих ближайших встреч: записи, заявки и то, что я веду; у клуба — на всю колонку. */
+function MyMap({ full }: { full?: boolean }) {
   return (
-    <Card className="absolute top-[335px] left-[721px] h-[291px] w-[495px] justify-between overflow-hidden bg-secondary p-[26px]">
-      <Img src="memphis2.svg" className="top-0 right-0 h-[220px] w-[200px]" />
-      <Img src="jump.png" className="top-[60px] right-[40px] h-[150px] w-[139px] object-cover" />
-      <div className="relative h-[69px] w-[134px]">
-        <Eyebrow className="text-foreground">ЦЕЛЬ НЕДЕЛИ</Eyebrow>
-        <p className="absolute top-[19px] left-0 font-display font-extrabold whitespace-nowrap text-foreground">
-          <span className="text-[44px] leading-[44px]">4</span>
-          <span className="text-[20px] leading-[44px]"> / 5</span>
-        </p>
-      </div>
-      <div className="relative h-14 w-[240px]">
-        <p className="w-[120.5px] text-[13px] leading-[18px] font-bold text-foreground">ещё одна — и цель закрыта</p>
-        <Progress value={80} className="absolute top-11 left-0 h-3" />
-      </div>
+    <Card className={cn("absolute left-[721px] w-[495px] overflow-hidden p-0", full ? "top-0 h-[626px]" : "top-[335px] h-[291px]")}>
+      <MyEventsMap className="size-full" />
+      <Badge variant="outline" className="pointer-events-none absolute top-3 right-3 z-[500] bg-card text-[11px] font-extrabold tracking-[1px]">
+        МОИ ВСТРЕЧИ НА КАРТЕ
+      </Badge>
     </Card>
   );
 }
@@ -179,12 +171,19 @@ export default function ActivityPage() {
             <button type="button" onClick={m.markAllRead} title="Отметить всё прочитанным"
               className="absolute -top-[14px] right-[539px] z-10 rotate-[-2deg] transition-transform hover:rotate-0">
               <Badge variant="accent" className="border-2 border-ink text-[13px] leading-[18px] text-white shadow-hard-sm">
-                {m.totalUnread} новых · прочитать
+                {m.totalUnread} {plural(m.totalUnread, ["новое", "новых", "новых"])} · прочитать
               </Badge>
             </button>
           )}
-          <Plans m={m} />
-          <Goal />
+          {/* билеты и заявки — только у участника; клубу карта его мероприятий на всю колонку */}
+          {m.participant ? (
+            <>
+              <Plans m={m} />
+              <MyMap />
+            </>
+          ) : (
+            <MyMap full />
+          )}
         </div>
       </main>
     </div>

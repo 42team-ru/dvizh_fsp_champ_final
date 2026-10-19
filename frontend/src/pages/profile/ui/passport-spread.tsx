@@ -33,6 +33,7 @@ import {
   whenLabel,
 } from "./passport-utils";
 import { ProfileShare } from "./profile-share";
+import { handle } from "@/shared/lib/handle";
 
 const IMG = "/profile";
 const CHIP_TONES = [
@@ -617,7 +618,7 @@ function DataPage() {
           <div className="flex gap-4">
             <Field
               label="ЛОГИН"
-              value={user?.username ? `@${user.username}` : "—"}
+              value={user?.username ? handle(user.username) : "—"}
             />
             <Field label="ГОРОД" value={user?.city ?? "—"} />
           </div>

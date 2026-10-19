@@ -12,6 +12,7 @@ import { fullName } from "@/pages/event/model/use-event";
 import type { ManagedEvent } from "../model/use-manage-event";
 import { ago, dateShort } from "../model/format";
 import { Avatar, CabinetDialog, Chip, Divider, FieldLabel, OrangeButton, PersonLine, PillTabs, textareaClass, Warning } from "./parts";
+import { handle } from "@/shared/lib/handle";
 
 type Filter = "PENDING" | "CONFIRMED" | "WAITLISTED" | "REJECTED" | "CANCELLED";
 const REASON_MAX = 300;
@@ -139,7 +140,7 @@ function RejectDialog({
           <Avatar user={target.participant} className="size-9" />
           <div className="flex min-w-0 flex-col">
             <span className="truncate text-[15px] font-extrabold text-foreground">
-              {fullName(target.participant)} · @{target.participant.username}
+              {fullName(target.participant)} · {handle(target.participant.username)}
             </span>
             <span className="truncate text-[13px] font-medium text-muted-foreground">
               {eventTitle}

@@ -7,6 +7,7 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } fr
 import { UserAvatar } from "@/shared/components/ui/user-avatar";
 import type { UserShortResponse } from "@/shared/api/generated/core/appAPI.schemas";
 import { fullName } from "@/pages/event/model/use-event";
+import { handle } from "@/shared/lib/handle";
 
 /** Плашка статуса: текст капсом, цвет — только подсказка. */
 export function Chip({ tone = "bg-card", className, children }: { tone?: string; className?: string; children: ReactNode }) {
@@ -118,7 +119,7 @@ export function PersonLine({ user, extra }: { user: UserShortResponse; extra?: s
         {fullName(user)}
       </Link>
       <span className="truncate text-[13px] font-medium text-muted-foreground">
-        @{user.username}
+        {handle(user.username)}
         {(extra ?? user.city) ? ` · ${extra ?? user.city}` : ""}
       </span>
     </div>

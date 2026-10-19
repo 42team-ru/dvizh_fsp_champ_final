@@ -45,6 +45,8 @@ export function useLeaveTip() {
 
   return {
     tip,
+    /** Ещё грузится: не показываем ни подсказку, ни запасной вариант, чтобы карточка не мигала. */
+    loading: query.isPending,
     option,
     pick: setPicked,
     remindAt,

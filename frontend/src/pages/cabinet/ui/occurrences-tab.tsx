@@ -9,6 +9,7 @@ import type { ManagedEvent } from "../model/use-manage-event";
 import { dateShort, dayShort, dayTime, hm } from "../model/format";
 import { Avatar, Chip, OrangeButton, PillTabs } from "./parts";
 import { AddDateDialog, CancelDialog, ConfirmDialog, RescheduleDialog } from "./occurrence-dialogs";
+import { handle } from "@/shared/lib/handle";
 
 const SOURCE: Record<string, string> = { RULE: "По расписанию", EXTRA: "Добавлено", SINGLE: "Разовое" };
 const STEP = 8;
@@ -151,7 +152,7 @@ function WhoComes({ event, o, onClose }: { event: ManagedEvent; o: OccurrenceRes
           <Avatar user={u} className="size-9" />
           <div className="flex min-w-0 flex-col">
             <span className="truncate text-[15px] font-extrabold text-foreground">{fullName(u)}</span>
-            <span className="truncate text-xs font-medium text-muted-foreground">@{u.username}{u.city ? ` · ${u.city}` : ""}</span>
+            <span className="truncate text-xs font-medium text-muted-foreground">{handle(u.username)}{u.city ? ` · ${u.city}` : ""}</span>
           </div>
         </div>
       ))}

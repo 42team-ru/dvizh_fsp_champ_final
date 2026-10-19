@@ -1,6 +1,7 @@
 import { useRef, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router";
-import { useEventsCreate } from "@/shared/api/generated/core/events/events";
+import { useEventsCreate, useEventsCreatePermission } from "@/shared/api/generated/core/events/events";
+import { Link } from "react-router";
 import type { EventRequest, EventRequestJoinMode, EventRequestKind, EventRequestLevel } from "@/shared/api/generated/core/appAPI.schemas";
 import { EventRequestLevel as LEVELS } from "@/shared/api/generated/core/appAPI.schemas";
 import { AppHeader } from "@/widgets/app-header/ui/app-header";
@@ -42,6 +43,9 @@ const intOrUndefined = (value: string) => (value.trim() ? Number(value) : undefi
 export default function EventCreatePage() {
   const navigate = useNavigate();
   const create = useEventsCreate();
+  const permissionQuery = useEventsCreatePermission();
+  const permission = permissionQuery.data?.status === 200 ? permissionQuery.data.data : undefined;
+  const blocked = permission?.canCreate === false;
   const tomorrow = new Date(Date.now() + 86_400_000);
   const [sport, setSport] = useState<PickedSport | null>(null);
   /** Точка места: из подсказки адреса или клика по карте. Без неё адрес не засчитывается. */
@@ -117,9 +121,18 @@ export default function EventCreatePage() {
   return (
     <div className="relative isolate min-h-dvh overflow-clip bg-background pb-[110px] lg:pb-12">
       <MemphisBackground seed="feed" />
-      <div className="hidden lg:block"><AppHeader current="feed" /></div>
+      <div className="sticky top-0 z-40 hidden lg:block"><AppHeader current="feed" /></div>
       <main className="mx-auto flex w-full max-w-[880px] flex-col gap-5 px-4 pt-8 lg:px-8">
         <h1 className="font-display text-[32px] leading-10 font-extrabold lg:text-[40px] lg:leading-[50px]">Новое событие</h1>
+        {blocked && (
+          <div role="alert" className="flex flex-col gap-2 rounded-[20px] border-2 border-ink bg-peach p-5">
+            <p className="font-display text-lg font-bold">Публикация пока недоступна</p>
+            <p className="text-base font-semibold">{permission?.reason}</p>
+            <Button asChild variant="ink" size="sm" className="self-start">
+              <Link to="/my/org">Открыть анкету клуба</Link>
+            </Button>
+          </div>
+        )}
         <form className="flex flex-col gap-5" onSubmit={(event) => { event.preventDefault(); submit(); }}>
           <Section title="Что">
             <label className={field}>Название
@@ -237,7 +250,7 @@ export default function EventCreatePage() {
 
           {error && <p role="alert" className="text-base font-bold text-destructive">{error}</p>}
           <div className="flex flex-wrap gap-3">
-            <Button type="submit" size="lg" disabled={create.isPending}>{create.isPending ? "Публикуем…" : "Опубликовать"}</Button>
+            <Button type="submit" size="lg" disabled={create.isPending || blocked}>{create.isPending ? "Публикуем…" : "Опубликовать"}</Button>
             <Button type="button" size="lg" variant="soft" onClick={() => navigate(-1)}>Отмена</Button>
           </div>
         </form>

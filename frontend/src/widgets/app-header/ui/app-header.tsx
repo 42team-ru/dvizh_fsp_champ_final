@@ -5,7 +5,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Icon } from "@/shared/components/ui/icon";
 import { AccountMenu } from "@/features/auth/sign-out/ui/account-menu";
 import { useCabinetAccess } from "@/entity/user/model/use-cabinet-access";
-import { useUnreadNotifications } from "@/entity/notification/model/use-unread-notifications";
+import { useNavAccess } from "@/entity/user/model/use-nav-access";
 import { BriefcaseBusiness } from "lucide-react";
 import { SearchPalette } from "@/widgets/search-palette/ui/search-palette";
 
@@ -14,19 +14,24 @@ const NAV = [
   { key: "feed", to: "/feed", label: "Лента", icon: "icon-grid", w: "w-[104.5px]" },
   { key: "activity", to: "/activity", label: "Активность", icon: "icon-bell", w: "w-[178.5px]" },
   { key: "profile", to: "/profile", label: "Профиль", icon: "icon-user", w: "w-[126.5px]" },
-];
+] as const;
 
 /** Папка иконки: в папке страницы активная иконка белая; в кабинете ни одна из четырёх не активна. */
 const iconFolder = (current: string, key: string) =>
   current !== "cabinet" ? current : key === "home" ? "feed" : "home";
 
-/** `wide` — контейнер 1440px, как у ленты; остальные страницы 1280px. Вкладка «Кабинет» — только организаторам. */
-export function AppHeader({ current = "home", wide }: { current?: "home" | "feed" | "profile" | "activity" | "cabinet"; wide?: boolean }) {
+/**
+ * Шапка одна и та же на всех страницах: ширина контейнера не зависит от страницы, шапка прилипает к верху —
+ * при переходах ничего не прыгает. Вкладка «Кабинет» — только организаторам.
+ */
+export function AppHeader({ current = "home" }: { current?: "home" | "feed" | "profile" | "activity" | "cabinet" }) {
   const cabinet = useCabinetAccess();
-  const unread = useUnreadNotifications().total;
+  const nav = useNavAccess();
+  const items = NAV.filter((item) =>
+    (item.key !== "activity" || nav.showActivity) && (item.key !== "profile" || nav.showProfile));
   return (
-    <header className="box-border h-[76px] border-b-2 border-ink bg-background">
-      <div className={`mx-auto flex h-full w-full ${wide ? "max-w-[1440px]" : "max-w-[1280px]"} items-center px-8`}>
+    <header className="sticky top-0 z-40 box-border h-[76px] border-b-2 border-ink bg-background">
+      <div className="mx-auto flex h-full w-full max-w-[1280px] items-center px-8">
         <Link to="/" aria-label="Движ — на главную">
           <BrandPlate className="gap-[10px]">
             <img src="/icon.svg" alt="" className="size-10 shrink-0" />
@@ -37,7 +42,7 @@ export function AppHeader({ current = "home", wide }: { current?: "home" | "feed
         </Link>
 
         <nav className="ml-7 flex shrink-0 gap-[2px]">
-          {NAV.map((item) => (
+          {items.map((item) => (
             <Button
               key={item.label}
               asChild
@@ -48,13 +53,13 @@ export function AppHeader({ current = "home", wide }: { current?: "home" | "feed
               <Link to={item.to} aria-current={item.key === current ? "page" : undefined}>
                 <Icon name={`${iconFolder(current, item.key)}/${item.icon}`} className="size-[19px]" />
                 {item.label}
-                {item.key === "activity" && unread > 0 ? (
+                {item.key === "activity" && nav.unread > 0 ? (
                   <Badge
                     variant="accent"
-                    aria-label={`${unread} непрочитанных`}
-                    className="absolute top-1/2 left-[140.5px] h-[22px] -translate-y-1/2 min-w-[22px] justify-center rounded-[11px] px-1 py-px text-xs leading-[17px] font-extrabold text-white"
+                    aria-label={`${nav.unread} непрочитанных`}
+                    className="absolute top-1/2 left-[140.5px] h-[22px] -translate-y-1/2 min-w-[22px] justify-center rounded-[11px] px-1 text-xs leading-[17px] font-extrabold text-white"
                   >
-                    {unread > 99 ? "99+" : unread}
+                    {nav.unread > 99 ? "99+" : nav.unread}
                   </Badge>
                 ) : null}
               </Link>
@@ -73,12 +78,15 @@ export function AppHeader({ current = "home", wide }: { current?: "home" | "feed
         <div className="ml-auto flex shrink-0 items-center gap-3">
           <SearchPalette />
 
-          <Button asChild className="shrink-0">
-            <Link to="/events/new">
-              <Icon name="icon-plus" className="size-[18px]" />
-              Создать
-            </Link>
-          </Button>
+          {/* админ событий не создаёт (правило 7) */}
+          {nav.canCreate && (
+            <Button asChild className="shrink-0">
+              <Link to="/events/new">
+                <Icon name="icon-plus" className="size-[18px]" />
+                Создать
+              </Link>
+            </Button>
+          )}
 
           <AccountMenu />
         </div>

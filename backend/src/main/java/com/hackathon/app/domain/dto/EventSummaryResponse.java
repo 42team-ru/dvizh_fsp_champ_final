@@ -29,6 +29,8 @@ public record EventSummaryResponse(
 		@Schema(description = "Очно или онлайн", requiredMode = REQUIRED) EventFormat format,
 		@Schema(description = "Адрес") String address,
 		@Schema(description = "Как найти место") String locationNote,
+		@Schema(description = "Широта; у онлайн-мероприятия null") Double lat,
+		@Schema(description = "Долгота; у онлайн-мероприятия null") Double lon,
 		@Schema(description = "Для какого уровня", requiredMode = REQUIRED) EventLevel level,
 		@Schema(description = "Вид мероприятия") EventKind kind,
 		@Schema(description = "Режим записи", requiredMode = REQUIRED) JoinMode joinMode,

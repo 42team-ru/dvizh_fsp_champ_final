@@ -54,6 +54,8 @@ function Owner() {
 function Rail() {
   const { user } = useUser();
   const { isOrg, eventsCount } = useCabinetAccess();
+  const org = useOrganizationsMe({ query: { enabled: isOrg, retry: false } });
+  const mine = org.data?.status === 200 ? org.data.data : undefined;
   return (
     <aside className="flex w-full shrink-0 flex-col gap-1.5 rounded-[24px] border-2 border-ink bg-card px-3.5 py-4 lg:sticky lg:top-6 lg:w-[232px]">
       <Owner />
@@ -65,6 +67,20 @@ function Rail() {
             <span className="rounded-pill bg-secondary px-2 py-px text-xs font-extrabold text-foreground">{eventsCount}</span>
           )}
         </NavLink>
+        {isOrg && (
+          <NavLink to="/my/org" className={({ isActive }) => cn(item, isActive && "bg-ink text-white hover:bg-ink")}>
+            Анкета клуба
+            {mine?.status !== "APPROVED" && (
+              <span className="rounded-pill bg-peach px-2 py-px text-xs font-extrabold text-foreground">!</span>
+            )}
+          </NavLink>
+        )}
+        {isOrg && mine?.status === "APPROVED" && mine.id && (
+          <Link to={`/orgs/${mine.id}`} className={item}>
+            Публичная страница
+            <ArrowUpRight className="size-4" strokeWidth={2.6} />
+          </Link>
+        )}
         {!isOrg && user?.id && (
           <Link to={`/users/${user.id}`} className={item}>
             Публичная страница

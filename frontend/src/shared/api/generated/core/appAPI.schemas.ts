@@ -1154,6 +1154,8 @@ export interface ViewerResponse {
   joinAs?: ViewerResponseJoinAs;
   /** Моё место в листе ожидания (1 — следующий); null — я не в листе ожидания */
   waitlistPosition?: number;
+  /** Причина отказа организатора, если моя заявка отклонена; иначе null */
+  decisionReason?: string;
 }
 
 /**
@@ -1895,6 +1897,10 @@ export interface EventSummaryResponse {
   address?: string;
   /** Как найти место */
   locationNote?: string;
+  /** Широта; у онлайн-мероприятия null */
+  lat?: number;
+  /** Долгота; у онлайн-мероприятия null */
+  lon?: number;
   /** Для какого уровня */
   level: EventSummaryResponseLevel;
   /** Вид мероприятия */
