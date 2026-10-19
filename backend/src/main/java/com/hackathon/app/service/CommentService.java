@@ -10,17 +10,22 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.hackathon.app.domain.dto.CommentResponse;
+import com.hackathon.app.domain.dto.OrganizationShortResponse;
 import com.hackathon.app.domain.entity.AppUser;
 import com.hackathon.app.domain.entity.Comment;
 import com.hackathon.app.domain.entity.Event;
+import com.hackathon.app.domain.entity.Organization;
+import com.hackathon.app.domain.enums.SystemRole;
 import com.hackathon.app.domain.exception.BadRequestException;
 import com.hackathon.app.domain.exception.ConflictException;
 import com.hackathon.app.domain.exception.ForbiddenException;
 import com.hackathon.app.domain.mapper.CommentMapper;
+import com.hackathon.app.domain.mapper.OrganizationMapper;
 import com.hackathon.app.repository.AppUserRepository;
 import com.hackathon.app.repository.CommentRepository;
 import com.hackathon.app.repository.DbTimeRepository;
 import com.hackathon.app.repository.EventRepository;
+import com.hackathon.app.repository.OrganizationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,6 +48,8 @@ public class CommentService {
     private final EventAccessPolicy policy;
     private final CommentMapper mapper;
     private final NotificationSubjects notificationSubjects;
+    private final OrganizationRepository organizations;
+    private final OrganizationMapper organizationMapper;
 
     /**
      * Старые сверху, как в переписке. after — только сообщения новее этого момента (подгрузка новых без всей ленты).
@@ -51,8 +58,8 @@ public class CommentService {
     public List<CommentResponse> list(UUID eventId, UUID userId, Instant after) {
         var event = find(eventId);
         var eventComments = after == null
-                ? comments.findByEventIdAndHiddenFalseOrderByCreatedAt(eventId)
-                : comments.findByEventIdAndHiddenFalseAndCreatedAtAfterOrderByCreatedAt(eventId, after);
+                ? comments.findByEventIdOrderByCreatedAt(eventId)
+                : comments.findChangedAfter(eventId, after);
         return toResponses(event, eventComments, userId);
     }
 
@@ -67,7 +74,7 @@ public class CommentService {
         if (replyToId == null) {
             blockedReason = policy.commentBlockedReason(event);
         } else {
-            parent = comments.findById(replyToId).filter(c -> c.getEventId().equals(eventId) && !c.isHidden())
+            parent = comments.findById(replyToId).filter(c -> c.getEventId().equals(eventId))
                     .orElseThrow(() -> new BadRequestException("Сообщение, на которое вы отвечаете, не найдено"));
             blockedReason = policy.replyBlockedReason(event, parent);
         }
@@ -75,9 +82,13 @@ public class CommentService {
             throw new ConflictException(blockedReason);
         }
         var saved = comments.saveAndFlush(mapper.toEntity(eventId, userId, text, replyToId));
+        var organizerIds = policy.organizerIds(event);
         if (parent != null) {
             // Оповещается только автор исходного сообщения; ответ самому себе публикатор пропустит.
             notificationSubjects.reply(event, saved, parent.getAuthorId());
+        } else if (!organizerIds.contains(userId)) {
+            // Вопрос в общий поток: организаторы должны его увидеть, иначе сценарий «уточнить условия» обрывается.
+            notificationSubjects.question(event, saved, organizerIds);
         }
         return toResponses(event, List.of(saved), userId).getFirst();
     }
@@ -112,7 +123,7 @@ public class CommentService {
     /** Чужое — 403, удалённое или закрытое обсуждение — 409. */
     private Comment editable(Event event, UUID commentId, UUID userId) {
         var comment = comments.findById(commentId)
-                .filter(c -> c.getEventId().equals(event.getId()) && !c.isHidden())
+                .filter(c -> c.getEventId().equals(event.getId()))
                 .orElseThrow(() -> new NoSuchElementException(NOT_FOUND));
         var blockedReason = policy.commentEditBlockedReason(event, comment, userId);
         if (blockedReason != null) {
@@ -123,11 +134,15 @@ public class CommentService {
         return comment;
     }
 
-    /** Авторы, цитаты, счётчики ответов и организаторы — по одному запросу на весь список. */
-    private List<CommentResponse> toResponses(Event event, List<Comment> page, UUID userId) {
+    /**
+     * Авторы, цитаты, счётчики ответов, организаторы и организации авторов — по одному запросу на весь список.
+     * Скрытое модератором: текст и причину видит админ, автор — только причину, остальные — заглушку.
+     */
+    List<CommentResponse> toResponses(Event event, List<Comment> page, UUID userId) {
         if (page.isEmpty()) {
             return List.of();
         }
+        boolean admin = users.findById(userId).map(u -> u.getSystemRole() == SystemRole.ADMIN).orElse(false);
         var organizerIds = policy.organizerIds(event);
         var parentIds = page.stream().map(Comment::getParentId).filter(id -> id != null).distinct().toList();
         Map<UUID, Comment> parentsById = comments.findAllById(parentIds).stream()
@@ -139,15 +154,18 @@ public class CommentService {
                 .collect(Collectors.toMap(AppUser::getId, Function.identity()));
         var repliesById = comments.countReplies(page.stream().map(Comment::getId).toList()).stream()
                 .collect(Collectors.toMap(CommentRepository.ReplyCount::getParentId, CommentRepository.ReplyCount::getCount));
+        Map<UUID, OrganizationShortResponse> organizationByAccount = organizations.findByAccountIdIn(authorIds).stream()
+                .collect(Collectors.toMap(Organization::getAccountId, organizationMapper::toShort));
         return page.stream()
                 .map(comment -> {
                     var parent = comment.getParentId() == null ? null : parentsById.get(comment.getParentId());
+                    boolean mine = comment.getAuthorId().equals(userId);
                     return mapper.toResponse(comment, authorsById.get(comment.getAuthorId()),
-                            organizerIds.contains(comment.getAuthorId()),
-                            comment.getAuthorId().equals(userId),
+                            organizationByAccount.get(comment.getAuthorId()),
+                            organizerIds.contains(comment.getAuthorId()), mine,
                             policy.commentEditBlockedReason(event, comment, userId) == null,
                             parent == null ? null : mapper.toReply(parent, authorsById.get(parent.getAuthorId())),
-                            repliesById.getOrDefault(comment.getId(), 0L));
+                            repliesById.getOrDefault(comment.getId(), 0L), admin, admin || mine);
                 })
                 .toList();
     }

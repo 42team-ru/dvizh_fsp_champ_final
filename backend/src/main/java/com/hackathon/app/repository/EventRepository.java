@@ -35,11 +35,17 @@ public interface EventRepository extends JpaRepository<Event, UUID>, JpaSpecific
 	long countByStatus(EventStatus status);
 
 	/** Поиск в админке: status необязателен; q — готовый шаблон в нижнем регистре вида %текст% (без поиска — "%"). */
+	/** Админка: все статусы; фильтры по статусу, организации и автору необязательны. */
 	@Query("""
 			select e from Event e
 			where (:status is null or e.status = :status)
+			  and (:organizationId is null or e.organizationId = :organizationId)
+			  and e.authorId = coalesce(:authorId, e.authorId)
 			  and lower(e.title) like :q""")
-	Page<Event> search(EventStatus status, String q, Pageable pageable);
+	Page<Event> search(EventStatus status, UUID organizationId, UUID authorId, String q, Pageable pageable);
+
+	/** Сколько мероприятий разместила организация во всех статусах. */
+	long countByOrganizationId(UUID organizationId);
 
 	@Query("select e.authorId as userId, count(e) as count from Event e where e.authorId in :userIds group by e.authorId")
     List<UserCount> countAuthoredByUsers(java.util.Collection<UUID> userIds);

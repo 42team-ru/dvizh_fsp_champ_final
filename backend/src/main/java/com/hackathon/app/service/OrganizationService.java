@@ -1,22 +1,35 @@
 package com.hackathon.app.service;
 
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import com.hackathon.app.domain.dto.FileUpload;
 import com.hackathon.app.domain.dto.OrganizationResponse;
 import com.hackathon.app.domain.dto.PublicOrganizationResponse;
 import com.hackathon.app.domain.dto.SaveOrganizationRequest;
+import com.hackathon.app.domain.dto.SportResponse;
 import com.hackathon.app.domain.entity.Organization;
+import com.hackathon.app.domain.entity.OrganizationSport;
+import com.hackathon.app.domain.entity.Sport;
 import com.hackathon.app.domain.enums.FileKind;
 import com.hackathon.app.domain.enums.OrganizationStatus;
 import com.hackathon.app.domain.enums.SystemRole;
+import com.hackathon.app.domain.exception.BadRequestException;
 import com.hackathon.app.domain.exception.ConflictException;
 import com.hackathon.app.domain.exception.ForbiddenException;
 import com.hackathon.app.domain.mapper.OrganizationMapper;
+import com.hackathon.app.domain.mapper.SportMapper;
 import com.hackathon.app.repository.AppUserRepository;
 import com.hackathon.app.repository.DbTimeRepository;
 import com.hackathon.app.repository.OrganizationRepository;
+import com.hackathon.app.repository.OrganizationSportRepository;
+import com.hackathon.app.repository.SportRepository;
 import com.hackathon.app.repository.StoredFileRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +49,7 @@ public class OrganizationService {
 	static final String NOT_FOUND = "Организация не найдена";
 	private static final String NO_PROFILE = "Анкета организации ещё не заполнена";
 	private static final int MAX_DOCUMENTS = 10;
+	private static final int MAX_SPORTS = 10;
 
 	private final OrganizationRepository organizations;
 	private final AppUserRepository users;
@@ -45,6 +59,11 @@ public class OrganizationService {
 	private final OrganizationAwardService awards;
 	private final StoredFileRepository storedFiles;
 	private final NotificationSubjects notificationSubjects;
+	private final OrganizationSportRepository organizationSports;
+	private final SportRepository sportRepository;
+	private final SportService sportService;
+	private final SportMapper sportMapper;
+	private final OrganizerTrust trust;
 
 	@Transactional(readOnly = true)
 	public OrganizationResponse mine(UUID userId) {
@@ -62,25 +81,29 @@ public class OrganizationService {
 		var contacts = OrganizationContacts.normalize(r.contacts());
 		var org = organizations.findByAccountId(userId).orElse(null);
 		// Админам пишем, когда анкета уходит на проверку: первая подача и правка после отказа.
-		boolean submitted = org == null || org.getStatus() == OrganizationStatus.REJECTED;
+		// Отказ и возврат на доработку снимаются правкой анкеты: она снова уходит на проверку.
+		boolean submitted = org == null || org.getStatus() == OrganizationStatus.REJECTED
+				|| org.getStatus() == OrganizationStatus.REVISION;
 		var now = dbTime.now();
 		if (org == null) {
 			org = mapper.toEntity(r, userId, OrganizationStatus.PENDING, now);
 		}
 		else {
 			mapper.update(org, r);
-			if (org.getStatus() == OrganizationStatus.REJECTED) {
+			if (submitted) {
 				mapper.resubmit(org, OrganizationStatus.PENDING, now);
 			}
 		}
 		org.getContacts().clear();
 		org.getContacts().putAll(contacts);
+		var sportIds = resolveSports(r, userId);
 		try {
 			org = organizations.saveAndFlush(org);
 		}
 		catch (DataIntegrityViolationException _) { // две первые анкеты одновременно: unique(account_id)
 			throw new ConflictException("Анкета уже сохраняется, обновите страницу");
 		}
+		replaceSports(org.getId(), sportIds);
 		if (submitted) {
 			notificationSubjects.submitted(org);
 		}
@@ -96,7 +119,7 @@ public class OrganizationService {
 		var org = requireProfile(userId);
 		var old = org.getLogoFileId();
 		var logo = files.store(FileKind.ORG_LOGO, upload, userId, org.getId(), null, null);
-		org.setLogoFileId(logo.getId());
+		mapper.logo(org, logo.getId());
 		organizations.saveAndFlush(org);
 		if (old != null) {
 			storedFiles.findById(old).ifPresent(files::delete);
@@ -110,7 +133,7 @@ public class OrganizationService {
 		var org = requireProfile(userId);
 		var old = org.getLogoFileId();
 		if (old != null) {
-			org.setLogoFileId(null);
+			mapper.logo(org, null);
 			organizations.saveAndFlush(org);
 			storedFiles.findById(old).ifPresent(files::delete);
 		}
@@ -144,8 +167,47 @@ public class OrganizationService {
 	@Transactional(readOnly = true)
 	public PublicOrganizationResponse getPublic(UUID id) {
 		return organizations.findByIdAndStatus(id, OrganizationStatus.APPROVED)
-				.map(org -> mapper.toPublic(org, files.organizationDocuments(org.getId()), awards.badges(org.getId())))
+				.map(org -> {
+					var stats = trust.ofOrganization(org.getId());
+					return mapper.toPublic(org, files.organizationDocuments(org.getId()), awards.badges(org.getId()),
+							sportsOf(org.getId()), stats.hostedMeetings(), stats.participantsTotal());
+				})
 				.orElseThrow(() -> new NoSuchElementException(NOT_FOUND));
+	}
+
+	/** Виды спорта организации для ответов (анкета, публичная страница, админка). */
+	@Transactional(readOnly = true)
+	public List<SportResponse> sportsOf(UUID organizationId) {
+		var ids = organizationSports.findByOrganizationIdOrderByCreatedAt(organizationId).stream()
+				.map(OrganizationSport::getSportId).toList();
+		var byId = sportRepository.findAllById(ids).stream().collect(Collectors.toMap(Sport::getId, Function.identity()));
+		return ids.stream().map(byId::get).filter(Objects::nonNull).map(sportMapper::toResponse).toList();
+	}
+
+	/** Виды из справочника и свои названия (создадутся, как в форме мероприятия); всего хотя бы один, без повторов. */
+	private Set<UUID> resolveSports(SaveOrganizationRequest r, UUID userId) {
+		var ids = new LinkedHashSet<UUID>();
+		if (r.sportIds() != null) {
+			r.sportIds().stream().filter(Objects::nonNull).forEach(id -> ids.add(sportService.resolve(id, null, userId).getId()));
+		}
+		if (r.sportNames() != null) {
+			r.sportNames().forEach(name -> ids.add(sportService.resolve(null, name, userId).getId()));
+		}
+		if (ids.isEmpty()) {
+			throw new BadRequestException("Укажите хотя бы один вид спорта, которым занимается организация");
+		}
+		if (ids.size() > MAX_SPORTS) {
+			throw new BadRequestException("Не больше " + MAX_SPORTS + " видов спорта");
+		}
+		return ids;
+	}
+
+	/** Набор видов заменяется целиком. */
+	private void replaceSports(UUID organizationId, Set<UUID> sportIds) {
+		organizationSports.deleteByOrganizationId(organizationId);
+		organizationSports.flush();
+		organizationSports.saveAllAndFlush(sportIds.stream()
+				.map(sportId -> sportMapper.toOrganizationSport(organizationId, sportId)).toList());
 	}
 
 	/**
@@ -168,7 +230,7 @@ public class OrganizationService {
 	}
 
 	private OrganizationResponse toResponse(Organization org) {
-		return mapper.toResponse(org, files.organizationDocuments(org.getId()));
+		return mapper.toResponse(org, files.organizationDocuments(org.getId()), sportsOf(org.getId()));
 	}
 
 	private void requireOrgAccount(UUID userId) {

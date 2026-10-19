@@ -58,6 +58,14 @@ class AdminOrganizationController {
 		return admin.reject(id, userId(jwt), request.reason());
 	}
 
+	@PostMapping("/{id}/return")
+	@Operation(operationId = "admin_returnOrganization", summary = "Вернуть анкету на доработку с причиной",
+			description = "Только заявку на проверке (иначе 409). Не отказ: организация дополняет анкету, и она снова уходит на проверку.")
+	AdminOrganizationResponse returnForRevision(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,
+			@Valid @RequestBody RejectOrganizationRequest request) {
+		return admin.returnForRevision(id, userId(jwt), request.reason());
+	}
+
 	private static UUID userId(Jwt jwt) {
 		return UUID.fromString(jwt.getSubject());
 	}

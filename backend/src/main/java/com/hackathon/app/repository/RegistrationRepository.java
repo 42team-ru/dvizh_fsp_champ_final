@@ -32,6 +32,12 @@ public interface RegistrationRepository extends JpaRepository<Registration, UUID
 
 	Optional<Registration> findByEventIdAndUserId(UUID eventId, UUID userId);
 
+	/** Лист ожидания по порядку очереди: первым продвигается тот, кто встал раньше. */
+	List<Registration> findByEventIdAndStatusOrderByQueuedAtAscIdAsc(UUID eventId, RegistrationStatus status);
+
+	/** Сколько стоят в очереди раньше: место в листе ожидания = это число + 1. */
+	long countByEventIdAndStatusAndQueuedAtBefore(UUID eventId, RegistrationStatus status, java.time.Instant queuedAt);
+
 	List<Registration> findByUserIdAndEventIdIn(UUID userId, Collection<UUID> eventIds);
 
 	List<Registration> findByUserIdOrderByCreatedAtDesc(UUID userId);
@@ -39,6 +45,10 @@ public interface RegistrationRepository extends JpaRepository<Registration, UUID
 	List<Registration> findByEventIdOrderByCreatedAt(UUID eventId);
 
 	List<Registration> findByEventIdAndStatusOrderByCreatedAt(UUID eventId, RegistrationStatus status);
+
+	/** Кому важны новости мероприятия: id пользователей с записью в этих статусах. */
+	@Query("select r.userId from Registration r where r.eventId = :eventId and r.status in :statuses")
+	List<UUID> findUserIds(UUID eventId, Collection<RegistrationStatus> statuses);
 
 	/** Подтверждённые участники мероприятия. */
 	@Query("select r.userId from Registration r where r.eventId = :eventId and r.status = com.hackathon.app.domain.enums.RegistrationStatus.CONFIRMED")
@@ -58,4 +68,18 @@ public interface RegistrationRepository extends JpaRepository<Registration, UUID
 			where r.eventId = :eventId and r.status = :status
 			order by r.createdAt""")
 	List<AppUser> findUsers(UUID eventId, RegistrationStatus status);
+
+	/**
+	 * Доверие к организатору: сколько разных людей подтверждённо записывались на его прошедшие встречи
+	 * (у мероприятия есть неотменённое занятие до now). Фильтр — как в EventOccurrenceRepository.countHosted.
+	 */
+	@Query("""
+			select count(distinct r.userId) from Registration r join Event e on e.id = r.eventId
+			where r.status = com.hackathon.app.domain.enums.RegistrationStatus.CONFIRMED
+			  and e.status <> com.hackathon.app.domain.enums.EventStatus.DELETED
+			  and e.authorId = coalesce(:authorId, e.authorId)
+			  and (:organizationId is null or e.organizationId = :organizationId)
+			  and exists (select o.id from EventOccurrence o where o.eventId = e.id and o.startAt < :now
+			      and o.status = com.hackathon.app.domain.enums.OccurrenceStatus.SCHEDULED)""")
+	long countHostedParticipants(UUID authorId, UUID organizationId, java.time.Instant now);
 }

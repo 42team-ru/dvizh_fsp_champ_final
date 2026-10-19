@@ -36,13 +36,19 @@ import org.hibernate.annotations.BatchSize;
 @NoArgsConstructor
 public class Organization extends AuditEntity {
 
+	/** Идентификатор организации. */
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
 	private UUID id;
+	/** Аккаунт роли ORG, который ведёт организацию (id пользователя); один аккаунт — одна анкета. */
 	private UUID accountId;
+	/** Название, например «Шахматный клуб «Ладья»». */
 	private String name;
+	/** Чем занимается: для участников и для проверки админом. */
 	private String description;
+	/** Город; null — не указан. */
 	private String city;
+	/** Контакты по типу (телефон, Telegram, сайт…); формат проверяет OrganizationContacts, хотя бы один. */
 	@ElementCollection
 	@CollectionTable(name = "organization_contacts", joinColumns = @JoinColumn(name = "organization_id"))
 	@MapKeyEnumerated(EnumType.STRING)
@@ -50,11 +56,16 @@ public class Organization extends AuditEntity {
 	@Column(name = "contact_value")
 	@BatchSize(size = 50)
 	private Map<ContactType, String> contacts = new LinkedHashMap<>();
+	/** Статус допуска: публикация и публичная страница — только при APPROVED. */
 	@Enumerated(EnumType.STRING)
 	private OrganizationStatus status;
+	/** Причина отказа или возврата на доработку; организация видит её в кабинете. */
 	private String rejectReason;
+	/** Когда анкета последний раз ушла на проверку. */
 	private Instant submittedAt;
+	/** Когда админ принял последнее решение; null — ещё не рассматривали. */
 	private Instant reviewedAt;
+	/** Кто принял решение (id администратора); null — ещё не рассматривали. */
 	private UUID reviewedById;
 	/** Логотип (файл в S3); null — без логотипа. */
 	private UUID logoFileId;

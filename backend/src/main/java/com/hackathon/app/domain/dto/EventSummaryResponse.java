@@ -46,6 +46,10 @@ public record EventSummaryResponse(
 		@Schema(description = "Причина снятия с публикации или удаления") String moderationReason,
 		@Schema(description = "Организатор-человек", requiredMode = REQUIRED) UUID authorId,
 		@Schema(description = "Организация; null — от частного лица") UUID organizationId,
+		@Schema(description = "Кто организует: автор мероприятия (у события организации — её аккаунт)", requiredMode = REQUIRED)
+		UserShortResponse organizer,
+		@Schema(description = "Организация для подписи «Шахматный клуб «Ладья»»; null — от частного лица")
+		OrganizationShortResponse organization,
 		@Schema(description = "Статус моей записи; null — не записан") RegistrationStatus myRegistrationStatus,
 		@Schema(description = "Обложка (первое фото): /api/files/{id}; null — без фото") String coverUrl) {
 }

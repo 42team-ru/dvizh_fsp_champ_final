@@ -44,6 +44,7 @@ import com.hackathon.app.domain.dto.SaveUserPreferencesRequest;
 import com.hackathon.app.domain.dto.UserPreferencesResponse;
 import com.hackathon.app.domain.dto.UpdateProfileRequest;
 import com.hackathon.app.domain.dto.UserSportResponse;
+import com.hackathon.app.domain.dto.CreatePermissionResponse;
 import com.hackathon.app.domain.dto.MyRegistrationResponse;
 import com.hackathon.app.domain.dto.OrganizationResponse;
 import com.hackathon.app.domain.dto.OrganizerResponse;
@@ -466,6 +467,13 @@ public class Actor {
 				Map.of("text", text, "replyToId", replyToId.toString()), type(CommentResponse.class));
 	}
 
+	/** Исправить своё сообщение. */
+	public CommentResponse editComment(UUID eventId, UUID commentId, String text) {
+		return send("PUT /api/events/" + eventId + "/comments/" + commentId,
+				put("/api/events/{id}/comments/{commentId}", eventId, commentId), Map.of("text", text),
+				type(CommentResponse.class));
+	}
+
 	// ---------- уведомления ----------
 
 	/** Первая страница входящих, новые сверху. */
@@ -641,6 +649,72 @@ public class Actor {
         params.forEach(request::param);
         return send("GET /api/admin/users", request, null, api.generic(PageResponse.class, AdminUserResponse.class));
     }
+
+	// ---------- модерация обсуждений, восстановление, доработка ----------
+
+	public CommentResponse hideComment(UUID commentId, String reason) {
+		return send("POST /api/admin/comments/" + commentId + "/hide", post("/api/admin/comments/{id}/hide", commentId),
+				Map.of("reason", reason), type(CommentResponse.class));
+	}
+
+	public CommentResponse unhideComment(UUID commentId) {
+		return send("POST /api/admin/comments/" + commentId + "/unhide", post("/api/admin/comments/{id}/unhide", commentId),
+				null, type(CommentResponse.class));
+	}
+
+	public AdminEventResponse restoreEvent(UUID eventId) {
+		return send("POST /api/admin/events/" + eventId + "/restore", post("/api/admin/events/{id}/restore", eventId),
+				null, type(AdminEventResponse.class));
+	}
+
+	public AdminOrganizationResponse returnOrganization(UUID organizationId, String reason) {
+		return send("POST /api/admin/organizations/" + organizationId + "/return",
+				post("/api/admin/organizations/{id}/return", organizationId), Map.of("reason", reason),
+				type(AdminOrganizationResponse.class));
+	}
+
+	public AdminOrganizationResponse adminOrganization(UUID organizationId) {
+		return send("GET /api/admin/organizations/" + organizationId, get("/api/admin/organizations/{id}", organizationId),
+				null, type(AdminOrganizationResponse.class));
+	}
+
+	/** Мероприятия организации в админке, во всех статусах. */
+	public PageResponse<AdminEventResponse> adminEventsOfOrganization(UUID organizationId) {
+		var request = get("/api/admin/events").param("organizationId", organizationId.toString());
+		return send("GET /api/admin/events?organizationId", request, null, api.generic(PageResponse.class, AdminEventResponse.class));
+	}
+
+	// ---------- похожие, объявления, календарь, право создавать ----------
+
+	public List<EventSummaryResponse> similarEvents(UUID eventId) {
+		return send("GET /api/events/" + eventId + "/similar", get("/api/events/{id}/similar", eventId), null,
+				listOf(EventSummaryResponse.class));
+	}
+
+	public EventResponse announce(UUID eventId, String text) {
+		return send("PUT /api/events/" + eventId + "/announcement", put("/api/events/{id}/announcement", eventId),
+				Map.of("text", text), type(EventResponse.class));
+	}
+
+	public EventResponse clearAnnouncement(UUID eventId) {
+		return send("DELETE /api/events/" + eventId + "/announcement", delete("/api/events/{id}/announcement", eventId),
+				null, type(EventResponse.class));
+	}
+
+	/** Файл .ics как текст (сырой запрос: это не JSON). */
+	public String calendar(UUID eventId) {
+		try {
+			return raw(get("/api/events/{id}/calendar.ics", eventId)).andReturn().getResponse()
+					.getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+		} catch (java.io.UnsupportedEncodingException e) {
+			throw new IllegalStateException(e);
+		}
+	}
+
+	public CreatePermissionResponse createPermission() {
+		return send("GET /api/events/create-permission", get("/api/events/create-permission"), null,
+				type(CreatePermissionResponse.class));
+	}
 
 	// ---------- запасной выход ----------
 

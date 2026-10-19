@@ -30,5 +30,10 @@ public record ViewerResponse(
 		@Schema(description = "Вижу onlineUrl и privateDetails", requiredMode = REQUIRED)
 		boolean canSeePrivateDetails,
 		@Schema(description = "Могу написать в обсуждение", requiredMode = REQUIRED)
-		boolean canComment) {
+		boolean canComment,
+		@Schema(description = "Какой статус получу, если нажму «Записаться»: CONFIRMED — сразу участник, PENDING — заявка, "
+				+ "WAITLISTED — мест нет, встану в лист ожидания; null — записаться нельзя")
+		RegistrationStatus joinAs,
+		@Schema(description = "Моё место в листе ожидания (1 — следующий); null — я не в листе ожидания", example = "1")
+		Integer waitlistPosition) {
 }

@@ -9,15 +9,19 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.hackathon.app.domain.entity.AppUser;
 import com.hackathon.app.domain.entity.Event;
 import com.hackathon.app.domain.entity.EventOccurrence;
+import com.hackathon.app.domain.entity.Organization;
 import com.hackathon.app.domain.entity.Registration;
 import com.hackathon.app.domain.entity.Sport;
 import com.hackathon.app.domain.enums.OccurrenceStatus;
 import com.hackathon.app.domain.enums.QuorumStatus;
 import com.hackathon.app.domain.enums.RegistrationStatus;
+import com.hackathon.app.repository.AppUserRepository;
 import com.hackathon.app.repository.EventOccurrenceRepository;
 import com.hackathon.app.repository.OccurrenceAttendanceRepository;
+import com.hackathon.app.repository.OrganizationRepository;
 import com.hackathon.app.repository.RegistrationRepository;
 import com.hackathon.app.repository.SportRepository;
 import lombok.RequiredArgsConstructor;
@@ -34,15 +38,28 @@ class EventListLookups {
 	private final OccurrenceAttendanceRepository attendances;
 	private final OccurrenceService occurrenceService;
 	private final EventAccessPolicy policy;
+	private final AppUserRepository users;
+	private final OrganizationRepository organizations;
 
 	/**
 	 * Виды спорта, число подтверждённых участников, статус записи пользователя, а также ближайшее подходящее
-	 * занятие (в периоде списка), сколько на него отметились и расписание словами — для серий.
+	 * занятие (в периоде списка), сколько на него отметились и расписание словами — для серий; авторы и организации.
 	 */
 	record Lookups(Map<UUID, Sport> sportsById, Map<UUID, Long> confirmedByEventId,
 			Map<UUID, RegistrationStatus> myStatusByEventId, Map<UUID, EventOccurrence> nextByEventId,
 			Map<UUID, Long> attendeesByOccurrenceId, Map<UUID, String> scheduleByEventId,
-			Set<UUID> cancelledSingleIds, EventAccessPolicy policy) {
+			Set<UUID> cancelledSingleIds, Map<UUID, AppUser> authorsById, Map<UUID, Organization> organizationsById,
+			EventAccessPolicy policy) {
+
+		/** Автор мероприятия — для подписи «кто организует» в карточке ленты. */
+		AppUser author(Event event) {
+			return authorsById.get(event.getAuthorId());
+		}
+
+		/** Организация мероприятия; null — от частного лица. */
+		Organization organization(Event event) {
+			return event.getOrganizationId() == null ? null : organizationsById.get(event.getOrganizationId());
+		}
 
 		Sport sport(Event event) {
 			return sportsById.get(event.getSportId());
@@ -93,7 +110,7 @@ class EventListLookups {
 	/** Ближайшее занятие ищется в [from, to]. */
 	Lookups load(List<Event> eventList, UUID userId, Instant from, Instant to) {
 		if (eventList.isEmpty()) {
-			return new Lookups(Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), policy);
+			return new Lookups(Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Map.of(), Map.of(), policy);
 		}
 		var eventIds = eventList.stream().map(Event::getId).toList();
 		Map<UUID, Sport> sportsById = sports.findAllById(eventList.stream().map(Event::getSportId).distinct().toList())
@@ -112,9 +129,15 @@ class EventListLookups {
 				: attendances.countByOccurrenceIds(seriesNextIds).stream()
 						.collect(Collectors.toMap(OccurrenceAttendanceRepository.OccurrenceCount::getOccurrenceId,
 								OccurrenceAttendanceRepository.OccurrenceCount::getCount));
+		var authorsById = users.findAllById(eventList.stream().map(Event::getAuthorId).distinct().toList()).stream()
+				.collect(Collectors.toMap(AppUser::getId, Function.identity()));
+		var organizationIds = eventList.stream().map(Event::getOrganizationId).filter(Objects::nonNull).distinct().toList();
+		Map<UUID, Organization> organizationsById = organizationIds.isEmpty() ? Map.of()
+				: organizations.findAllById(organizationIds).stream()
+						.collect(Collectors.toMap(Organization::getId, Function.identity()));
 		return new Lookups(sportsById, confirmedByEventId, myStatusByEventId, nextByEventId, attendeesByOccurrenceId,
 				occurrenceService.descriptions(eventList), Set.copyOf(occurrences.findCancelledSingleEventIds(eventIds)),
-				policy);
+				authorsById, organizationsById, policy);
 	}
 
 	/** findAllById не сохраняет порядок: возвращаем порядок из запроса (по ближайшему занятию). */

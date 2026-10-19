@@ -129,7 +129,7 @@ class NotificationFlowE2ETest {
      * ШАГИ: 1. Подать анкету, одобрить, отклонить и подать снова. 2. Написать вопрос и прямой ответ, затем ответить себе.
      * 3. Добавить соорганизатора и выйти из состава самостоятельно.
      * ПРОВЕРЯЕМ: все активные админы видят подачу, организация — решения; повторный отказ без изменений не дублируется;
-     * уведомления обсуждения получает только автор исходного сообщения, самостоятельный выход получает автор события.
+     * ответ получает только автор исходного сообщения, вопрос в общий поток — организатор; самостоятельный выход получает автор события.
      * ПОЧЕМУ ВАЖНО: новые процессы используют общий механизм, не рассылая весь чат всем участникам.
      */
     @Test void organizationsRepliesAndOrganizersAreAddressed() {
@@ -154,10 +154,11 @@ class NotificationFlowE2ETest {
         author.reply(event.id(), question.id(), "Ответ с подробностями");
         commenter.reply(event.id(), question.id(), "Сам себе");
         assertThat(types(commenter)).containsExactly(NotificationType.COMMENT_REPLY);
-        assertThat(types(author)).isEmpty();
+        // вопрос в общий поток доходит до организатора; свои сообщения и ответы — нет
+        assertThat(types(author)).containsExactly(NotificationType.COMMENT_CREATED);
         author.addOrganizer(event.id(), co.username()); co.removeOrganizer(event.id(), co.id());
         assertThat(types(co)).containsExactly(NotificationType.ORGANIZER_ADDED);
-        assertThat(types(author)).containsExactly(NotificationType.ORGANIZER_REMOVED);
+        assertThat(types(author)).containsExactly(NotificationType.ORGANIZER_REMOVED, NotificationType.COMMENT_CREATED);
     }
 
     private List<NotificationType> types(Actor actor) { return actor.notifications().items().stream().map(NotificationResponse::type).toList(); }

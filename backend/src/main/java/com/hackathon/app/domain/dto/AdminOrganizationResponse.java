@@ -13,5 +13,9 @@ import java.util.UUID;
 public record AdminOrganizationResponse(UUID id, String name, String description, String city,
 		Map<ContactType, String> contacts, OrganizationStatus status, String rejectReason,
 		Instant submittedAt, Instant reviewedAt, UUID reviewedById, OrganizationAccountResponse account,
-		Instant createdAt, Instant updatedAt, String logoUrl, List<FileResponse> documents) {
+		Instant createdAt, Instant updatedAt, String logoUrl, List<FileResponse> documents,
+		/** Виды спорта организации. */
+		List<SportResponse> sports,
+		/** Сколько мероприятий она разместила во всех статусах (список — admin_listEvents?organizationId=). */
+		long eventsCount) {
 }

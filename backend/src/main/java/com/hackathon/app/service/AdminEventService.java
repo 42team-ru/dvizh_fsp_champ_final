@@ -61,15 +61,17 @@ public class AdminEventService {
     private final EventMapper mapper;
 
     /**
-     * Новые сверху; q ищет по названию без учёта регистра, status необязателен.
+     * Новые сверху; q ищет по названию без учёта регистра. status, organizationId (мероприятия организации —
+     * переход со страницы организации) и authorId необязательны.
      */
     @Transactional(readOnly = true)
-    public PageResponse<AdminEventResponse> list(EventStatus status, String q, int page, int size) {
+    public PageResponse<AdminEventResponse> list(EventStatus status, UUID organizationId, UUID authorId, String q,
+            int page, int size) {
         var query = Strings.blankToNull(q);
         var pattern = query == null ? "%" : "%" + query.toLowerCase() + "%";
         var pageable = PageRequest.of(Math.max(page, 0), Math.clamp(size, 1, MAX_PAGE_SIZE),
                 Sort.by(Sort.Direction.DESC, "createdAt"));
-        var result = events.search(status, pattern, pageable);
+        var result = events.search(status, organizationId, authorId, pattern, pageable);
         var eventList = result.getContent();
         var sportsById = sports.findAllById(eventList.stream().map(Event::getSportId).distinct().toList()).stream()
                 .collect(Collectors.toMap(Sport::getId, Function.identity()));
@@ -95,6 +97,21 @@ public class AdminEventService {
             throw new ConflictException(blockedReason);
         }
         return moderate(event, EventStatus.UNPUBLISHED, reason, adminId);
+    }
+
+    /**
+     * Вернуть снятое в публикацию (ошибка модератора или нарушение исправлено): снова в ленте, запись открыта,
+     * участники получают уведомление. Причина снятия стирается. Удалённое и опубликованное — 409.
+     */
+    @Transactional
+    public AdminEventResponse restore(UUID eventId, UUID adminId) {
+        var event = findForUpdate(eventId);
+        notificationChanges.watch(eventId, adminId);
+        var blockedReason = policy.restoreBlockedReason(event);
+        if (blockedReason != null) {
+            throw new ConflictException(blockedReason);
+        }
+        return moderate(event, EventStatus.PUBLISHED, null, adminId);
     }
 
     /**

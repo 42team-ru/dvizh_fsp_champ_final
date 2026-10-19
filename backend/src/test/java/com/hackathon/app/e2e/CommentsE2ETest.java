@@ -9,6 +9,8 @@ import static org.springframework.http.HttpStatus.*;
 import java.util.List;
 import java.util.UUID;
 
+import com.hackathon.app.e2e.support.OrganizationForm;
+import com.hackathon.app.domain.enums.NotificationType;
 import com.hackathon.app.domain.dto.CommentResponse;
 import com.hackathon.app.e2e.support.Actor;
 import com.hackathon.app.e2e.support.EventForm;
@@ -168,5 +170,83 @@ class CommentsE2ETest {
 	private void assertNotRegistered(Actor reader, UUID eventId) {
 		assertThat(reader.openEvent(eventId).viewer().registrationStatus()).isNull();
 		assertThat(reader.myRegistrations()).isEmpty();
+	}
+
+	/**
+	 * ФЛОУ: участник задаёт вопрос, организатор получает уведомление; админ скрывает некорректное сообщение,
+	 *   а потом возвращает его — мероприятие и остальное обсуждение не страдают.
+	 * ШАГИ:
+	 *   1. Создать событие, задать вопрос читателем и проверить уведомление COMMENT_CREATED у автора.
+	 *   2. Админ скрывает вопрос с причиной: проверить, что видят автор вопроса, посторонний и админ.
+	 *   3. Попробовать ответить на скрытое, исправить его и скрыть сообщение не админом.
+	 *   4. Админ возвращает сообщение: текст снова виден всем.
+	 * ПРОВЕРЯЕМ: заглушка (text = null, hidden) у всех, причина — только автору и админу, текст — только админу;
+	 *   уведомление автору COMMENT_HIDDEN; ответ и правка — 409, скрытие не админом — 403; возврат снимает скрытие.
+	 * ПОЧЕМУ ВАЖНО: ТЗ требует модерацию отдельных сообщений с сохранением мероприятия и остального обсуждения,
+	 *   а вопрос участника не должен остаться незамеченным организатором.
+	 */
+	@Test
+	void adminHidesAndRestoresMessageWithoutTouchingRestOfDiscussion() {
+		// 1. Вопрос доходит до организатора уведомлением.
+		var author = api.newUser("author");
+		var reader = api.newUser("reader");
+		var stranger = api.newUser("stranger");
+		var admin = api.newAdmin();
+		var id = author.createEvent(EventForm.free()).id();
+		var question = reader.comment(id, "Некорректное сообщение");
+		var answer = author.comment(id, "Обычный ответ");
+		assertThat(author.notifications().items()).extracting(n -> n.type()).contains(NotificationType.COMMENT_CREATED);
+
+		// 2. Скрытие: заглушка у всех, причина — автору, текст — админу.
+		var hidden = admin.hideComment(question.id(), "Оскорбления");
+		assertThat(hidden.hidden()).isTrue();
+		assertThat(hidden.text()).isEqualTo("Некорректное сообщение");
+		var asStranger = stranger.comments(id);
+		assertThat(asStranger).extracting(CommentResponse::id).containsExactly(question.id(), answer.id());
+		assertThat(asStranger.getFirst().text()).isNull();
+		assertThat(asStranger.getFirst().hidden()).isTrue();
+		assertThat(asStranger.getFirst().hiddenReason()).isNull();
+		assertThat(asStranger.get(1).text()).isEqualTo("Обычный ответ");
+		var asAuthor = reader.comments(id).getFirst();
+		assertThat(asAuthor.text()).isNull();
+		assertThat(asAuthor.hiddenReason()).isEqualTo("Оскорбления");
+		assertThat(asAuthor.canEdit()).isFalse();
+		assertThat(reader.notifications().items()).extracting(n -> n.type()).contains(NotificationType.COMMENT_HIDDEN);
+
+		// 3. На скрытое не ответить и не исправить; скрывать может только админ.
+		assertThatApi(() -> author.reply(id, question.id(), "Ответ")).fails(CONFLICT, "Нельзя ответить на сообщение, скрытое модератором");
+		assertThatApi(() -> reader.editComment(id, question.id(), "Исправлено")).fails(CONFLICT, "Сообщение скрыто модератором");
+		assertThatApi(() -> author.hideComment(answer.id(), "Не нравится")).fails(FORBIDDEN);
+
+		// 4. Возврат: текст снова у всех.
+		assertThat(admin.unhideComment(question.id()).hidden()).isFalse();
+		assertThat(stranger.comments(id).getFirst().text()).isEqualTo("Некорректное сообщение");
+	}
+
+	/**
+	 * ФЛОУ: допущенная организация отвечает в обсуждении своего события — ответ подписан организацией.
+	 * ШАГИ: 1. Подать анкету ORG и одобрить. 2. Создать событие от организации. 3. Пользователь спрашивает,
+	 *   организация отвечает. 4. Прочитать обсуждение и карточку.
+	 * ПРОВЕРЯЕМ: у ответа organization с названием клуба и меткой «Организатор»; у вопроса organization = null;
+	 *   в карточке организатор тоже подписан организацией.
+	 * ПОЧЕМУ ВАЖНО: сценарий 5 требует различать авторство: «Шахматный клуб», а не имя контактного лица.
+	 */
+	@Test
+	void organizationReplyIsSignedWithOrganizationName() {
+		var club = api.newOrganization("club");
+		var name = uniqueName("Клуб ");
+		var organizationId = club.submitOrganization(OrganizationForm.valid().name(name)).id();
+		api.newAdmin().approveOrganization(organizationId);
+		var id = club.createEvent(EventForm.free()).id();
+		var reader = api.newUser("reader");
+		var question = reader.comment(id, "Нужна своя доска?");
+		club.reply(id, question.id(), "Доски дадим");
+
+		var thread = reader.comments(id);
+		assertThat(thread.getFirst().organization()).isNull();
+		assertThat(thread.get(1).isOrganizer()).isTrue();
+		assertThat(thread.get(1).organization().id()).isEqualTo(organizationId);
+		assertThat(thread.get(1).organization().name()).isEqualTo(name);
+		assertThat(reader.openEvent(id).organizers().getFirst().organization().name()).isEqualTo(name);
 	}
 }

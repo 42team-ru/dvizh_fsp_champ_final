@@ -18,7 +18,6 @@ import java.util.concurrent.TimeUnit;
 import com.hackathon.app.domain.dto.MyRegistrationResponse;
 import com.hackathon.app.domain.enums.RegistrationStatus;
 import com.hackathon.app.e2e.support.Actor;
-import com.hackathon.app.e2e.support.ApiCallFailed;
 import com.hackathon.app.e2e.support.EventForm;
 import com.hackathon.app.e2e.support.TestApi;
 import com.hackathon.app.repository.AppUserRepository;
@@ -190,25 +189,26 @@ class RegistrationE2ETest {
 	}
 
 	/**
-	 * ФЛОУ: заполненная и уже начавшаяся встречи закрывают запись; одобрение тоже учитывает capacity.
+	 * ФЛОУ: заполненная и уже начавшаяся встречи не переполняются; одобрение тоже учитывает capacity.
 	 * ШАГИ:
-	 *   1. Создать FREE на одно место, занять его и получить отказ для второго USER с «Мест нет».
+	 *   1. Создать FREE на одно место, занять его; второй USER попадает в лист ожидания и места не занимает.
 	 *   2. Создать REQUEST на одно место, подать две заявки, подтвердить одну, получить отказ для второй.
 	 *   3. Создать будущее событие через API и перенести startAt в прошлое через EventRepository.
 	 *   4. Проверить запрет записи и соответствующие viewer.canRegister/registerBlockedReason.
-	 * ПРОВЕРЯЕМ: 409 и точные причины, один CONFIRMED и оставшийся PENDING, отсутствие поздней записи в БД.
+	 * ПРОВЕРЯЕМ: WAITLISTED вместо места, 409 и точные причины, один CONFIRMED и оставшийся PENDING,
+	 *   отсутствие поздней записи в БД.
 	 * ПОЧЕМУ ВАЖНО: API не должен переполнять встречу ни прямой записью, ни решением организатора, ни после начала.
 	 */
 	@Test
 	void capacityAndStartedEventBlockRegistrationAndApproval() {
-		// 1. Свободная запись учитывает занятое последнее место.
+		// 1. Свободная запись учитывает занятое последнее место: второй встаёт в лист ожидания, места не занимает.
 		var author = api.newUser("author");
 		var first = api.newUser("first");
 		var second = api.newUser("second");
 		var freeId = author.createEvent(EventForm.free().capacity(1)).id();
 		assertThat(first.joinEvent(freeId).status()).isEqualTo(CONFIRMED);
-		assertThatApi(() -> second.joinEvent(freeId)).fails(CONFLICT, "Мест нет");
-		assertRegistrationBlocked(second, freeId, "Мест нет");
+		assertThat(second.joinEvent(freeId).status()).isEqualTo(WAITLISTED);
+		assertThat(registrations.countByEventIdAndStatus(freeId, CONFIRMED)).isEqualTo(1);
 
 		// 2. Одобрение тоже ограничено capacity; вторая заявка остаётся PENDING.
 		var requestId = author.createEvent(EventForm.byRequest().capacity(1)).id();
@@ -235,9 +235,9 @@ class RegistrationE2ETest {
 	 * ШАГИ:
 	 *   1. Через API подготовить автора, четырёх участников и FREE с capacity = 2.
 	 *   2. Запустить четыре потока, дождаться их готовности и одновременно открыть барьер старта.
-	 *   3. Собрать ответы с ограничением времени; сверить два успеха и два отказа «Мест нет».
+	 *   3. Собрать ответы с ограничением времени; сверить два CONFIRMED и два WAITLISTED (лист ожидания).
 	 *   4. Перечитать Registration из БД и участников карточки после завершения всех транзакций.
-	 * ПРОВЕРЯЕМ: ровно capacity строк CONFIRMED, отсутствие лишних строк и согласованный счётчик карточки.
+	 * ПРОВЕРЯЕМ: ровно capacity строк CONFIRMED, остальные в листе ожидания, согласованный счётчик карточки.
 	 * ПОЧЕМУ ВАЖНО: последовательные запросы не обнаруживают потерю блокировки, позволяющую переполнить встречу.
 	 */
 	@Test
@@ -256,18 +256,18 @@ class RegistrationE2ETest {
 		var ready = new CountDownLatch(attempts);
 		var start = new CountDownLatch(1);
 		var pool = Executors.newFixedThreadPool(attempts);
-		var futures = new ArrayList<Future<Integer>>();
+		var futures = new ArrayList<Future<RegistrationStatus>>();
 		try {
 			for (var racer : racers) {
 				futures.add(pool.submit(() -> joinAtBarrier(racer, id, ready, start)));
 			}
 			assertThat(ready.await(5, TimeUnit.SECONDS)).isTrue();
 			start.countDown();
-			var statuses = new ArrayList<Integer>();
+			var statuses = new ArrayList<RegistrationStatus>();
 			for (var future : futures) {
 				statuses.add(future.get(10, TimeUnit.SECONDS));
 			}
-			assertThat(statuses).containsExactlyInAnyOrder(201, 201, 409, 409);
+			assertThat(statuses).containsExactlyInAnyOrder(CONFIRMED, CONFIRMED, WAITLISTED, WAITLISTED);
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
 			throw new AssertionError("Ожидание параллельной записи прервано", e);
@@ -284,15 +284,15 @@ class RegistrationE2ETest {
 			}
 		}
 
-		// 3. В БД ровно capacity строк, счётчик и участники карточки согласованы.
-		assertThat(registrations.findByEventIdOrderByCreatedAt(id)).hasSize(capacity)
-				.allSatisfy(row -> assertThat(row.getStatus()).isEqualTo(CONFIRMED));
+		// 3. В БД ровно capacity подтверждённых, остальные ждут; счётчик и участники карточки согласованы.
+		assertThat(registrations.countByEventIdAndStatus(id, CONFIRMED)).isEqualTo(capacity);
+		assertThat(registrations.countByEventIdAndStatus(id, WAITLISTED)).isEqualTo(attempts - capacity);
 		var card = author.openEvent(id);
 		assertThat(card.participantsCount()).isEqualTo(capacity);
 		assertThat(card.participants()).hasSize(capacity);
 	}
 
-	private int joinAtBarrier(Actor racer, UUID eventId, CountDownLatch ready, CountDownLatch start) {
+	private RegistrationStatus joinAtBarrier(Actor racer, UUID eventId, CountDownLatch ready, CountDownLatch start) {
 		ready.countDown();
 		try {
 			assertThat(start.await(5, TimeUnit.SECONDS)).isTrue();
@@ -300,14 +300,7 @@ class RegistrationE2ETest {
 			Thread.currentThread().interrupt();
 			throw new AssertionError("Поток записи прерван", e);
 		}
-		try {
-			assertThat(racer.joinEvent(eventId).status()).isEqualTo(CONFIRMED);
-			return CREATED.value();
-		} catch (ApiCallFailed failure) {
-			assertThat(failure.status()).isEqualTo(CONFLICT);
-			assertThat(failure.detail()).isEqualTo("Мест нет");
-			return failure.status().value();
-		}
+		return racer.joinEvent(eventId).status();
 	}
 
 	private MyRegistrationResponse assertMine(Actor participant, UUID registrationId, RegistrationStatus status) {
@@ -329,5 +322,49 @@ class RegistrationE2ETest {
 		assertThat(card.viewer().canSeePrivateDetails()).isEqualTo(visible);
 		assertThat(card.privateDetails()).isEqualTo(visible ? "Код входа: 12345" : null);
 		assertThat(card.onlineUrl()).isEqualTo(visible ? "https://meet.example.com/private" : null);
+	}
+
+	/**
+	 * ФЛОУ: на полное свободное мероприятие встают в лист ожидания и проходят в участники по очереди.
+	 * ШАГИ:
+	 *   1. FREE на одно место: первый CONFIRMED, второй и третий — WAITLISTED; viewer показывает места в очереди.
+	 *   2. Первый отменяет запись — второй автоматически участник и получает уведомление; третий теперь первый в очереди.
+	 *   3. Автор увеличивает лимит мест — третий тоже проходит.
+	 *   4. Админ и аккаунт организации не записываются участниками.
+	 * ПРОВЕРЯЕМ: joinAs = WAITLISTED у нового человека при полной встрече, waitlistPosition 1 и 2, продвижение в
+	 *   порядке очереди, «Освободилось место — вы записаны», число подтверждённых не больше лимита; 409 для ролей.
+	 * ПОЧЕМУ ВАЖНО: ТЗ называет лист ожидания: освободившееся место не должно пропадать, а люди — уходить ни с чем.
+	 */
+	@Test
+	void waitlistPromotesPeopleInQueueOrderWhenSeatsFreeUp() {
+		// 1. Встреча заполнена — следующие встают в очередь.
+		var author = api.newUser("author");
+		var first = api.newUser("first");
+		var second = api.newUser("second");
+		var third = api.newUser("third");
+		var form = EventForm.free().capacity(1);
+		var id = author.createEvent(form).id();
+		first.joinEvent(id);
+		assertThat(second.openEvent(id).viewer().joinAs()).isEqualTo(WAITLISTED);
+		assertThat(second.joinEvent(id).status()).isEqualTo(WAITLISTED);
+		assertThat(third.joinEvent(id).status()).isEqualTo(WAITLISTED);
+		assertThat(second.openEvent(id).viewer().waitlistPosition()).isEqualTo(1);
+		assertThat(third.openEvent(id).viewer().waitlistPosition()).isEqualTo(2);
+		assertThat(third.myRegistration(id).waitlistPosition()).isEqualTo(2);
+
+		// 2. Освободилось место — проходит первый в очереди.
+		first.cancelRegistration(id);
+		assertThat(second.myRegistration(id).status()).isEqualTo(CONFIRMED);
+		assertThat(second.notifications().items()).extracting(n -> n.title()).contains("Освободилось место — вы записаны");
+		assertThat(third.openEvent(id).viewer().waitlistPosition()).isEqualTo(1);
+		assertThat(registrations.countByEventIdAndStatus(id, CONFIRMED)).isEqualTo(1);
+
+		// 3. Больше мест — очередь продвигается сама.
+		author.updateEvent(id, form.capacity(3));
+		assertThat(third.myRegistration(id).status()).isEqualTo(CONFIRMED);
+
+		// 4. Участником записывается только человек.
+		assertThatApi(() -> api.newAdmin().joinEvent(id)).fails(CONFLICT, "Администратор не записывается на мероприятия");
+		assertThatApi(() -> api.newOrganization("org").joinEvent(id)).fails(CONFLICT, "Аккаунт организации не записывается участником");
 	}
 }

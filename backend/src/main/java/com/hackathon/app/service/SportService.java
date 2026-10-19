@@ -52,7 +52,18 @@ public class SportService {
         }
         var normalized = normalize(name);
         return sports.findByNormalizedName(normalized)
-                .orElseGet(() -> sports.save(mapper.toCustom(name, normalized, normalized.replace(' ', '-'), userId)));
+                .orElseGet(() -> sports.save(mapper.toCustom(name, normalized, freeSlug(normalized.replace(' ', '-')), userId)));
+    }
+
+    /** Свободный slug: при совпадении добавляется номер — «мини-футбол-2». */
+    private String freeSlug(String name) {
+        // колонка slug — 100 символов: оставляем место под номер
+        var base = name.length() > 95 ? name.substring(0, 95) : name;
+        var slug = base;
+        for (int n = 2; sports.existsBySlug(slug); n++) {
+            slug = base + "-" + n;
+        }
+        return slug;
     }
 
     /** «  Пляжный   волейбол » → «Пляжный волейбол»; пустая → null. */

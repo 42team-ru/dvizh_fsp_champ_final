@@ -53,15 +53,20 @@ class AdminEventController {
     }
 
     @GetMapping("/events")
-    @Operation(operationId = "admin_listEvents", summary = "Мероприятия во всех статусах: фильтр по статусу и поиск по названию")
+    @Operation(operationId = "admin_listEvents", summary = "Мероприятия во всех статусах",
+            description = "Фильтры по статусу, организации (её мероприятия со страницы организации) и автору, поиск по названию.")
     PageResponse<AdminEventResponse> list(@AuthenticationPrincipal Jwt jwt,
                                           @RequestParam(required = false) EventStatus status,
+                                          @Parameter(description = "Только мероприятия этой организации")
+                                          @RequestParam(required = false) UUID organizationId,
+                                          @Parameter(description = "Только мероприятия этого автора")
+                                          @RequestParam(required = false) UUID authorId,
                                           @RequestParam(required = false) String searchText,
                                           @RequestParam(defaultValue = "0") int page,
                                           @RequestParam(defaultValue = "20") int size) {
-        log.info("Endpoint called: GET /api/admin/events, userId={}, status={}, searchText={}, page={}, size={}",
-                jwt.getSubject(), status, searchText, page, size);
-        var response = admin.list(status, searchText, page, size);
+        log.info("Endpoint called: GET /api/admin/events, userId={}, status={}, organizationId={}, authorId={}, searchText={}, page={}, size={}",
+                jwt.getSubject(), status, organizationId, authorId, searchText, page, size);
+        var response = admin.list(status, organizationId, authorId, searchText, page, size);
         log.info("Endpoint response: GET /api/admin/events, total={}", response.totalElements());
         return response;
     }
@@ -77,6 +82,19 @@ class AdminEventController {
         log.info("Endpoint called: POST /api/admin/events/{}/unpublish, userId={}, request={}", id, jwt.getSubject(), request);
         var response = admin.unpublish(id, userId(jwt), request.reason());
         log.info("Endpoint response: POST /api/admin/events/{}/unpublish, response={}", id, response);
+        return response;
+    }
+
+    @PostMapping("/events/{id}/restore")
+    @Operation(operationId = "admin_restoreEvent", summary = "Вернуть снятое мероприятие в публикацию",
+            description = "Только снятое с публикации: снова в ленте, запись открыта, участники получают уведомление.")
+    @ApiResponse(responseCode = "200", description = "OK")
+    @ApiResponse(responseCode = "404", description = "Мероприятия нет", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    @ApiResponse(responseCode = "409", description = "Удалено или уже опубликовано", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    AdminEventResponse restore(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+        log.info("Endpoint called: POST /api/admin/events/{}/restore, userId={}", id, jwt.getSubject());
+        var response = admin.restore(id, userId(jwt));
+        log.info("Endpoint response: POST /api/admin/events/{}/restore, response={}", id, response);
         return response;
     }
 

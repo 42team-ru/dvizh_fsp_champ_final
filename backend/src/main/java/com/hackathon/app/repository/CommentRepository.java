@@ -22,21 +22,25 @@ public interface CommentRepository extends JpaRepository<Comment, UUID> {
     }
 
     /**
-     * Обсуждение мероприятия по порядку, без скрытых.
+     * Обсуждение мероприятия по порядку; скрытые модератором тоже — их текст прячет сервис.
      */
-    List<Comment> findByEventIdAndHiddenFalseOrderByCreatedAt(UUID eventId);
+    List<Comment> findByEventIdOrderByCreatedAt(UUID eventId);
 
     /**
-     * Только новые сообщения — для подгрузки чата без перезагрузки всей ленты.
+     * Новые и изменённые после момента (правка, удаление, скрытие) — для подгрузки чата без перезагрузки всей ленты.
      */
-    List<Comment> findByEventIdAndHiddenFalseAndCreatedAtAfterOrderByCreatedAt(UUID eventId, Instant after);
+    @Query("""
+            select c from Comment c
+            where c.eventId = :eventId and (c.createdAt > :after or c.updatedAt > :after)
+            order by c.createdAt""")
+    List<Comment> findChangedAfter(UUID eventId, Instant after);
 
     /**
      * Ответы на сообщения из списка, по одному запросу на всю страницу.
      */
     @Query("""
             select c.parentId as parentId, count(c) as count from Comment c
-            where c.parentId in :parentIds and c.hidden = false
+            where c.parentId in :parentIds
             group by c.parentId""")
     List<ReplyCount> countReplies(Collection<UUID> parentIds);
 }

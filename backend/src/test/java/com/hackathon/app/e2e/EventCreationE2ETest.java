@@ -10,6 +10,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
+import com.hackathon.app.domain.enums.NotificationType;
 import com.hackathon.app.domain.entity.Sport;
 import com.hackathon.app.domain.enums.EventStatus;
 import com.hackathon.app.domain.enums.OrganizationStatus;
@@ -167,5 +168,65 @@ class EventCreationE2ETest {
 		assertThat(card.sport().id()).isEqualTo(sportId);
 		assertThat(card.status()).isEqualTo(EventStatus.PUBLISHED);
 		assertThat(card.viewer().canRegister()).isTrue();
+	}
+
+	/**
+	 * ФЛОУ: человек ищет встречу по виду спорта и месту, смотрит похожие, получает объявление организатора
+	 *   и добавляет встречу в календарь.
+	 * ШАГИ:
+	 *   1. Два события своего вида спорта в Красноярске и одно в Москве; поиск по названию вида (ё = е).
+	 *   2. Фильтр «рядом» по координатам Красноярска и Москвы.
+	 *   3. Похожие для первого события; после записи на второе оно из похожих уходит.
+	 *   4. Организатор публикует объявление, участник получает уведомление; не организатор — 403; снять.
+	 *   5. Календарь .ics: участник видит приватные детали, посторонний — нет.
+	 *   6. «мини-футбол» и «мини футбол» — два вида без конфликта slug; право создавать у USER и ADMIN.
+	 * ПРОВЕРЯЕМ: поиск по виду спорта, фильтр по месту (онлайн — всегда), состав похожих, announcement и
+	 *   EVENT_ANNOUNCEMENT, содержимое .ics, разные id видов, canCreate true/false с причиной.
+	 * ПОЧЕМУ ВАЖНО: человек должен быстро найти встречу рядом и не упираться в тупик; организатор — сообщить
+	 *   об изменении всем сразу; форма не должна падать на похожих названиях.
+	 */
+	@Test
+	void searchNearbySimilarAnnouncementAndCalendarWork() {
+		// 1. Поиск по виду спорта, в том числе «е» вместо «ё».
+		var author = api.newUser("author");
+		var reader = api.newUser("reader");
+		var stranger = api.newUser("stranger");
+		var suffix = uniqueName("");
+		var sport = "Кёрлинг " + suffix;
+		var first = author.createEvent(EventForm.free().sport(sport)).id();
+		var second = author.createEvent(EventForm.free().sport(sport).privateDetails("Код от двери 1234")).id();
+		var moscow = author.createEvent(EventForm.free().sport(sport).offline("Москва, Лужники", 55.7158, 37.5537)).id();
+		assertThat(reader.search("керлинг " + suffix)).extracting(e -> e.id()).containsExactlyInAnyOrder(first, second, moscow);
+
+		// 2. «Рядом» с Красноярском — без московского; рядом с Москвой — только он.
+		assertThat(reader.feed(Map.of("searchText", suffix, "lat", "56.01", "lon", "92.89", "radiusKm", "20")))
+				.extracting(e -> e.id()).containsExactlyInAnyOrder(first, second);
+		assertThat(reader.feed(Map.of("searchText", suffix, "lat", "55.75", "lon", "37.62", "radiusKm", "20")))
+				.extracting(e -> e.id()).containsExactly(moscow);
+
+		// 3. Похожие: тот же вид, без этого события и без тех, куда я уже записан.
+		assertThat(reader.similarEvents(first)).extracting(e -> e.id()).containsExactlyInAnyOrder(second, moscow);
+		reader.joinEvent(second);
+		assertThat(reader.similarEvents(first)).extracting(e -> e.id()).containsExactly(moscow);
+
+		// 4. Объявление: участникам — уведомлением, вверху карточки.
+		assertThat(author.announce(second, "Переносим на 20:00").announcement()).isEqualTo("Переносим на 20:00");
+		assertThat(reader.notifications().items()).extracting(n -> n.type()).contains(NotificationType.EVENT_ANNOUNCEMENT);
+		assertThatApi(() -> reader.announce(second, "Я тоже хочу")).fails(FORBIDDEN, "Объявления публикует только организатор");
+		assertThat(author.clearAnnouncement(second).announcement()).isNull();
+
+		// 5. Календарь: приватные детали — только участнику.
+		var ics = reader.calendar(second);
+		assertThat(ics).startsWith("BEGIN:VCALENDAR").contains("BEGIN:VEVENT", "SUMMARY:", "Код от двери 1234");
+		assertThat(stranger.calendar(second)).contains("BEGIN:VEVENT").doesNotContain("Код от двери");
+
+		// 6. Похожие названия видов не конфликтуют; право создавать считает сервер.
+		var dashed = author.createEvent(EventForm.free().sport("Мини-футбол " + suffix)).sport().id();
+		var spaced = author.createEvent(EventForm.free().sport("Мини футбол " + suffix)).sport().id();
+		assertThat(dashed).isNotEqualTo(spaced);
+		assertThat(author.createPermission().canCreate()).isTrue();
+		var admin = api.newAdmin().createPermission();
+		assertThat(admin.canCreate()).isFalse();
+		assertThat(admin.reason()).isEqualTo("Администратор не создаёт мероприятия");
 	}
 }

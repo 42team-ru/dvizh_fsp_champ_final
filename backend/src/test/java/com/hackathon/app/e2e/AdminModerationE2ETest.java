@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import com.hackathon.app.domain.enums.NotificationType;
 import com.hackathon.app.domain.dto.AdminEventResponse;
 import com.hackathon.app.domain.enums.EventStatus;
 import com.hackathon.app.e2e.support.Actor;
@@ -224,5 +225,36 @@ class AdminModerationE2ETest {
 			assertThat(event.status()).isEqualTo(status);
 			assertThat(event.moderationReason()).isEqualTo(reason);
 		});
+	}
+
+	/**
+	 * ФЛОУ: админ ошибочно снял мероприятие и возвращает его в публикацию.
+	 * ШАГИ: 1. Создать событие с участником и снять его. 2. Вернуть в публикацию. 3. Проверить ленту, запись
+	 *   и уведомление участнику. 4. Повторное восстановление и восстановление удалённого.
+	 * ПРОВЕРЯЕМ: статус PUBLISHED без причины, событие в поиске, новая запись проходит, EVENT_RESTORED у участника,
+	 *   409 «Мероприятие и так опубликовано» и «Удалённое мероприятие восстановить нельзя».
+	 * ПОЧЕМУ ВАЖНО: ошибку модерации нужно исправлять без пересоздания события и потери записей.
+	 */
+	@Test
+	void restoreReturnsUnpublishedEventButNotDeletedOne() {
+		var author = api.newUser("author");
+		var participant = api.newUser("participant");
+		var admin = api.newAdmin();
+		var title = uniqueName("Йога ");
+		var id = author.createEvent(EventForm.free().title(title)).id();
+		participant.joinEvent(id);
+		admin.unpublishEvent(id, "Проверяем жалобу");
+
+		var restored = admin.restoreEvent(id);
+		assertThat(restored.status()).isEqualTo(PUBLISHED);
+		assertThat(restored.moderationReason()).isNull();
+		var newcomer = api.newUser("newcomer");
+		assertThat(newcomer.search(title)).extracting(e -> e.id()).containsExactly(id);
+		assertThat(newcomer.joinEvent(id).status()).isEqualTo(CONFIRMED);
+		assertThat(participant.notifications().items()).extracting(n -> n.type()).contains(NotificationType.EVENT_RESTORED);
+
+		assertThatApi(() -> admin.restoreEvent(id)).fails(CONFLICT, "Мероприятие и так опубликовано");
+		admin.deleteEvent(id, "Дубль");
+		assertThatApi(() -> admin.restoreEvent(id)).fails(CONFLICT, "Удалённое мероприятие восстановить нельзя");
 	}
 }

@@ -42,4 +42,6 @@ public class Registration extends AuditEntity {
 	private Instant decidedAt;
 	/** Кто принял решение (id пользователя); null — автоматически при свободной записи. */
 	private UUID decidedById;
+	/** Когда встал в лист ожидания: порядок очереди; null — не в листе ожидания. */
+	private Instant queuedAt;
 }

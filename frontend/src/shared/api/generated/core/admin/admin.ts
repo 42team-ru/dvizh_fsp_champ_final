@@ -38,6 +38,8 @@ import type {
   AdminPreviewPetItemParams,
   AdminStatsParams,
   AdminStatsResponse,
+  CommentResponse,
+  HideCommentRequest,
   ModerateEventRequest,
   OrganizationAwardResponse,
   PageResponseAdminEventResponse,
@@ -512,6 +514,107 @@ export const useAdminPreviewPetItem = <TError = ErrorType<ProblemDetail>,
       > => {
       return useMutation(getAdminPreviewPetItemMutationOptions(options), queryClient);
     }
+    export type adminReturnOrganizationResponse200 = {
+  data: AdminOrganizationResponse
+  status: 200
+}
+
+export type adminReturnOrganizationResponseSuccess = (adminReturnOrganizationResponse200) & {
+  headers: Headers;
+};
+;
+
+export type adminReturnOrganizationResponse = (adminReturnOrganizationResponseSuccess)
+
+export const getAdminReturnOrganizationUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/organizations/${id}/return`
+}
+
+/**
+ * Только заявку на проверке (иначе 409). Не отказ: организация дополняет анкету, и она снова уходит на проверку.
+ * @summary Вернуть анкету на доработку с причиной
+ */
+export const adminReturnOrganization = async (id: string,
+    rejectOrganizationRequest: RejectOrganizationRequest, options?: Parameters<typeof authMutator>[1]): Promise<adminReturnOrganizationResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return authMutator<adminReturnOrganizationResponse>(getAdminReturnOrganizationUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(rejectOrganizationRequest)
+  }
+);}
+
+
+
+
+
+export const getAdminReturnOrganizationMutationKey = () => ['adminReturnOrganization'] as const;
+
+export const getAdminReturnOrganizationMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminReturnOrganization>>, TError,AdminReturnOrganizationMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminReturnOrganization>>, TError,AdminReturnOrganizationMutationVariables, TContext> => {
+
+const mutationKey = getAdminReturnOrganizationMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminReturnOrganization>>, AdminReturnOrganizationMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  adminReturnOrganization(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminReturnOrganizationMutationResult = NonNullable<Awaited<ReturnType<typeof adminReturnOrganization>>>
+    export type AdminReturnOrganizationMutationBody = RejectOrganizationRequest
+    export type AdminReturnOrganizationMutationError = ErrorType<unknown>
+    export type AdminReturnOrganizationMutationVariables = {id: string;data: RejectOrganizationRequest}
+
+    /**
+ * @summary Вернуть анкету на доработку с причиной
+ */
+export const useAdminReturnOrganization = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminReturnOrganization>>, TError,AdminReturnOrganizationMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adminReturnOrganization>>,
+        TError,
+        AdminReturnOrganizationMutationVariables,
+        TContext
+      > => {
+      return useMutation(getAdminReturnOrganizationMutationOptions(options), queryClient);
+    }
     export type adminRejectOrganizationResponse200 = {
   data: AdminOrganizationResponse
   status: 200
@@ -809,6 +912,304 @@ export const useAdminUnpublishEvent = <TError = ErrorType<ProblemDetail>,
         TContext
       > => {
       return useMutation(getAdminUnpublishEventMutationOptions(options), queryClient);
+    }
+    export type adminRestoreEventResponse200 = {
+  data: AdminEventResponse
+  status: 200
+}
+
+export type adminRestoreEventResponse404 = {
+  data: ProblemDetail
+  status: 404
+}
+
+export type adminRestoreEventResponse409 = {
+  data: ProblemDetail
+  status: 409
+}
+
+export type adminRestoreEventResponseSuccess = (adminRestoreEventResponse200) & {
+  headers: Headers;
+};
+export type adminRestoreEventResponseError = (adminRestoreEventResponse404 | adminRestoreEventResponse409) & {
+  headers: Headers;
+};
+
+export type adminRestoreEventResponse = (adminRestoreEventResponseSuccess | adminRestoreEventResponseError)
+
+export const getAdminRestoreEventUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/events/${id}/restore`
+}
+
+/**
+ * Только снятое с публикации: снова в ленте, запись открыта, участники получают уведомление.
+ * @summary Вернуть снятое мероприятие в публикацию
+ */
+export const adminRestoreEvent = async (id: string, options?: Parameters<typeof authMutator>[1]): Promise<adminRestoreEventResponse> => {
+
+  return authMutator<adminRestoreEventResponse>(getAdminRestoreEventUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getAdminRestoreEventMutationKey = () => ['adminRestoreEvent'] as const;
+
+export const getAdminRestoreEventMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminRestoreEvent>>, TError,AdminRestoreEventMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminRestoreEvent>>, TError,AdminRestoreEventMutationVariables, TContext> => {
+
+const mutationKey = getAdminRestoreEventMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminRestoreEvent>>, AdminRestoreEventMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  adminRestoreEvent(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminRestoreEventMutationResult = NonNullable<Awaited<ReturnType<typeof adminRestoreEvent>>>
+
+    export type AdminRestoreEventMutationError = ErrorType<ProblemDetail>
+    export type AdminRestoreEventMutationVariables = {id: string}
+
+    /**
+ * @summary Вернуть снятое мероприятие в публикацию
+ */
+export const useAdminRestoreEvent = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminRestoreEvent>>, TError,AdminRestoreEventMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adminRestoreEvent>>,
+        TError,
+        AdminRestoreEventMutationVariables,
+        TContext
+      > => {
+      return useMutation(getAdminRestoreEventMutationOptions(options), queryClient);
+    }
+    export type adminUnhideCommentResponse200 = {
+  data: CommentResponse
+  status: 200
+}
+
+export type adminUnhideCommentResponse404 = {
+  data: ProblemDetail
+  status: 404
+}
+
+export type adminUnhideCommentResponseSuccess = (adminUnhideCommentResponse200) & {
+  headers: Headers;
+};
+export type adminUnhideCommentResponseError = (adminUnhideCommentResponse404) & {
+  headers: Headers;
+};
+
+export type adminUnhideCommentResponse = (adminUnhideCommentResponseSuccess | adminUnhideCommentResponseError)
+
+export const getAdminUnhideCommentUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/comments/${id}/unhide`
+}
+
+/**
+ * @summary Вернуть скрытое сообщение
+ */
+export const adminUnhideComment = async (id: string, options?: Parameters<typeof authMutator>[1]): Promise<adminUnhideCommentResponse> => {
+
+  return authMutator<adminUnhideCommentResponse>(getAdminUnhideCommentUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getAdminUnhideCommentMutationKey = () => ['adminUnhideComment'] as const;
+
+export const getAdminUnhideCommentMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminUnhideComment>>, TError,AdminUnhideCommentMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminUnhideComment>>, TError,AdminUnhideCommentMutationVariables, TContext> => {
+
+const mutationKey = getAdminUnhideCommentMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminUnhideComment>>, AdminUnhideCommentMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  adminUnhideComment(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminUnhideCommentMutationResult = NonNullable<Awaited<ReturnType<typeof adminUnhideComment>>>
+
+    export type AdminUnhideCommentMutationError = ErrorType<ProblemDetail>
+    export type AdminUnhideCommentMutationVariables = {id: string}
+
+    /**
+ * @summary Вернуть скрытое сообщение
+ */
+export const useAdminUnhideComment = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminUnhideComment>>, TError,AdminUnhideCommentMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adminUnhideComment>>,
+        TError,
+        AdminUnhideCommentMutationVariables,
+        TContext
+      > => {
+      return useMutation(getAdminUnhideCommentMutationOptions(options), queryClient);
+    }
+    export type adminHideCommentResponse200 = {
+  data: CommentResponse
+  status: 200
+}
+
+export type adminHideCommentResponse404 = {
+  data: ProblemDetail
+  status: 404
+}
+
+export type adminHideCommentResponseSuccess = (adminHideCommentResponse200) & {
+  headers: Headers;
+};
+export type adminHideCommentResponseError = (adminHideCommentResponse404) & {
+  headers: Headers;
+};
+
+export type adminHideCommentResponse = (adminHideCommentResponseSuccess | adminHideCommentResponseError)
+
+export const getAdminHideCommentUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/comments/${id}/hide`
+}
+
+/**
+ * Мероприятие и остальное обсуждение остаются; вместо текста все видят «Сообщение скрыто модератором», автор — причину. Ответить на скрытое и изменить его нельзя.
+ * @summary Скрыть сообщение с причиной
+ */
+export const adminHideComment = async (id: string,
+    hideCommentRequest: HideCommentRequest, options?: Parameters<typeof authMutator>[1]): Promise<adminHideCommentResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return authMutator<adminHideCommentResponse>(getAdminHideCommentUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(hideCommentRequest)
+  }
+);}
+
+
+
+
+
+export const getAdminHideCommentMutationKey = () => ['adminHideComment'] as const;
+
+export const getAdminHideCommentMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminHideComment>>, TError,AdminHideCommentMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminHideComment>>, TError,AdminHideCommentMutationVariables, TContext> => {
+
+const mutationKey = getAdminHideCommentMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminHideComment>>, AdminHideCommentMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  adminHideComment(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminHideCommentMutationResult = NonNullable<Awaited<ReturnType<typeof adminHideComment>>>
+    export type AdminHideCommentMutationBody = HideCommentRequest
+    export type AdminHideCommentMutationError = ErrorType<ProblemDetail>
+    export type AdminHideCommentMutationVariables = {id: string;data: HideCommentRequest}
+
+    /**
+ * @summary Скрыть сообщение с причиной
+ */
+export const useAdminHideComment = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminHideComment>>, TError,AdminHideCommentMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adminHideComment>>,
+        TError,
+        AdminHideCommentMutationVariables,
+        TContext
+      > => {
+      return useMutation(getAdminHideCommentMutationOptions(options), queryClient);
     }
     export type adminConfirmAwardResponse200 = {
   data: OrganizationAwardResponse
@@ -1394,7 +1795,8 @@ export const getAdminListEventsUrl = (params?: AdminListEventsParams,) => {
 }
 
 /**
- * @summary Мероприятия во всех статусах: фильтр по статусу и поиск по названию
+ * Фильтры по статусу, организации (её мероприятия со страницы организации) и автору, поиск по названию.
+ * @summary Мероприятия во всех статусах
  */
 export const adminListEvents = async (params?: AdminListEventsParams, options?: Parameters<typeof authMutator>[1]): Promise<adminListEventsResponse> => {
 
@@ -1465,7 +1867,7 @@ export function useAdminListEvents<TData = Awaited<ReturnType<typeof adminListEv
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Мероприятия во всех статусах: фильтр по статусу и поиск по названию
+ * @summary Мероприятия во всех статусах
  */
 
 export function useAdminListEvents<TData = Awaited<ReturnType<typeof adminListEvents>>, TError = ErrorType<unknown>>(
