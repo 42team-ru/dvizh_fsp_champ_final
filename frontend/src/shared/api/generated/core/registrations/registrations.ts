@@ -25,6 +25,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  EventRegistrationResponse,
   PageResponseMyRegistrationResponse,
   ProblemDetail,
   RegistrationRequest,
@@ -57,6 +58,11 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   return result;
 };
 
+export type registrationsRejectResponse200 = {
+  data: RegistrationResponse
+  status: 200
+}
+
 export type registrationsRejectResponse403 = {
   data: ProblemDetail
   status: 403
@@ -72,12 +78,14 @@ export type registrationsRejectResponse409 = {
   status: 409
 }
 
-;
+export type registrationsRejectResponseSuccess = (registrationsRejectResponse200) & {
+  headers: Headers;
+};
 export type registrationsRejectResponseError = (registrationsRejectResponse403 | registrationsRejectResponse404 | registrationsRejectResponse409) & {
   headers: Headers;
 };
 
-export type registrationsRejectResponse = (registrationsRejectResponseError)
+export type registrationsRejectResponse = (registrationsRejectResponseSuccess | registrationsRejectResponseError)
 
 export const getRegistrationsRejectUrl = (id: string,) => {
 
@@ -168,7 +176,12 @@ export const useRegistrationsReject = <TError = ErrorType<ProblemDetail>,
       > => {
       return useMutation(getRegistrationsRejectMutationOptions(options), queryClient);
     }
-    export type registrationsApproveResponse403 = {
+    export type registrationsApproveResponse200 = {
+  data: RegistrationResponse
+  status: 200
+}
+
+export type registrationsApproveResponse403 = {
   data: ProblemDetail
   status: 403
 }
@@ -183,12 +196,14 @@ export type registrationsApproveResponse409 = {
   status: 409
 }
 
-;
+export type registrationsApproveResponseSuccess = (registrationsApproveResponse200) & {
+  headers: Headers;
+};
 export type registrationsApproveResponseError = (registrationsApproveResponse403 | registrationsApproveResponse404 | registrationsApproveResponse409) & {
   headers: Headers;
 };
 
-export type registrationsApproveResponse = (registrationsApproveResponseError)
+export type registrationsApproveResponse = (registrationsApproveResponseSuccess | registrationsApproveResponseError)
 
 export const getRegistrationsApproveUrl = (id: string,) => {
 
@@ -264,7 +279,12 @@ export const useRegistrationsApprove = <TError = ErrorType<ProblemDetail>,
       > => {
       return useMutation(getRegistrationsApproveMutationOptions(options), queryClient);
     }
-    export type registrationsListForEventResponse403 = {
+    export type registrationsListForEventResponse200 = {
+  data: EventRegistrationResponse[]
+  status: 200
+}
+
+export type registrationsListForEventResponse403 = {
   data: ProblemDetail
   status: 403
 }
@@ -274,12 +294,14 @@ export type registrationsListForEventResponse404 = {
   status: 404
 }
 
-;
+export type registrationsListForEventResponseSuccess = (registrationsListForEventResponse200) & {
+  headers: Headers;
+};
 export type registrationsListForEventResponseError = (registrationsListForEventResponse403 | registrationsListForEventResponse404) & {
   headers: Headers;
 };
 
-export type registrationsListForEventResponse = (registrationsListForEventResponseError)
+export type registrationsListForEventResponse = (registrationsListForEventResponseSuccess | registrationsListForEventResponseError)
 
 export const getRegistrationsListForEventUrl = (id: string,
     params?: RegistrationsListForEventParams,) => {
@@ -630,6 +652,11 @@ export function useRegistrationsMine<TData = Awaited<ReturnType<typeof registrat
 
 
 
+export type registrationsCancelResponse200 = {
+  data: RegistrationResponse
+  status: 200
+}
+
 export type registrationsCancelResponse404 = {
   data: ProblemDetail
   status: 404
@@ -640,12 +667,14 @@ export type registrationsCancelResponse409 = {
   status: 409
 }
 
-;
+export type registrationsCancelResponseSuccess = (registrationsCancelResponse200) & {
+  headers: Headers;
+};
 export type registrationsCancelResponseError = (registrationsCancelResponse404 | registrationsCancelResponse409) & {
   headers: Headers;
 };
 
-export type registrationsCancelResponse = (registrationsCancelResponseError)
+export type registrationsCancelResponse = (registrationsCancelResponseSuccess | registrationsCancelResponseError)
 
 export const getRegistrationsCancelUrl = (id: string,) => {
 

@@ -95,6 +95,7 @@ class EventController {
     @GetMapping("/{id}")
     @Operation(operationId = "events_get", summary = "Карточка мероприятия",
             description = "Открывается в любом статусе: снятое и удалённое — с причиной. Блок viewer говорит, какие кнопки показать.")
+    @ApiResponse(responseCode = "200", description = "OK")
     @ApiResponse(responseCode = "404", description = "Мероприятия нет", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     EventResponse get(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
         log.info("Endpoint called: GET /api/events/{}, userId={}", id, jwt.getSubject());
@@ -119,6 +120,7 @@ class EventController {
     @PutMapping("/{id}")
     @Operation(operationId = "events_update", summary = "Изменить мероприятие",
             description = "Только организатор. Заменяет все поля формы; статус и модерация не меняются.")
+    @ApiResponse(responseCode = "200", description = "OK")
     @ApiResponse(responseCode = "400", description = "Ошибка в форме", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "403", description = "Не организатор", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "404", description = "Мероприятия нет", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
@@ -134,6 +136,7 @@ class EventController {
     @PostMapping("/{id}/organizers")
     @Operation(operationId = "events_addOrganizer", summary = "Добавить соорганизатора",
             description = "Только автор. Соорганизатор правит мероприятие и решает заявки наравне с автором. Возвращает новый состав.")
+    @ApiResponse(responseCode = "200", description = "OK")
     @ApiResponse(responseCode = "403", description = "Не автор", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "404", description = "Мероприятия или пользователя нет", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "409", description = "Уже организатор, администратор, записан участником или мероприятие удалено",
@@ -149,6 +152,7 @@ class EventController {
     @DeleteMapping("/{id}/organizers/{userId}")
     @Operation(operationId = "events_removeOrganizer", summary = "Убрать соорганизатора",
             description = "Автор убирает любого соорганизатора, соорганизатор может выйти сам. Автора убрать нельзя. Возвращает новый состав.")
+    @ApiResponse(responseCode = "200", description = "OK")
     @ApiResponse(responseCode = "403", description = "Не автор и не сам соорганизатор", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "404", description = "Мероприятия нет или пользователь не организатор", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "409", description = "Это автор или мероприятие удалено", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
@@ -177,6 +181,7 @@ class EventController {
 
     @DeleteMapping("/{id}/photos/{fileId}")
     @Operation(operationId = "events_removePhoto", summary = "Удалить фото из галереи")
+    @ApiResponse(responseCode = "200", description = "OK")
     @ApiResponse(responseCode = "403", description = "Не организатор", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     EventResponse removePhoto(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id, @PathVariable UUID fileId) {
         log.info("Endpoint called: DELETE /api/events/{}/photos/{}, userId={}", id, fileId, jwt.getSubject());

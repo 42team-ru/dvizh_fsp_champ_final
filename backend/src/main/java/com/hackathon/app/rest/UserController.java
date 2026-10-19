@@ -66,6 +66,7 @@ class UserController {
 	@PutMapping(path = "/me", consumes = MediaType.APPLICATION_JSON_VALUE)
 	@Operation(operationId = "users_updateMe", summary = "Изменить свой профиль",
 			description = "Имя, фамилия, город и о себе целиком. Пустые город и о себе стирают значение.")
+	@ApiResponse(responseCode = "200", description = "OK")
 	@ApiResponse(responseCode = "400", description = "Не заполнено имя или слишком длинный текст", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
 	MeResponse updateMe(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody UpdateProfileRequest request) {
 		log.info("Endpoint called: PUT /api/users/me, userId={}, request={}", jwt.getSubject(), request);
@@ -87,6 +88,7 @@ class UserController {
 	@Operation(operationId = "users_saveMySports", summary = "Сохранить мои виды спорта целиком",
 			description = "Вид из справочника — sportId, свой — sportName (создаётся, если его нет). "
 					+ "Чего нет в списке — убирается; пустой список очищает. По ним строится лента «Для меня» (forMe).")
+	@ApiResponse(responseCode = "200", description = "OK")
 	@ApiResponse(responseCode = "400", description = "Не указан вид спорта или неизвестный sportId", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
 	List<UserSportResponse> saveMySports(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody SaveUserSportsRequest request) {
 		log.info("Endpoint called: PUT /api/users/me/sports, userId={}, request={}", jwt.getSubject(), request);
@@ -129,6 +131,7 @@ class UserController {
 	@PutMapping(path = "/me/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Operation(operationId = "users_uploadAvatar", summary = "Загрузить аватар (JPG, PNG, WebP до 5 МБ)",
 			description = "Заменяет прежний. Ссылка приходит в avatarUrl.")
+	@ApiResponse(responseCode = "200", description = "OK")
 	@ApiResponse(responseCode = "400", description = "Не тот формат или слишком большой файл", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
 	MeResponse uploadAvatar(@AuthenticationPrincipal Jwt jwt,
 			@Parameter(description = "Изображение") @RequestPart("file") MultipartFile file) {

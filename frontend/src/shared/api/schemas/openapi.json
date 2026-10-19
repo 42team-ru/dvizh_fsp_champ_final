@@ -77,6 +77,16 @@
           "required": true
         },
         "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            }
+          },
           "400": {
             "description": "Не заполнено имя или слишком длинный текст",
             "content": {
@@ -131,6 +141,19 @@
           "required": true
         },
         "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserSportResponse"
+                  }
+                }
+              }
+            }
+          },
           "400": {
             "description": "Не указан вид спорта или неизвестный sportId",
             "content": {
@@ -182,6 +205,16 @@
           "required": true
         },
         "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PetResponse"
+                }
+              }
+            }
+          },
           "400": {
             "description": "Неизвестный слот или вещь",
             "content": {
@@ -224,6 +257,16 @@
           "required": true
         },
         "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PetResponse"
+                }
+              }
+            }
+          },
           "400": {
             "description": "Нет такой вещи в слоте",
             "content": {
@@ -236,6 +279,47 @@
           },
           "404": {
             "description": "Нет такого слота",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/me/pet/name": {
+      "put": {
+        "tags": [
+          "pets"
+        ],
+        "summary": "Переименовать питомца",
+        "operationId": "pets_rename",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PetRenameRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Питомец с новым именем",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PetResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Имя питомца — от 1 до 30 символов",
             "content": {
               "application/json": {
                 "schema": {
@@ -275,6 +359,16 @@
           }
         },
         "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            }
+          },
           "400": {
             "description": "Не тот формат или слишком большой файл",
             "content": {
@@ -385,6 +479,16 @@
           }
         },
         "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationResponse"
+                }
+              }
+            }
+          },
           "400": {
             "description": "Не тот формат или слишком большой файл",
             "content": {
@@ -447,6 +551,16 @@
           }
         ],
         "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventResponse"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Мероприятия нет",
             "content": {
@@ -488,6 +602,16 @@
           "required": true
         },
         "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventResponse"
+                }
+              }
+            }
+          },
           "400": {
             "description": "Ошибка в форме",
             "content": {
@@ -570,6 +694,16 @@
           "required": true
         },
         "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OccurrenceResponse"
+                }
+              }
+            }
+          },
           "400": {
             "description": "Не в будущем, вне границ серии или окончание раньше начала",
             "content": {
@@ -652,6 +786,16 @@
           "required": true
         },
         "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentResponse"
+                }
+              }
+            }
+          },
           "403": {
             "description": "Чужое сообщение",
             "content": {
@@ -777,6 +921,16 @@
           }
         },
         "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationResponse"
+                }
+              }
+            }
+          },
           "403": {
             "description": "Не организатор (админ тоже не решает)",
             "content": {
@@ -830,6 +984,16 @@
           }
         ],
         "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationResponse"
+                }
+              }
+            }
+          },
           "403": {
             "description": "Не организатор (админ тоже не решает)",
             "content": {
@@ -891,6 +1055,16 @@
           }
         },
         "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationResponse"
+                }
+              }
+            }
+          },
           "400": {
             "description": "Не тот формат или слишком большой файл",
             "content": {
@@ -1140,6 +1314,19 @@
           }
         ],
         "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EventRegistrationResponse"
+                  }
+                }
+              }
+            }
+          },
           "403": {
             "description": "Не организатор",
             "content": {
@@ -1335,6 +1522,19 @@
           "required": true
         },
         "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrganizerResponse"
+                  }
+                }
+              }
+            }
+          },
           "403": {
             "description": "Не автор",
             "content": {
@@ -1410,6 +1610,19 @@
           }
         ],
         "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OccurrenceResponse"
+                  }
+                }
+              }
+            }
+          },
           "400": {
             "description": "Конец периода раньше начала",
             "content": {
@@ -1543,6 +1756,16 @@
           }
         ],
         "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OccurrenceResponse"
+                }
+              }
+            }
+          },
           "403": {
             "description": "Не организатор",
             "content": {
@@ -1615,6 +1838,16 @@
           "required": true
         },
         "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OccurrenceResponse"
+                }
+              }
+            }
+          },
           "403": {
             "description": "Не организатор",
             "content": {
@@ -1677,6 +1910,16 @@
           }
         ],
         "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OccurrenceResponse"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Мероприятия или занятия нет",
             "content": {
@@ -1727,6 +1970,16 @@
           }
         ],
         "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OccurrenceResponse"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Мероприятия или занятия нет",
             "content": {
@@ -1781,6 +2034,19 @@
           }
         ],
         "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CommentResponse"
+                  }
+                }
+              }
+            }
+          },
           "404": {
             "description": "Мероприятия нет",
             "content": {
@@ -2082,6 +2348,16 @@
           "required": true
         },
         "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminEventResponse"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Мероприятия нет",
             "content": {
@@ -2168,6 +2444,16 @@
           }
         ],
         "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PetResponse"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Нет пользователя",
             "content": {
@@ -2562,6 +2848,19 @@
           }
         ],
         "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserShortResponse"
+                  }
+                }
+              }
+            }
+          },
           "403": {
             "description": "Не организатор",
             "content": {
@@ -3251,6 +3550,16 @@
           }
         ],
         "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationResponse"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Мероприятия нет или я не записан",
             "content": {
@@ -3302,6 +3611,16 @@
           }
         ],
         "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventResponse"
+                }
+              }
+            }
+          },
           "403": {
             "description": "Не организатор",
             "content": {
@@ -3344,6 +3663,19 @@
           }
         ],
         "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrganizerResponse"
+                  }
+                }
+              }
+            }
+          },
           "403": {
             "description": "Не автор и не сам соорганизатор",
             "content": {
@@ -3407,49 +3739,18 @@
           "required": true
         },
         "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminEventResponse"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Мероприятия нет",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/users/me/pet/name": {
-      "put": {
-        "tags": [
-          "pets"
-        ],
-        "summary": "Переименовать питомца",
-        "operationId": "pets_rename",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PetRenameRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Питомец с новым именем",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PetResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Имя питомца — от 1 до 30 символов",
             "content": {
               "application/json": {
                 "schema": {
@@ -3529,6 +3830,156 @@
           }
         }
       },
+      "MeResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "username": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "systemRole": {
+            "type": "string",
+            "enum": [
+              "USER",
+              "ORG",
+              "ADMIN"
+            ]
+          },
+          "authProvider": {
+            "type": "string",
+            "enum": [
+              "LOCAL",
+              "YANDEX",
+              "GITHUB"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "bio": {
+            "type": "string"
+          },
+          "avatarUrl": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "pet": {
+            "$ref": "#/components/schemas/PetResponse"
+          }
+        }
+      },
+      "PetResponse": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "mood": {
+            "type": "string",
+            "enum": [
+              "idle",
+              "happy",
+              "surprised",
+              "thinking",
+              "sad",
+              "wink",
+              "offended",
+              "sleep"
+            ]
+          },
+          "activity": {
+            "type": "string"
+          },
+          "outfit": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "$ref": "#/components/schemas/PetStatusResponse"
+          }
+        },
+        "required": [
+          "activity",
+          "mood",
+          "name",
+          "outfit"
+        ]
+      },
+      "PetStatusResponse": {
+        "type": "object",
+        "properties": {
+          "mood": {
+            "type": "string",
+            "enum": [
+              "idle",
+              "happy",
+              "surprised",
+              "thinking",
+              "sad",
+              "wink",
+              "offended",
+              "sleep"
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "ORGANIZED_EVENT_MODERATED",
+              "REGISTERED_EVENT_MODERATED",
+              "REGISTRATION_REJECTED",
+              "REGISTRATION_APPROVED",
+              "EVENT_SOON",
+              "NEW_REQUESTS",
+              "AWAITING_APPROVAL",
+              "INACTIVE",
+              "DEFAULT"
+            ]
+          },
+          "eventId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "eventTitle": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "eventId",
+          "eventTitle",
+          "message",
+          "mood",
+          "reason"
+        ]
+      },
       "SaveUserSportsRequest": {
         "type": "object",
         "description": "Виды спорта профиля целиком; пустой список очищает",
@@ -3574,6 +4025,64 @@
           }
         }
       },
+      "SportResponse": {
+        "type": "object",
+        "description": "Вид спорта",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "description": "Название",
+            "example": "Футбол"
+          },
+          "slug": {
+            "type": "string",
+            "description": "Код для URL",
+            "example": "football"
+          },
+          "custom": {
+            "type": "boolean",
+            "description": "Добавлен пользователем, а не из справочника"
+          },
+          "imageUrl": {
+            "type": "string",
+            "description": "Иллюстрация вида спорта; у видов без своей картинки — общая",
+            "example": "/api/sport-images/football.webp"
+          }
+        },
+        "required": [
+          "custom",
+          "id",
+          "imageUrl",
+          "name",
+          "slug"
+        ]
+      },
+      "UserSportResponse": {
+        "type": "object",
+        "description": "Вид спорта в профиле и уровень в нём",
+        "properties": {
+          "sport": {
+            "$ref": "#/components/schemas/SportResponse"
+          },
+          "level": {
+            "type": "string",
+            "description": "Уровень; null — не указан",
+            "enum": [
+              "BEGINNER",
+              "AMATEUR",
+              "ADVANCED",
+              "PRO"
+            ]
+          }
+        },
+        "required": [
+          "sport"
+        ]
+      },
       "PetRequest": {
         "type": "object",
         "description": "Полная замена образа бобра",
@@ -3610,6 +4119,17 @@
             "example": "helmet"
           }
         }
+      },
+      "PetRenameRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
       },
       "SaveOrganizationRequest": {
         "type": "object",
@@ -3971,56 +4491,6 @@
           "firstStart",
           "rrule"
         ]
-      },
-      "OccurrenceRequest": {
-        "type": "object",
-        "description": "Время занятия: для добавления разовой даты или переноса",
-        "properties": {
-          "startAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "Начало, в будущем и в границах серии",
-            "example": "2027-06-12T13:00:00Z"
-          },
-          "endAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "Окончание, позже начала. При переносе можно не указывать — длительность сохранится; у разовой даты обязательно",
-            "example": "2027-06-12T14:30:00Z"
-          }
-        },
-        "required": [
-          "startAt"
-        ]
-      },
-      "CommentUpdateRequest": {
-        "type": "object",
-        "description": "Исправить своё сообщение",
-        "properties": {
-          "text": {
-            "type": "string",
-            "description": "Новый текст",
-            "example": "Можно прийти без своих шиповок? Размер 43",
-            "maxLength": 2000,
-            "minLength": 0
-          }
-        },
-        "required": [
-          "text"
-        ]
-      },
-      "RejectRegistrationRequest": {
-        "type": "object",
-        "description": "Отказ по заявке; тело можно не передавать",
-        "properties": {
-          "reason": {
-            "type": "string",
-            "description": "Причина отказа; участник увидит её в своей записи",
-            "example": "Группа уже набрана",
-            "maxLength": 1000,
-            "minLength": 0
-          }
-        }
       },
       "EventResponse": {
         "type": "object",
@@ -4540,42 +5010,6 @@
           "rrule"
         ]
       },
-      "SportResponse": {
-        "type": "object",
-        "description": "Вид спорта",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "name": {
-            "type": "string",
-            "description": "Название",
-            "example": "Футбол"
-          },
-          "slug": {
-            "type": "string",
-            "description": "Код для URL",
-            "example": "football"
-          },
-          "custom": {
-            "type": "boolean",
-            "description": "Добавлен пользователем, а не из справочника"
-          },
-          "imageUrl": {
-            "type": "string",
-            "description": "Иллюстрация вида спорта; у видов без своей картинки — общая",
-            "example": "/api/sport-images/football.webp"
-          }
-        },
-        "required": [
-          "custom",
-          "id",
-          "imageUrl",
-          "name",
-          "slug"
-        ]
-      },
       "UserShortResponse": {
         "type": "object",
         "description": "Публичная карточка человека: организатор или участник, без email",
@@ -4674,125 +5108,37 @@
           "isOrganizer"
         ]
       },
-      "RegistrationRequest": {
+      "OccurrenceRequest": {
         "type": "object",
-        "description": "Запись на мероприятие; тело можно не передавать",
+        "description": "Время занятия: для добавления разовой даты или переноса",
         "properties": {
-          "message": {
-            "type": "string",
-            "description": "Сообщение организатору (для записи по заявке)",
-            "example": "Играю два года, возьму свой мяч",
-            "maxLength": 1000,
-            "minLength": 0
-          }
-        }
-      },
-      "RegistrationResponse": {
-        "type": "object",
-        "description": "Запись на мероприятие после действия (записаться, отменить, принять, отклонить)",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "eventId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Мероприятие"
-          },
-          "userId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Участник"
-          },
-          "status": {
-            "type": "string",
-            "description": "Статус записи",
-            "enum": [
-              "CONFIRMED",
-              "PENDING",
-              "REJECTED",
-              "CANCELLED"
-            ]
-          },
-          "message": {
-            "type": "string",
-            "description": "Сообщение к заявке"
-          },
-          "decisionReason": {
-            "type": "string",
-            "description": "Причина решения организатора"
-          },
-          "decidedAt": {
+          "startAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Когда решено; null — ещё нет"
+            "description": "Начало, в будущем и в границах серии",
+            "example": "2027-06-12T13:00:00Z"
           },
-          "decidedById": {
+          "endAt": {
             "type": "string",
-            "format": "uuid",
-            "description": "Кто решил; null — автоматически при свободной записи"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "Окончание, позже начала. При переносе можно не указывать — длительность сохранится; у разовой даты обязательно",
+            "example": "2027-06-12T14:30:00Z"
           }
         },
         "required": [
-          "createdAt",
-          "eventId",
-          "id",
-          "status",
-          "userId"
+          "startAt"
         ]
       },
-      "AddOrganizerRequest": {
+      "CommentUpdateRequest": {
         "type": "object",
-        "description": "Добавить соорганизатора",
-        "properties": {
-          "login": {
-            "type": "string",
-            "description": "Логин или email пользователя",
-            "example": "maria",
-            "maxLength": 255,
-            "minLength": 0
-          }
-        },
-        "required": [
-          "login"
-        ]
-      },
-      "CancelOccurrenceRequest": {
-        "type": "object",
-        "description": "Отмена занятия серии",
-        "properties": {
-          "reason": {
-            "type": "string",
-            "description": "Причина; участники увидят её у занятия",
-            "example": "Зал закрыт на праздники",
-            "maxLength": 1000,
-            "minLength": 0
-          }
-        },
-        "required": [
-          "reason"
-        ]
-      },
-      "CommentRequest": {
-        "type": "object",
-        "description": "Новое сообщение в обсуждении мероприятия",
+        "description": "Исправить своё сообщение",
         "properties": {
           "text": {
             "type": "string",
-            "description": "Текст",
-            "example": "Можно прийти без своих шиповок?",
+            "description": "Новый текст",
+            "example": "Можно прийти без своих шиповок? Размер 43",
             "maxLength": 2000,
             "minLength": 0
-          },
-          "replyToId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Ответ на сообщение (id); пусто — в общий поток"
           }
         },
         "required": [
@@ -4888,6 +5234,144 @@
           "isMine",
           "isOrganizer",
           "repliesCount"
+        ]
+      },
+      "RejectRegistrationRequest": {
+        "type": "object",
+        "description": "Отказ по заявке; тело можно не передавать",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "Причина отказа; участник увидит её в своей записи",
+            "example": "Группа уже набрана",
+            "maxLength": 1000,
+            "minLength": 0
+          }
+        }
+      },
+      "RegistrationResponse": {
+        "type": "object",
+        "description": "Запись на мероприятие после действия (записаться, отменить, принять, отклонить)",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "eventId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Мероприятие"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Участник"
+          },
+          "status": {
+            "type": "string",
+            "description": "Статус записи",
+            "enum": [
+              "CONFIRMED",
+              "PENDING",
+              "REJECTED",
+              "CANCELLED"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "description": "Сообщение к заявке"
+          },
+          "decisionReason": {
+            "type": "string",
+            "description": "Причина решения организатора"
+          },
+          "decidedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Когда решено; null — ещё нет"
+          },
+          "decidedById": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Кто решил; null — автоматически при свободной записи"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "createdAt",
+          "eventId",
+          "id",
+          "status",
+          "userId"
+        ]
+      },
+      "RegistrationRequest": {
+        "type": "object",
+        "description": "Запись на мероприятие; тело можно не передавать",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Сообщение организатору (для записи по заявке)",
+            "example": "Играю два года, возьму свой мяч",
+            "maxLength": 1000,
+            "minLength": 0
+          }
+        }
+      },
+      "AddOrganizerRequest": {
+        "type": "object",
+        "description": "Добавить соорганизатора",
+        "properties": {
+          "login": {
+            "type": "string",
+            "description": "Логин или email пользователя",
+            "example": "maria",
+            "maxLength": 255,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "login"
+        ]
+      },
+      "CancelOccurrenceRequest": {
+        "type": "object",
+        "description": "Отмена занятия серии",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "Причина; участники увидят её у занятия",
+            "example": "Зал закрыт на праздники",
+            "maxLength": 1000,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "CommentRequest": {
+        "type": "object",
+        "description": "Новое сообщение в обсуждении мероприятия",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Текст",
+            "example": "Можно прийти без своих шиповок?",
+            "maxLength": 2000,
+            "minLength": 0
+          },
+          "replyToId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Ответ на сообщение (id); пусто — в общий поток"
+          }
+        },
+        "required": [
+          "text"
         ]
       },
       "RegisterRequest": {
@@ -5120,6 +5604,79 @@
         },
         "required": [
           "reason"
+        ]
+      },
+      "AdminEventResponse": {
+        "type": "object",
+        "description": "Мероприятие в админке: статус модерации и кто автор",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "description": "Название"
+          },
+          "sport": {
+            "$ref": "#/components/schemas/SportResponse",
+            "description": "Вид спорта"
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Начало"
+          },
+          "address": {
+            "type": "string",
+            "description": "Адрес"
+          },
+          "author": {
+            "$ref": "#/components/schemas/UserShortResponse",
+            "description": "Автор"
+          },
+          "organizationId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Организация; null — от частного лица"
+          },
+          "participantsCount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Подтверждённых участников"
+          },
+          "status": {
+            "type": "string",
+            "description": "Статус",
+            "enum": [
+              "PUBLISHED",
+              "UNPUBLISHED",
+              "DELETED"
+            ]
+          },
+          "moderationReason": {
+            "type": "string",
+            "description": "Причина снятия или удаления"
+          },
+          "moderatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Когда снято или удалено"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "author",
+          "createdAt",
+          "id",
+          "participantsCount",
+          "sport",
+          "startAt",
+          "status",
+          "title"
         ]
       },
       "EventSummaryResponse": {
@@ -5359,122 +5916,6 @@
           "lastName",
           "sports",
           "username"
-        ]
-      },
-      "UserSportResponse": {
-        "type": "object",
-        "description": "Вид спорта в профиле и уровень в нём",
-        "properties": {
-          "sport": {
-            "$ref": "#/components/schemas/SportResponse"
-          },
-          "level": {
-            "type": "string",
-            "description": "Уровень; null — не указан",
-            "enum": [
-              "BEGINNER",
-              "AMATEUR",
-              "ADVANCED",
-              "PRO"
-            ]
-          }
-        },
-        "required": [
-          "sport"
-        ]
-      },
-      "PetResponse": {
-        "type": "object",
-        "properties": {
-          "mood": {
-            "type": "string",
-            "enum": [
-              "idle",
-              "happy",
-              "surprised",
-              "thinking",
-              "sad",
-              "wink",
-              "offended",
-              "sleep"
-            ]
-          },
-          "activity": {
-            "type": "string"
-          },
-          "outfit": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            }
-          },
-          "status": {
-            "$ref": "#/components/schemas/PetStatusResponse"
-          },
-          "name": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "activity",
-          "mood",
-          "name",
-          "outfit"
-        ]
-      },
-      "PetStatusResponse": {
-        "type": "object",
-        "properties": {
-          "mood": {
-            "type": "string",
-            "enum": [
-              "idle",
-              "happy",
-              "surprised",
-              "thinking",
-              "sad",
-              "wink",
-              "offended",
-              "sleep"
-            ]
-          },
-          "message": {
-            "type": "string"
-          },
-          "reason": {
-            "type": "string",
-            "enum": [
-              "ORGANIZED_EVENT_MODERATED",
-              "REGISTERED_EVENT_MODERATED",
-              "REGISTRATION_REJECTED",
-              "REGISTRATION_APPROVED",
-              "EVENT_SOON",
-              "NEW_REQUESTS",
-              "AWAITING_APPROVAL",
-              "INACTIVE",
-              "DEFAULT"
-            ]
-          },
-          "eventId": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "uuid"
-          },
-          "eventTitle": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        },
-        "required": [
-          "eventId",
-          "eventTitle",
-          "message",
-          "mood",
-          "reason"
         ]
       },
       "AttendedOccurrenceResponse": {
@@ -5780,6 +6221,54 @@
           }
         }
       },
+      "EventRegistrationResponse": {
+        "type": "object",
+        "description": "Заявка глазами организатора",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "id заявки — для approve и reject"
+          },
+          "participant": {
+            "$ref": "#/components/schemas/UserShortResponse",
+            "description": "Кто подал"
+          },
+          "status": {
+            "type": "string",
+            "description": "Статус",
+            "enum": [
+              "CONFIRMED",
+              "PENDING",
+              "REJECTED",
+              "CANCELLED"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "description": "Сообщение к заявке"
+          },
+          "decisionReason": {
+            "type": "string",
+            "description": "Причина решения"
+          },
+          "decidedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Когда решено"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "createdAt",
+          "id",
+          "participant",
+          "status"
+        ]
+      },
       "PageResponseEventSummaryResponse": {
         "type": "object",
         "properties": {
@@ -6024,62 +6513,6 @@
           }
         }
       },
-      "MeResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "username": {
-            "type": "string"
-          },
-          "email": {
-            "type": "string"
-          },
-          "firstName": {
-            "type": "string"
-          },
-          "lastName": {
-            "type": "string"
-          },
-          "active": {
-            "type": "boolean"
-          },
-          "systemRole": {
-            "type": "string",
-            "enum": [
-              "USER",
-              "ORG",
-              "ADMIN"
-            ]
-          },
-          "authProvider": {
-            "type": "string",
-            "enum": [
-              "LOCAL",
-              "YANDEX",
-              "GITHUB"
-            ]
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "bio": {
-            "type": "string"
-          },
-          "avatarUrl": {
-            "type": "string"
-          },
-          "city": {
-            "type": "string"
-          },
-          "pet": {
-            "$ref": "#/components/schemas/PetResponse"
-          }
-        }
-      },
       "AdminUserResponse": {
         "type": "object",
         "description": "Пользователь для администратора",
@@ -6289,79 +6722,6 @@
           }
         }
       },
-      "AdminEventResponse": {
-        "type": "object",
-        "description": "Мероприятие в админке: статус модерации и кто автор",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "title": {
-            "type": "string",
-            "description": "Название"
-          },
-          "sport": {
-            "$ref": "#/components/schemas/SportResponse",
-            "description": "Вид спорта"
-          },
-          "startAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "Начало"
-          },
-          "address": {
-            "type": "string",
-            "description": "Адрес"
-          },
-          "author": {
-            "$ref": "#/components/schemas/UserShortResponse",
-            "description": "Автор"
-          },
-          "organizationId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Организация; null — от частного лица"
-          },
-          "participantsCount": {
-            "type": "integer",
-            "format": "int64",
-            "description": "Подтверждённых участников"
-          },
-          "status": {
-            "type": "string",
-            "description": "Статус",
-            "enum": [
-              "PUBLISHED",
-              "UNPUBLISHED",
-              "DELETED"
-            ]
-          },
-          "moderationReason": {
-            "type": "string",
-            "description": "Причина снятия или удаления"
-          },
-          "moderatedAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "Когда снято или удалено"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        },
-        "required": [
-          "author",
-          "createdAt",
-          "id",
-          "participantsCount",
-          "sport",
-          "startAt",
-          "status",
-          "title"
-        ]
-      },
       "PageResponseAdminEventResponse": {
         "type": "object",
         "properties": {
@@ -6388,17 +6748,6 @@
             "format": "int32"
           }
         }
-      },
-      "PetRenameRequest": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "name"
-        ]
       }
     },
     "securitySchemes": {

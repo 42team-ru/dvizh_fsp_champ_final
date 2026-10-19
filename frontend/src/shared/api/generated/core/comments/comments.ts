@@ -55,6 +55,11 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   return result;
 };
 
+export type commentsUpdateResponse200 = {
+  data: CommentResponse
+  status: 200
+}
+
 export type commentsUpdateResponse403 = {
   data: ProblemDetail
   status: 403
@@ -70,12 +75,14 @@ export type commentsUpdateResponse409 = {
   status: 409
 }
 
-;
+export type commentsUpdateResponseSuccess = (commentsUpdateResponse200) & {
+  headers: Headers;
+};
 export type commentsUpdateResponseError = (commentsUpdateResponse403 | commentsUpdateResponse404 | commentsUpdateResponse409) & {
   headers: Headers;
 };
 
-export type commentsUpdateResponse = (commentsUpdateResponseError)
+export type commentsUpdateResponse = (commentsUpdateResponseSuccess | commentsUpdateResponseError)
 
 export const getCommentsUpdateUrl = (id: string,
     commentId: string,) => {
@@ -273,17 +280,24 @@ export const useCommentsDelete = <TError = ErrorType<ProblemDetail>,
       > => {
       return useMutation(getCommentsDeleteMutationOptions(options), queryClient);
     }
-    export type commentsListResponse404 = {
+    export type commentsListResponse200 = {
+  data: CommentResponse[]
+  status: 200
+}
+
+export type commentsListResponse404 = {
   data: ProblemDetail
   status: 404
 }
 
-;
+export type commentsListResponseSuccess = (commentsListResponse200) & {
+  headers: Headers;
+};
 export type commentsListResponseError = (commentsListResponse404) & {
   headers: Headers;
 };
 
-export type commentsListResponse = (commentsListResponseError)
+export type commentsListResponse = (commentsListResponseSuccess | commentsListResponseError)
 
 export const getCommentsListUrl = (id: string,
     params?: CommentsListParams,) => {

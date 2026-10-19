@@ -61,6 +61,7 @@ class PetController {
 	@PutMapping("/users/me/pet")
 	@Operation(operationId = "pets_saveMine", summary = "Сохранить образ целиком",
 			description = "Чего нет в outfit — снимается. Неверный образ отклоняется целиком (400), сохранённый не меняется.")
+	@ApiResponse(responseCode = "200", description = "OK")
 	@ApiResponse(responseCode = "400", description = "Неизвестный слот или вещь", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
 	PetResponse saveMine(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody PetRequest request) {
 		log.info("Endpoint called: PUT /api/users/me/pet, userId={}, request={}", jwt.getSubject(), request);
@@ -83,6 +84,7 @@ class PetController {
 	@PutMapping("/users/me/pet/slots/{slot}")
 	@Operation(operationId = "pets_equip", summary = "Надеть или снять вещь в одном слоте",
 			description = "Например, сменить головной убор: slot = hat, item = helmet. item = null — снять.")
+	@ApiResponse(responseCode = "200", description = "OK")
 	@ApiResponse(responseCode = "400", description = "Нет такой вещи в слоте", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
 	@ApiResponse(responseCode = "404", description = "Нет такого слота", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
 	PetResponse equip(@AuthenticationPrincipal Jwt jwt, @PathVariable String slot,
@@ -96,6 +98,7 @@ class PetController {
 
 	@GetMapping("/users/{id}/pet")
 	@Operation(operationId = "pets_getUser", summary = "Бобр другого пользователя", description = "Только образ, без данных аккаунта.")
+	@ApiResponse(responseCode = "200", description = "OK")
 	@ApiResponse(responseCode = "404", description = "Нет пользователя", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
 	PetResponse getUser(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
 		log.info("Endpoint called: GET /api/users/{}/pet, userId={}", id, jwt.getSubject());

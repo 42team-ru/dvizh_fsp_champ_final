@@ -62,6 +62,7 @@ class RegistrationController {
     @DeleteMapping("/events/{id}/registrations/me")
     @Operation(operationId = "registrations_cancel", summary = "Отменить свою запись",
             description = "Место освобождается. Повторная отмена ничего не меняет (200).")
+    @ApiResponse(responseCode = "200", description = "OK")
     @ApiResponse(responseCode = "404", description = "Мероприятия нет или я не записан", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "409", description = "Заявка отклонена или мероприятие уже началось", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     RegistrationResponse cancel(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
@@ -74,6 +75,7 @@ class RegistrationController {
     @GetMapping("/events/{id}/registrations")
     @Operation(operationId = "registrations_listForEvent", summary = "Участники и заявки мероприятия",
             description = "Только организатору. status — необязательный фильтр, например PENDING или REJECTED.")
+    @ApiResponse(responseCode = "200", description = "OK")
     @ApiResponse(responseCode = "403", description = "Не организатор", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "404", description = "Мероприятия нет", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     List<EventRegistrationResponse> listForEvent(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,
@@ -87,6 +89,7 @@ class RegistrationController {
     @PostMapping("/registrations/{id}/approve")
     @Operation(operationId = "registrations_approve", summary = "Принять заявку",
             description = "Только организатор. Можно принять и ранее отклонённую — так исправляется ошибка.")
+    @ApiResponse(responseCode = "200", description = "OK")
     @ApiResponse(responseCode = "403", description = "Не организатор (админ тоже не решает)", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "404", description = "Заявки нет", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "409", description = "Мест нет, мероприятие снято или участник сам отменил", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
@@ -100,6 +103,7 @@ class RegistrationController {
     @PostMapping("/registrations/{id}/reject")
     @Operation(operationId = "registrations_reject", summary = "Отклонить заявку",
             description = "Только организатор. Можно отклонить и подтверждённого. Причину участник увидит в своей записи.")
+    @ApiResponse(responseCode = "200", description = "OK")
     @ApiResponse(responseCode = "403", description = "Не организатор (админ тоже не решает)", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "404", description = "Заявки нет", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "409", description = "Участник сам отменил запись", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))

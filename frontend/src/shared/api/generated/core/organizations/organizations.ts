@@ -267,7 +267,12 @@ export const useOrganizationsSaveMine = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getOrganizationsSaveMineMutationOptions(options), queryClient);
     }
-    export type organizationsUploadLogoResponse400 = {
+    export type organizationsUploadLogoResponse200 = {
+  data: OrganizationResponse
+  status: 200
+}
+
+export type organizationsUploadLogoResponse400 = {
   data: ProblemDetail
   status: 400
 }
@@ -277,12 +282,14 @@ export type organizationsUploadLogoResponse404 = {
   status: 404
 }
 
-;
+export type organizationsUploadLogoResponseSuccess = (organizationsUploadLogoResponse200) & {
+  headers: Headers;
+};
 export type organizationsUploadLogoResponseError = (organizationsUploadLogoResponse400 | organizationsUploadLogoResponse404) & {
   headers: Headers;
 };
 
-export type organizationsUploadLogoResponse = (organizationsUploadLogoResponseError)
+export type organizationsUploadLogoResponse = (organizationsUploadLogoResponseSuccess | organizationsUploadLogoResponseError)
 
 export const getOrganizationsUploadLogoUrl = () => {
 
@@ -447,7 +454,12 @@ export const useOrganizationsDeleteLogo = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getOrganizationsDeleteLogoMutationOptions(options), queryClient);
     }
-    export type organizationsAddDocumentResponse400 = {
+    export type organizationsAddDocumentResponse200 = {
+  data: OrganizationResponse
+  status: 200
+}
+
+export type organizationsAddDocumentResponse400 = {
   data: ProblemDetail
   status: 400
 }
@@ -457,12 +469,14 @@ export type organizationsAddDocumentResponse409 = {
   status: 409
 }
 
-;
+export type organizationsAddDocumentResponseSuccess = (organizationsAddDocumentResponse200) & {
+  headers: Headers;
+};
 export type organizationsAddDocumentResponseError = (organizationsAddDocumentResponse400 | organizationsAddDocumentResponse409) & {
   headers: Headers;
 };
 
-export type organizationsAddDocumentResponse = (organizationsAddDocumentResponseError)
+export type organizationsAddDocumentResponse = (organizationsAddDocumentResponseSuccess | organizationsAddDocumentResponseError)
 
 export const getOrganizationsAddDocumentUrl = () => {
 

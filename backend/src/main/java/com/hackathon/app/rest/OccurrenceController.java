@@ -48,6 +48,7 @@ class OccurrenceController {
     @Operation(operationId = "occurrences_list", summary = "Занятия мероприятия",
             description = "Все занятия в [from, to] по порядку, включая отменённые. Без from — с текущего момента, "
                     + "без to — до конца серии. У разового мероприятия одно занятие. Блок viewer говорит, какие кнопки показать.")
+    @ApiResponse(responseCode = "200", description = "OK")
     @ApiResponse(responseCode = "400", description = "Конец периода раньше начала", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "404", description = "Мероприятия нет", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     List<OccurrenceResponse> list(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,
@@ -82,6 +83,7 @@ class OccurrenceController {
     @Operation(operationId = "occurrences_reschedule", summary = "Перенести занятие серии",
             description = "Только организатор. Будущее занятие, которое состоится, переносится в будущее в границах серии; "
                     + "отметки сохраняются. Без endAt длительность прежняя.")
+    @ApiResponse(responseCode = "200", description = "OK")
     @ApiResponse(responseCode = "400", description = "Не в будущем, вне границ серии или окончание раньше начала", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "403", description = "Не организатор", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "404", description = "Мероприятия или занятия нет", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
@@ -98,6 +100,7 @@ class OccurrenceController {
     @Operation(operationId = "occurrences_cancel", summary = "Отменить занятие",
             description = "Только организатор. Необратимо; отметки и записи остаются, участники видят причину. "
                     + "У разового мероприятия это отмена всего мероприятия: оно уходит из ленты, запись закрывается.")
+    @ApiResponse(responseCode = "200", description = "OK")
     @ApiResponse(responseCode = "403", description = "Не организатор", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "404", description = "Мероприятия или занятия нет", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "409", description = "Уже отменено или началось, мероприятие удалено", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
@@ -113,6 +116,7 @@ class OccurrenceController {
     @Operation(operationId = "occurrences_confirm", summary = "Подтвердить: занятие состоится",
             description = "Только организатор, если у мероприятия задан кворум. Можно и пока кворум не набран; "
                     + "подтверждение не снимается. Повторно — ничего не меняет.")
+    @ApiResponse(responseCode = "200", description = "OK")
     @ApiResponse(responseCode = "403", description = "Не организатор", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "404", description = "Мероприятия или занятия нет", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "409", description = "Кворум не задан, занятие отменено или началось, мероприятие снято или удалено", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
@@ -126,6 +130,7 @@ class OccurrenceController {
     @PostMapping("/{occurrenceId}/attendance")
     @Operation(operationId = "occurrences_attend", summary = "Отметиться «приду» на занятие серии",
             description = "Только принятому в серию, до начала занятия и пока есть места на него. Повторно — ничего не меняет.")
+    @ApiResponse(responseCode = "200", description = "OK")
     @ApiResponse(responseCode = "404", description = "Мероприятия или занятия нет", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "409", description = "Не в серии, мест нет, занятие отменено или началось, мероприятие снято или разовое", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     OccurrenceResponse attend(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id, @PathVariable UUID occurrenceId) {
@@ -138,6 +143,7 @@ class OccurrenceController {
     @DeleteMapping("/{occurrenceId}/attendance")
     @Operation(operationId = "occurrences_unattend", summary = "Снять отметку «приду»",
             description = "До начала занятия; место освобождается. Если отметки нет — ничего не меняет.")
+    @ApiResponse(responseCode = "200", description = "OK")
     @ApiResponse(responseCode = "404", description = "Мероприятия или занятия нет", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "409", description = "Занятие отменено или началось, мероприятие разовое", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     OccurrenceResponse unattend(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id, @PathVariable UUID occurrenceId) {
@@ -150,6 +156,7 @@ class OccurrenceController {
     @GetMapping("/{occurrenceId}/attendees")
     @Operation(operationId = "occurrences_attendees", summary = "Кто придёт на занятие",
             description = "Только организатору. У серии — отметившиеся, у разового — подтверждённые участники.")
+    @ApiResponse(responseCode = "200", description = "OK")
     @ApiResponse(responseCode = "403", description = "Не организатор", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "404", description = "Мероприятия или занятия нет", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     List<UserShortResponse> attendees(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,

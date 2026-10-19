@@ -69,6 +69,7 @@ class AdminEventController {
     @PostMapping("/events/{id}/unpublish")
     @Operation(operationId = "admin_unpublishEvent", summary = "Снять с публикации с причиной",
             description = "Пропадает из ленты, запись закрывается; записавшиеся видят статус и причину.")
+    @ApiResponse(responseCode = "200", description = "OK")
     @ApiResponse(responseCode = "404", description = "Мероприятия нет", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "409", description = "Мероприятие уже удалено", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     AdminEventResponse unpublish(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,
@@ -82,6 +83,7 @@ class AdminEventController {
     @DeleteMapping("/events/{id}")
     @Operation(operationId = "admin_deleteEvent", summary = "Удалить с причиной",
             description = "Мягкое удаление: по прямой ссылке открывается с плашкой «Удалено» и причиной.")
+    @ApiResponse(responseCode = "200", description = "OK")
     @ApiResponse(responseCode = "404", description = "Мероприятия нет", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     AdminEventResponse delete(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,
                               @Valid @RequestBody ModerateEventRequest request) {

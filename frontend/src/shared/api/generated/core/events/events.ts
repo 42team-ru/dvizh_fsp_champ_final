@@ -34,6 +34,7 @@ import type {
   EventsListParams,
   EventsMapParams,
   EventsMineParams,
+  OrganizerResponse,
   PageResponseEventSummaryResponse,
   ProblemDetail
 } from '../appAPI.schemas';
@@ -61,17 +62,24 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   return result;
 };
 
+export type eventsGetResponse200 = {
+  data: EventResponse
+  status: 200
+}
+
 export type eventsGetResponse404 = {
   data: ProblemDetail
   status: 404
 }
 
-;
+export type eventsGetResponseSuccess = (eventsGetResponse200) & {
+  headers: Headers;
+};
 export type eventsGetResponseError = (eventsGetResponse404) & {
   headers: Headers;
 };
 
-export type eventsGetResponse = (eventsGetResponseError)
+export type eventsGetResponse = (eventsGetResponseSuccess | eventsGetResponseError)
 
 export const getEventsGetUrl = (id: string,) => {
 
@@ -174,6 +182,11 @@ export function useEventsGet<TData = Awaited<ReturnType<typeof eventsGet>>, TErr
 
 
 
+export type eventsUpdateResponse200 = {
+  data: EventResponse
+  status: 200
+}
+
 export type eventsUpdateResponse400 = {
   data: ProblemDetail
   status: 400
@@ -194,12 +207,14 @@ export type eventsUpdateResponse409 = {
   status: 409
 }
 
-;
+export type eventsUpdateResponseSuccess = (eventsUpdateResponse200) & {
+  headers: Headers;
+};
 export type eventsUpdateResponseError = (eventsUpdateResponse400 | eventsUpdateResponse403 | eventsUpdateResponse404 | eventsUpdateResponse409) & {
   headers: Headers;
 };
 
-export type eventsUpdateResponse = (eventsUpdateResponseError)
+export type eventsUpdateResponse = (eventsUpdateResponseSuccess | eventsUpdateResponseError)
 
 export const getEventsUpdateUrl = (id: string,) => {
 
@@ -630,7 +645,12 @@ export const useEventsAddPhoto = <TError = ErrorType<ProblemDetail>,
       > => {
       return useMutation(getEventsAddPhotoMutationOptions(options), queryClient);
     }
-    export type eventsAddOrganizerResponse403 = {
+    export type eventsAddOrganizerResponse200 = {
+  data: OrganizerResponse[]
+  status: 200
+}
+
+export type eventsAddOrganizerResponse403 = {
   data: ProblemDetail
   status: 403
 }
@@ -645,12 +665,14 @@ export type eventsAddOrganizerResponse409 = {
   status: 409
 }
 
-;
+export type eventsAddOrganizerResponseSuccess = (eventsAddOrganizerResponse200) & {
+  headers: Headers;
+};
 export type eventsAddOrganizerResponseError = (eventsAddOrganizerResponse403 | eventsAddOrganizerResponse404 | eventsAddOrganizerResponse409) & {
   headers: Headers;
 };
 
-export type eventsAddOrganizerResponse = (eventsAddOrganizerResponseError)
+export type eventsAddOrganizerResponse = (eventsAddOrganizerResponseSuccess | eventsAddOrganizerResponseError)
 
 export const getEventsAddOrganizerUrl = (id: string,) => {
 
@@ -981,17 +1003,24 @@ export function useEventsMap<TData = Awaited<ReturnType<typeof eventsMap>>, TErr
 
 
 
+export type eventsRemovePhotoResponse200 = {
+  data: EventResponse
+  status: 200
+}
+
 export type eventsRemovePhotoResponse403 = {
   data: ProblemDetail
   status: 403
 }
 
-;
+export type eventsRemovePhotoResponseSuccess = (eventsRemovePhotoResponse200) & {
+  headers: Headers;
+};
 export type eventsRemovePhotoResponseError = (eventsRemovePhotoResponse403) & {
   headers: Headers;
 };
 
-export type eventsRemovePhotoResponse = (eventsRemovePhotoResponseError)
+export type eventsRemovePhotoResponse = (eventsRemovePhotoResponseSuccess | eventsRemovePhotoResponseError)
 
 export const getEventsRemovePhotoUrl = (id: string,
     fileId: string,) => {
@@ -1068,7 +1097,12 @@ export const useEventsRemovePhoto = <TError = ErrorType<ProblemDetail>,
       > => {
       return useMutation(getEventsRemovePhotoMutationOptions(options), queryClient);
     }
-    export type eventsRemoveOrganizerResponse403 = {
+    export type eventsRemoveOrganizerResponse200 = {
+  data: OrganizerResponse[]
+  status: 200
+}
+
+export type eventsRemoveOrganizerResponse403 = {
   data: ProblemDetail
   status: 403
 }
@@ -1083,12 +1117,14 @@ export type eventsRemoveOrganizerResponse409 = {
   status: 409
 }
 
-;
+export type eventsRemoveOrganizerResponseSuccess = (eventsRemoveOrganizerResponse200) & {
+  headers: Headers;
+};
 export type eventsRemoveOrganizerResponseError = (eventsRemoveOrganizerResponse403 | eventsRemoveOrganizerResponse404 | eventsRemoveOrganizerResponse409) & {
   headers: Headers;
 };
 
-export type eventsRemoveOrganizerResponse = (eventsRemoveOrganizerResponseError)
+export type eventsRemoveOrganizerResponse = (eventsRemoveOrganizerResponseSuccess | eventsRemoveOrganizerResponseError)
 
 export const getEventsRemoveOrganizerUrl = (id: string,
     userId: string,) => {

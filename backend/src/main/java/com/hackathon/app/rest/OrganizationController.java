@@ -55,6 +55,7 @@ class OrganizationController {
 	@PutMapping(path = "/me/logo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Operation(operationId = "organizations_uploadLogo", summary = "Загрузить логотип (JPG, PNG, WebP до 5 МБ)",
 			description = "Заменяет прежний логотип. Статус допуска не меняется.")
+	@ApiResponse(responseCode = "200", description = "OK")
 	@ApiResponse(responseCode = "400", description = "Не тот формат или слишком большой файл", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
 	@ApiResponse(responseCode = "404", description = "Анкета ещё не заполнена", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
 	OrganizationResponse uploadLogo(@AuthenticationPrincipal Jwt jwt,
@@ -77,6 +78,7 @@ class OrganizationController {
 	@PostMapping(path = "/me/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Operation(operationId = "organizations_addDocument", summary = "Загрузить документ (PDF, JPG, PNG до 10 МБ)",
 			description = "Устав, свидетельство и т.п. Видят организация, админ при проверке и все вошедшие после одобрения. Не больше 10.")
+	@ApiResponse(responseCode = "200", description = "OK")
 	@ApiResponse(responseCode = "400", description = "Не тот формат или слишком большой файл", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
 	@ApiResponse(responseCode = "409", description = "Уже 10 документов", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
 	OrganizationResponse addDocument(@AuthenticationPrincipal Jwt jwt,

@@ -25,6 +25,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AdminEventResponse,
   AdminListEventsParams,
   AdminListOrganizationsParams,
   AdminListUsersParams,
@@ -247,7 +248,12 @@ export const useAdminApproveOrganization = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getAdminApproveOrganizationMutationOptions(options), queryClient);
     }
-    export type adminUnpublishEventResponse404 = {
+    export type adminUnpublishEventResponse200 = {
+  data: AdminEventResponse
+  status: 200
+}
+
+export type adminUnpublishEventResponse404 = {
   data: ProblemDetail
   status: 404
 }
@@ -257,12 +263,14 @@ export type adminUnpublishEventResponse409 = {
   status: 409
 }
 
-;
+export type adminUnpublishEventResponseSuccess = (adminUnpublishEventResponse200) & {
+  headers: Headers;
+};
 export type adminUnpublishEventResponseError = (adminUnpublishEventResponse404 | adminUnpublishEventResponse409) & {
   headers: Headers;
 };
 
-export type adminUnpublishEventResponse = (adminUnpublishEventResponseError)
+export type adminUnpublishEventResponse = (adminUnpublishEventResponseSuccess | adminUnpublishEventResponseError)
 
 export const getAdminUnpublishEventUrl = (id: string,) => {
 
@@ -943,17 +951,24 @@ export function useAdminListEvents<TData = Awaited<ReturnType<typeof adminListEv
 
 
 
+export type adminDeleteEventResponse200 = {
+  data: AdminEventResponse
+  status: 200
+}
+
 export type adminDeleteEventResponse404 = {
   data: ProblemDetail
   status: 404
 }
 
-;
+export type adminDeleteEventResponseSuccess = (adminDeleteEventResponse200) & {
+  headers: Headers;
+};
 export type adminDeleteEventResponseError = (adminDeleteEventResponse404) & {
   headers: Headers;
 };
 
-export type adminDeleteEventResponse = (adminDeleteEventResponseError)
+export type adminDeleteEventResponse = (adminDeleteEventResponseSuccess | adminDeleteEventResponseError)
 
 export const getAdminDeleteEventUrl = (id: string,) => {
 

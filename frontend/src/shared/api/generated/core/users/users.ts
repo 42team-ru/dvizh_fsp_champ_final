@@ -61,17 +61,24 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   return result;
 };
 
+export type usersUpdateMeResponse200 = {
+  data: MeResponse
+  status: 200
+}
+
 export type usersUpdateMeResponse400 = {
   data: ProblemDetail
   status: 400
 }
 
-;
+export type usersUpdateMeResponseSuccess = (usersUpdateMeResponse200) & {
+  headers: Headers;
+};
 export type usersUpdateMeResponseError = (usersUpdateMeResponse400) & {
   headers: Headers;
 };
 
-export type usersUpdateMeResponse = (usersUpdateMeResponseError)
+export type usersUpdateMeResponse = (usersUpdateMeResponseSuccess | usersUpdateMeResponseError)
 
 export const getUsersUpdateMeUrl = () => {
 
@@ -273,17 +280,24 @@ export function useUsersMySports<TData = Awaited<ReturnType<typeof usersMySports
 
 
 
+export type usersSaveMySportsResponse200 = {
+  data: UserSportResponse[]
+  status: 200
+}
+
 export type usersSaveMySportsResponse400 = {
   data: ProblemDetail
   status: 400
 }
 
-;
+export type usersSaveMySportsResponseSuccess = (usersSaveMySportsResponse200) & {
+  headers: Headers;
+};
 export type usersSaveMySportsResponseError = (usersSaveMySportsResponse400) & {
   headers: Headers;
 };
 
-export type usersSaveMySportsResponse = (usersSaveMySportsResponseError)
+export type usersSaveMySportsResponse = (usersSaveMySportsResponseSuccess | usersSaveMySportsResponseError)
 
 export const getUsersSaveMySportsUrl = () => {
 
@@ -373,17 +387,24 @@ export const useUsersSaveMySports = <TError = ErrorType<ProblemDetail>,
       > => {
       return useMutation(getUsersSaveMySportsMutationOptions(options), queryClient);
     }
-    export type usersUploadAvatarResponse400 = {
+    export type usersUploadAvatarResponse200 = {
+  data: MeResponse
+  status: 200
+}
+
+export type usersUploadAvatarResponse400 = {
   data: ProblemDetail
   status: 400
 }
 
-;
+export type usersUploadAvatarResponseSuccess = (usersUploadAvatarResponse200) & {
+  headers: Headers;
+};
 export type usersUploadAvatarResponseError = (usersUploadAvatarResponse400) & {
   headers: Headers;
 };
 
-export type usersUploadAvatarResponse = (usersUploadAvatarResponseError)
+export type usersUploadAvatarResponse = (usersUploadAvatarResponseSuccess | usersUploadAvatarResponseError)
 
 export const getUsersUploadAvatarUrl = () => {
 

@@ -46,6 +46,103 @@ export interface ProblemDetail {
   properties?: ProblemDetailProperties;
 }
 
+export type MeResponseSystemRole = typeof MeResponseSystemRole[keyof typeof MeResponseSystemRole];
+
+
+export const MeResponseSystemRole = {
+  USER: 'USER',
+  ORG: 'ORG',
+  ADMIN: 'ADMIN',
+} as const;
+
+export type MeResponseAuthProvider = typeof MeResponseAuthProvider[keyof typeof MeResponseAuthProvider];
+
+
+export const MeResponseAuthProvider = {
+  LOCAL: 'LOCAL',
+  YANDEX: 'YANDEX',
+  GITHUB: 'GITHUB',
+} as const;
+
+export type PetResponseMood = typeof PetResponseMood[keyof typeof PetResponseMood];
+
+
+export const PetResponseMood = {
+  idle: 'idle',
+  happy: 'happy',
+  surprised: 'surprised',
+  thinking: 'thinking',
+  sad: 'sad',
+  wink: 'wink',
+  offended: 'offended',
+  sleep: 'sleep',
+} as const;
+
+export type PetStatusResponseMood = typeof PetStatusResponseMood[keyof typeof PetStatusResponseMood];
+
+
+export const PetStatusResponseMood = {
+  idle: 'idle',
+  happy: 'happy',
+  surprised: 'surprised',
+  thinking: 'thinking',
+  sad: 'sad',
+  wink: 'wink',
+  offended: 'offended',
+  sleep: 'sleep',
+} as const;
+
+export type PetStatusResponseReason = typeof PetStatusResponseReason[keyof typeof PetStatusResponseReason];
+
+
+export const PetStatusResponseReason = {
+  ORGANIZED_EVENT_MODERATED: 'ORGANIZED_EVENT_MODERATED',
+  REGISTERED_EVENT_MODERATED: 'REGISTERED_EVENT_MODERATED',
+  REGISTRATION_REJECTED: 'REGISTRATION_REJECTED',
+  REGISTRATION_APPROVED: 'REGISTRATION_APPROVED',
+  EVENT_SOON: 'EVENT_SOON',
+  NEW_REQUESTS: 'NEW_REQUESTS',
+  AWAITING_APPROVAL: 'AWAITING_APPROVAL',
+  INACTIVE: 'INACTIVE',
+  DEFAULT: 'DEFAULT',
+} as const;
+
+export interface PetStatusResponse {
+  mood: PetStatusResponseMood;
+  message: string;
+  reason: PetStatusResponseReason;
+  /** @nullable */
+  eventId: string | null;
+  /** @nullable */
+  eventTitle: string | null;
+}
+
+export type PetResponseOutfit = {[key: string]: string};
+
+export interface PetResponse {
+  name: string;
+  mood: PetResponseMood;
+  activity: string;
+  outfit: PetResponseOutfit;
+  status?: PetStatusResponse;
+}
+
+export interface MeResponse {
+  id?: string;
+  username?: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  active?: boolean;
+  systemRole?: MeResponseSystemRole;
+  authProvider?: MeResponseAuthProvider;
+  createdAt?: string;
+  bio?: string;
+  avatarUrl?: string;
+  city?: string;
+  pet?: PetResponse;
+}
+
 /**
  * Уровень; не указан — подходят мероприятия любого уровня
  */
@@ -87,6 +184,43 @@ export interface SaveUserSportsRequest {
 }
 
 /**
+ * Вид спорта
+ */
+export interface SportResponse {
+  id: string;
+  /** Название */
+  name: string;
+  /** Код для URL */
+  slug: string;
+  /** Добавлен пользователем, а не из справочника */
+  custom: boolean;
+  /** Иллюстрация вида спорта; у видов без своей картинки — общая */
+  imageUrl: string;
+}
+
+/**
+ * Уровень; null — не указан
+ */
+export type UserSportResponseLevel = typeof UserSportResponseLevel[keyof typeof UserSportResponseLevel];
+
+
+export const UserSportResponseLevel = {
+  BEGINNER: 'BEGINNER',
+  AMATEUR: 'AMATEUR',
+  ADVANCED: 'ADVANCED',
+  PRO: 'PRO',
+} as const;
+
+/**
+ * Вид спорта в профиле и уровень в нём
+ */
+export interface UserSportResponse {
+  sport: SportResponse;
+  /** Уровень; null — не указан */
+  level?: UserSportResponseLevel;
+}
+
+/**
  * Код слота → код вещи. Чтобы снять вещь, не передавайте слот (null тоже снимает)
  */
 export type PetRequestOutfit = {[key: string]: string};
@@ -107,6 +241,10 @@ export interface PetRequest {
 export interface PetEquipRequest {
   /** Код вещи из этого слота; null — снять (инвентарь станет none) */
   item?: string;
+}
+
+export interface PetRenameRequest {
+  name: string;
 }
 
 export type SaveOrganizationRequestContacts = {[key: string]: string};
@@ -364,40 +502,6 @@ export interface EventRequest {
 }
 
 /**
- * Время занятия: для добавления разовой даты или переноса
- */
-export interface OccurrenceRequest {
-  /** Начало, в будущем и в границах серии */
-  startAt: string;
-  /** Окончание, позже начала. При переносе можно не указывать — длительность сохранится; у разовой даты обязательно */
-  endAt?: string;
-}
-
-/**
- * Исправить своё сообщение
- */
-export interface CommentUpdateRequest {
-  /**
-     * Новый текст
-     * @minLength 0
-     * @maxLength 2000
-     */
-  text: string;
-}
-
-/**
- * Отказ по заявке; тело можно не передавать
- */
-export interface RejectRegistrationRequest {
-  /**
-     * Причина отказа; участник увидит её в своей записи
-     * @minLength 0
-     * @maxLength 1000
-     */
-  reason?: string;
-}
-
-/**
  * Очно или онлайн
  */
 export type EventResponseFormat = typeof EventResponseFormat[keyof typeof EventResponseFormat];
@@ -457,21 +561,6 @@ export const EventResponseStatus = {
   UNPUBLISHED: 'UNPUBLISHED',
   DELETED: 'DELETED',
 } as const;
-
-/**
- * Вид спорта
- */
-export interface SportResponse {
-  id: string;
-  /** Название */
-  name: string;
-  /** Код для URL */
-  slug: string;
-  /** Добавлен пользователем, а не из справочника */
-  custom: boolean;
-  /** Иллюстрация вида спорта; у видов без своей картинки — общая */
-  imageUrl: string;
-}
 
 /**
  * Публичная карточка человека: организатор или участник, без email
@@ -767,88 +856,25 @@ export interface EventResponse {
 }
 
 /**
- * Запись на мероприятие; тело можно не передавать
+ * Время занятия: для добавления разовой даты или переноса
  */
-export interface RegistrationRequest {
-  /**
-     * Сообщение организатору (для записи по заявке)
-     * @minLength 0
-     * @maxLength 1000
-     */
-  message?: string;
+export interface OccurrenceRequest {
+  /** Начало, в будущем и в границах серии */
+  startAt: string;
+  /** Окончание, позже начала. При переносе можно не указывать — длительность сохранится; у разовой даты обязательно */
+  endAt?: string;
 }
 
 /**
- * Статус записи
+ * Исправить своё сообщение
  */
-export type RegistrationResponseStatus = typeof RegistrationResponseStatus[keyof typeof RegistrationResponseStatus];
-
-
-export const RegistrationResponseStatus = {
-  CONFIRMED: 'CONFIRMED',
-  PENDING: 'PENDING',
-  REJECTED: 'REJECTED',
-  CANCELLED: 'CANCELLED',
-} as const;
-
-/**
- * Запись на мероприятие после действия (записаться, отменить, принять, отклонить)
- */
-export interface RegistrationResponse {
-  id: string;
-  /** Мероприятие */
-  eventId: string;
-  /** Участник */
-  userId: string;
-  /** Статус записи */
-  status: RegistrationResponseStatus;
-  /** Сообщение к заявке */
-  message?: string;
-  /** Причина решения организатора */
-  decisionReason?: string;
-  /** Когда решено; null — ещё нет */
-  decidedAt?: string;
-  /** Кто решил; null — автоматически при свободной записи */
-  decidedById?: string;
-  createdAt: string;
-}
-
-/**
- * Добавить соорганизатора
- */
-export interface AddOrganizerRequest {
+export interface CommentUpdateRequest {
   /**
-     * Логин или email пользователя
-     * @minLength 0
-     * @maxLength 255
-     */
-  login: string;
-}
-
-/**
- * Отмена занятия серии
- */
-export interface CancelOccurrenceRequest {
-  /**
-     * Причина; участники увидят её у занятия
-     * @minLength 0
-     * @maxLength 1000
-     */
-  reason: string;
-}
-
-/**
- * Новое сообщение в обсуждении мероприятия
- */
-export interface CommentRequest {
-  /**
-     * Текст
+     * Новый текст
      * @minLength 0
      * @maxLength 2000
      */
   text: string;
-  /** Ответ на сообщение (id); пусто — в общий поток */
-  replyToId?: string;
 }
 
 /**
@@ -890,6 +916,103 @@ export interface CommentResponse {
   editedAt?: string;
   /** Удалено автором */
   deleted: boolean;
+}
+
+/**
+ * Отказ по заявке; тело можно не передавать
+ */
+export interface RejectRegistrationRequest {
+  /**
+     * Причина отказа; участник увидит её в своей записи
+     * @minLength 0
+     * @maxLength 1000
+     */
+  reason?: string;
+}
+
+/**
+ * Статус записи
+ */
+export type RegistrationResponseStatus = typeof RegistrationResponseStatus[keyof typeof RegistrationResponseStatus];
+
+
+export const RegistrationResponseStatus = {
+  CONFIRMED: 'CONFIRMED',
+  PENDING: 'PENDING',
+  REJECTED: 'REJECTED',
+  CANCELLED: 'CANCELLED',
+} as const;
+
+/**
+ * Запись на мероприятие после действия (записаться, отменить, принять, отклонить)
+ */
+export interface RegistrationResponse {
+  id: string;
+  /** Мероприятие */
+  eventId: string;
+  /** Участник */
+  userId: string;
+  /** Статус записи */
+  status: RegistrationResponseStatus;
+  /** Сообщение к заявке */
+  message?: string;
+  /** Причина решения организатора */
+  decisionReason?: string;
+  /** Когда решено; null — ещё нет */
+  decidedAt?: string;
+  /** Кто решил; null — автоматически при свободной записи */
+  decidedById?: string;
+  createdAt: string;
+}
+
+/**
+ * Запись на мероприятие; тело можно не передавать
+ */
+export interface RegistrationRequest {
+  /**
+     * Сообщение организатору (для записи по заявке)
+     * @minLength 0
+     * @maxLength 1000
+     */
+  message?: string;
+}
+
+/**
+ * Добавить соорганизатора
+ */
+export interface AddOrganizerRequest {
+  /**
+     * Логин или email пользователя
+     * @minLength 0
+     * @maxLength 255
+     */
+  login: string;
+}
+
+/**
+ * Отмена занятия серии
+ */
+export interface CancelOccurrenceRequest {
+  /**
+     * Причина; участники увидят её у занятия
+     * @minLength 0
+     * @maxLength 1000
+     */
+  reason: string;
+}
+
+/**
+ * Новое сообщение в обсуждении мероприятия
+ */
+export interface CommentRequest {
+  /**
+     * Текст
+     * @minLength 0
+     * @maxLength 2000
+     */
+  text: string;
+  /** Ответ на сообщение (id); пусто — в общий поток */
+  replyToId?: string;
 }
 
 export type RegisterRequestAccountType = typeof RegisterRequestAccountType[keyof typeof RegisterRequestAccountType];
@@ -1024,6 +1147,46 @@ export interface ModerateEventRequest {
      * @maxLength 1000
      */
   reason: string;
+}
+
+/**
+ * Статус
+ */
+export type AdminEventResponseStatus = typeof AdminEventResponseStatus[keyof typeof AdminEventResponseStatus];
+
+
+export const AdminEventResponseStatus = {
+  PUBLISHED: 'PUBLISHED',
+  UNPUBLISHED: 'UNPUBLISHED',
+  DELETED: 'DELETED',
+} as const;
+
+/**
+ * Мероприятие в админке: статус модерации и кто автор
+ */
+export interface AdminEventResponse {
+  id: string;
+  /** Название */
+  title: string;
+  /** Вид спорта */
+  sport: SportResponse;
+  /** Начало */
+  startAt: string;
+  /** Адрес */
+  address?: string;
+  /** Автор */
+  author: UserShortResponse;
+  /** Организация; null — от частного лица */
+  organizationId?: string;
+  /** Подтверждённых участников */
+  participantsCount: number;
+  /** Статус */
+  status: AdminEventResponseStatus;
+  /** Причина снятия или удаления */
+  moderationReason?: string;
+  /** Когда снято или удалено */
+  moderatedAt?: string;
+  createdAt: string;
 }
 
 /**
@@ -1170,28 +1333,6 @@ export interface EventSummaryResponse {
 }
 
 /**
- * Уровень; null — не указан
- */
-export type UserSportResponseLevel = typeof UserSportResponseLevel[keyof typeof UserSportResponseLevel];
-
-
-export const UserSportResponseLevel = {
-  BEGINNER: 'BEGINNER',
-  AMATEUR: 'AMATEUR',
-  ADVANCED: 'ADVANCED',
-  PRO: 'PRO',
-} as const;
-
-/**
- * Вид спорта в профиле и уровень в нём
- */
-export interface UserSportResponse {
-  sport: SportResponse;
-  /** Уровень; null — не указан */
-  level?: UserSportResponseLevel;
-}
-
-/**
  * Публичный профиль организатора-человека и его ближайшие мероприятия
  */
 export interface PublicUserResponse {
@@ -1214,69 +1355,6 @@ export interface PublicUserResponse {
   attendedCount: number;
   /** Опубликованные и ещё не начавшиеся мероприятия, где человек автор; ближайшие первыми */
   events: EventSummaryResponse[];
-}
-
-export type PetResponseMood = typeof PetResponseMood[keyof typeof PetResponseMood];
-
-
-export const PetResponseMood = {
-  idle: 'idle',
-  happy: 'happy',
-  surprised: 'surprised',
-  thinking: 'thinking',
-  sad: 'sad',
-  wink: 'wink',
-  offended: 'offended',
-  sleep: 'sleep',
-} as const;
-
-export type PetResponseOutfit = {[key: string]: string};
-
-export type PetStatusResponseMood = typeof PetStatusResponseMood[keyof typeof PetStatusResponseMood];
-
-
-export const PetStatusResponseMood = {
-  idle: 'idle',
-  happy: 'happy',
-  surprised: 'surprised',
-  thinking: 'thinking',
-  sad: 'sad',
-  wink: 'wink',
-  offended: 'offended',
-  sleep: 'sleep',
-} as const;
-
-export type PetStatusResponseReason = typeof PetStatusResponseReason[keyof typeof PetStatusResponseReason];
-
-
-export const PetStatusResponseReason = {
-  ORGANIZED_EVENT_MODERATED: 'ORGANIZED_EVENT_MODERATED',
-  REGISTERED_EVENT_MODERATED: 'REGISTERED_EVENT_MODERATED',
-  REGISTRATION_REJECTED: 'REGISTRATION_REJECTED',
-  REGISTRATION_APPROVED: 'REGISTRATION_APPROVED',
-  EVENT_SOON: 'EVENT_SOON',
-  NEW_REQUESTS: 'NEW_REQUESTS',
-  AWAITING_APPROVAL: 'AWAITING_APPROVAL',
-  INACTIVE: 'INACTIVE',
-  DEFAULT: 'DEFAULT',
-} as const;
-
-export interface PetStatusResponse {
-  mood: PetStatusResponseMood;
-  message: string;
-  reason: PetStatusResponseReason;
-  /** @nullable */
-  eventId: string | null;
-  /** @nullable */
-  eventTitle: string | null;
-}
-
-export interface PetResponse {
-  mood: PetResponseMood;
-  activity: string;
-  outfit: PetResponseOutfit;
-  status?: PetStatusResponse;
-  name: string;
 }
 
 /**
@@ -1421,6 +1499,38 @@ export interface PublicOrganizationResponse {
   contacts?: PublicOrganizationResponseContacts;
   logoUrl?: string;
   documents?: FileResponse[];
+}
+
+/**
+ * Статус
+ */
+export type EventRegistrationResponseStatus = typeof EventRegistrationResponseStatus[keyof typeof EventRegistrationResponseStatus];
+
+
+export const EventRegistrationResponseStatus = {
+  CONFIRMED: 'CONFIRMED',
+  PENDING: 'PENDING',
+  REJECTED: 'REJECTED',
+  CANCELLED: 'CANCELLED',
+} as const;
+
+/**
+ * Заявка глазами организатора
+ */
+export interface EventRegistrationResponse {
+  /** id заявки — для approve и reject */
+  id: string;
+  /** Кто подал */
+  participant: UserShortResponse;
+  /** Статус */
+  status: EventRegistrationResponseStatus;
+  /** Сообщение к заявке */
+  message?: string;
+  /** Причина решения */
+  decisionReason?: string;
+  /** Когда решено */
+  decidedAt?: string;
+  createdAt: string;
 }
 
 export interface PageResponseEventSummaryResponse {
@@ -1581,40 +1691,6 @@ export interface AvailabilityCheckResponse {
   available?: boolean;
 }
 
-export type MeResponseSystemRole = typeof MeResponseSystemRole[keyof typeof MeResponseSystemRole];
-
-
-export const MeResponseSystemRole = {
-  USER: 'USER',
-  ORG: 'ORG',
-  ADMIN: 'ADMIN',
-} as const;
-
-export type MeResponseAuthProvider = typeof MeResponseAuthProvider[keyof typeof MeResponseAuthProvider];
-
-
-export const MeResponseAuthProvider = {
-  LOCAL: 'LOCAL',
-  YANDEX: 'YANDEX',
-  GITHUB: 'GITHUB',
-} as const;
-
-export interface MeResponse {
-  id?: string;
-  username?: string;
-  email?: string;
-  firstName?: string;
-  lastName?: string;
-  active?: boolean;
-  systemRole?: MeResponseSystemRole;
-  authProvider?: MeResponseAuthProvider;
-  createdAt?: string;
-  bio?: string;
-  avatarUrl?: string;
-  city?: string;
-  pet?: PetResponse;
-}
-
 export type AdminUserResponseSystemRole = typeof AdminUserResponseSystemRole[keyof typeof AdminUserResponseSystemRole];
 
 
@@ -1696,56 +1772,12 @@ export interface PageResponseAdminOrganizationResponse {
   totalPages?: number;
 }
 
-/**
- * Статус
- */
-export type AdminEventResponseStatus = typeof AdminEventResponseStatus[keyof typeof AdminEventResponseStatus];
-
-
-export const AdminEventResponseStatus = {
-  PUBLISHED: 'PUBLISHED',
-  UNPUBLISHED: 'UNPUBLISHED',
-  DELETED: 'DELETED',
-} as const;
-
-/**
- * Мероприятие в админке: статус модерации и кто автор
- */
-export interface AdminEventResponse {
-  id: string;
-  /** Название */
-  title: string;
-  /** Вид спорта */
-  sport: SportResponse;
-  /** Начало */
-  startAt: string;
-  /** Адрес */
-  address?: string;
-  /** Автор */
-  author: UserShortResponse;
-  /** Организация; null — от частного лица */
-  organizationId?: string;
-  /** Подтверждённых участников */
-  participantsCount: number;
-  /** Статус */
-  status: AdminEventResponseStatus;
-  /** Причина снятия или удаления */
-  moderationReason?: string;
-  /** Когда снято или удалено */
-  moderatedAt?: string;
-  createdAt: string;
-}
-
 export interface PageResponseAdminEventResponse {
   items?: AdminEventResponse[];
   page?: number;
   size?: number;
   totalElements?: number;
   totalPages?: number;
-}
-
-export interface PetRenameRequest {
-  name: string;
 }
 
 export type UsersUploadAvatarBody = {

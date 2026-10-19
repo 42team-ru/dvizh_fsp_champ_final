@@ -47,6 +47,7 @@ class CommentController {
     @Operation(operationId = "comments_list", summary = "Сообщения обсуждения",
             description = "Старые сверху. replyTo — цитата сообщения, на которое ответили; isMine — моё; canEdit — могу исправить или удалить. "
                     + "after — только сообщения новее этого момента (подгрузка новых).")
+    @ApiResponse(responseCode = "200", description = "OK")
     @ApiResponse(responseCode = "404", description = "Мероприятия нет", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     List<CommentResponse> list(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,
                                @Parameter(description = "Только сообщения новее этого момента: createdAt последнего полученного", example = "2026-10-19T09:00:00Z")
@@ -74,6 +75,7 @@ class CommentController {
 
     @PutMapping("/{commentId}")
     @Operation(operationId = "comments_update", summary = "Исправить своё сообщение", description = "В ответе появится editedAt.")
+    @ApiResponse(responseCode = "200", description = "OK")
     @ApiResponse(responseCode = "403", description = "Чужое сообщение", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "404", description = "Нет мероприятия или сообщения", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "409", description = "Сообщение удалено или обсуждение закрыто", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))

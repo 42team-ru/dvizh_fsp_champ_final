@@ -168,17 +168,24 @@ export function usePetsGetMine<TData = Awaited<ReturnType<typeof petsGetMine>>, 
 
 
 
+export type petsSaveMineResponse200 = {
+  data: PetResponse
+  status: 200
+}
+
 export type petsSaveMineResponse400 = {
   data: ProblemDetail
   status: 400
 }
 
-;
+export type petsSaveMineResponseSuccess = (petsSaveMineResponse200) & {
+  headers: Headers;
+};
 export type petsSaveMineResponseError = (petsSaveMineResponse400) & {
   headers: Headers;
 };
 
-export type petsSaveMineResponse = (petsSaveMineResponseError)
+export type petsSaveMineResponse = (petsSaveMineResponseSuccess | petsSaveMineResponseError)
 
 export const getPetsSaveMineUrl = () => {
 
@@ -268,7 +275,12 @@ export const usePetsSaveMine = <TError = ErrorType<ProblemDetail>,
       > => {
       return useMutation(getPetsSaveMineMutationOptions(options), queryClient);
     }
-    export type petsEquipResponse400 = {
+    export type petsEquipResponse200 = {
+  data: PetResponse
+  status: 200
+}
+
+export type petsEquipResponse400 = {
   data: ProblemDetail
   status: 400
 }
@@ -278,12 +290,14 @@ export type petsEquipResponse404 = {
   status: 404
 }
 
-;
+export type petsEquipResponseSuccess = (petsEquipResponse200) & {
+  headers: Headers;
+};
 export type petsEquipResponseError = (petsEquipResponse400 | petsEquipResponse404) & {
   headers: Headers;
 };
 
-export type petsEquipResponse = (petsEquipResponseError)
+export type petsEquipResponse = (petsEquipResponseSuccess | petsEquipResponseError)
 
 export const getPetsEquipUrl = (slot: string,) => {
 
@@ -374,17 +388,130 @@ export const usePetsEquip = <TError = ErrorType<ProblemDetail>,
       > => {
       return useMutation(getPetsEquipMutationOptions(options), queryClient);
     }
-    export type petsGetUserResponse404 = {
+    export type petsRenameResponse200 = {
+  data: PetResponse
+  status: 200
+}
+
+export type petsRenameResponse400 = {
+  data: ProblemDetail
+  status: 400
+}
+
+export type petsRenameResponseSuccess = (petsRenameResponse200) & {
+  headers: Headers;
+};
+export type petsRenameResponseError = (petsRenameResponse400) & {
+  headers: Headers;
+};
+
+export type petsRenameResponse = (petsRenameResponseSuccess | petsRenameResponseError)
+
+export const getPetsRenameUrl = () => {
+
+
+
+
+  return `/api/users/me/pet/name`
+}
+
+/**
+ * @summary Переименовать питомца
+ */
+export const petsRename = async (petRenameRequest: PetRenameRequest, options?: Parameters<typeof authMutator>[1]): Promise<petsRenameResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return authMutator<petsRenameResponse>(getPetsRenameUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(petRenameRequest)
+  }
+);}
+
+
+
+
+
+export const getPetsRenameMutationKey = () => ['petsRename'] as const;
+
+export const getPetsRenameMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof petsRename>>, TError,PetsRenameMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof petsRename>>, TError,PetsRenameMutationVariables, TContext> => {
+
+const mutationKey = getPetsRenameMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof petsRename>>, PetsRenameMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  petsRename(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PetsRenameMutationResult = NonNullable<Awaited<ReturnType<typeof petsRename>>>
+    export type PetsRenameMutationBody = PetRenameRequest
+    export type PetsRenameMutationError = ErrorType<ProblemDetail>
+    export type PetsRenameMutationVariables = {data: PetRenameRequest}
+
+    /**
+ * @summary Переименовать питомца
+ */
+export const usePetsRename = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof petsRename>>, TError,PetsRenameMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof petsRename>>,
+        TError,
+        PetsRenameMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPetsRenameMutationOptions(options), queryClient);
+    }
+    export type petsGetUserResponse200 = {
+  data: PetResponse
+  status: 200
+}
+
+export type petsGetUserResponse404 = {
   data: ProblemDetail
   status: 404
 }
 
-;
+export type petsGetUserResponseSuccess = (petsGetUserResponse200) & {
+  headers: Headers;
+};
 export type petsGetUserResponseError = (petsGetUserResponse404) & {
   headers: Headers;
 };
 
-export type petsGetUserResponse = (petsGetUserResponseError)
+export type petsGetUserResponse = (petsGetUserResponseSuccess | petsGetUserResponseError)
 
 export const getPetsGetUserUrl = (id: string,) => {
 
@@ -600,109 +727,3 @@ export function usePetsCatalog<TData = Awaited<ReturnType<typeof petsCatalog>>, 
 
 
 
-export type petsRenameResponse200 = {
-  data: PetResponse
-  status: 200
-}
-
-export type petsRenameResponse400 = {
-  data: ProblemDetail
-  status: 400
-}
-
-export type petsRenameResponseSuccess = (petsRenameResponse200) & {
-  headers: Headers;
-};
-export type petsRenameResponseError = (petsRenameResponse400) & {
-  headers: Headers;
-};
-
-export type petsRenameResponse = (petsRenameResponseSuccess | petsRenameResponseError)
-
-export const getPetsRenameUrl = () => {
-
-
-
-
-  return `/api/users/me/pet/name`
-}
-
-/**
- * @summary Переименовать питомца
- */
-export const petsRename = async (petRenameRequest: PetRenameRequest, options?: Parameters<typeof authMutator>[1]): Promise<petsRenameResponse> => {
-
-    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
-    if (!h) return {};
-    if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Symbol.iterator in h) {
-      return Object.fromEntries(
-        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
-      );
-    }
-    const headers: Record<string, string | readonly string[]> = {};
-    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
-      if (value !== undefined) headers[name] = value;
-    }
-    return headers;
-  };
-return authMutator<petsRenameResponse>(getPetsRenameUrl(),
-  {
-    ...options,
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(petRenameRequest)
-  }
-);}
-
-
-
-
-
-export const getPetsRenameMutationKey = () => ['petsRename'] as const;
-
-export const getPetsRenameMutationOptions = <TError = ErrorType<ProblemDetail>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof petsRename>>, TError,PetsRenameMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
-): UseMutationOptions<Awaited<ReturnType<typeof petsRename>>, TError,PetsRenameMutationVariables, TContext> => {
-
-const mutationKey = getPetsRenameMutationKey();
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof petsRename>>, PetsRenameMutationVariables> = (props) => {
-          const {data} = props ?? {};
-
-          return  petsRename(data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type PetsRenameMutationResult = NonNullable<Awaited<ReturnType<typeof petsRename>>>
-    export type PetsRenameMutationBody = PetRenameRequest
-    export type PetsRenameMutationError = ErrorType<ProblemDetail>
-    export type PetsRenameMutationVariables = {data: PetRenameRequest}
-
-    /**
- * @summary Переименовать питомца
- */
-export const usePetsRename = <TError = ErrorType<ProblemDetail>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof petsRename>>, TError,PetsRenameMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof petsRename>>,
-        TError,
-        PetsRenameMutationVariables,
-        TContext
-      > => {
-      return useMutation(getPetsRenameMutationOptions(options), queryClient);
-    }

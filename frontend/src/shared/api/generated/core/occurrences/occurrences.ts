@@ -29,7 +29,8 @@ import type {
   OccurrenceRequest,
   OccurrenceResponse,
   OccurrencesListParams,
-  ProblemDetail
+  ProblemDetail,
+  UserShortResponse
 } from '../appAPI.schemas';
 
 import { authMutator } from '../../../mutators/authMutator';
@@ -55,6 +56,11 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   return result;
 };
 
+export type occurrencesRescheduleResponse200 = {
+  data: OccurrenceResponse
+  status: 200
+}
+
 export type occurrencesRescheduleResponse400 = {
   data: ProblemDetail
   status: 400
@@ -75,12 +81,14 @@ export type occurrencesRescheduleResponse409 = {
   status: 409
 }
 
-;
+export type occurrencesRescheduleResponseSuccess = (occurrencesRescheduleResponse200) & {
+  headers: Headers;
+};
 export type occurrencesRescheduleResponseError = (occurrencesRescheduleResponse400 | occurrencesRescheduleResponse403 | occurrencesRescheduleResponse404 | occurrencesRescheduleResponse409) & {
   headers: Headers;
 };
 
-export type occurrencesRescheduleResponse = (occurrencesRescheduleResponseError)
+export type occurrencesRescheduleResponse = (occurrencesRescheduleResponseSuccess | occurrencesRescheduleResponseError)
 
 export const getOccurrencesRescheduleUrl = (id: string,
     occurrenceId: string,) => {
@@ -173,7 +181,12 @@ export const useOccurrencesReschedule = <TError = ErrorType<ProblemDetail>,
       > => {
       return useMutation(getOccurrencesRescheduleMutationOptions(options), queryClient);
     }
-    export type occurrencesListResponse400 = {
+    export type occurrencesListResponse200 = {
+  data: OccurrenceResponse[]
+  status: 200
+}
+
+export type occurrencesListResponse400 = {
   data: ProblemDetail
   status: 400
 }
@@ -183,12 +196,14 @@ export type occurrencesListResponse404 = {
   status: 404
 }
 
-;
+export type occurrencesListResponseSuccess = (occurrencesListResponse200) & {
+  headers: Headers;
+};
 export type occurrencesListResponseError = (occurrencesListResponse400 | occurrencesListResponse404) & {
   headers: Headers;
 };
 
-export type occurrencesListResponse = (occurrencesListResponseError)
+export type occurrencesListResponse = (occurrencesListResponseSuccess | occurrencesListResponseError)
 
 export const getOccurrencesListUrl = (id: string,
     params?: OccurrencesListParams,) => {
@@ -429,7 +444,12 @@ export const useOccurrencesAdd = <TError = ErrorType<ProblemDetail>,
       > => {
       return useMutation(getOccurrencesAddMutationOptions(options), queryClient);
     }
-    export type occurrencesConfirmResponse403 = {
+    export type occurrencesConfirmResponse200 = {
+  data: OccurrenceResponse
+  status: 200
+}
+
+export type occurrencesConfirmResponse403 = {
   data: ProblemDetail
   status: 403
 }
@@ -444,12 +464,14 @@ export type occurrencesConfirmResponse409 = {
   status: 409
 }
 
-;
+export type occurrencesConfirmResponseSuccess = (occurrencesConfirmResponse200) & {
+  headers: Headers;
+};
 export type occurrencesConfirmResponseError = (occurrencesConfirmResponse403 | occurrencesConfirmResponse404 | occurrencesConfirmResponse409) & {
   headers: Headers;
 };
 
-export type occurrencesConfirmResponse = (occurrencesConfirmResponseError)
+export type occurrencesConfirmResponse = (occurrencesConfirmResponseSuccess | occurrencesConfirmResponseError)
 
 export const getOccurrencesConfirmUrl = (id: string,
     occurrenceId: string,) => {
@@ -527,7 +549,12 @@ export const useOccurrencesConfirm = <TError = ErrorType<ProblemDetail>,
       > => {
       return useMutation(getOccurrencesConfirmMutationOptions(options), queryClient);
     }
-    export type occurrencesCancelResponse403 = {
+    export type occurrencesCancelResponse200 = {
+  data: OccurrenceResponse
+  status: 200
+}
+
+export type occurrencesCancelResponse403 = {
   data: ProblemDetail
   status: 403
 }
@@ -542,12 +569,14 @@ export type occurrencesCancelResponse409 = {
   status: 409
 }
 
-;
+export type occurrencesCancelResponseSuccess = (occurrencesCancelResponse200) & {
+  headers: Headers;
+};
 export type occurrencesCancelResponseError = (occurrencesCancelResponse403 | occurrencesCancelResponse404 | occurrencesCancelResponse409) & {
   headers: Headers;
 };
 
-export type occurrencesCancelResponse = (occurrencesCancelResponseError)
+export type occurrencesCancelResponse = (occurrencesCancelResponseSuccess | occurrencesCancelResponseError)
 
 export const getOccurrencesCancelUrl = (id: string,
     occurrenceId: string,) => {
@@ -640,7 +669,12 @@ export const useOccurrencesCancel = <TError = ErrorType<ProblemDetail>,
       > => {
       return useMutation(getOccurrencesCancelMutationOptions(options), queryClient);
     }
-    export type occurrencesAttendResponse404 = {
+    export type occurrencesAttendResponse200 = {
+  data: OccurrenceResponse
+  status: 200
+}
+
+export type occurrencesAttendResponse404 = {
   data: ProblemDetail
   status: 404
 }
@@ -650,12 +684,14 @@ export type occurrencesAttendResponse409 = {
   status: 409
 }
 
-;
+export type occurrencesAttendResponseSuccess = (occurrencesAttendResponse200) & {
+  headers: Headers;
+};
 export type occurrencesAttendResponseError = (occurrencesAttendResponse404 | occurrencesAttendResponse409) & {
   headers: Headers;
 };
 
-export type occurrencesAttendResponse = (occurrencesAttendResponseError)
+export type occurrencesAttendResponse = (occurrencesAttendResponseSuccess | occurrencesAttendResponseError)
 
 export const getOccurrencesAttendUrl = (id: string,
     occurrenceId: string,) => {
@@ -733,7 +769,12 @@ export const useOccurrencesAttend = <TError = ErrorType<ProblemDetail>,
       > => {
       return useMutation(getOccurrencesAttendMutationOptions(options), queryClient);
     }
-    export type occurrencesUnattendResponse404 = {
+    export type occurrencesUnattendResponse200 = {
+  data: OccurrenceResponse
+  status: 200
+}
+
+export type occurrencesUnattendResponse404 = {
   data: ProblemDetail
   status: 404
 }
@@ -743,12 +784,14 @@ export type occurrencesUnattendResponse409 = {
   status: 409
 }
 
-;
+export type occurrencesUnattendResponseSuccess = (occurrencesUnattendResponse200) & {
+  headers: Headers;
+};
 export type occurrencesUnattendResponseError = (occurrencesUnattendResponse404 | occurrencesUnattendResponse409) & {
   headers: Headers;
 };
 
-export type occurrencesUnattendResponse = (occurrencesUnattendResponseError)
+export type occurrencesUnattendResponse = (occurrencesUnattendResponseSuccess | occurrencesUnattendResponseError)
 
 export const getOccurrencesUnattendUrl = (id: string,
     occurrenceId: string,) => {
@@ -826,7 +869,12 @@ export const useOccurrencesUnattend = <TError = ErrorType<ProblemDetail>,
       > => {
       return useMutation(getOccurrencesUnattendMutationOptions(options), queryClient);
     }
-    export type occurrencesAttendeesResponse403 = {
+    export type occurrencesAttendeesResponse200 = {
+  data: UserShortResponse[]
+  status: 200
+}
+
+export type occurrencesAttendeesResponse403 = {
   data: ProblemDetail
   status: 403
 }
@@ -836,12 +884,14 @@ export type occurrencesAttendeesResponse404 = {
   status: 404
 }
 
-;
+export type occurrencesAttendeesResponseSuccess = (occurrencesAttendeesResponse200) & {
+  headers: Headers;
+};
 export type occurrencesAttendeesResponseError = (occurrencesAttendeesResponse403 | occurrencesAttendeesResponse404) & {
   headers: Headers;
 };
 
-export type occurrencesAttendeesResponse = (occurrencesAttendeesResponseError)
+export type occurrencesAttendeesResponse = (occurrencesAttendeesResponseSuccess | occurrencesAttendeesResponseError)
 
 export const getOccurrencesAttendeesUrl = (id: string,
     occurrenceId: string,) => {
