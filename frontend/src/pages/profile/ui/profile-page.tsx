@@ -6,6 +6,7 @@ import { useWardrobe } from "../model/use-wardrobe";
 import { EditProfileDialog } from "@/features/edit-profile/ui/edit-profile-dialog";
 import { Link } from "react-router";
 import { MyBeaverPet } from "@/widgets/beaver-pet/ui/my-beaver-pet";
+import { ProfileGallery } from "./profile-gallery";
 import { ProfileMobile } from "./profile-mobile";
 import { AppHeader } from "@/widgets/app-header/ui/app-header";
 import { Badge } from "@/shared/components/ui/badge";
@@ -321,6 +322,7 @@ export default function ProfilePage() {
           <Attendance />
           <Achievements />
         </div>
+        <div className="mt-6"><ProfileGallery /></div>
       </main>
     </div>
     </>

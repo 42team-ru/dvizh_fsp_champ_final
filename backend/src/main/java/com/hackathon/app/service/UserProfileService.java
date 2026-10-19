@@ -1,6 +1,9 @@
 package com.hackathon.app.service;
 
 import java.util.NoSuchElementException;
+import java.util.List;
+import com.hackathon.app.domain.dto.FileResponse;
+import com.hackathon.app.domain.exception.ConflictException;
 import java.util.UUID;
 
 import com.hackathon.app.domain.dto.FileUpload;
@@ -56,7 +59,7 @@ public class UserProfileService {
         var now = dbTime.now();
         var ids = feed.findIds(EventSpecifications.publishedByAuthor(id), now, null, UPCOMING_LIMIT);
         var upcoming = EventListLookups.sortedLike(events.findAllById(ids), ids);
-        return userMapper.toPublic(user, userSports.of(id), history.total(id), eventService.summaries(upcoming, viewerId));
+        return userMapper.toPublic(user, userSports.of(id), history.total(id), eventService.summaries(upcoming, viewerId), photos(id));
     }
 
     /** Правка своего профиля: имя, фамилия, город, о себе. */
@@ -89,6 +92,36 @@ public class UserProfileService {
         users.saveAndFlush(user);
         files.deleteAll(storedFiles.findByUploadedByIdAndKind(userId, FileKind.AVATAR));
         return MeResponse.of(user, pets.get(userId));
+    }
+
+    /** Галерея профиля: аватар в неё не входит. */
+    @Transactional(readOnly = true)
+    public List<FileResponse> photos(UUID userId) {
+        find(userId);
+        return fileMapper.toResponses(storedFiles.findByUploadedByIdAndKindOrderByCreatedAtAscIdAsc(userId, FileKind.USER_PHOTO));
+    }
+
+    /** Добавить фото; блокировка владельца защищает лимит при параллельных загрузках. */
+    @Transactional
+    public List<FileResponse> addPhoto(UUID userId, FileUpload upload) {
+        users.findByIdForUpdate(userId).orElseThrow(() -> new NoSuchElementException("Пользователь не найден"));
+        if (storedFiles.countByUploadedByIdAndKind(userId, FileKind.USER_PHOTO) >= 6) {
+            throw new ConflictException("Можно загрузить не больше 6 фото");
+        }
+        files.store(FileKind.USER_PHOTO, upload, userId, null, null, null);
+        return photos(userId);
+    }
+
+    /** Удалить только собственное фото галереи; чужие файлы и аватары не затрагиваются. */
+    @Transactional
+    public List<FileResponse> removePhoto(UUID userId, UUID fileId) {
+        users.findByIdForUpdate(userId).orElseThrow(() -> new NoSuchElementException("Пользователь не найден"));
+        var photo = storedFiles.findById(fileId)
+                .filter(f -> f.getKind() == FileKind.USER_PHOTO && userId.equals(f.getUploadedById()))
+                .orElseThrow(() -> new NoSuchElementException(FileService.NOT_FOUND));
+        files.delete(photo);
+        storedFiles.flush();
+        return photos(userId);
     }
 
     private AppUser find(UUID userId) {

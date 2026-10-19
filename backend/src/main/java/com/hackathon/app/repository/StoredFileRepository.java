@@ -13,6 +13,11 @@ public interface StoredFileRepository extends JpaRepository<StoredFile, UUID> {
 
 	List<StoredFile> findByUploadedByIdAndKind(UUID uploadedById, FileKind kind);
 
+    /** Личная галерея в порядке загрузки. */
+    List<StoredFile> findByUploadedByIdAndKindOrderByCreatedAtAscIdAsc(UUID uploadedById, FileKind kind);
+
+    long countByUploadedByIdAndKind(UUID uploadedById, FileKind kind);
+
 	List<StoredFile> findByOrganizationIdAndKindOrderByCreatedAtAsc(UUID organizationId, FileKind kind);
 
 	long countByOrganizationIdAndKind(UUID organizationId, FileKind kind);

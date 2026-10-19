@@ -9,6 +9,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuthLogout } from "@/shared/api/generated/core/auth/auth";
 import { USER_QUERY_KEY } from "@/entity/user/model/use-user";
 import { MyBeaverPet } from "@/widgets/beaver-pet/ui/my-beaver-pet";
+import { ProfileGallery } from "./profile-gallery";
 import { MobileTabBar } from "@/widgets/mobile-shell/ui/mobile-tab-bar";
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
@@ -278,6 +279,7 @@ export function ProfileMobile() {
       <MemphisBackground variant="mobile" seed="profile" />
       <AppBar />
       <Passport />
+      <div className="px-4"><ProfileGallery /></div>
       <Pet />
       <Attendance />
       <Achievements />

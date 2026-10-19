@@ -222,6 +222,108 @@ export interface UserSportResponse {
   level?: UserSportResponseLevel;
 }
 
+export interface HelpersPreferences {
+  /** Напоминать о тренировках */
+  reminders: boolean;
+  /** Подсказывать события рядом */
+  nearby: boolean;
+  /** Радоваться достижениям */
+  cheer: boolean;
+}
+
+export type SaveUserPreferencesRequestLevel = typeof SaveUserPreferencesRequestLevel[keyof typeof SaveUserPreferencesRequestLevel];
+
+
+export const SaveUserPreferencesRequestLevel = {
+  BEGINNER: 'BEGINNER',
+  AMATEUR: 'AMATEUR',
+  ADVANCED: 'ADVANCED',
+  PRO: 'PRO',
+} as const;
+
+export type SaveUserPreferencesRequestDaysItem = typeof SaveUserPreferencesRequestDaysItem[keyof typeof SaveUserPreferencesRequestDaysItem];
+
+
+export const SaveUserPreferencesRequestDaysItem = {
+  MONDAY: 'MONDAY',
+  TUESDAY: 'TUESDAY',
+  WEDNESDAY: 'WEDNESDAY',
+  THURSDAY: 'THURSDAY',
+  FRIDAY: 'FRIDAY',
+  SATURDAY: 'SATURDAY',
+  SUNDAY: 'SUNDAY',
+} as const;
+
+export type SaveUserPreferencesRequestDaytime = typeof SaveUserPreferencesRequestDaytime[keyof typeof SaveUserPreferencesRequestDaytime];
+
+
+export const SaveUserPreferencesRequestDaytime = {
+  MORNING: 'MORNING',
+  DAY: 'DAY',
+  EVENING: 'EVENING',
+} as const;
+
+export interface SaveUserPreferencesRequest {
+  level: SaveUserPreferencesRequestLevel;
+  /**
+     * Удобные дни недели; хотя бы один
+     * @minItems 1
+     */
+  days: SaveUserPreferencesRequestDaysItem[];
+  daytime: SaveUserPreferencesRequestDaytime;
+  /**
+     * Радиус поиска в километрах
+     * @minimum 1
+     * @maximum 20
+     */
+  radiusKm: number;
+  helpers: HelpersPreferences;
+}
+
+export type UserPreferencesResponseLevel = typeof UserPreferencesResponseLevel[keyof typeof UserPreferencesResponseLevel];
+
+
+export const UserPreferencesResponseLevel = {
+  BEGINNER: 'BEGINNER',
+  AMATEUR: 'AMATEUR',
+  ADVANCED: 'ADVANCED',
+  PRO: 'PRO',
+} as const;
+
+export type UserPreferencesResponseDaysItem = typeof UserPreferencesResponseDaysItem[keyof typeof UserPreferencesResponseDaysItem];
+
+
+export const UserPreferencesResponseDaysItem = {
+  MONDAY: 'MONDAY',
+  TUESDAY: 'TUESDAY',
+  WEDNESDAY: 'WEDNESDAY',
+  THURSDAY: 'THURSDAY',
+  FRIDAY: 'FRIDAY',
+  SATURDAY: 'SATURDAY',
+  SUNDAY: 'SUNDAY',
+} as const;
+
+export type UserPreferencesResponseDaytime = typeof UserPreferencesResponseDaytime[keyof typeof UserPreferencesResponseDaytime];
+
+
+export const UserPreferencesResponseDaytime = {
+  MORNING: 'MORNING',
+  DAY: 'DAY',
+  EVENING: 'EVENING',
+} as const;
+
+export interface UserPreferencesResponse {
+  level: UserPreferencesResponseLevel;
+  days: UserPreferencesResponseDaysItem[];
+  daytime: UserPreferencesResponseDaytime;
+  /**
+     * @minimum 1
+     * @maximum 20
+     */
+  radiusKm: number;
+  helpers: HelpersPreferences;
+}
+
 /**
  * Код слота → код вещи. Чтобы снять вещь, не передавайте слот (null тоже снимает)
  */
@@ -1494,6 +1596,8 @@ export interface PublicUserResponse {
   attendedCount: number;
   /** Опубликованные и ещё не начавшиеся мероприятия, где человек автор; ближайшие первыми */
   events: EventSummaryResponse[];
+  /** Фото личной галереи в порядке загрузки, до 6; отдельно от аватара */
+  photos: FileResponse[];
 }
 
 /**
@@ -2079,6 +2183,11 @@ export type UsersUploadAvatarBody = {
 
 export type OrganizationsUploadLogoBody = {
   /** Изображение */
+  file: Blob | File;
+};
+
+export type UsersAddPhotoBody = {
+  /** Фото */
   file: Blob | File;
 };
 

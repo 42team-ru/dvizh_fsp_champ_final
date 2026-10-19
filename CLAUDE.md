@@ -58,10 +58,11 @@ cd backend && ./gradlew postgresTest  # смоук миграций на нас�
 |---|---|
 | `AppUser` (`users`) | есть в шаблоне; добавить `bio?`, `avatarUrl?`, `city?` |
 | `Sport` | `id`, `name`, `normalizedName` (unique), `slug`, `custom` (boolean), `createdById?`, `createdAt` |
-| `UserSport` | `userId`, `sportId`, `level?` (`BEGINNER \| AMATEUR \| PRO`) |
+| `UserPreferences` | `id`, `userId` (unique), `level` (`SportLevel`), `days` (`DayOfWeek`, отдельная таблица `user_preference_days`), `daytime` (`MORNING \| DAY \| EVENING`), `radiusKm` (1–20), `reminders`, `nearby`, `cheer`, аудит |
+| `UserSport` | `userId`, `sportId`, `level?` (`BEGINNER \| AMATEUR \| ADVANCED \| PRO`) |
 | `Organization` | `id`, `accountId` (unique, аккаунт роли ORG), `name`, `description`, `city?`, `contacts` (`Map<ContactType, String>`, таблица `organization_contacts`; `ContactType = PHONE \| EMAIL \| TELEGRAM \| VK \| WHATSAPP \| MAX \| WEBSITE`, минимум один, формат проверяет сервис), `status` (`PENDING \| APPROVED \| REJECTED`), `rejectReason?`, `submittedAt`, `reviewedAt?`, `reviewedById?` |
 | `OrganizationSport` | `organizationId`, `sportId` |
-| `Event` | `id`, `title`, `description`, `sportId`, `authorId`, `organizationId?` (если создано от организации), `startAt`, `endAt?`, `format` (`OFFLINE \| ONLINE`), `address?`, `locationNote?`, `onlineUrl?`, `lat?`, `lon?` (обязательны для OFFLINE, у ONLINE не хранятся; рядом в БД вычисляемая PostGIS-точка `location`), `level` (`ANY \| BEGINNER \| AMATEUR \| PRO`), `kind?` (тренировка, игра, встреча, любительский турнир), `requirements?`, `equipment?`, `capacity?`, `joinMode` (`FREE \| REQUEST`), `privateDetails?`, `status` (`PUBLISHED \| UNPUBLISHED \| DELETED`), `moderationReason?`, `moderatedAt?`, `moderatedById?`, `createdAt`, `updatedAt` |
+| `Event` | `id`, `title`, `description`, `sportId`, `authorId`, `organizationId?` (если создано от организации), `startAt`, `endAt?`, `format` (`OFFLINE \| ONLINE`), `address?`, `locationNote?`, `onlineUrl?`, `lat?`, `lon?` (обязательны для OFFLINE, у ONLINE не хранятся; рядом в БД вычисляемая PostGIS-точка `location`), `level` (`ANY \| BEGINNER \| AMATEUR \| ADVANCED \| PRO`), `kind?` (тренировка, игра, встреча, любительский турнир), `requirements?`, `equipment?`, `capacity?`, `joinMode` (`FREE \| REQUEST`), `privateDetails?`, `status` (`PUBLISHED \| UNPUBLISHED \| DELETED`), `moderationReason?`, `moderatedAt?`, `moderatedById?`, `createdAt`, `updatedAt` |
 | `Event` (кворум) | + `minParticipants?` — «состоится, если наберём N», не больше `capacity` |
 | `Event` (серия) | + `recurring`, `timeZone` (IANA), `seriesStartDate`, `seriesEndDate`; у серии `startAt/endAt` — первое занятие, `capacity` — на каждое занятие |
 | `EventScheduleRule` (`event_schedule_rules`) | `id`, `eventId`, `sortOrder`, `firstStart` (`LocalDateTime`, местное время серии = DTSTART), `durationMinutes`, `rrule` (RFC 5545, без `RRULE:`) |
@@ -74,7 +75,37 @@ cd backend && ./gradlew postgresTest  # смоук миграций на нас�
 - Удаление событий мягкое (`status = DELETED`): записавшиеся видят, что произошло.
 - Счётчик «записались 8 из 16» не храним: считаем подтверждённые записи одним запросом по списку `eventId`.
 - `privateDetails` (точное место, ссылка на внешний чат) и `onlineUrl` видят только подтверждённые участники и организатор.
-- Уровень: в UI пять вариантов (Любой, Новичок, Любитель, Профи).
+- Уровень: в UI пять вариантов (Любой, Новичок, Любитель, Опытный, Профи), поэтому в enum есть `ADVANCED`.
+
+## Личная галерея профиля
+
+Галерея отделена от аватара: файлы `USER_PHOTO` в существующей таблице `files`, до 6 фото
+JPG/PNG/WebP по 5 МБ. `GET /api/users/me/photos` (`users_myPhotos`) возвращает список;
+`POST /api/users/me/photos` (`users_addPhoto`, multipart `file`) добавляет;
+`DELETE /api/users/me/photos/{fileId}` (`users_removePhoto`) удаляет только своё фото галереи.
+Изменения возвращают весь список по времени загрузки. Лимит защищён блокировкой пользователя.
+`PublicUserResponse.photos` показывает галерею всем вошедшим; скачивание — существующий `/api/files/{id}`.
+Чужой файл, аватар или неизвестный id при удалении → 404; без входа → 401.
+Загрузка/удаление аватара не меняет галерею. Во фронте отдельный блок «Мои фото» в мобильном и десктопном профиле.
+
+## Предпочтения онбординга
+
+`GET /api/users/me/preferences` (`users_myPreferences`) и `PUT /api/users/me/preferences`
+(`users_saveMyPreferences`) доступны вошедшему владельцу профиля любой роли. PUT заменяет настройки
+целиком: `level`, непустой список `days`, `daytime`, целое `radiusKm` (1–20),
+`helpers: {reminders, nearby, cheer}`; все поля обязательны, включая false у помощников.
+Дни — MONDAY–SUNDAY; повторы схлопываются, ответ отсортирован с понедельника.
+До первого сохранения GET не создаёт строку в БД и возвращает AMATEUR, TUESDAY/THURSDAY/SATURDAY,
+EVENING, 5 км и helpers=true/true/false. Настройки приватные, в публичный профиль не входят.
+
+Соответствия фронта: novice → BEGINNER, amateur → AMATEUR, pro → PRO; «Пн»–«Вс» → MONDAY–SUNDAY;
+morning/day/evening → MORNING/DAY/EVENING; radius → radiusKm. ADVANCED также поддерживается API.
+Общий уровень независим от UserSport: при подключении онбординга фронт передаёт выбранный уровень
+каждому спорту через существующий PUT /api/users/me/sports. Сохранение предпочтений не меняет интересы.
+
+**Текущий объём:** хранение и контракт API. Экран онбординга ещё не подключён;
+расписание и радиус не применяются к ленте, помощники не запускают уведомления или реакции.
+Имя/наряд питомца и статус завершения онбординга этим API не управляются.
 
 ## Бизнес-правила (инварианты)
 
