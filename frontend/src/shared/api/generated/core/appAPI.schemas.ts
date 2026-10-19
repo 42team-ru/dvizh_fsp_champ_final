@@ -4,6 +4,198 @@
  * appAPI
  * OpenAPI spec version: v1
  */
+export type CreateEventRequestLevel = typeof CreateEventRequestLevel[keyof typeof CreateEventRequestLevel];
+
+
+export const CreateEventRequestLevel = {
+  ANY: 'ANY',
+  BEGINNER: 'BEGINNER',
+  AMATEUR: 'AMATEUR',
+  PRO: 'PRO',
+} as const;
+
+export type CreateEventRequestFormat = typeof CreateEventRequestFormat[keyof typeof CreateEventRequestFormat];
+
+
+export const CreateEventRequestFormat = {
+  TRAINING: 'TRAINING',
+  GAME: 'GAME',
+  MEETUP: 'MEETUP',
+  AMATEUR_TOURNAMENT: 'AMATEUR_TOURNAMENT',
+} as const;
+
+export type CreateEventRequestJoinMode = typeof CreateEventRequestJoinMode[keyof typeof CreateEventRequestJoinMode];
+
+
+export const CreateEventRequestJoinMode = {
+  FREE: 'FREE',
+  REQUEST: 'REQUEST',
+} as const;
+
+export interface CreateEventRequest {
+  /**
+     * @minLength 0
+     * @maxLength 200
+     */
+  title: string;
+  /**
+     * @minLength 0
+     * @maxLength 5000
+     */
+  description?: string;
+  sportId: number;
+  startAt: string;
+  endAt?: string;
+  offlineMode: boolean;
+  /**
+     * @minLength 0
+     * @maxLength 500
+     */
+  address?: string;
+  /**
+     * @minLength 0
+     * @maxLength 1000
+     */
+  locationNote?: string;
+  /**
+     * @minimum -90
+     * @maximum 90
+     */
+  latitude?: number;
+  /**
+     * @minimum -180
+     * @maximum 180
+     */
+  longitude?: number;
+  level?: CreateEventRequestLevel;
+  format?: CreateEventRequestFormat;
+  /**
+     * @minLength 0
+     * @maxLength 2000
+     */
+  requirements?: string;
+  /**
+     * @minLength 0
+     * @maxLength 2000
+     */
+  equipment?: string;
+  /**
+     * @minimum 1
+     * @maximum 10000
+     */
+  capacity?: number;
+  joinMode?: CreateEventRequestJoinMode;
+}
+
+export type EventResponseLevel = typeof EventResponseLevel[keyof typeof EventResponseLevel];
+
+
+export const EventResponseLevel = {
+  ANY: 'ANY',
+  BEGINNER: 'BEGINNER',
+  AMATEUR: 'AMATEUR',
+  PRO: 'PRO',
+} as const;
+
+export type EventResponseFormat = typeof EventResponseFormat[keyof typeof EventResponseFormat];
+
+
+export const EventResponseFormat = {
+  TRAINING: 'TRAINING',
+  GAME: 'GAME',
+  MEETUP: 'MEETUP',
+  AMATEUR_TOURNAMENT: 'AMATEUR_TOURNAMENT',
+} as const;
+
+export type EventResponseJoinMode = typeof EventResponseJoinMode[keyof typeof EventResponseJoinMode];
+
+
+export const EventResponseJoinMode = {
+  FREE: 'FREE',
+  REQUEST: 'REQUEST',
+} as const;
+
+export type EventResponseStatus = typeof EventResponseStatus[keyof typeof EventResponseStatus];
+
+
+export const EventResponseStatus = {
+  PUBLISHED: 'PUBLISHED',
+  UNPUBLISHED: 'UNPUBLISHED',
+  DELETED: 'DELETED',
+} as const;
+
+export type EventResponseMyRegistrationStatus = typeof EventResponseMyRegistrationStatus[keyof typeof EventResponseMyRegistrationStatus];
+
+
+export const EventResponseMyRegistrationStatus = {
+  CONFIRMED: 'CONFIRMED',
+  PENDING: 'PENDING',
+  REJECTED: 'REJECTED',
+  CANCELLED: 'CANCELLED',
+} as const;
+
+export interface SportResponse {
+  id?: number;
+  code?: string;
+  name?: string;
+}
+
+export interface EventResponse {
+  id?: string;
+  title?: string;
+  description?: string;
+  sport?: SportResponse;
+  authorId?: string;
+  organizationId?: string;
+  startAt?: string;
+  endAt?: string;
+  offlineMode?: boolean;
+  address?: string;
+  locationNote?: string;
+  latitude?: number;
+  longitude?: number;
+  level?: EventResponseLevel;
+  format?: EventResponseFormat;
+  requirements?: string;
+  equipment?: string;
+  capacity?: number;
+  joinMode?: EventResponseJoinMode;
+  status?: EventResponseStatus;
+  moderationReason?: string;
+  participantsCount?: number;
+  myRegistrationStatus?: EventResponseMyRegistrationStatus;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface JoinEventRequest {
+  /**
+     * @minLength 0
+     * @maxLength 1000
+     */
+  message?: string;
+}
+
+export type RegistrationResponseStatus = typeof RegistrationResponseStatus[keyof typeof RegistrationResponseStatus];
+
+
+export const RegistrationResponseStatus = {
+  CONFIRMED: 'CONFIRMED',
+  PENDING: 'PENDING',
+  REJECTED: 'REJECTED',
+  CANCELLED: 'CANCELLED',
+} as const;
+
+export interface RegistrationResponse {
+  id?: string;
+  eventId?: string;
+  userId?: string;
+  status?: RegistrationResponseStatus;
+  message?: string;
+  decidedAt?: string;
+  createdAt?: string;
+}
+
 export interface RegisterRequest {
   /**
      * @minLength 3
@@ -68,9 +260,49 @@ export interface LoginRequest {
   password: string;
 }
 
+export type DecideRegistrationRequestStatus = typeof DecideRegistrationRequestStatus[keyof typeof DecideRegistrationRequestStatus];
+
+
+export const DecideRegistrationRequestStatus = {
+  CONFIRMED: 'CONFIRMED',
+  PENDING: 'PENDING',
+  REJECTED: 'REJECTED',
+  CANCELLED: 'CANCELLED',
+} as const;
+
+export interface DecideRegistrationRequest {
+  status: DecideRegistrationRequestStatus;
+}
+
 export interface PingResponse {
   status?: string;
   time?: string;
+}
+
+export type EventRegistrationResponseStatus = typeof EventRegistrationResponseStatus[keyof typeof EventRegistrationResponseStatus];
+
+
+export const EventRegistrationResponseStatus = {
+  CONFIRMED: 'CONFIRMED',
+  PENDING: 'PENDING',
+  REJECTED: 'REJECTED',
+  CANCELLED: 'CANCELLED',
+} as const;
+
+export interface ParticipantResponse {
+  id?: string;
+  username?: string;
+  firstName?: string;
+  lastName?: string;
+}
+
+export interface EventRegistrationResponse {
+  id?: string;
+  participant?: ParticipantResponse;
+  status?: EventRegistrationResponseStatus;
+  message?: string;
+  decidedAt?: string;
+  createdAt?: string;
 }
 
 export type DemoAccountResponseSystemRole = typeof DemoAccountResponseSystemRole[keyof typeof DemoAccountResponseSystemRole];
@@ -121,6 +353,20 @@ export interface MeResponse {
   authProvider?: MeResponseAuthProvider;
   createdAt?: string;
 }
+
+export type EventsRegistrationsParams = {
+status?: EventsRegistrationsStatus;
+};
+
+export type EventsRegistrationsStatus = typeof EventsRegistrationsStatus[keyof typeof EventsRegistrationsStatus];
+
+
+export const EventsRegistrationsStatus = {
+  CONFIRMED: 'CONFIRMED',
+  PENDING: 'PENDING',
+  REJECTED: 'REJECTED',
+  CANCELLED: 'CANCELLED',
+} as const;
 
 export type AuthCheckUsernameParams = {
 username: string;

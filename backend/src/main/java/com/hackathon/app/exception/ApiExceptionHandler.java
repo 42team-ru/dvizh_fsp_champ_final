@@ -17,9 +17,19 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 		return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage());
 	}
 
+	@ExceptionHandler(BadRequestException.class)
+	ProblemDetail badRequest(BadRequestException e) {
+		return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
+	}
+
 	@ExceptionHandler(UnauthorizedException.class)
 	ProblemDetail unauthorized(UnauthorizedException e) {
 		return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, e.getMessage());
+	}
+
+	@ExceptionHandler(ForbiddenException.class)
+	ProblemDetail forbidden(ForbiddenException e) {
+		return ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, e.getMessage());
 	}
 
 	@ExceptionHandler(ConflictException.class)

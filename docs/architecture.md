@@ -20,11 +20,32 @@ docker-compose.dev.yml  только БД для разработки
 | `repository` | Spring Data интерфейсы доступа к БД |
 | `entity` | JPA-сущности (наружу не отдаём, только через `dto`) |
 | `dto` | Запросы и ответы API (records, валидация) |
+| `mapper` | MapStruct: entity ↔ dto, **всё заполнение полей сущностей только здесь** (сервис — чистая бизнес-логика). Общий `@Mapper(config = MappingConfig.class)`: поля без источника пропускаются без `ignore = true`, строки идут через `util.Strings.blankToNull` (обрезка, пустые → `null`) |
+| `util` | Статические утилиты без состояния (`Strings`) |
 | `config` | Security, OpenAPI, `@ConfigurationProperties` |
 | `exception` | Свои исключения и единый `ApiExceptionHandler` (RFC 9457) |
 
 Зависимости идут только вниз: `rest → service → repository → entity`. Миграции БД: `backend/src/main/resources/db/migration` (Flyway, только вперёд; применённые миграции не править, добавлять новые `V3__...`).
 Пример готового флоу: регистрация и вход (`AuthController`, `AuthService`).
+
+## Мероприятия (`EventController`, `SportController`, `EventService`, миграция `V3__events.sql`)
+- Мероприятие (`events`) — центр модели. Вид спорта — справочник `sports` в БД (сидится миграцией), новый вид не требует кода.
+- `GET /api/sports` — справочник; `POST /api/events` — создать (автор = текущий пользователь, сразу `PUBLISHED`);
+  `GET /api/events/{id}` — карточка с `participantsCount` и `myRegistrationStatus`; `GET /api/events/{id}/participants` — подтверждённые участники;
+  `POST /api/events/{id}/join` — записаться (`{"message"?}`); после отмены — та же ручка, запись возобновляется;
+  `POST /api/events/{id}/cancel` — отменить свою запись/заявку (место освобождается; повторное нажатие — 200; отклонённую — 409; после старта — 409);
+  `GET /api/events/{id}/registrations?status=` — все заявки (только организатор, иначе 403);
+  `PATCH /api/events/{id}/registrations/{registrationId}` `{"status":"CONFIRMED"|"REJECTED"}` — решение организатора.
+- Решение можно пересматривать сколько угодно: случайно отклонённого организатор находит в `?status=REJECTED` и подтверждает
+  (если есть места). Сам отклонённый повторно подать заявку не может (иначе отказ ничего не значит). Отменённую пользователем запись решение не трогает (409).
+- Офлайн-мероприятию обязателен `address` (координаты по желанию), онлайн — место/ссылка в `locationNote`.
+- Запись (`registrations`, unique(event_id, user_id)): `joinMode=FREE` → сразу `CONFIRMED`, `REQUEST` → `PENDING`.
+  Отказ (409): организатор на своё, уже началось, уже записан/заявка ждёт/отклонена, нет мест (`capacity`).
+  Строка мероприятия блокируется (`SELECT ... FOR UPDATE`), поэтому лимит мест не превышается при параллельной записи.
+- id генерирует Hibernate (UUID). `createdAt`/`updatedAt` — в базовом `entity.AuditEntity` (`@MappedSuperclass`), сущности от него наследуются.
+- Текущее время для бизнес-проверок («мероприятие уже началось», `decidedAt`) берётся у базы: `DbTimeRepository.now()`, а не `Clock`.
+- Контроллеры логируют на английском `Endpoint called: <METHOD> <путь>, userId=..., request=...` и `Endpoint response: <METHOD> <путь>, response=...`. Если сервис бросил исключение (4xx), строки `Endpoint response` не будет: ответ формирует `ApiExceptionHandler`.
+- `organization_id` и поля модерации уже в схеме, но API их пока не заполняет. Комментарии не реализованы.
 
 ## Правила для контроллеров
 - Только под `/api/...`, с `produces = APPLICATION_JSON_VALUE` (иначе в спецификации будет `*/*`, и Orval сгенерирует `string` вместо типа).
