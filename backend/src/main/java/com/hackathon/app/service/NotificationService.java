@@ -3,6 +3,7 @@ package com.hackathon.app.service;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.*;
+import java.util.stream.Collectors;
 import com.hackathon.app.config.NotificationProperties;
 import com.hackathon.app.domain.dto.*;
 import com.hackathon.app.domain.entity.*;
@@ -10,6 +11,7 @@ import com.hackathon.app.domain.enums.*;
 import com.hackathon.app.domain.exception.BadRequestException;
 import com.hackathon.app.domain.exception.ConflictException;
 import com.hackathon.app.domain.mapper.NotificationMapper;
+import com.hackathon.app.domain.mapper.UserMapper;
 import com.hackathon.app.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -31,9 +33,17 @@ public class NotificationService {
     private final NotificationMapper mapper;
     private final NotificationProperties properties;
     private final DbTimeRepository dbTime;
+    private final UserMapper userMapper;
+
+    /** Непрочитанные уведомления по типам — для счётчиков на вкладках активности. */
+    @Transactional(readOnly = true)
+    public List<NotificationTypeCountResponse> unreadCounts(UUID userId) {
+        return notifications.unreadByType(userId).stream()
+                .map(c -> new NotificationTypeCountResponse(c.getType(), c.getUnread())).toList();
+    }
 
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
-    public NotificationPageResponse list(UUID userId, String cursor, int size, boolean unreadOnly) {
+    public NotificationPageResponse list(UUID userId, String cursor, int size, boolean unreadOnly, Set<NotificationType> types) {
         var revision = revision(userId);
         var before = Instant.parse("9999-12-31T00:00:00Z");
         var beforeId = new UUID(-1L, -1L);
@@ -46,7 +56,9 @@ public class NotificationService {
             } catch (RuntimeException invalid) { throw new BadRequestException("Некорректный курсор уведомлений"); }
         }
         int limit = Math.clamp(size, 1, 100);
-        var page = notifications.page(userId, unreadOnly, before, beforeId, PageRequest.of(0, limit + 1));
+        var allTypes = types == null || types.isEmpty();
+        var page = notifications.page(userId, unreadOnly, allTypes, allTypes ? Set.of(NotificationType.REMINDER) : types,
+                before, beforeId, PageRequest.of(0, limit + 1));
         boolean more = page.size() > limit;
         var items = page.stream().limit(limit).toList();
         String next = null;
@@ -55,7 +67,10 @@ public class NotificationService {
             next = Base64.getUrlEncoder().withoutPadding().encodeToString(
                     (last.getCreatedAt() + "|" + last.getId()).getBytes(StandardCharsets.UTF_8));
         }
-        return new NotificationPageResponse(items.stream().map(mapper::response).toList(), next,
+        // Авторы одним запросом: имя и аватар для строки «Саша ответила…».
+        var actors = users.findAllById(items.stream().map(Notification::getActorId).filter(Objects::nonNull).distinct().toList())
+                .stream().collect(Collectors.toMap(AppUser::getId, userMapper::toShort));
+        return new NotificationPageResponse(items.stream().map(n -> mapper.response(n, actors.get(n.getActorId()))).toList(), next,
                 notifications.countByUserIdAndReadAtIsNull(userId), revision);
     }
 

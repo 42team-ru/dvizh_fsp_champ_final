@@ -1,0 +1,111 @@
+import { useState } from "react";
+import { keepPreviousData, useQueryClient } from "@tanstack/react-query";
+import {
+  getNotificationsListQueryKey, getNotificationsUnreadCountsQueryKey, useNotificationsList, useNotificationsRead,
+  useNotificationsReadAll, useNotificationsUnreadCounts,
+} from "@/shared/api/generated/core/notifications/notifications";
+import { useRegistrationsMine } from "@/shared/api/generated/core/registrations/registrations";
+import type { NotificationResponse, NotificationsListTypesItem } from "@/shared/api/generated/core/appAPI.schemas";
+
+/** Вкладки активности: каждая — свой набор типов уведомлений; «Заявки» — мои заявки, ждущие решения. */
+export type ActivityTab = "all" | "replies" | "achievements" | "reminders" | "requests";
+
+const REPLIES: NotificationsListTypesItem[] = ["COMMENT_REPLY", "COMMENT_CREATED"];
+const ACHIEVEMENTS: NotificationsListTypesItem[] = ["ACHIEVEMENT_UNLOCKED"];
+const REMINDERS: NotificationsListTypesItem[] = ["REMINDER"];
+
+export const ACTIVITY_TABS: { key: ActivityTab; label: string; types?: NotificationsListTypesItem[] }[] = [
+  { key: "all", label: "Все", types: [...REPLIES, ...ACHIEVEMENTS, ...REMINDERS] },
+  { key: "replies", label: "Ответы", types: REPLIES },
+  { key: "achievements", label: "Достижения", types: ACHIEVEMENTS },
+  { key: "reminders", label: "Напоминания", types: REMINDERS },
+  { key: "requests", label: "Заявки" },
+];
+
+const STEP = 30;
+const DAY = 86_400_000;
+const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+
+/** «Сегодня», «Вчера», иначе «18 октября». */
+export function dayLabel(iso: string) {
+  const day = startOfDay(new Date(iso));
+  const today = startOfDay(new Date());
+  if (day === today) return "СЕГОДНЯ";
+  if (day === today - DAY) return "ВЧЕРА";
+  return new Date(iso).toLocaleDateString("ru-RU", { day: "numeric", month: "long" }).toUpperCase();
+}
+
+/** Время для строки: сегодня — «14:36», раньше — «18 окт». */
+export function shortTime(iso: string) {
+  const d = new Date(iso);
+  return startOfDay(d) === startOfDay(new Date())
+    ? d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })
+    : d.toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
+}
+
+/**
+ * Данные «Активности»: уведомления по вкладкам (ответы, достижения, напоминания), счётчики непрочитанного,
+ * мои заявки в ожидании решения и ближайшие подтверждённые записи («Ты идёшь»). Обновляется раз в 30 секунд.
+ */
+export function useActivity() {
+  const cache = useQueryClient();
+  const [tab, setTabState] = useState<ActivityTab>("all");
+  const [size, setSize] = useState(STEP);
+  const types = ACTIVITY_TABS.find((t) => t.key === tab)?.types;
+
+  const counts = useNotificationsUnreadCounts({ query: { refetchInterval: 30_000 } });
+  const list = useNotificationsList({ types, size }, {
+    query: { enabled: tab !== "requests", placeholderData: keepPreviousData, refetchInterval: 30_000 },
+  });
+  const pending = useRegistrationsMine({ status: "PENDING", when: "UPCOMING", size: 50 });
+  const going = useRegistrationsMine({ status: "CONFIRMED", when: "UPCOMING", size: 2 });
+
+  const page = list.data?.status === 200 ? list.data.data : undefined;
+  const items: NotificationResponse[] = page?.items ?? [];
+  const pendingItems = pending.data?.status === 200 ? pending.data.data.items ?? [] : [];
+  const pendingTotal = pending.data?.status === 200 ? pending.data.data.totalElements ?? pendingItems.length : 0;
+  const goingItems = going.data?.status === 200 ? going.data.data.items ?? [] : [];
+  const goingTotal = going.data?.status === 200 ? going.data.data.totalElements ?? goingItems.length : 0;
+
+  const unreadByType = new Map((counts.data?.status === 200 ? counts.data.data : []).map((c) => [c.type, c.unread]));
+  const unreadOf = (key: ActivityTab) => key === "requests"
+    ? pendingTotal
+    : (ACTIVITY_TABS.find((t) => t.key === key)?.types ?? []).reduce((sum, t) => sum + (unreadByType.get(t) ?? 0), 0);
+
+  // Лента по дням: «СЕГОДНЯ», «ВЧЕРА», дальше датой.
+  const groups: { label: string; items: NotificationResponse[] }[] = [];
+  for (const n of items) {
+    const label = dayLabel(n.createdAt);
+    const last = groups[groups.length - 1];
+    if (last?.label === label) last.items.push(n);
+    else groups.push({ label, items: [n] });
+  }
+
+  const refresh = () => {
+    void cache.invalidateQueries({ queryKey: getNotificationsListQueryKey() });
+    void cache.invalidateQueries({ queryKey: getNotificationsUnreadCountsQueryKey() });
+  };
+  const read = useNotificationsRead({ mutation: { onSuccess: refresh } });
+  const readAll = useNotificationsReadAll({ mutation: { onSuccess: refresh } });
+
+  return {
+    tab,
+    setTab: (next: ActivityTab) => { setTabState(next); setSize(STEP); },
+    unreadOf,
+    totalUnread: unreadOf("all"),
+    list,
+    groups,
+    hasMore: page?.nextCursor != null && size < 100,
+    showMore: () => setSize((s) => Math.min(100, s + STEP)),
+    /** Отметить прочитанным при переходе по уведомлению; уже прочитанные не трогаем. */
+    markRead: (n: NotificationResponse) => { if (!n.readAt) read.mutate({ id: n.id }); },
+    markAllRead: () => { if (page) readAll.mutate({ data: { throughRevision: page.revision } }); },
+    pending,
+    pendingItems,
+    pendingTotal,
+    goingItems,
+    goingTotal,
+  };
+}
+
+export type ActivityModel = ReturnType<typeof useActivity>;

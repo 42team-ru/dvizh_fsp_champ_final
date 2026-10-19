@@ -18,7 +18,7 @@ public class NotificationSubjects {
     public void reply(Event event, Comment reply, UUID parentAuthorId) {
         publisher.publish(List.of(new NotificationFact("reply:" + reply.getId(), Set.of(parentAuthorId), reply.getAuthorId(),
                 NotificationType.COMMENT_REPLY, NotificationCategory.DISCUSSIONS, "Вам ответили в обсуждении",
-                event.getTitle(), "/events/" + event.getId(), event.getId(), null, null, null)));
+                event.getTitle() + "\n" + preview(reply.getText()), "/events/" + event.getId(), event.getId(), null, null, null)));
     }
 
     /** Новое сообщение в общем потоке — организаторам, чтобы вопрос не остался без ответа. Свой вопрос публикатор пропустит. */
