@@ -1,16 +1,28 @@
 import * as React from "react"
 import { cn } from "cn"
+import { RoughBorder, type RoughOptions } from "@/shared/components/ui/rough-border"
 
-function Card({ className, ...props }: React.ComponentProps<"div">) {
+/** `rough` — нарисовать рамку от руки (rough.js) вместо обычной. */
+function Card({
+  className,
+  rough,
+  children,
+  ...props
+}: React.ComponentProps<"div"> & { rough?: boolean | RoughOptions }) {
+  const options = typeof rough === "object" ? rough : {}
   return (
     <div
       data-slot="card"
       className={cn(
         "flex flex-col rounded-card border-2 border-ink bg-card text-card-foreground",
+        rough && "relative border-transparent",
         className
       )}
       {...props}
-    />
+    >
+      {children}
+      {rough ? <RoughBorder radius={24} {...options} /> : null}
+    </div>
   )
 }
 

@@ -5,6 +5,8 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
 import { Icon } from "@/shared/components/ui/icon";
+import { MemphisBackground } from "@/shared/components/ui/memphis-background";
+import { RoughBorder } from "@/shared/components/ui/rough-border";
 import { Participants } from "@/shared/components/ui/participants";
 import { Progress } from "@/shared/components/ui/progress";
 import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar";
@@ -159,10 +161,10 @@ function Hero() {
           </Badge>
         </div>
         <div className="mt-[26px] flex gap-3">
-          <Button variant="secondary" size="lg">
+          <Button variant="secondary" size="lg" rough>
             Открыть билет
           </Button>
-          <Button variant="clear" size="lg" className="border-white">
+          <Button variant="clear" size="lg" rough={{ color: "white" }}>
             <Icon name="icon-arrow" className="size-[18px]" />
             Другие события
           </Button>
@@ -226,11 +228,11 @@ function Tip() {
           Выходить пора в 19:00 — до стадиона 25 минут пешком
         </p>
       </div>
-      <Button variant="ink">
+      <Button variant="ink" rough>
         <Icon name="icon-bell1" className="size-[18px]" />
         Напомнить
       </Button>
-      <Button variant="soft">Не надо</Button>
+      <Button variant="soft" rough={false}>Не надо</Button>
     </Card>
   );
 }
@@ -277,7 +279,7 @@ function Week() {
           <Progress value={80} className="h-3" />
         </div>
 
-        <Button variant="soft" className="shrink-0">
+        <Button variant="soft" rough className="shrink-0">
           <Icon name="icon-coin" className="size-[18px]" />
           Бублик ждёт монет
         </Button>
@@ -335,7 +337,8 @@ function EventCard({ event }: { event: (typeof EVENTS)[number] }) {
 
 function Stat({ value, label, tone }: { value: string; label: string; tone: string }) {
   return (
-    <div className={`box-border h-[74px] flex-1 rounded-[14px] border-2 border-ink px-[14px] pt-[10px] ${tone}`}>
+    <div className={`relative box-border h-[74px] flex-1 rounded-[14px] border-2 border-transparent px-[14px] pt-[10px] ${tone}`}>
+      <RoughBorder radius={14} roughness={0.9} />
       <p className="font-display text-[22px] leading-[27px] font-extrabold whitespace-nowrap text-foreground">
         {value}
       </p>
@@ -410,7 +413,9 @@ export default function HomePage() {
   return (
     <>
     <HomeMobile />
-    <div className="hidden min-h-dvh bg-background lg:block">
+    <div className="relative isolate hidden min-h-dvh overflow-hidden bg-background lg:block">
+      <MemphisBackground />
+      <div className="relative z-10">
       <AppHeader current="home" />
       <main className="mx-auto flex w-full max-w-[1280px] flex-col gap-7 px-8 pt-8 pb-12">
         <Hero />
@@ -431,6 +436,7 @@ export default function HomePage() {
           ))}
         </div>
       </main>
+      </div>
     </div>
     </>
   );

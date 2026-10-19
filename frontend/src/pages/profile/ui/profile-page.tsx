@@ -6,7 +6,9 @@ import { Card } from "@/shared/components/ui/card";
 import { Eyebrow } from "@/shared/components/ui/eyebrow";
 import { Icon } from "@/shared/components/ui/icon";
 import { Progress } from "@/shared/components/ui/progress";
+import { RoughBorder } from "@/shared/components/ui/rough-border";
 import { cn } from "cn";
+import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 
 const STATS = [
   { value: "48", label: "тренировок", tone: "bg-card" },
@@ -96,7 +98,7 @@ function Passport() {
             <div
               key={s.label}
               className={cn(
-                "relative h-[86px] w-[139.5px] shrink-0 rounded-2xl border-2 border-ink",
+                "relative h-[86px] w-[139.5px] shrink-0 rounded-2xl border-2 border-transparent",
                 s.tone
               )}
             >
@@ -106,6 +108,7 @@ function Passport() {
               <p className="absolute top-[51px] left-[14px] text-xs leading-[17px] font-semibold text-foreground opacity-70">
                 {s.label}
               </p>
+              <RoughBorder radius={16} roughness={0.9} />
             </div>
           ))}
         </div>
@@ -362,7 +365,8 @@ export default function ProfilePage() {
   return (
     <>
     <ProfileMobile />
-    <div className="hidden min-h-dvh bg-background lg:block">
+    <div className="relative isolate hidden min-h-dvh overflow-clip bg-background lg:block">
+      <MemphisBackground seed="profile" />
       <AppHeader current="profile" />
       <main className="mx-auto w-full max-w-[1280px] px-8 pt-8 pb-12">
         <div className="relative h-[881px] w-[1216px]">

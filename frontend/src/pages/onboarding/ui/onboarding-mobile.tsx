@@ -14,6 +14,7 @@ import {
   SPORTS,
   type OnboardingData,
 } from "./onboarding-steps";
+import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 
 const dir = "/m-onb";
 const shapes = "/onboarding";
@@ -506,7 +507,8 @@ export function OnboardingMobile({ step, setStep, data, update, canNext, finish 
     step === 1 ? "Погнали" : step === 2 ? `Дальше · выбрано ${selected}` : "Дальше";
 
   return (
-    <div className="flex min-h-dvh flex-col gap-4 bg-background lg:hidden">
+    <div className="relative isolate flex min-h-dvh overflow-clip flex-col gap-4 bg-background lg:hidden">
+      <MemphisBackground variant="mobile" seed="onboarding" />
       <TopBar step={step} onBack={() => setStep(step - 1)} onSkip={() => finish("/")} />
 
       {step === 1 && <Welcome />}

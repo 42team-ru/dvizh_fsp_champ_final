@@ -5,6 +5,7 @@ import { Disc } from "@/shared/components/ui/disc";
 import { Icon } from "@/shared/components/ui/icon";
 import { Progress } from "@/shared/components/ui/progress";
 import { cn } from "cn";
+import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 
 const dir = "m-activity";
 const CHIPS = ["Все", "Заявки", "Напоминания", "Подписки"];
@@ -75,7 +76,8 @@ function Label({ children }: { children: string }) {
 
 export function ActivityMobile() {
   return (
-    <div className="flex min-h-dvh flex-col gap-4 bg-background pb-[110px] lg:hidden">
+    <div className="relative isolate flex min-h-dvh overflow-clip flex-col gap-4 bg-background pb-[110px] lg:hidden">
+      <MemphisBackground variant="mobile" seed="activity" />
       <div className="flex h-16 shrink-0 items-center justify-between px-4">
         <div className="flex items-center gap-2">
           <span className="flex size-9 items-center justify-center rounded-[11px] border-2 border-ink bg-secondary">
@@ -99,6 +101,7 @@ export function ActivityMobile() {
           <Button
             key={c}
             variant={i === 0 ? "ink" : "soft"}
+            rough={false}
             className="h-11 shrink-0 px-[18px] text-sm shadow-none"
           >
             {c}
@@ -120,8 +123,8 @@ export function ActivityMobile() {
             <Unread />
           </div>
           <div className="flex gap-[10px]">
-            <Button className="h-12 min-w-0 flex-1 px-5 text-sm">Принять</Button>
-            <Button variant="soft" className="h-12 min-w-0 flex-1 px-5 text-sm">
+            <Button rough={false} className="h-12 min-w-0 flex-1 px-5 text-sm">Принять</Button>
+            <Button variant="soft" rough={false} className="h-12 min-w-0 flex-1 px-5 text-sm">
               Нет
             </Button>
           </div>

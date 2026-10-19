@@ -12,6 +12,7 @@ import {
   StepWelcome,
   type OnboardingData,
 } from "./onboarding-steps";
+import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 
 const STEPS = 5;
 
@@ -79,7 +80,8 @@ export default function OnboardingPage() {
       canNext={canNext}
       finish={finish}
     />
-    <div className="hidden min-h-dvh overflow-x-auto bg-background lg:block">
+    <div className="relative isolate hidden min-h-dvh overflow-x-clip bg-background lg:block">
+      <MemphisBackground seed="onboarding" />
       <div className="relative mx-auto h-[820px] w-[1280px] overflow-hidden bg-background">
         <Logo />
         <Progress step={step} />

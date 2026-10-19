@@ -1,6 +1,7 @@
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"
+import { RoughBorder, type RoughOptions } from "@/shared/components/ui/rough-border"
 import { Slot } from "radix-ui"
 
 const buttonVariants = cva(
@@ -43,26 +44,75 @@ const buttonVariants = cva(
   }
 )
 
+/** Варианты с видимой обводкой: у них рамка рисуется от руки (rough.js). */
+const ROUGH_VARIANTS = new Set([
+  "default",
+  "secondary",
+  "accent",
+  "outline",
+  "destructive",
+  "ink",
+  "soft",
+  "clear",
+])
+
+/**
+ * `rough` — рамка от руки (rough.js). По умолчанию включена для вариантов с обводкой
+ * (кроме размера `chip` — это фильтры), `rough={false}` выключает. Работает и с `asChild`, если ребёнок — один элемент.
+ */
 function Button({
   className,
   variant = "default",
   size = "default",
   asChild = false,
+  rough,
+  children,
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean
+    rough?: boolean | RoughOptions
   }) {
   const Comp = asChild ? Slot.Root : "button"
+  const enabled = rough ?? (ROUGH_VARIANTS.has(variant ?? "default") && size !== "chip")
+  const options: RoughOptions = {
+    color: variant === "clear" ? "white" : undefined,
+    ...(typeof rough === "object" ? rough : {}),
+  }
+  const border = <RoughBorder radius={999} roughness={0.9} {...options} />
+
+  let content: React.ReactNode = children
+  if (enabled) {
+    if (!asChild) {
+      content = (
+        <>
+          {children}
+          {border}
+        </>
+      )
+    } else if (React.isValidElement<{ children?: React.ReactNode }>(children)) {
+      content = React.cloneElement(
+        children,
+        undefined,
+        children.props.children,
+        border
+      )
+    }
+  }
 
   return (
     <Comp
       data-slot="button"
       data-variant={variant}
       data-size={size}
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(
+        buttonVariants({ variant, size, className }),
+        enabled && "relative border-transparent"
+      )}
       {...props}
-    />
+    >
+      {content}
+    </Comp>
   )
 }
 

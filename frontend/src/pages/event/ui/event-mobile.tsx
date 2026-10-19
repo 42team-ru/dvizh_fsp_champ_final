@@ -8,6 +8,7 @@ import { Icon } from "@/shared/components/ui/icon";
 import { Progress } from "@/shared/components/ui/progress";
 import { Switch } from "@/shared/components/ui/switch";
 import { cn } from "cn";
+import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 
 const dir = "m-event";
 
@@ -91,7 +92,8 @@ function IconRow({
 
 export function EventMobile() {
   return (
-    <div className="flex min-h-dvh flex-col gap-4 bg-background pb-[100px] lg:hidden">
+    <div className="relative isolate flex min-h-dvh overflow-clip flex-col gap-4 bg-background pb-[100px] lg:hidden">
+      <MemphisBackground variant="mobile" seed="event" />
       <div className="relative h-[230px] w-full shrink-0 overflow-hidden bg-sky">
         <img
           src={`/${dir}/photo-decor.svg`}

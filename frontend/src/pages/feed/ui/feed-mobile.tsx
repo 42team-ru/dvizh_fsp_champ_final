@@ -7,6 +7,7 @@ import { Disc } from "@/shared/components/ui/disc";
 import { Icon } from "@/shared/components/ui/icon";
 import { Progress } from "@/shared/components/ui/progress";
 import { cn } from "cn";
+import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 
 const dir = "m-feed";
 const CHIPS = ["Все", "Рядом", "Сегодня", "Бег", "Футбол", "Йога", "Вело"];
@@ -257,7 +258,8 @@ function Promo() {
 
 export function FeedMobile() {
   return (
-    <div className="flex min-h-dvh flex-col gap-4 bg-background pb-[110px] lg:hidden">
+    <div className="relative isolate flex min-h-dvh overflow-clip flex-col gap-4 bg-background pb-[110px] lg:hidden">
+      <MemphisBackground variant="mobile" seed="feed" />
       <MobileAppBar dir={dir} title="Лента" titleClassName="text-xl" />
 
       <div className="flex gap-[10px] px-4">
@@ -282,6 +284,7 @@ export function FeedMobile() {
           <Button
             key={c}
             variant={i === 0 ? "ink" : "soft"}
+            rough={false}
             className="h-11 shrink-0 px-[18px] text-sm shadow-none"
           >
             {c}

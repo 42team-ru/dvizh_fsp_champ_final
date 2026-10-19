@@ -5,7 +5,9 @@ import { Card } from "@/shared/components/ui/card";
 import { Eyebrow } from "@/shared/components/ui/eyebrow";
 import { Icon } from "@/shared/components/ui/icon";
 import { Progress } from "@/shared/components/ui/progress";
+import { RoughBorder } from "@/shared/components/ui/rough-border";
 import { cn } from "cn";
+import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 
 const dir = "m-profile";
 
@@ -111,12 +113,13 @@ function Passport() {
               <div
                 key={s.l}
                 className={cn(
-                  "box-border flex min-w-0 flex-1 flex-col gap-[2px] rounded-[14px] border-[1.5px] border-ink p-[10px]",
+                  "relative box-border flex min-w-0 flex-1 flex-col gap-[2px] rounded-[14px] border-[1.5px] border-transparent p-[10px]",
                   s.tone
                 )}
               >
                 <span className="font-display text-lg text-foreground">{s.v}</span>
                 <span className="text-[11px] text-muted-foreground">{s.l}</span>
+                <RoughBorder radius={14} strokeWidth={1.5} roughness={0.8} />
               </div>
             ))}
           </div>
@@ -300,7 +303,8 @@ function Settings() {
 
 export function ProfileMobile() {
   return (
-    <div className="flex min-h-dvh flex-col gap-4 bg-background pb-[110px] lg:hidden">
+    <div className="relative isolate flex min-h-dvh overflow-clip flex-col gap-4 bg-background pb-[110px] lg:hidden">
+      <MemphisBackground variant="mobile" seed="profile" />
       <AppBar />
       <Passport />
       <Pet />

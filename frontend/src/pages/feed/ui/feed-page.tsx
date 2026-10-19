@@ -12,6 +12,7 @@ import { Card } from "@/shared/components/ui/card";
 import { Icon } from "@/shared/components/ui/icon";
 import { Participants } from "@/shared/components/ui/participants";
 import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar";
+import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 
 const FILTERS = ["Все", "Сегодня", "Выходные", "Бег", "Игры", "Йога", "Шахматы"];
 
@@ -256,7 +257,8 @@ export default function FeedPage() {
   return (
     <>
     <FeedMobile />
-    <div className="hidden min-h-dvh bg-background lg:block">
+    <div className="relative isolate hidden min-h-dvh overflow-clip bg-background lg:block">
+      <MemphisBackground seed="feed" />
       <AppHeader current="feed" />
       <main className="mx-auto flex w-full max-w-[1280px] flex-col gap-7 px-8 pt-8 pb-12">
         <FilterBar />

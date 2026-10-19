@@ -1,4 +1,5 @@
 import { Outlet, useLocation } from "react-router";
+import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 
 type Brand = {
   title: string;
@@ -40,7 +41,8 @@ export default function AuthLayout() {
   const brand = pathname.includes("/register") ? REGISTER_BRAND : LOGIN_BRAND;
 
   return (
-    <div className="flex min-h-dvh w-full flex-col bg-background lg:flex-row">
+    <div className="relative isolate flex min-h-dvh w-full flex-col overflow-clip bg-background lg:flex-row">
+      <MemphisBackground variant="auth" seed={brand.assets} className="hidden lg:block" />
       <MobileBanner brand={brand} />
       <BrandPanel brand={brand} />
       <div className={`relative flex-1 px-4 pt-[18px] pb-5 lg:px-16 lg:pb-10 ${brand.contentTop}`}>

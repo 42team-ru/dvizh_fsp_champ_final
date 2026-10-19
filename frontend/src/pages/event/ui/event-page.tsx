@@ -8,7 +8,9 @@ import { Card } from "@/shared/components/ui/card";
 import { Eyebrow } from "@/shared/components/ui/eyebrow";
 import { Icon } from "@/shared/components/ui/icon";
 import { Progress } from "@/shared/components/ui/progress";
+import { RoughBorder } from "@/shared/components/ui/rough-border";
 import { cn } from "cn";
+import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 
 const FACTS = [
   {
@@ -234,7 +236,7 @@ function Organizer() {
         ].map((s) => (
           <div
             key={s.l}
-            className={cn("relative h-[61px] w-[219.5px] rounded-[14px] border-2 border-ink", s.tone)}
+            className={cn("relative h-[61px] w-[219.5px] rounded-[14px] border-2 border-transparent", s.tone)}
           >
             <p className="absolute top-[10px] left-3 font-display text-lg leading-[22px] font-extrabold text-foreground">
               {s.v}
@@ -242,6 +244,7 @@ function Organizer() {
             <p className="absolute top-8 left-3 text-[11px] leading-[15px] font-semibold text-muted-foreground">
               {s.l}
             </p>
+            <RoughBorder radius={14} roughness={0.9} />
           </div>
         ))}
       </div>
@@ -366,7 +369,8 @@ export default function EventPage() {
   return (
     <>
     <EventMobile />
-    <div className="hidden min-h-dvh bg-background lg:block">
+    <div className="relative isolate hidden min-h-dvh overflow-clip bg-background lg:block">
+      <MemphisBackground seed="event" />
       <AppHeader current="feed" />
       <main className="mx-auto flex w-full max-w-[1280px] flex-col items-center gap-7 px-8 pt-8 pb-12">
         <TopBar />

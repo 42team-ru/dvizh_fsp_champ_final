@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 import { MobileTabBar } from "@/widgets/mobile-shell/ui/mobile-tab-bar";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
@@ -6,6 +7,7 @@ import { Card } from "@/shared/components/ui/card";
 import { Disc } from "@/shared/components/ui/disc";
 import { Icon } from "@/shared/components/ui/icon";
 import { Progress } from "@/shared/components/ui/progress";
+import { RoughBorder } from "@/shared/components/ui/rough-border";
 import { cn } from "cn";
 
 const dir = "m-home";
@@ -221,7 +223,7 @@ function Tip() {
         </div>
         <div className="flex gap-[10px]">
           <Button className="h-12 min-w-0 flex-1 px-5 text-sm">Напомнить</Button>
-          <Button variant="soft" className="h-12 min-w-0 flex-1 px-5 text-sm">
+          <Button variant="soft" rough={false} className="h-12 min-w-0 flex-1 px-5 text-sm">
             Не надо
           </Button>
         </div>
@@ -368,12 +370,13 @@ function Posts() {
                 <div
                   key={s.l}
                   className={cn(
-                    "box-border flex min-w-0 flex-1 flex-col gap-[2px] rounded-[14px] border-[1.5px] border-ink px-3 py-[10px]",
+                    "relative box-border flex min-w-0 flex-1 flex-col gap-[2px] rounded-[14px] border-[1.5px] border-transparent px-3 py-[10px]",
                     s.tone
                   )}
                 >
                   <span className="font-display text-[15px] text-foreground">{s.v}</span>
                   <span className="text-[11px] text-muted-foreground">{s.l}</span>
+                  <RoughBorder radius={14} strokeWidth={1.5} roughness={0.8} />
                 </div>
               ))}
             </div>
@@ -399,7 +402,8 @@ function Posts() {
 
 export function HomeMobile() {
   return (
-    <div className="flex min-h-dvh flex-col gap-4 bg-background pb-[110px] lg:hidden">
+    <div className="relative isolate flex min-h-dvh flex-col gap-4 overflow-hidden bg-background pb-[110px] lg:hidden">
+      <MemphisBackground variant="mobile" />
       <AppBar />
       <div className="flex flex-col gap-[2px] px-4 pt-1 leading-[normal] whitespace-nowrap">
         <h1 className="font-display text-[26px] font-extrabold text-foreground">Привет, Аня!</h1>

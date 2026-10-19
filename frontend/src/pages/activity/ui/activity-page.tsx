@@ -8,6 +8,7 @@ import { Eyebrow } from "@/shared/components/ui/eyebrow";
 import { Icon } from "@/shared/components/ui/icon";
 import { Progress } from "@/shared/components/ui/progress";
 import { cn } from "cn";
+import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 
 const XS = "h-9 px-4 text-[13px] leading-[18px]";
 
@@ -149,8 +150,8 @@ function Feed() {
           dot
           action={
             <div className="flex shrink-0 gap-2">
-              <Button className={XS}>Принять</Button>
-              <Button variant="soft" className={XS}>
+              <Button rough={false} className={XS}>Принять</Button>
+              <Button variant="soft" rough={false} className={XS}>
                 Нет
               </Button>
             </div>
@@ -252,8 +253,8 @@ function Tickets() {
               </p>
             </div>
             <div className="absolute top-[14px] left-[96px] h-[72px] w-[2px] border-l-2 border-dashed border-ink" />
-            <span className="absolute top-[-11px] left-[85px] box-border size-[22px] rounded-[11px] border-2 border-ink bg-card" />
-            <span className="absolute top-[89px] left-[85px] box-border size-[22px] rounded-[11px] border-2 border-ink bg-card" />
+            <span className="absolute top-[-11px] left-[85px] box-border size-[22px] rounded-[11px] border-2 border-t-0 border-ink bg-card" />
+            <span className="absolute top-[89px] left-[85px] box-border size-[22px] rounded-[11px] border-2 border-b-0 border-ink bg-card" />
             <div className="flex h-[100px] w-[265px] shrink-0 flex-col justify-center gap-1 py-[14px] pr-4 pl-[22px]">
               <div className={cn("w-[227px] shrink-0", t.titleBox)}>
                 <p className="-mt-px font-display text-[15px] leading-[19px] font-bold text-foreground">
@@ -328,7 +329,8 @@ export default function ActivityPage() {
   return (
     <>
     <ActivityMobile />
-    <div className="hidden min-h-dvh bg-background lg:block">
+    <div className="relative isolate hidden min-h-dvh overflow-clip bg-background lg:block">
+      <MemphisBackground seed="activity" />
       <AppHeader current="activity" />
       <main className="mx-auto flex w-full max-w-[1280px] flex-col gap-7 px-8 pt-8 pb-12">
         <FilterBar />
