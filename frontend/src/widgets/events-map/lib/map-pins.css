@@ -83,3 +83,6 @@
   background: var(--primary);
   box-shadow: 3px 3px 0 var(--ink);
 }
+
+/* Дом пользователя на карте ленты: готовая капля public/feed/map-home-pin.svg; поверх событий и не кликается. */
+.map-home { display: block; width: 40px; height: 50px; max-width: none; pointer-events: none; }
