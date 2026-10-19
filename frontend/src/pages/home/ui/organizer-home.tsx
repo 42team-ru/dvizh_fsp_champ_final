@@ -1,3 +1,4 @@
+import { coverOf } from "@/entity/event/lib/cover";
 import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router";
 import { motion } from "motion/react";
@@ -382,13 +383,13 @@ const COVER_TONES = ["bg-sun", "bg-mint", "bg-sky"];
 function MyEventCard({ e, pending, index }: { e: EventSummaryResponse; pending: number; index: number }) {
   const going = e.occurrenceAttendeesCount ?? e.participantsCount;
   const pct = e.capacity ? Math.round((going / e.capacity) * 100) : undefined;
-  const photo = e.coverUrl ?? e.sport.imageUrl;
+  const photo = coverOf(e);
   return (
     <motion.article initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
       transition={{ type: "spring", stiffness: 240, damping: 24, delay: index * 0.06 }} whileHover={{ y: -4 }}
       className={cn(CARD, "flex min-w-0 flex-col overflow-hidden")}>
       <div className={cn("relative h-[120px] border-b-2 border-ink", COVER_TONES[index % COVER_TONES.length])}>
-        {photo && <img src={photo} alt="" className="absolute inset-0 size-full object-cover" />}
+        {photo.src && <img src={photo.src} style={{ objectPosition: photo.position }} alt="" className="absolute inset-0 size-full object-cover" />}
         <Chip tone="bg-card" className="absolute top-3 left-3 px-2 py-px text-[10px] normal-case">{e.sport.name}</Chip>
         <Chip tone="bg-secondary" className="absolute bottom-3 left-3 gap-1 px-2 py-px text-[10px] normal-case"><Clock className="size-3" />{dayLabel(e.startAt)}</Chip>
       </div>

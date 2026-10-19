@@ -1,5 +1,7 @@
 package com.hackathon.app.service;
 
+import com.hackathon.app.domain.entity.StoredFile;
+import com.hackathon.app.domain.dto.FocusPoint;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
@@ -307,24 +309,36 @@ public class EventService {
      * Строка мероприятия заблокирована: параллельные загрузки не превысят лимит.
      */
     @Transactional
-    public EventResponse addPhoto(UUID eventId, UUID userId, FileUpload upload) {
+    public EventResponse addPhoto(UUID eventId, UUID userId, FileUpload upload, FocusPoint focus) {
         var event = requireManageable(eventId, userId);
         if (storedFiles.countByEventIdAndKind(eventId, FileKind.EVENT_PHOTO) >= MAX_PHOTOS) {
             throw new ConflictException("Можно загрузить не больше " + MAX_PHOTOS + " фото");
         }
         int position = storedFiles.maxPosition(eventId, FileKind.EVENT_PHOTO) + 1;
-        files.store(FileKind.EVENT_PHOTO, upload, userId, null, event.getId(), position);
+        var photo = files.store(FileKind.EVENT_PHOTO, upload, userId, null, event.getId(), position);
+        files.focus(photo, focus);
+        return get(eventId, userId);
+    }
+
+    /** Точка фокуса фото: вокруг неё обрезаются превью в ленте, на главной и в билете. */
+    @Transactional
+    public EventResponse setPhotoFocus(UUID eventId, UUID fileId, UUID userId, FocusPoint focus) {
+        requireManageable(eventId, userId);
+        files.focus(photoOf(eventId, fileId), focus);
         return get(eventId, userId);
     }
 
     @Transactional
     public EventResponse removePhoto(UUID eventId, UUID fileId, UUID userId) {
         requireManageable(eventId, userId);
-        var photo = storedFiles.findById(fileId)
+        files.delete(photoOf(eventId, fileId));
+        return get(eventId, userId);
+    }
+
+    private StoredFile photoOf(UUID eventId, UUID fileId) {
+        return storedFiles.findById(fileId)
                 .filter(f -> f.getKind() == FileKind.EVENT_PHOTO && eventId.equals(f.getEventId()))
                 .orElseThrow(() -> new NoSuchElementException(FileService.NOT_FOUND));
-        files.delete(photo);
-        return get(eventId, userId);
     }
 
     private Event requireManageable(UUID eventId, UUID userId) {

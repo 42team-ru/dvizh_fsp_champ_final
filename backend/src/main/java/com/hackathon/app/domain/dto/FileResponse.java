@@ -13,5 +13,6 @@ public record FileResponse(
 		@Schema(description = "Адрес для скачивания и показа: /api/files/{id}", requiredMode = REQUIRED) String url,
 		@Schema(description = "Имя файла, как его загрузили", requiredMode = REQUIRED) String name,
 		@Schema(description = "MIME-тип", requiredMode = REQUIRED) String contentType,
-		@Schema(description = "Размер в байтах", requiredMode = REQUIRED) long size) {
+		@Schema(description = "Размер в байтах", requiredMode = REQUIRED) long size,
+		@Schema(description = "Точка фокуса для превью; null — центр") FocusPoint focus) {
 }

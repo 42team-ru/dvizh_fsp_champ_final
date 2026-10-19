@@ -1046,6 +1046,67 @@
         }
       }
     },
+    "/api/events/{id}/photos/{fileId}/focus": {
+      "put": {
+        "tags": [
+          "events"
+        ],
+        "summary": "Точка фокуса фото: вокруг неё обрезаются превью",
+        "operationId": "events_setPhotoFocus",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "fileId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FocusPoint"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Координаты вне 0–100",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Не организатор",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/events/{id}/occurrences/{occurrenceId}": {
       "put": {
         "tags": [
@@ -2486,6 +2547,26 @@
             "schema": {
               "type": "string",
               "format": "uuid"
+            }
+          },
+          {
+            "name": "focusX",
+            "in": "query",
+            "description": "Точка фокуса по горизонтали, % (0–100); без неё — центр",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "name": "focusY",
+            "in": "query",
+            "description": "Точка фокуса по вертикали, % (0–100)",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "format": "double"
             }
           }
         ],
@@ -6640,6 +6721,32 @@
           }
         }
       },
+      "FocusPoint": {
+        "type": "object",
+        "description": "Точка фокуса: проценты от левого и верхнего края",
+        "properties": {
+          "x": {
+            "type": "number",
+            "format": "double",
+            "description": "По горизонтали, 0–100",
+            "example": 50,
+            "maximum": 100,
+            "minimum": 0
+          },
+          "y": {
+            "type": "number",
+            "format": "double",
+            "description": "По вертикали, 0–100",
+            "example": 20,
+            "maximum": 100,
+            "minimum": 0
+          }
+        },
+        "required": [
+          "x",
+          "y"
+        ]
+      },
       "SportResponse": {
         "type": "object",
         "description": "Вид спорта",
@@ -6666,11 +6773,16 @@
             "type": "string",
             "description": "Иллюстрация вида спорта; у видов без своей картинки — общая",
             "example": "/api/sport-images/football.webp"
+          },
+          "imageFocus": {
+            "$ref": "#/components/schemas/FocusPoint",
+            "description": "Точка фокуса иллюстрации — голова персонажа: превью обрезаются вокруг неё"
           }
         },
         "required": [
           "custom",
           "id",
+          "imageFocus",
           "imageUrl",
           "name",
           "slug"
@@ -7144,6 +7256,10 @@
             "type": "integer",
             "format": "int64",
             "description": "Размер в байтах"
+          },
+          "focus": {
+            "$ref": "#/components/schemas/FocusPoint",
+            "description": "Точка фокуса для превью; null — центр"
           }
         },
         "required": [
@@ -9383,6 +9499,10 @@
           "coverUrl": {
             "type": "string",
             "description": "Обложка (первое фото): /api/files/{id}; null — без фото"
+          },
+          "coverFocus": {
+            "$ref": "#/components/schemas/FocusPoint",
+            "description": "Точка фокуса обложки; null — центр или без фото (тогда у иллюстрации вида — sport.imageFocus)"
           }
         },
         "required": [

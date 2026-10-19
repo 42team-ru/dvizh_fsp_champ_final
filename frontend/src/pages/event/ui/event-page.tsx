@@ -1,3 +1,4 @@
+import { coverOf } from "@/entity/event/lib/cover";
 import { MessageCircleQuestion } from "lucide-react";
 import { EmptyState } from "@/shared/components/ui/empty-state";
 import { WavingBeaver } from "@/widgets/beaver-pet/ui/waving-beaver";
@@ -111,7 +112,7 @@ function RegisterAction({ m, className, hintClassName }: { m: EventModel; classN
 
 function TicketHero({ m }: { m: EventModel }) {
   const e = m.event!;
-  const cover = e.photos[0]?.url ?? e.sport.imageUrl;
+  const cover = coverOf(e);
   return (
     // Тень — drop-shadow на обёртке (box-shadow маска срезала бы целиком). Внешняя обёртка
     // шире на тень и вырезает те же дыры уже из тени, чтобы сквозь вырез был виден фон.
@@ -119,7 +120,7 @@ function TicketHero({ m }: { m: EventModel }) {
     <div className="relative h-[400px] w-[1216px] drop-shadow-[6px_6px_0_var(--ink)]">
     <Card className="relative h-[400px] w-[1216px] flex-row items-start overflow-hidden rounded-[28px] p-0" style={notchMask(TICKET_HEIGHT)}>
       <div className="relative h-[396px] w-[270px] shrink-0 overflow-hidden border-r-2 border-ink">
-        <img src={cover} alt="" className="absolute top-0 left-0 h-[396px] w-[268px] object-cover" />
+        <img src={cover.src} style={{ objectPosition: cover.position }} alt="" className="absolute top-0 left-0 h-[396px] w-[268px] object-cover" />
         <div className="absolute top-0 left-0 h-[396px] w-[268px] bg-gradient-to-b from-[rgba(22,24,31,0.05)] via-[rgba(22,24,31,0.15)] via-55% to-[rgba(22,24,31,0.7)]" />
         <div className="absolute top-[18px] right-[18px] left-[18px] flex gap-[6px]">
           <Badge variant="outline" title={e.sport.name} className="min-w-0 shrink"><span className="truncate">{e.sport.name}</span></Badge>

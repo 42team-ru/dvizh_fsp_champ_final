@@ -53,5 +53,7 @@ public record EventSummaryResponse(
 		@Schema(description = "Организация для подписи «Шахматный клуб «Ладья»»; null — от частного лица")
 		OrganizationShortResponse organization,
 		@Schema(description = "Статус моей записи; null — не записан") RegistrationStatus myRegistrationStatus,
-		@Schema(description = "Обложка (первое фото): /api/files/{id}; null — без фото") String coverUrl) {
+		@Schema(description = "Обложка (первое фото): /api/files/{id}; null — без фото") String coverUrl,
+		@Schema(description = "Точка фокуса обложки; null — центр или без фото (тогда у иллюстрации вида — sport.imageFocus)")
+		FocusPoint coverFocus) {
 }

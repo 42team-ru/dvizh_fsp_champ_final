@@ -27,6 +27,8 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import com.hackathon.app.domain.dto.FocusPoint;
+import com.hackathon.app.domain.exception.BadRequestException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -249,9 +251,12 @@ class EventController {
     @ApiResponse(responseCode = "409", description = "Уже 6 фото или мероприятие удалено", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @ResponseStatus(HttpStatus.CREATED)
     EventResponse addPhoto(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,
-            @Parameter(description = "Изображение") @RequestPart("file") MultipartFile file) {
-        log.info("Endpoint called: POST /api/events/{}/photos, userId={}, request={}", id, jwt.getSubject(), Uploads.describe(file));
-        var response = events.addPhoto(id, userId(jwt), Uploads.of(file));
+            @Parameter(description = "Изображение") @RequestPart("file") MultipartFile file,
+            @Parameter(description = "Точка фокуса по горизонтали, % (0–100); без неё — центр") @RequestParam(required = false) Double focusX,
+            @Parameter(description = "Точка фокуса по вертикали, % (0–100)") @RequestParam(required = false) Double focusY) {
+        log.info("Endpoint called: POST /api/events/{}/photos, userId={}, request={}, focus={},{}", id, jwt.getSubject(),
+                Uploads.describe(file), focusX, focusY);
+        var response = events.addPhoto(id, userId(jwt), Uploads.of(file), focus(focusX, focusY));
         log.info("Endpoint response: POST /api/events/{}/photos, photos={}", id, response.photos().size());
         return response;
     }
@@ -265,6 +270,27 @@ class EventController {
         var response = events.removePhoto(id, fileId, userId(jwt));
         log.info("Endpoint response: DELETE /api/events/{}/photos/{}, photos={}", id, fileId, response.photos().size());
         return response;
+    }
+
+    @PutMapping(path = "/{id}/photos/{fileId}/focus", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(operationId = "events_setPhotoFocus", summary = "Точка фокуса фото: вокруг неё обрезаются превью")
+    @ApiResponse(responseCode = "400", description = "Координаты вне 0–100", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    @ApiResponse(responseCode = "403", description = "Не организатор", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    EventResponse setPhotoFocus(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id, @PathVariable UUID fileId,
+            @Valid @RequestBody FocusPoint request) {
+        log.info("Endpoint called: PUT /api/events/{}/photos/{}/focus, userId={}, request={}", id, fileId, jwt.getSubject(), request);
+        var response = events.setPhotoFocus(id, fileId, userId(jwt), request);
+        log.info("Endpoint response: PUT /api/events/{}/photos/{}/focus, photos={}", id, fileId, response.photos().size());
+        return response;
+    }
+
+    /** Обе координаты или ни одной, каждая 0–100; иначе 400. */
+    private static FocusPoint focus(Double x, Double y) {
+        if (x == null && y == null) return null;
+        if (x == null || y == null || x < 0 || x > 100 || y < 0 || y > 100) {
+            throw new BadRequestException("Точка фокуса — две координаты от 0 до 100");
+        }
+        return new FocusPoint(x, y);
     }
 
     private static UUID userId(Jwt jwt) {

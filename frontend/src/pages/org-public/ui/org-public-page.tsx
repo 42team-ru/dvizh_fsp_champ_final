@@ -1,3 +1,4 @@
+import { coverOf } from "@/entity/event/lib/cover";
 import { CalendarClock } from "lucide-react";
 import { EmptyState } from "@/shared/components/ui/empty-state";
 import { Link, useParams } from "react-router";
@@ -118,7 +119,7 @@ export default function OrgPublicPage() {
                 <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                   {items.map((e) => (
                     <EventCard key={e.id} href={`/events/${e.id}`} titleLines={2}
-                      event={toCardData(e, { photo: e.coverUrl ?? e.sport.imageUrl })} />
+                      event={toCardData(e, { photo: coverOf(e).src, position: coverOf(e).position })} />
                   ))}
                 </div>
               )}

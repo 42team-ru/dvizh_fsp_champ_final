@@ -11,6 +11,7 @@ import java.util.UUID;
 
 import com.hackathon.app.domain.dto.FileDownload;
 import com.hackathon.app.domain.dto.FileResponse;
+import com.hackathon.app.domain.dto.FocusPoint;
 import com.hackathon.app.domain.dto.FileUpload;
 import com.hackathon.app.domain.entity.StoredFile;
 import com.hackathon.app.domain.enums.FileKind;
@@ -109,16 +110,22 @@ public class FileService {
 		return mapper.toResponses(files.findByEventIdAndKindOrderByPositionAscCreatedAtAsc(eventId, FileKind.EVENT_PHOTO));
 	}
 
-	/** Обложки для списка мероприятий одним запросом: eventId → ссылка на первое фото. */
+	/** Обложки для списка мероприятий одним запросом: eventId → первое фото (ссылка и точка фокуса). */
 	@Transactional(readOnly = true)
-	public Map<UUID, String> eventCovers(Collection<UUID> eventIds) {
-		var covers = new LinkedHashMap<UUID, String>();
+	public Map<UUID, FileResponse> eventCovers(Collection<UUID> eventIds) {
+		var covers = new LinkedHashMap<UUID, FileResponse>();
 		if (eventIds.isEmpty()) {
 			return covers;
 		}
 		files.findByEventIdInAndKindOrderByPositionAscCreatedAtAsc(eventIds, FileKind.EVENT_PHOTO)
-				.forEach(f -> covers.putIfAbsent(f.getEventId(), mapper.fileUrl(f.getId())));
+				.forEach(f -> covers.computeIfAbsent(f.getEventId(), id -> mapper.toResponse(f)));
 		return covers;
+	}
+
+	/** Задать точку фокуса фото; null — центр. */
+	@Transactional
+	public void focus(StoredFile file, FocusPoint focus) {
+		mapper.focus(file, focus);
 	}
 
 	@Transactional(readOnly = true)

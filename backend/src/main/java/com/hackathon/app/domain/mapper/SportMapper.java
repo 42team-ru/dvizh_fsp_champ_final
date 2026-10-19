@@ -13,6 +13,7 @@ import org.mapstruct.Mapping;
 public interface SportMapper {
 
 	@Mapping(target = "imageUrl", expression = "java(SportImages.url(sport.getSlug()))")
+	@Mapping(target = "imageFocus", expression = "java(SportImages.focus(sport.getSlug()))")
 	SportResponse toResponse(Sport sport);
 
 	/** Свой вид спорта, который пользователь ввёл в форме мероприятия. */
