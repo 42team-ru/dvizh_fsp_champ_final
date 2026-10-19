@@ -1,6 +1,5 @@
-import { useId, useState, type ComponentType, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Castle, CircleOff, Disc, Dumbbell, Footprints, Gamepad2, Laptop, MountainSnow, Shield, Sparkles, Volleyball } from "lucide-react";
 import { toast } from "sonner";
 import { USER_QUERY_KEY } from "@/entity/user/model/use-user";
 import type { PetCatalogResponse, PetResponse, ShopItemResponse } from "@/shared/api/generated/core/appAPI.schemas";
@@ -16,6 +15,7 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "@/shared/components/ui/dialog";
 import { BeaverPet, type BeaverMood } from "@/widgets/beaver-pet/ui/beaver-pet";
+import { BeaverItemPreview } from "@/widgets/beaver-pet/ui/beaver-item-preview";
 import type { BeaverActivity, BeaverOutfit } from "@/widgets/beaver-pet/ui/beaver-wardrobe";
 import { cn } from "cn";
 
@@ -37,22 +37,6 @@ const groupOf = (slot: string): GroupId =>
   GROUPS.find((g) => "slots" in g && (g.slots as readonly string[]).includes(slot))?.id ?? "accessories";
 
 const TONES = ["bg-peach", "bg-sky-soft", "bg-lime-soft", "bg-lavender-soft"];
-
-/** Значок вещи: рисунок из макета для одежды, иконка для инвентаря и вещей админа. */
-const SVG_BY_ITEM: Record<string, string> = { "hat:crown": "crown", "hat:headphones": "phones", "neck:medal": "medal" };
-const SVG_BY_SLOT: Record<string, string> = { hat: "cap", shirt: "shirt", eyewear: "glasses", neck: "scarf" };
-const ICON_BY_ITEM: Record<string, ComponentType<{ className?: string }>> = {
-  "activity:none": CircleOff, "activity:juggle": Volleyball, "activity:dribble": Volleyball, "activity:lift": Dumbbell,
-  "activity:chess": Castle, "activity:ski": MountainSnow, "activity:hockey": Disc, "activity:esports": Gamepad2,
-  "activity:programming": Laptop, "bottom:swimshorts": Footprints, "bottom:hockeypants": Shield,
-};
-
-function ItemIcon({ item }: { item: ShopItemResponse }) {
-  const svg = SVG_BY_ITEM[item.id] ?? SVG_BY_SLOT[item.slot];
-  if (svg) return <img src={`${IMG}/${svg}.svg`} alt="" className="size-12" />;
-  const Icon = ICON_BY_ITEM[item.id] ?? Sparkles;
-  return <Icon className="size-10 text-ink" />;
-}
 
 /** Окно «Гардероб и имя»: имя питомца и образ с живым предпросмотром; сохраняется кнопкой. */
 export function WardrobeDialog({ children }: { children: ReactNode }) {
@@ -242,41 +226,42 @@ function WardrobeForm({
                 </button>
               ))}
             </div>
-            <ul className="-mx-1 grid max-h-[260px] grid-cols-3 gap-x-[10px] gap-y-3 overflow-y-auto px-1 pt-3 pb-1 sm:grid-cols-4">
+            <ul className="-mr-4 -ml-1 grid max-h-[300px] grid-cols-3 gap-x-[10px] gap-y-4 overflow-y-auto pt-3 pr-4 pb-1 pl-1">
               {shown.map((item, index) => {
                 const on = worn(item);
                 const locked = !item.owned;
+                const status = on ? "надето" : locked ? "закрыто" : "доступно";
                 return (
-                  <li key={item.id} className={cn("flex min-w-0 flex-col gap-[6px]", locked && "opacity-55")}>
+                  <li key={item.id} className={cn("flex min-w-0 flex-col gap-[6px]", locked && "opacity-60")}>
                     <button
                       type="button"
                       disabled={locked || busy}
                       aria-pressed={on}
-                      aria-label={`${item.label}: ${on ? "надето" : locked ? "закрыто" : "доступно"}`}
+                      aria-label={`${item.label}: ${status}`}
                       title={locked ? (item.hint ? `Дают ${item.hint}` : `В магазине за ${item.price} монет`) : item.label}
                       onClick={() => toggle(item)}
                       className={cn(
-                        "relative flex h-[78px] w-full items-center justify-center rounded-[14px] transition-transform enabled:hover:-translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+                        "relative flex h-[104px] w-full items-center justify-center rounded-[14px] transition-transform enabled:hover:-translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
                         TONES[index % TONES.length],
                         on ? "border-[3.5px] border-primary" : "border-2 border-ink",
                       )}
                     >
-                      <ItemIcon item={item} />
+                      <BeaverItemPreview slot={item.slot} code={item.code} className="size-[80px]" />
                       {on && (
-                        <span className="absolute -top-[10px] -right-[8px] flex size-[22px] items-center justify-center rounded-pill border-2 border-ink bg-secondary">
+                        <span className="absolute -top-[10px] -right-[8px] flex size-[24px] items-center justify-center rounded-pill border-2 border-ink bg-secondary">
                           <img src={`${IMG}/check.svg`} alt="" className="size-3" />
                         </span>
                       )}
                       {locked && <img src={`${IMG}/lock.svg`} alt="" className="absolute top-1 right-1 size-[18px]" />}
                     </button>
-                    <span className="line-clamp-2 text-center text-[11px] leading-[14px] font-bold text-foreground">{item.label}</span>
+                    <span className="line-clamp-2 text-center text-xs leading-[15px] font-bold text-foreground">{item.label}</span>
                     <span
                       className={cn(
-                        "text-center text-[9px] font-extrabold tracking-[1px]",
+                        "text-center text-[10px] font-extrabold tracking-[1px]",
                         on ? "text-primary" : "text-muted-foreground",
                       )}
                     >
-                      {on ? "надето" : locked ? "закрыто" : "доступно"}
+                      {status.toUpperCase()}
                     </span>
                   </li>
                 );

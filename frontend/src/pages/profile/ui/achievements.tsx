@@ -66,7 +66,7 @@ export function AchievementsColumn({ className, style }: { className?: string; s
       ) : query.isError ? (
         <p className="text-sm text-muted-foreground">Не удалось загрузить достижения.</p>
       ) : (
-        <ul className="no-scrollbar flex min-h-0 flex-col gap-[10px] overflow-y-auto">
+        <ul className="flex min-h-0 flex-1 flex-col gap-[10px] overflow-y-auto pr-2 [scrollbar-color:var(--ink)_transparent] [scrollbar-width:thin]">
           {achievements.map((a) => (
             <li
               key={a.code}

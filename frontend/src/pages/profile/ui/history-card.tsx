@@ -5,6 +5,7 @@ import { Card } from "@/shared/components/ui/card";
 import { cn } from "cn";
 import { visitsWord } from "./use-attendance";
 import { SPORT_LEVEL_LABEL, whenLabel } from "./passport-utils";
+import { SPREAD_H } from "./passport-spread";
 import { usePublicProfile, type PublicProfile } from "../model/public-profile";
 
 /** Цвета полос по видам спорта: чаще всего — синий, дальше по кругу. */
@@ -15,7 +16,8 @@ const REG_TONES = {
   CONFIRMED: { box: "bg-sky-soft", badge: "border-primary text-primary", text: "ПОДТВЕРЖДЕНО" },
 } as const;
 
-const CARD = "absolute top-[573px] left-0 h-[626px] w-[495px] gap-[18px] overflow-hidden rounded-[24px] p-[26px]";
+const CARD_STYLE = { top: SPREAD_H + 20 };
+const CARD = "absolute left-0 h-[316px] w-[495px] gap-[14px] overflow-hidden rounded-[24px] p-[22px]";
 
 /** История посещений: всего, по видам спорта и ближайшие записи. В чужом профиле — его данные без записей. */
 export function HistoryCard() {
@@ -26,14 +28,11 @@ export function HistoryCard() {
 function Head({ total }: { total: number }) {
   return (
     <>
-      <div className="flex items-center justify-between font-bold whitespace-nowrap">
+      <div className="flex items-baseline justify-between font-bold whitespace-nowrap">
         <h2 className="font-display text-[22px] text-foreground">История</h2>
-        <span className="text-[13px] text-muted-foreground">за всё время</span>
-      </div>
-
-      <div className="flex items-end gap-[10px] whitespace-nowrap">
-        <span className="font-display text-[56px] leading-[normal] font-extrabold text-foreground">{total}</span>
-        <span className="pb-2 text-base font-bold text-muted-foreground">{visitsWord(total)}</span>
+        <span className="text-[13px] text-muted-foreground">
+          <span className="font-display text-lg font-extrabold text-foreground">{total}</span> {visitsWord(total)} за всё время
+        </span>
       </div>
     </>
   );
@@ -42,16 +41,16 @@ function Head({ total }: { total: number }) {
 /** Чужая история: число посещений, виды спорта с уровнем и события, которые человек ведёт. */
 function PublicHistory({ owner }: { owner: PublicProfile }) {
   const { user } = owner;
-  const events = user.events.slice(0, 3);
+  const events = user.events.slice(0, 1);
   return (
-    <Card className={CARD}>
+    <Card className={CARD} style={CARD_STYLE}>
       <Head total={user.attendedCount} />
 
-      <ul className="flex flex-col gap-3" aria-label="Виды спорта">
+      <ul className="flex flex-col gap-[10px]" aria-label="Виды спорта">
         {user.sports.length === 0 ? (
           <li className="text-sm font-semibold text-muted-foreground">Виды спорта пока не выбраны.</li>
         ) : (
-          user.sports.slice(0, 4).map((s, i) => (
+          user.sports.slice(0, 3).map((s, i) => (
             <li key={s.sport.id} className="flex items-center gap-3">
               <span className={cn("size-[14px] shrink-0 rounded-full border-[1.5px] border-ink", BARS[i % BARS.length])} />
               <span className="min-w-0 truncate text-sm font-extrabold text-foreground">{s.sport.name}</span>
@@ -102,7 +101,7 @@ function MyHistory() {
 
   const data = summary.data?.status === 200 ? summary.data.data : undefined;
   const total = data?.total ?? 0;
-  const sports = (data?.bySport ?? []).slice(0, 4);
+  const sports = (data?.bySport ?? []).slice(0, 3);
   const max = Math.max(1, ...sports.map((s) => s.count));
 
   const upcoming = (mine.data?.status === 200 ? (mine.data.data.items ?? []) : [])
@@ -114,13 +113,13 @@ function MyHistory() {
         new Date(a.myNextOccurrence?.startAt ?? a.event.startAt).getTime() -
         new Date(b.myNextOccurrence?.startAt ?? b.event.startAt).getTime(),
     )
-    .slice(0, 2);
+    .slice(0, 1);
 
   return (
-    <Card className={CARD}>
+    <Card className={CARD} style={CARD_STYLE}>
       <Head total={total} />
 
-      <ul className="flex flex-col gap-3" aria-label="Посещения по видам спорта">
+      <ul className="flex flex-col gap-[10px]" aria-label="Посещения по видам спорта">
         {sports.length === 0 ? (
           <li className="text-sm font-semibold text-muted-foreground">
             Посещений пока нет. После первого занятия здесь появится статистика по видам спорта.

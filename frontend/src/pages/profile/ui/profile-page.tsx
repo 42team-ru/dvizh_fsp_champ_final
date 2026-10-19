@@ -24,7 +24,7 @@ function Img({ name, className }: { name: string; className?: string }) {
 function Attendance() {
   const { total, text, word } = useAttendance();
   return (
-    <Card className="absolute top-[573px] left-[515px] h-[626px] w-[701px] justify-between overflow-hidden rounded-[28px] bg-primary px-[28px] py-[26px]">
+    <Card style={{ top: SPREAD_H + 20 }} className="absolute left-[515px] h-[316px] w-[701px] justify-between overflow-hidden rounded-[28px] bg-primary px-[28px] py-[26px]">
       <Img name="memphis2.svg" className="top-0 right-0 h-[260px] w-[400px]" />
       <div className="relative h-[81px] w-[336px]">
         <Eyebrow className="text-lilac">ПОСЕЩЕНО</Eyebrow>
@@ -79,7 +79,7 @@ export default function ProfilePage() {
       <MemphisBackground seed={owner ? "user" : "profile"} />
       <AppHeader current={owner ? "feed" : "profile"} />
       <main className="mx-auto w-full max-w-[1280px] px-8 pt-8 pb-12">
-        <div className="relative h-[1199px] w-[1216px]">
+        <div className="relative w-[1216px]" style={{ height: SPREAD_H + 20 + 316 }}>
           <PassportSpread />
           <HistoryCard />
           <Attendance />
