@@ -41,3 +41,27 @@ export const REGISTRATION_STATUS: Record<string, { label: string; tone: string }
   REJECTED: { label: "Заявка отклонена", tone: "bg-destructive text-destructive-foreground" },
   CANCELLED: { label: "Запись отменена", tone: "bg-muted text-muted-foreground" },
 };
+
+/** Статус заявки глазами организатора (кабинет, вкладка «Заявки»). */
+export const PARTICIPANT_STATUS: Record<string, { label: string; tone: string }> = {
+  PENDING: { label: "Ждёт", tone: "bg-peach" },
+  CONFIRMED: { label: "Принят", tone: "bg-secondary" },
+  REJECTED: { label: "Отклонена", tone: "bg-salmon" },
+  CANCELLED: { label: "Отменил сам", tone: "bg-track" },
+  WAITLISTED: { label: "В очереди", tone: "bg-sky-soft" },
+};
+
+/** Статус публикации мероприятия. */
+export const EVENT_STATUS: Record<string, { label: string; tone: string }> = {
+  PUBLISHED: { label: "Опубликовано", tone: "bg-lime-soft" },
+  UNPUBLISHED: { label: "Снято с публикации", tone: "bg-peach" },
+  DELETED: { label: "Удалено", tone: "bg-salmon" },
+};
+
+/** Статус допуска организации. */
+export const ORGANIZATION_STATUS: Record<string, { label: string; tone: string }> = {
+  APPROVED: { label: "допущена", tone: "bg-lime-soft" },
+  PENDING: { label: "на проверке", tone: "bg-sky-soft" },
+  REJECTED: { label: "отклонена", tone: "bg-salmon" },
+  REVISION: { label: "на доработке", tone: "bg-peach" },
+};

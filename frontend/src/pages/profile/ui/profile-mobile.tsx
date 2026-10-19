@@ -9,6 +9,8 @@ import { usePublicProfile } from "../model/public-profile";
 import { ProfileBeaverPet, ProfilePetName } from "./profile-pet";
 import { EditProfileDialog } from "@/features/edit-profile/ui/edit-profile-dialog";
 import { Link, useNavigate } from "react-router";
+import { BriefcaseBusiness } from "lucide-react";
+import { useCabinetAccess } from "@/entity/user/model/use-cabinet-access";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuthLogout } from "@/shared/api/generated/core/auth/auth";
 import { USER_QUERY_KEY } from "@/entity/user/model/use-user";
@@ -47,6 +49,7 @@ const small =
 
 function AppBar() {
   const { user, readOnly } = useProfile();
+  const cabinet = useCabinetAccess();
   return (
     <div className="flex h-16 shrink-0 items-center justify-between px-4">
       <BrandPlate>
@@ -64,15 +67,26 @@ function AppBar() {
           <Icon name={`${dir}/icon-chev`} className="size-5 rotate-180" />
         </Link>
       ) : (
-        <EditProfileDialog user={user}>
-          <button
-            type="button"
-            aria-label="Редактировать профиль"
-            className="box-border flex size-11 items-center justify-center rounded-[22px] border-2 border-ink bg-card"
-          >
-            <Icon name={`${dir}/icon-settings`} className="size-5" />
-          </button>
-        </EditProfileDialog>
+        <div className="flex gap-2">
+          {cabinet.allowed && (
+            <Link
+              to="/my/events"
+              aria-label="Кабинет организатора"
+              className="box-border flex size-11 items-center justify-center rounded-[22px] border-2 border-ink bg-card"
+            >
+              <BriefcaseBusiness className="size-5" strokeWidth={2.2} />
+            </Link>
+          )}
+          <EditProfileDialog user={user}>
+            <button
+              type="button"
+              aria-label="Редактировать профиль"
+              className="box-border flex size-11 items-center justify-center rounded-[22px] border-2 border-ink bg-card"
+            >
+              <Icon name={`${dir}/icon-settings`} className="size-5" />
+            </button>
+          </EditProfileDialog>
+        </div>
       )}
     </div>
   );

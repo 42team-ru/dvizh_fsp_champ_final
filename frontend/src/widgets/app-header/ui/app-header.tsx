@@ -5,6 +5,8 @@ import { Button } from "@/shared/components/ui/button";
 import { Icon } from "@/shared/components/ui/icon";
 import { UserAvatar } from "@/shared/components/ui/user-avatar";
 import { useUser } from "@/entity/user/model/use-user";
+import { useCabinetAccess } from "@/entity/user/model/use-cabinet-access";
+import { BriefcaseBusiness } from "lucide-react";
 import { SearchPalette } from "@/widgets/search-palette/ui/search-palette";
 
 const NAV = [
@@ -14,9 +16,14 @@ const NAV = [
   { key: "profile", to: "/profile", label: "Профиль", icon: "icon-user", w: "w-[126.5px]" },
 ];
 
-/** `wide` — контейнер 1440px, как у ленты; остальные страницы 1280px. */
-export function AppHeader({ current = "home", wide }: { current?: "home" | "feed" | "profile" | "activity"; wide?: boolean }) {
+/** Папка иконки: в папке страницы активная иконка белая; в кабинете ни одна из четырёх не активна. */
+const iconFolder = (current: string, key: string) =>
+  current !== "cabinet" ? current : key === "home" ? "feed" : "home";
+
+/** `wide` — контейнер 1440px, как у ленты; остальные страницы 1280px. Вкладка «Кабинет» — только организаторам. */
+export function AppHeader({ current = "home", wide }: { current?: "home" | "feed" | "profile" | "activity" | "cabinet"; wide?: boolean }) {
   const { user } = useUser();
+  const cabinet = useCabinetAccess();
   return (
     <header className="box-border h-[76px] border-b-2 border-ink bg-background">
       <div className={`mx-auto flex h-full w-full ${wide ? "max-w-[1440px]" : "max-w-[1280px]"} items-center px-8`}>
@@ -39,7 +46,7 @@ export function AppHeader({ current = "home", wide }: { current?: "home" | "feed
               className={`relative justify-start font-bold ${item.w}`}
             >
               <Link to={item.to} aria-current={item.key === current ? "page" : undefined}>
-                <Icon name={`${current === "home" ? "home" : current}/${item.icon}`} className="size-[19px]" />
+                <Icon name={`${iconFolder(current, item.key)}/${item.icon}`} className="size-[19px]" />
                 {item.label}
                 {item.count ? (
                   <Badge
@@ -52,6 +59,14 @@ export function AppHeader({ current = "home", wide }: { current?: "home" | "feed
               </Link>
             </Button>
           ))}
+          {cabinet.allowed && (
+            <Button asChild variant="nav" size="nav" className="justify-start font-bold">
+              <Link to="/my/events" aria-current={current === "cabinet" ? "page" : undefined}>
+                <BriefcaseBusiness className="size-[19px]" strokeWidth={2.2} />
+                Кабинет
+              </Link>
+            </Button>
+          )}
         </nav>
 
         <div className="ml-auto flex shrink-0 items-center gap-3">

@@ -27,6 +27,9 @@
   --photo-lilac: #d9d4fa;
   --photo-map: #e9ecfb;
   --danger: #e5383b;
+  --salmon: #ffb9a0;
+  --peach-soft: #fff4ee;
+  --orange-ink: #c2410c;
 
   --background: var(--paper);
   --foreground: var(--ink);
@@ -145,6 +148,9 @@
   --color-rose: var(--rose);
   --color-lilac: var(--lilac);
   --color-track: var(--track);
+  --color-salmon: var(--salmon);
+  --color-peach-soft: var(--peach-soft);
+  --color-orange-ink: var(--orange-ink);
   --color-photo-lime: var(--photo-lime);
   --color-photo-mint: var(--photo-mint);
   --color-photo-lilac: var(--photo-lilac);

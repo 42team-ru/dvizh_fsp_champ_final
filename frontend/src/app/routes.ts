@@ -17,6 +17,10 @@ export default [
     route("events/new", "routes/event-create.tsx"),
     route("events/:id", "routes/event.tsx"),
     route("pet", "routes/pet.tsx"),
+    layout("providers/guards/cabinet-guard.tsx", [
+      route("my/events", "routes/my-events.tsx"),
+      route("my/events/:id/manage", "routes/my-event-manage.tsx"),
+    ]),
   ]),
   ...prefix("/auth", [
     layout("routes/auth/auth-layout.tsx", [
