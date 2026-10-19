@@ -26,6 +26,9 @@ public interface AppUserRepository extends JpaRepository<AppUser, UUID> {
     org.springframework.data.domain.Page<AppUser> search(String pattern,
             com.hackathon.app.domain.enums.SystemRole role, org.springframework.data.domain.Pageable pageable);
 
+    /** Активные аккаунты указанной роли. */
+    List<AppUser> findBySystemRoleAndActiveTrue(com.hackathon.app.domain.enums.SystemRole role);
+
     boolean existsByUsernameIgnoreCase(String username);
 
 	boolean existsByEmailIgnoreCase(String email);
