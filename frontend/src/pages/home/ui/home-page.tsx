@@ -84,10 +84,10 @@ function Hero() {
 
       <div className="absolute top-[44px] left-[44px] w-[700px]">
         <p className="text-[15px] leading-[21px] font-bold text-white opacity-90">
-          Привет{name ? `, ${name}` : ""}! {e ? (next.role === "organizer" ? "Ты ведёшь" : "Дальше у тебя") : isLoading ? "" : "Ближайших встреч пока нет"}
+          Привет{name ? `, ${name}` : ""}! {e ? (next.role === "organizer" ? "Ты ведёшь" : "Дальше у тебя") : isLoading || user?.systemRole === "ADMIN" ? "" : "Ближайших встреч пока нет"}
         </p>
         <h1 className="mt-[6px] line-clamp-2 font-display text-[52px] leading-[54.5px] font-extrabold tracking-[-1px] text-white">
-          {e ? e.title : isLoading ? "…" : "Найди компанию для спорта"}
+          {e ? e.title : isLoading ? "…" : user?.systemRole === "ADMIN" ? "Все события платформы" : "Найди компанию для спорта"}
         </h1>
         {e && next && (
           <div className="mt-[26px] flex max-w-[700px] gap-2">

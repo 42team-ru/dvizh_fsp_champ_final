@@ -6,6 +6,7 @@ import {
 } from "@/shared/api/generated/core/notifications/notifications";
 import { useRegistrationsMine } from "@/shared/api/generated/core/registrations/registrations";
 import type { NotificationResponse, NotificationsListTypesItem } from "@/shared/api/generated/core/appAPI.schemas";
+import { useUser } from "@/entity/user/model/use-user";
 
 /** Вкладки активности: каждая — свой набор типов уведомлений; «Заявки» — мои заявки, ждущие решения. */
 export type ActivityTab = "all" | "replies" | "achievements" | "reminders" | "requests";
@@ -49,18 +50,23 @@ export function shortTime(iso: string) {
  */
 export function useActivity() {
   const cache = useQueryClient();
+  const { user } = useUser();
+  /** Достижения, напоминания, мои заявки и билеты есть только у участника; клубу остаются ответы в обсуждениях. */
+  const participant = user?.systemRole === "USER";
+  const tabs = participant ? ACTIVITY_TABS : ACTIVITY_TABS.filter((t) => t.key === "all" || t.key === "replies");
   const [tab, setTabState] = useState<ActivityTab>("all");
   const [size, setSize] = useState(STEP);
-  const types = ACTIVITY_TABS.find((t) => t.key === tab)?.types;
+  // у клуба «Все» и «Ответы» — одно и то же: вопросы и ответы в обсуждениях
+  const types = participant ? ACTIVITY_TABS.find((t) => t.key === tab)?.types : REPLIES;
 
   const counts = useNotificationsUnreadCounts({ query: { refetchInterval: 30_000 } });
   const list = useNotificationsList({ types, size }, {
     query: { enabled: tab !== "requests", placeholderData: keepPreviousData, refetchInterval: 30_000 },
   });
-  const pending = useRegistrationsMine({ status: "PENDING", when: "UPCOMING", size: 50 });
-  const going = useRegistrationsMine({ status: "CONFIRMED", when: "UPCOMING", size: 2 });
+  const pending = useRegistrationsMine({ status: "PENDING", when: "UPCOMING", size: 50 }, { query: { enabled: participant } });
+  const going = useRegistrationsMine({ status: "CONFIRMED", when: "UPCOMING", size: 2 }, { query: { enabled: participant } });
   /** Отменённые организатором или снятые: будущих занятий у них нет, поэтому в UPCOMING не попадают. */
-  const confirmed = useRegistrationsMine({ status: "CONFIRMED", size: 20 });
+  const confirmed = useRegistrationsMine({ status: "CONFIRMED", size: 20 }, { query: { enabled: participant } });
 
   const page = list.data?.status === 200 ? list.data.data : undefined;
   const items: NotificationResponse[] = page?.items ?? [];
@@ -76,7 +82,8 @@ export function useActivity() {
   const unreadByType = new Map((counts.data?.status === 200 ? counts.data.data : []).map((c) => [c.type, c.unread]));
   const unreadOf = (key: ActivityTab) => key === "requests"
     ? pendingTotal
-    : (ACTIVITY_TABS.find((t) => t.key === key)?.types ?? []).reduce((sum, t) => sum + (unreadByType.get(t) ?? 0), 0);
+    : ((participant ? ACTIVITY_TABS.find((t) => t.key === key)?.types : REPLIES) ?? [])
+      .reduce((sum, t) => sum + (unreadByType.get(t) ?? 0), 0);
 
   // Лента по дням: «СЕГОДНЯ», «ВЧЕРА», дальше датой.
   const groups: { label: string; items: NotificationResponse[] }[] = [];
@@ -95,6 +102,8 @@ export function useActivity() {
   const readAll = useNotificationsReadAll({ mutation: { onSuccess: refresh } });
 
   return {
+    participant,
+    tabs,
     tab,
     setTab: (next: ActivityTab) => { setTabState(next); setSize(STEP); },
     unreadOf,

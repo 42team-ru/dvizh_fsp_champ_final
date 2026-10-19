@@ -8953,6 +8953,16 @@
             "type": "string",
             "description": "Как найти место"
           },
+          "lat": {
+            "type": "number",
+            "format": "double",
+            "description": "Широта; у онлайн-мероприятия null"
+          },
+          "lon": {
+            "type": "number",
+            "format": "double",
+            "description": "Долгота; у онлайн-мероприятия null"
+          },
           "level": {
             "type": "string",
             "description": "Для какого уровня",

@@ -39,9 +39,11 @@ export function AccountMenu() {
             </div>
           </div>
           <DropdownMenu.Separator className="mx-2 my-1 h-0.5 bg-track" />
-          <DropdownMenu.Item asChild className={item}>
-            <Link to="/profile"><User className="size-[18px]" strokeWidth={2.4} />Профиль</Link>
-          </DropdownMenu.Item>
+          {user?.systemRole === "USER" && (
+            <DropdownMenu.Item asChild className={item}>
+              <Link to="/profile"><User className="size-[18px]" strokeWidth={2.4} />Профиль</Link>
+            </DropdownMenu.Item>
+          )}
           {cabinet.allowed && (
             <DropdownMenu.Item asChild className={item}>
               <Link to="/my/events"><BriefcaseBusiness className="size-[18px]" strokeWidth={2.4} />Кабинет</Link>

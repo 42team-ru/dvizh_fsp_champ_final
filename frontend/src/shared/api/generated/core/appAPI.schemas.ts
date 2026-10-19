@@ -1815,6 +1815,10 @@ export interface EventSummaryResponse {
   address?: string;
   /** Как найти место */
   locationNote?: string;
+  /** Широта; у онлайн-мероприятия null */
+  lat?: number;
+  /** Долгота; у онлайн-мероприятия null */
+  lon?: number;
   /** Для какого уровня */
   level: EventSummaryResponseLevel;
   /** Вид мероприятия */

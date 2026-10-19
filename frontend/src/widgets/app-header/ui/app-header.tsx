@@ -5,16 +5,16 @@ import { Button } from "@/shared/components/ui/button";
 import { Icon } from "@/shared/components/ui/icon";
 import { AccountMenu } from "@/features/auth/sign-out/ui/account-menu";
 import { useCabinetAccess } from "@/entity/user/model/use-cabinet-access";
-import { useUser } from "@/entity/user/model/use-user";
+import { useNavAccess } from "@/entity/user/model/use-nav-access";
 import { BriefcaseBusiness } from "lucide-react";
 import { SearchPalette } from "@/widgets/search-palette/ui/search-palette";
 
 const NAV = [
   { key: "home", to: "/", label: "Главная", icon: "icon-home", w: "w-[119px]" },
   { key: "feed", to: "/feed", label: "Лента", icon: "icon-grid", w: "w-[104.5px]" },
-  { key: "activity", to: "/activity", label: "Активность", icon: "icon-bell", w: "w-[178.5px]", count: 3 },
+  { key: "activity", to: "/activity", label: "Активность", icon: "icon-bell", w: "w-[178.5px]" },
   { key: "profile", to: "/profile", label: "Профиль", icon: "icon-user", w: "w-[126.5px]" },
-];
+] as const;
 
 /** Папка иконки: в папке страницы активная иконка белая; в кабинете ни одна из четырёх не активна. */
 const iconFolder = (current: string, key: string) =>
@@ -23,7 +23,9 @@ const iconFolder = (current: string, key: string) =>
 /** `wide` — контейнер 1440px, как у ленты; остальные страницы 1280px. Вкладка «Кабинет» — только организаторам. */
 export function AppHeader({ current = "home", wide }: { current?: "home" | "feed" | "profile" | "activity" | "cabinet"; wide?: boolean }) {
   const cabinet = useCabinetAccess();
-  const { user } = useUser();
+  const nav = useNavAccess();
+  const items = NAV.filter((item) =>
+    (item.key !== "activity" || nav.showActivity) && (item.key !== "profile" || nav.showProfile));
   return (
     <header className="box-border h-[76px] border-b-2 border-ink bg-background">
       <div className={`mx-auto flex h-full w-full ${wide ? "max-w-[1440px]" : "max-w-[1280px]"} items-center px-8`}>
@@ -37,7 +39,7 @@ export function AppHeader({ current = "home", wide }: { current?: "home" | "feed
         </Link>
 
         <nav className="ml-7 flex shrink-0 gap-[2px]">
-          {NAV.map((item) => (
+          {items.map((item) => (
             <Button
               key={item.label}
               asChild
@@ -48,12 +50,12 @@ export function AppHeader({ current = "home", wide }: { current?: "home" | "feed
               <Link to={item.to} aria-current={item.key === current ? "page" : undefined}>
                 <Icon name={`${iconFolder(current, item.key)}/${item.icon}`} className="size-[19px]" />
                 {item.label}
-                {item.count ? (
+                {item.key === "activity" && nav.unread > 0 ? (
                   <Badge
                     variant="accent"
-                    className="absolute top-[10px] left-[140.5px] size-[22px] justify-center rounded-[11px] p-px text-xs leading-[17px] font-extrabold text-white"
+                    className="absolute top-[10px] left-[140.5px] h-[22px] min-w-[22px] justify-center rounded-[11px] px-1 text-xs leading-[17px] font-extrabold text-white"
                   >
-                    {item.count}
+                    {nav.unread > 99 ? "99+" : nav.unread}
                   </Badge>
                 ) : null}
               </Link>
@@ -73,7 +75,7 @@ export function AppHeader({ current = "home", wide }: { current?: "home" | "feed
           <SearchPalette />
 
           {/* админ событий не создаёт (правило 7) */}
-          {user && user.systemRole !== "ADMIN" && (
+          {nav.canCreate && (
             <Button asChild className="shrink-0">
               <Link to="/events/new">
                 <Icon name="icon-plus" className="size-[18px]" />

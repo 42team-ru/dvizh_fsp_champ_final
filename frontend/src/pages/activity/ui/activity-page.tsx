@@ -2,7 +2,7 @@ import { Link } from "react-router";
 import { CancelledStamp } from "@/shared/components/ui/cancelled-stamp";
 import { ActivityMobile } from "./activity-mobile";
 import { PendingDialog, PendingRow, viewOf } from "./activity-parts";
-import { ACTIVITY_TABS, useActivity, type ActivityModel } from "../model/use-activity";
+import { useActivity, type ActivityModel } from "../model/use-activity";
 import { AppHeader } from "@/widgets/app-header/ui/app-header";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
@@ -10,8 +10,8 @@ import { Card } from "@/shared/components/ui/card";
 import { Disc } from "@/shared/components/ui/disc";
 import { Eyebrow } from "@/shared/components/ui/eyebrow";
 import { Icon } from "@/shared/components/ui/icon";
-import { Progress } from "@/shared/components/ui/progress";
 import { cn } from "cn";
+import { MyEventsMap } from "@/widgets/events-map/ui/my-events-map";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 import { QrCode } from "@/shared/components/ui/qr-code";
 import { plural } from "@/shared/lib/plural";
@@ -49,7 +49,7 @@ function FilterBar({ m }: { m: ActivityModel }) {
         Активность
       </h1>
       <div className="absolute top-[6px] left-[327.5px] flex gap-2" role="tablist" aria-label="Тип активности">
-        {ACTIVITY_TABS.map((t) => {
+        {m.tabs.map((t) => {
           const active = m.tab === t.key;
           const unread = m.unreadOf(t.key);
           return (
@@ -93,7 +93,9 @@ function Feed({ m }: { m: ActivityModel }) {
             {m.list.isPending && <p className="text-[15px] font-medium text-muted-foreground">Загружаем…</p>}
             {m.list.isError && <p role="alert" className="text-[15px] font-medium text-destructive">Не удалось загрузить активность.</p>}
             {m.list.isSuccess && m.groups.length === 0 && (
-              <p className="text-[15px] font-medium text-muted-foreground">Здесь пока пусто. Ответы в обсуждениях, новые достижения и напоминания о встречах появятся тут.</p>
+              <p className="text-[15px] font-medium text-muted-foreground">{m.participant
+                ? "Здесь пока пусто. Ответы в обсуждениях, новые достижения и напоминания о встречах появятся тут."
+                : "Здесь пока пусто. Вопросы участников в обсуждениях ваших мероприятий появятся тут."}</p>
             )}
             {m.groups.map((group) => (
               <section key={group.label} className="flex flex-col gap-[10px]">
@@ -186,22 +188,14 @@ function Tickets({ m }: { m: ActivityModel }) {
   );
 }
 
-function Goal() {
+/** Карта моих ближайших встреч: записи, заявки и то, что я веду. */
+function MyMap({ full }: { full?: boolean }) {
   return (
-    <Card className="absolute top-[335px] left-[721px] h-[291px] w-[186px] justify-between overflow-hidden bg-secondary p-[26px]">
-      <Img src="memphis2.svg" className="top-0 left-0 h-[220px] w-[200px]" />
-      <Img src="jump.png" className="top-[91px] left-[89px] h-[92px] w-[85px] object-cover" />
-      <div className="relative h-[69px] w-[134px]">
-        <Eyebrow className="text-foreground">ЦЕЛЬ НЕДЕЛИ</Eyebrow>
-        <p className="absolute top-[19px] left-0 font-display font-extrabold whitespace-nowrap text-foreground">
-          <span className="text-[44px] leading-[44px]">4</span>
-          <span className="text-[20px] leading-[44px]"> / 5</span>
-        </p>
-      </div>
-      <div className="relative h-14 w-[134px]">
-        <p className="w-[120.5px] text-[13px] leading-[18px] font-bold text-foreground">ещё одна — и цель закрыта</p>
-        <Progress value={80} className="absolute top-11 left-0 h-3" />
-      </div>
+    <Card className={cn("absolute left-[721px] overflow-hidden p-0", full ? "top-0 h-[626px] w-[495px]" : "top-[335px] h-[291px] w-[289px]")}>
+      <MyEventsMap className="size-full" />
+      <Badge variant="outline" className="pointer-events-none absolute top-3 right-3 z-[500] bg-card text-[11px] font-extrabold tracking-[1px]">
+        МОИ ВСТРЕЧИ НА КАРТЕ
+      </Badge>
     </Card>
   );
 }
@@ -210,12 +204,12 @@ function Goal() {
 function Requests({ m }: { m: ActivityModel }) {
   const first = m.pendingItems[0];
   return (
-    <Card className="absolute top-[335px] left-[927px] h-[291px] w-[289px] justify-between overflow-hidden bg-primary p-[26px]">
+    <Card className="absolute top-[335px] left-[1030px] h-[291px] w-[186px] justify-between overflow-hidden bg-primary p-[22px]">
       <Img src="memphis3.svg" className="top-0 left-0 h-[220px] w-[300px]" />
-      <div className="relative h-24 w-[237px]">
+      <div className="relative h-[120px] w-[142px]">
         <Eyebrow className="text-lilac">ЗАЯВКИ</Eyebrow>
         <p className="absolute top-[19px] left-0 font-display text-[44px] leading-[55px] font-extrabold text-white">{m.pendingTotal}</p>
-        <p className="absolute top-[77px] left-0 w-[237px] truncate text-sm leading-[19px] font-semibold text-white">
+        <p className="absolute top-[77px] left-0 line-clamp-2 w-[142px] text-sm leading-[19px] font-semibold text-white">
           {first ? `ждёт ответа: «${first.event.title}»` : "нет заявок в ожидании"}
         </p>
       </div>
@@ -240,9 +234,16 @@ export default function ActivityPage() {
         <FilterBar m={m} />
         <div className="relative h-[626px] w-[1216px] shrink-0">
           <Feed m={m} />
-          <Tickets m={m} />
-          <Goal />
-          <Requests m={m} />
+          {/* билеты и мои заявки — только у участника; клубу карта его мероприятий на всю колонку */}
+          {m.participant ? (
+            <>
+              <Tickets m={m} />
+              <MyMap />
+              <Requests m={m} />
+            </>
+          ) : (
+            <MyMap full />
+          )}
         </div>
       </main>
     </div>
