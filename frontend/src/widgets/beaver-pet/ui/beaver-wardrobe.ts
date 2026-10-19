@@ -96,12 +96,11 @@ const number = (text: string, y: number, size: number, fill = "#FFFFFF") =>
 
 const emblem = (svg: string) => svg.replace("<svg ", '<svg x="138" y="330" width="100" height="100" ');
 
-/** Исходный широкий логотип ФСП раскладывается в два ряда без перерисовки контуров. */
+/** На футболке только знак и ФСП; полная версия остаётся в исходном SVG. */
 function programmingBadge() {
-  const part = (x: number, y: number, width: number, height: number, viewBox: string) => programmingEmblem
-    .replace("<svg ", `<svg x="${x}" y="${y}" width="${width}" height="${height}" overflow="hidden" `)
-    .replace('viewBox="0 0 509 66"', `viewBox="${viewBox}"`);
-  return part(103, 335, 170, 56, "0 0 200 66") + part(90, 396, 196, 42, "200 0 309 66");
+  return programmingEmblem
+    .replace("<svg ", '<svg x="103" y="335" width="170" height="56" overflow="hidden" ')
+    .replace('viewBox="0 0 509 66"', 'viewBox="0 0 200 66"');
 }
 
 const clubShirts = Object.fromEntries(Object.entries(CLUBS).map(([id, club]) => [id, () => shirt({
