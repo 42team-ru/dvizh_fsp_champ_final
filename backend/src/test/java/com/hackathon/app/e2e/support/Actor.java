@@ -52,6 +52,17 @@ import com.hackathon.app.domain.dto.PublicOrganizationResponse;
 import com.hackathon.app.domain.dto.RegistrationResponse;
 import com.hackathon.app.domain.dto.SportResponse;
 import com.hackathon.app.domain.dto.UserResponse;
+import com.hackathon.app.domain.dto.NotificationPageResponse;
+import com.hackathon.app.domain.dto.NotificationPollResponse;
+import com.hackathon.app.domain.dto.NotificationSettingsResponse;
+import com.hackathon.app.domain.dto.ReadNotificationsRequest;
+import com.hackathon.app.domain.dto.SaveNotificationSettingsRequest;
+import com.hackathon.app.domain.dto.TelegramConnectionResponse;
+import com.hackathon.app.domain.dto.TelegramLinkResponse;
+import com.hackathon.app.domain.dto.TelegramUpdateRequest;
+import com.hackathon.app.domain.enums.NotificationCategory;
+import com.hackathon.app.domain.enums.NotificationChannel;
+import java.util.Set;
 import jakarta.servlet.http.Cookie;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.web.servlet.ResultActions;
@@ -285,6 +296,17 @@ public class Actor {
 	}
 
 
+	/** Добавить фото в галерею мероприятия (PNG). */
+	public EventResponse addEventPhoto(UUID eventId, byte[] png) {
+		return send("POST /api/events/" + eventId + "/photos", multipart("/api/events/{id}/photos", eventId)
+				.file(new MockMultipartFile("file", "photo.png", "image/png", png)), null, type(EventResponse.class));
+	}
+
+	public EventResponse removeEventPhoto(UUID eventId, UUID fileId) {
+		return send("DELETE /api/events/" + eventId + "/photos/" + fileId,
+				delete("/api/events/{id}/photos/{fileId}", eventId, fileId), null, type(EventResponse.class));
+	}
+
 	// ---------- занятия ----------
 
 	/** Все будущие занятия, включая отменённые. */
@@ -436,6 +458,78 @@ public class Actor {
 	public CommentResponse comment(UUID eventId, String text) {
 		return send("POST /api/events/" + eventId + "/comments", post("/api/events/{id}/comments", eventId),
 				Map.of("text", text), type(CommentResponse.class));
+	}
+
+	/** Ответить на конкретное сообщение обсуждения. */
+	public CommentResponse reply(UUID eventId, UUID replyToId, String text) {
+		return send("POST /api/events/" + eventId + "/comments (reply)", post("/api/events/{id}/comments", eventId),
+				Map.of("text", text, "replyToId", replyToId.toString()), type(CommentResponse.class));
+	}
+
+	// ---------- уведомления ----------
+
+	/** Первая страница входящих, новые сверху. */
+	public NotificationPageResponse notifications() {
+		return notifications(Map.of());
+	}
+
+	/** Входящие с параметрами: cursor, size, unreadOnly. */
+	public NotificationPageResponse notifications(Map<String, String> params) {
+		var request = get("/api/notifications");
+		params.forEach(request::param);
+		return send("GET /api/notifications " + params, request, null, type(NotificationPageResponse.class));
+	}
+
+	/** Long polling до ответа: timeoutSeconds = 0 отвечает сразу. */
+	public NotificationPollResponse notificationPoll(long revision, int timeoutSeconds) {
+		return beginNotificationPoll(revision, timeoutSeconds).await();
+	}
+
+	/** Открыть ожидание, как вкладка браузера, и вернуть его без ответа. */
+	public TestApi.Pending<NotificationPollResponse> beginNotificationPoll(long revision, int timeoutSeconds) {
+		return api.begin("GET /api/notifications/poll", get("/api/notifications/poll")
+				.param("revision", Long.toString(revision)).param("timeoutSeconds", Integer.toString(timeoutSeconds)),
+				cookie, type(NotificationPollResponse.class));
+	}
+
+	public NotificationPollResponse readNotification(UUID notificationId) {
+		return send("POST /api/notifications/" + notificationId + "/read",
+				post("/api/notifications/{id}/read", notificationId), null, type(NotificationPollResponse.class));
+	}
+
+	/** Прочитать всё до показанной ревизии. */
+	public NotificationPollResponse readNotifications(long throughRevision) {
+		return send("POST /api/notifications/read-all", post("/api/notifications/read-all"),
+				new ReadNotificationsRequest(throughRevision), type(NotificationPollResponse.class));
+	}
+
+	public NotificationSettingsResponse notificationSettings() {
+		return send("GET /api/notifications/settings", get("/api/notifications/settings"), null,
+				type(NotificationSettingsResponse.class));
+	}
+
+	/** Полностью заменить внешние каналы и категории. */
+	public NotificationSettingsResponse notificationSettings(Set<NotificationChannel> channels,
+			Set<NotificationCategory> categories) {
+		return send("PUT /api/notifications/settings", put("/api/notifications/settings"),
+				new SaveNotificationSettingsRequest(channels, categories), type(NotificationSettingsResponse.class));
+	}
+
+	public TelegramConnectionResponse telegramConnection() {
+		return send("GET /api/notifications/telegram", get("/api/notifications/telegram"), null,
+				type(TelegramConnectionResponse.class));
+	}
+
+	/** Одноразовая ссылка на бота. */
+	public TelegramLinkResponse telegramLink() {
+		return send("POST /api/notifications/telegram/link", post("/api/notifications/telegram/link"), null,
+				type(TelegramLinkResponse.class));
+	}
+
+	/** Update от Telegram с секретом webhook в заголовке. */
+	public void telegramUpdate(String secret, TelegramUpdateRequest update) {
+		send("POST /api/notifications/telegram/webhook", post("/api/notifications/telegram/webhook")
+				.header("X-Telegram-Bot-Api-Secret-Token", secret), update, null);
 	}
 
 	// ---------- организация ----------

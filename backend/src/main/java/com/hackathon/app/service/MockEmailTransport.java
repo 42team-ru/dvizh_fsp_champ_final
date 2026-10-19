@@ -5,5 +5,5 @@ import org.springframework.stereotype.Service;
 @Service
 public class MockEmailTransport implements NotificationTransport {
     public NotificationChannel channel() { return NotificationChannel.EMAIL; }
-    public Result send(Long chatId, String text) { return new Result(NotificationDeliveryStatus.MOCKED, null); }
+    public Result send(Long chatId, String text, Photo photo) { return new Result(NotificationDeliveryStatus.MOCKED, null); }
 }

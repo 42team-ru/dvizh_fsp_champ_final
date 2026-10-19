@@ -33,6 +33,7 @@ public class EventOrganizerService {
     private final EventRepository events;
     private final EventOrganizerRepository organizers;
     private final RegistrationRepository registrations;
+    private final NotificationChanges notificationChanges;
     private final AppUserRepository users;
     private final EventAccessPolicy policy;
     private final OrganizerMapper mapper;
@@ -81,7 +82,8 @@ public class EventOrganizerService {
      */
     @Transactional
     public List<OrganizerResponse> remove(UUID eventId, UUID userId, UUID organizerId) {
-        var event = events.findById(eventId).orElseThrow(() -> new NoSuchElementException(EventService.NOT_FOUND));
+        var event = events.findByIdForUpdate(eventId).orElseThrow(() -> new NoSuchElementException(EventService.NOT_FOUND));
+        notificationChanges.watch(eventId, userId);
         if (policy.isAuthor(event, organizerId)) {
             throw new ConflictException("Автора мероприятия убрать из организаторов нельзя");
         }
@@ -99,7 +101,8 @@ public class EventOrganizerService {
      * Менять состав может только автор и только пока событие не удалено.
      */
     private Event eventManagedByAuthor(UUID eventId, UUID userId) {
-        var event = events.findById(eventId).orElseThrow(() -> new NoSuchElementException(EventService.NOT_FOUND));
+        var event = events.findByIdForUpdate(eventId).orElseThrow(() -> new NoSuchElementException(EventService.NOT_FOUND));
+        notificationChanges.watch(eventId, userId);
         if (!policy.isAuthor(event, userId)) {
             throw new ForbiddenException("Состав организаторов меняет только автор мероприятия");
         }

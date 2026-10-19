@@ -46,6 +46,12 @@ services:
       S3_ENDPOINT: http://minio:9000
       S3_ACCESS_KEY: app
       S3_SECRET_KEY: ${S3_SECRET_KEY}
+      # Уведомления в Telegram (docs/notifications.md); по умолчанию выключены
+      APP_PUBLIC_URL: ${APP_PUBLIC_URL:-http://localhost}
+      TELEGRAM_ENABLED: ${TELEGRAM_ENABLED:-false}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME:-}
+      TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET:-}
     depends_on:
       db:
         condition: service_healthy

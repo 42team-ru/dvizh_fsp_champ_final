@@ -42,6 +42,7 @@ public class CommentService {
     private final DbTimeRepository dbTime;
     private final EventAccessPolicy policy;
     private final CommentMapper mapper;
+    private final NotificationSubjects notificationSubjects;
 
     /**
      * Старые сверху, как в переписке. after — только сообщения новее этого момента (подгрузка новых без всей ленты).
@@ -62,10 +63,11 @@ public class CommentService {
     public CommentResponse create(UUID eventId, UUID userId, String text, UUID replyToId) {
         var event = find(eventId);
         String blockedReason;
+        Comment parent = null;
         if (replyToId == null) {
             blockedReason = policy.commentBlockedReason(event);
         } else {
-            var parent = comments.findById(replyToId).filter(c -> c.getEventId().equals(eventId) && !c.isHidden())
+            parent = comments.findById(replyToId).filter(c -> c.getEventId().equals(eventId) && !c.isHidden())
                     .orElseThrow(() -> new BadRequestException("Сообщение, на которое вы отвечаете, не найдено"));
             blockedReason = policy.replyBlockedReason(event, parent);
         }
@@ -73,6 +75,10 @@ public class CommentService {
             throw new ConflictException(blockedReason);
         }
         var saved = comments.saveAndFlush(mapper.toEntity(eventId, userId, text, replyToId));
+        if (parent != null) {
+            // Оповещается только автор исходного сообщения; ответ самому себе публикатор пропустит.
+            notificationSubjects.reply(event, saved, parent.getAuthorId());
+        }
         return toResponses(event, List.of(saved), userId).getFirst();
     }
 
