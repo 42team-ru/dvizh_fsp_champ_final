@@ -103,6 +103,32 @@ class NotificationController {
         return response;
     }
 
+    @PutMapping("/email")
+    @Operation(operationId = "notifications_connectEmail", summary = "Подключить почту (демо)")
+    NotificationSettingsResponse connectEmail(@AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody ConnectNotificationEmailRequest request) {
+        return notifications.connectEmail(userId(jwt), request);
+    }
+
+    @DeleteMapping("/email")
+    @Operation(operationId = "notifications_disconnectEmail", summary = "Отключить почту")
+    NotificationSettingsResponse disconnectEmail(@AuthenticationPrincipal Jwt jwt) {
+        return notifications.disconnectEmail(userId(jwt));
+    }
+
+    @PutMapping("/max")
+    @Operation(operationId = "notifications_connectMax", summary = "Подключить MAX (демо)")
+    NotificationSettingsResponse connectMax(@AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody ConnectNotificationMaxRequest request) {
+        return notifications.connectMax(userId(jwt), request);
+    }
+
+    @DeleteMapping("/max")
+    @Operation(operationId = "notifications_disconnectMax", summary = "Отключить MAX")
+    NotificationSettingsResponse disconnectMax(@AuthenticationPrincipal Jwt jwt) {
+        return notifications.disconnectMax(userId(jwt));
+    }
+
     @GetMapping("/telegram")
     @Operation(operationId = "notifications_telegram", summary = "Состояние подключения Telegram")
     TelegramConnectionResponse telegram(@AuthenticationPrincipal Jwt jwt) {

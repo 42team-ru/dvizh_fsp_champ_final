@@ -83,6 +83,7 @@ class NotificationTelegramE2ETest {
      */
     @Test void connectedTelegramAndMockChannelsUseTheSameOutbox() {
         var author = api.newUser("telegramAuthor"); var member = api.newUser("telegramMember");
+        member.connectEmail("member@example.com"); member.connectMax("+79991234567");
         long chat = connect(member);
         assertThat(member.telegramConnection().connected()).isTrue();
         assertThat(member.notificationSettings().channels()).contains(NotificationChannel.TELEGRAM);

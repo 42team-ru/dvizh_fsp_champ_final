@@ -84,6 +84,7 @@ class NotificationInboxE2ETest {
     @Test void cursorPreferencesAndRetentionPreserveInboxSemantics() {
         var author = api.newUser("cursorAuthor"); var member = api.newUser("cursorMember");
         var event = author.createEvent(EventForm.free()); var question = member.comment(event.id(), "Вопрос");
+        member.connectEmail("member@example.com"); member.connectMax("+79991234567");
         member.notificationSettings(Set.of(NotificationChannel.MAX, NotificationChannel.EMAIL), EnumSet.allOf(NotificationCategory.class));
         for (int i = 0; i < 3; i++) author.reply(event.id(), question.id(), "Ответ " + i);
         var first = member.notifications(Map.of("size", "2"));
@@ -113,6 +114,7 @@ class NotificationInboxE2ETest {
      */
     @Test void rollbackDoesNotLeakNotificationsOrOutboxTasks() {
         var author = api.newUser("rollbackNotifyAuthor"); var member = api.newUser("rollbackNotifyMember");
+        author.connectEmail("author@example.com"); author.connectMax("+79991234567");
         author.notificationSettings(Set.of(NotificationChannel.MAX, NotificationChannel.EMAIL), EnumSet.allOf(NotificationCategory.class));
         var event = author.createEvent(EventForm.free());
         assertThatThrownBy(() -> new TransactionTemplate(transactions).execute(status -> {
@@ -120,6 +122,7 @@ class NotificationInboxE2ETest {
             throw new IllegalStateException("rollback");
         })).isInstanceOf(IllegalStateException.class).hasMessage("rollback");
         assertThat(author.notifications().items()).isEmpty();
+        member.connectMax("+79991234567");
         member.notificationSettings(Set.of(NotificationChannel.MAX), EnumSet.allOf(NotificationCategory.class));
         var question = member.comment(event.id(), "Вопрос до отката");
         assertThatThrownBy(() -> new TransactionTemplate(transactions).execute(status -> {

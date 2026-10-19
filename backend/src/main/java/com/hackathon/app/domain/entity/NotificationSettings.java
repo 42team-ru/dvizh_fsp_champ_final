@@ -22,6 +22,12 @@ public class NotificationSettings extends AuditEntity {
     private UUID id;
     /** Владелец. */
     private UUID userId;
+    /** Адрес демонстрационного почтового канала. */
+    @Column(length = 254)
+    private String email;
+    /** Телефон демонстрационного канала MAX. */
+    @Column(length = 32)
+    private String maxPhone;
     /** Включённые внешние каналы. */
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "notification_setting_channels", joinColumns = @JoinColumn(name = "settings_id"))

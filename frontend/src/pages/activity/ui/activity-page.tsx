@@ -1,7 +1,7 @@
+import { NotificationSettingsButton } from "@/features/notification-settings/ui/notification-settings-dialog";
 import { Link } from "react-router";
-import { CancelledStamp } from "@/shared/components/ui/cancelled-stamp";
 import { ActivityMobile } from "./activity-mobile";
-import { PendingDialog, PendingRow, viewOf } from "./activity-parts";
+import { PendingRow, PlansDialog, PlansSwitch, TicketRow, viewOf } from "./activity-parts";
 import { ACTIVITY_TABS, useActivity, type ActivityModel } from "../model/use-activity";
 import { AppHeader } from "@/widgets/app-header/ui/app-header";
 import { Badge } from "@/shared/components/ui/badge";
@@ -13,11 +13,8 @@ import { Icon } from "@/shared/components/ui/icon";
 import { Progress } from "@/shared/components/ui/progress";
 import { cn } from "cn";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
-import { QrCode } from "@/shared/components/ui/qr-code";
 
 const XS = "h-9 px-4 text-[13px] leading-[18px]";
-const MONTHS = ["ЯНВ", "ФЕВ", "МАР", "АПР", "МАЙ", "ИЮН", "ИЮЛ", "АВГ", "СЕН", "ОКТ", "НОЯ", "ДЕК"];
-const TICKET_TONES = ["bg-accent", "bg-primary"];
 
 function Img({ src, className }: { src: string; className?: string }) {
   return <img src={`/activity/${src}`} alt="" className={cn("absolute max-w-none", className)} />;
@@ -63,6 +60,7 @@ function FilterBar({ m }: { m: ActivityModel }) {
             </Button>
           );
         })}
+        <NotificationSettingsButton className="h-[38px] min-h-0 px-4" />
       </div>
       {m.totalUnread > 0 && (
         <button type="button" onClick={m.markAllRead} title="Отметить всё прочитанным"
@@ -74,21 +72,11 @@ function FilterBar({ m }: { m: ActivityModel }) {
   );
 }
 
-/** Лента: уведомления выбранного типа по дням; во вкладке «Заявки» — мои заявки в ожидании. */
+/** Лента: уведомления выбранного типа по дням. */
 function Feed({ m }: { m: ActivityModel }) {
   return (
     <Card className="absolute top-0 left-0 h-[626px] w-[701px] overflow-hidden">
       <div className="absolute inset-x-6 top-6 bottom-6 flex flex-col gap-[10px] overflow-y-auto pr-1">
-        {m.tab === "requests" ? (
-          <>
-            <Eyebrow>ЖДУТ РЕШЕНИЯ ОРГАНИЗАТОРА</Eyebrow>
-            {m.pendingItems.length === 0 && !m.pending.isPending && (
-              <p className="text-[15px] font-medium text-muted-foreground">Заявок в ожидании нет. Записи по заявке появятся здесь, пока организатор их не рассмотрит.</p>
-            )}
-            {m.pendingItems.map((reg) => <PendingRow key={reg.id} reg={reg} />)}
-          </>
-        ) : (
-          <>
             {m.list.isPending && <p className="text-[15px] font-medium text-muted-foreground">Загружаем…</p>}
             {m.list.isError && <p role="alert" className="text-[15px] font-medium text-destructive">Не удалось загрузить активность.</p>}
             {m.list.isSuccess && m.groups.length === 0 && (
@@ -118,6 +106,40 @@ function Feed({ m }: { m: ActivityModel }) {
               </section>
             ))}
             {m.hasMore && <Button variant="soft" className="self-center" onClick={m.showMore}>Показать ещё</Button>}
+      </div>
+    </Card>
+  );
+}
+
+/** «Ты идёшь» / «Заявки»: две ближайшие записи выбранной вкладки; «Все» открывает полный список. */
+function Plans({ m }: { m: ActivityModel }) {
+  const totals = { going: m.goingTotal, requests: m.pendingTotal };
+  return (
+    <Card className="absolute top-0 left-[721px] h-[315px] w-[495px] overflow-hidden">
+      <div className="absolute inset-x-6 top-6 flex items-center justify-between gap-2">
+        <PlansSwitch tab={m.plansTab} totals={totals} onChange={m.setPlansTab} />
+        <PlansDialog initialTab={m.plansTab} totals={totals}>
+          <Button variant="secondary" className={XS}>Все</Button>
+        </PlansDialog>
+      </div>
+      <div className="absolute top-[78px] left-6 flex w-[443px] flex-col gap-3">
+        {m.plansTab === "going" ? (
+          <>
+            {m.goingItems.length === 0 && !m.going.isPending && (
+              <p className="text-sm font-semibold text-muted-foreground">
+                Ближайших подтверждённых записей нет. <Link to="/feed" className="underline">Найти встречу</Link>
+              </p>
+            )}
+            {m.goingItems.map((reg, i) => <TicketRow key={reg.id} reg={reg} index={i} />)}
+          </>
+        ) : (
+          <>
+            {m.pendingItems.length === 0 && !m.pending.isPending && (
+              <p className="text-sm font-semibold text-muted-foreground">
+                Заявок в ожидании нет. Записи по заявке появятся здесь, пока организатор их не рассмотрит.
+              </p>
+            )}
+            {m.pendingItems.map((reg) => <PendingRow key={reg.id} reg={reg} />)}
           </>
         )}
       </div>
@@ -125,71 +147,11 @@ function Feed({ m }: { m: ActivityModel }) {
   );
 }
 
-/** «Ты идёшь»: ближайшие подтверждённые записи как посадочные талоны. */
-function Tickets({ m }: { m: ActivityModel }) {
-  return (
-    <Card className="absolute top-0 left-[721px] h-[315px] w-[495px] overflow-hidden">
-      <h2 className="absolute top-6 left-6 font-display text-[22px] leading-[27px] font-bold text-foreground">Ты идёшь</h2>
-      <span className="absolute top-8 right-6 text-[13px] leading-[18px] font-bold whitespace-nowrap text-muted-foreground">
-        {m.goingTotal} {m.goingTotal % 10 === 1 && m.goingTotal % 100 !== 11 ? "билет" : m.goingTotal % 10 >= 2 && m.goingTotal % 10 <= 4 && (m.goingTotal % 100 < 12 || m.goingTotal % 100 > 14) ? "билета" : "билетов"}
-      </span>
-      <div className="absolute top-[67px] left-6 flex w-[443px] flex-col gap-3">
-        {m.goingItems.length === 0 && (
-          <p className="text-sm font-semibold text-muted-foreground">
-            Ближайших подтверждённых записей нет. <Link to="/feed" className="underline">Найти встречу</Link>
-          </p>
-        )}
-        {m.goingItems.map((reg, i) => {
-          const start = new Date(reg.myNextOccurrence?.startAt ?? reg.event.startAt);
-          return (
-            <Link key={reg.id} to={`/events/${reg.event.id}`}
-              className="relative box-border flex h-[104px] w-[443px] shrink-0 items-stretch overflow-hidden rounded-[18px] border-2 border-ink bg-card">
-              <div className={cn("relative w-[88px] shrink-0 border-r-2 border-dashed border-ink text-white", TICKET_TONES[i % TICKET_TONES.length])}>
-                <p className="absolute inset-x-0 top-[12px] text-center text-[10px] leading-[14px] font-extrabold tracking-[1.5px]">{MONTHS[start.getMonth()]}</p>
-                <p className="absolute inset-x-0 top-[26px] text-center font-display text-[30px] leading-[37px] font-extrabold">{start.getDate()}</p>
-                <p className="absolute inset-x-0 top-[68px] text-center text-[13px] leading-[18px] font-bold">
-                  {start.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}
-                </p>
-              </div>
-              <div className="flex min-w-0 flex-1 flex-col">
-                <div className="flex h-[22px] shrink-0 items-center justify-between bg-primary px-3 text-[9px] font-extrabold whitespace-nowrap">
-                  <span className="tracking-[1.5px] text-secondary">ПОСАДОЧНЫЙ ТАЛОН</span>
-                  <span className="tracking-[1px] text-white">№ {reg.event.id.slice(0, 4).toUpperCase()}</span>
-                </div>
-                <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 px-4">
-                  <p className="line-clamp-2 font-display text-[15px] leading-[19px] font-bold text-foreground">{reg.event.title}</p>
-                  <div className="flex items-center gap-1">
-                    <Icon name="activity/icon-pin" className="size-[14px] shrink-0" />
-                    <span className="truncate text-[13px] leading-[18px] font-medium text-muted-foreground">
-                      {reg.event.format === "ONLINE" ? "Онлайн" : reg.event.address}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div className="relative w-[104px] shrink-0 overflow-hidden border-l-2 border-dashed border-ink bg-secondary">
-                <QrCode path={`/events/${reg.event.id}`} label="QR-код: страница встречи" className="absolute top-[8px] left-[26px] size-[52px]" />
-                {reg.event.cancelledByOrganizer || reg.event.status !== "PUBLISHED" ? (
-                  <CancelledStamp className="bottom-[6px] left-[10px] h-[28px] w-[84px] rotate-[7deg]" />
-                ) : (
-                  <div className="pointer-events-none absolute bottom-[6px] left-[10px] h-[28px] w-[84px] rotate-[7deg] text-primary">
-                    <img src="/event/stamp-admitted.svg" alt="" className="absolute inset-0 size-full max-w-none" />
-                    <p className="absolute inset-x-0 top-[7px] text-center font-display text-[11px] leading-[14px] font-extrabold">ДОПУЩЕН</p>
-                  </div>
-                )}
-              </div>
-            </Link>
-          );
-        })}
-      </div>
-    </Card>
-  );
-}
-
 function Goal() {
   return (
-    <Card className="absolute top-[335px] left-[721px] h-[291px] w-[186px] justify-between overflow-hidden bg-secondary p-[26px]">
-      <Img src="memphis2.svg" className="top-0 left-0 h-[220px] w-[200px]" />
-      <Img src="jump.png" className="top-[91px] left-[89px] h-[92px] w-[85px] object-cover" />
+    <Card className="absolute top-[335px] left-[721px] h-[291px] w-[495px] justify-between overflow-hidden bg-secondary p-[26px]">
+      <Img src="memphis2.svg" className="top-0 right-0 h-[220px] w-[200px]" />
+      <Img src="jump.png" className="top-[60px] right-[40px] h-[150px] w-[139px] object-cover" />
       <div className="relative h-[69px] w-[134px]">
         <Eyebrow className="text-foreground">ЦЕЛЬ НЕДЕЛИ</Eyebrow>
         <p className="absolute top-[19px] left-0 font-display font-extrabold whitespace-nowrap text-foreground">
@@ -197,31 +159,9 @@ function Goal() {
           <span className="text-[20px] leading-[44px]"> / 5</span>
         </p>
       </div>
-      <div className="relative h-14 w-[134px]">
+      <div className="relative h-14 w-[240px]">
         <p className="w-[120.5px] text-[13px] leading-[18px] font-bold text-foreground">ещё одна — и цель закрыта</p>
         <Progress value={80} className="absolute top-11 left-0 h-3" />
-      </div>
-    </Card>
-  );
-}
-
-/** «Заявки»: сколько моих заявок ждут решения; «Посмотреть» открывает их список. */
-function Requests({ m }: { m: ActivityModel }) {
-  const first = m.pendingItems[0];
-  return (
-    <Card className="absolute top-[335px] left-[927px] h-[291px] w-[289px] justify-between overflow-hidden bg-primary p-[26px]">
-      <Img src="memphis3.svg" className="top-0 left-0 h-[220px] w-[300px]" />
-      <div className="relative h-24 w-[237px]">
-        <Eyebrow className="text-lilac">ЗАЯВКИ</Eyebrow>
-        <p className="absolute top-[19px] left-0 font-display text-[44px] leading-[55px] font-extrabold text-white">{m.pendingTotal}</p>
-        <p className="absolute top-[77px] left-0 w-[237px] truncate text-sm leading-[19px] font-semibold text-white">
-          {first ? `ждёт ответа: «${first.event.title}»` : "нет заявок в ожидании"}
-        </p>
-      </div>
-      <div className="relative">
-        <PendingDialog items={m.pendingItems} total={m.pendingTotal} loading={m.pending.isPending}>
-          <Button variant="secondary" className="h-10 px-[18px] text-sm leading-[19px]">Посмотреть</Button>
-        </PendingDialog>
       </div>
     </Card>
   );
@@ -239,9 +179,8 @@ export default function ActivityPage() {
         <FilterBar m={m} />
         <div className="relative h-[626px] w-[1216px] shrink-0">
           <Feed m={m} />
-          <Tickets m={m} />
+          <Plans m={m} />
           <Goal />
-          <Requests m={m} />
         </div>
       </main>
     </div>

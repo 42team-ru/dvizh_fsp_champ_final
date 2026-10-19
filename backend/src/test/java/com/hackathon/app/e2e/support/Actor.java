@@ -59,6 +59,8 @@ import com.hackathon.app.domain.dto.UserResponse;
 import com.hackathon.app.domain.dto.NotificationPageResponse;
 import com.hackathon.app.domain.dto.NotificationPollResponse;
 import com.hackathon.app.domain.dto.NotificationSettingsResponse;
+import com.hackathon.app.domain.dto.ConnectNotificationEmailRequest;
+import com.hackathon.app.domain.dto.ConnectNotificationMaxRequest;
 import com.hackathon.app.domain.dto.ReadNotificationsRequest;
 import com.hackathon.app.domain.dto.SaveNotificationSettingsRequest;
 import com.hackathon.app.domain.dto.TelegramConnectionResponse;
@@ -513,6 +515,24 @@ public class Actor {
 		return send("POST /api/notifications/read-all", post("/api/notifications/read-all"),
 				new ReadNotificationsRequest(throughRevision), type(NotificationPollResponse.class));
 	}
+
+    public NotificationSettingsResponse connectEmail(String email) {
+        return send("PUT /api/notifications/email", put("/api/notifications/email"),
+                new ConnectNotificationEmailRequest(email), type(NotificationSettingsResponse.class));
+    }
+
+    public NotificationSettingsResponse disconnectEmail() {
+        return send("DELETE /api/notifications/email", delete("/api/notifications/email"), null, type(NotificationSettingsResponse.class));
+    }
+
+    public NotificationSettingsResponse connectMax(String phone) {
+        return send("PUT /api/notifications/max", put("/api/notifications/max"),
+                new ConnectNotificationMaxRequest(phone), type(NotificationSettingsResponse.class));
+    }
+
+    public NotificationSettingsResponse disconnectMax() {
+        return send("DELETE /api/notifications/max", delete("/api/notifications/max"), null, type(NotificationSettingsResponse.class));
+    }
 
 	public NotificationSettingsResponse notificationSettings() {
 		return send("GET /api/notifications/settings", get("/api/notifications/settings"), null,

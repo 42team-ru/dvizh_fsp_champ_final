@@ -541,6 +541,7 @@ export interface Channel {
   mode: string;
   available: boolean;
   connected: boolean;
+  target?: string;
 }
 
 export type NotificationSettingsResponseChannelsItem = typeof NotificationSettingsResponseChannelsItem[keyof typeof NotificationSettingsResponseChannelsItem];
@@ -570,6 +571,22 @@ export interface NotificationSettingsResponse {
   categories: NotificationSettingsResponseCategoriesItem[];
   reminders: boolean;
   availableChannels: Channel[];
+}
+
+export interface ConnectNotificationMaxRequest {
+  /**
+     * @minLength 0
+     * @maxLength 64
+     */
+  phone: string;
+}
+
+export interface ConnectNotificationEmailRequest {
+  /**
+     * @minLength 0
+     * @maxLength 254
+     */
+  email: string;
 }
 
 /**

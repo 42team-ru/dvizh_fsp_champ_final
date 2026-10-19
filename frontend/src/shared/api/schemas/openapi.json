@@ -756,6 +756,106 @@
         }
       }
     },
+    "/api/notifications/max": {
+      "put": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Подключить MAX (демо)",
+        "operationId": "notifications_connectMax",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConnectNotificationMaxRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationSettingsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Отключить MAX",
+        "operationId": "notifications_disconnectMax",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationSettingsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/email": {
+      "put": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Подключить почту (демо)",
+        "operationId": "notifications_connectEmail",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConnectNotificationEmailRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationSettingsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Отключить почту",
+        "operationId": "notifications_disconnectEmail",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationSettingsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/events/{id}": {
       "get": {
         "tags": [
@@ -6993,6 +7093,9 @@
           },
           "connected": {
             "type": "boolean"
+          },
+          "target": {
+            "type": "string"
           }
         },
         "required": [
@@ -7048,6 +7151,33 @@
           "categories",
           "channels",
           "reminders"
+        ]
+      },
+      "ConnectNotificationMaxRequest": {
+        "type": "object",
+        "properties": {
+          "phone": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "phone"
+        ]
+      },
+      "ConnectNotificationEmailRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 254,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "email"
         ]
       },
       "EventRequest": {
