@@ -91,6 +91,7 @@ export function EventCard({
   titleLines = 1,
   className,
   href,
+  action,
 }: {
   event: EventCardData;
   coverClassName?: string;
@@ -99,12 +100,15 @@ export function EventCard({
   className?: string;
   /** Ссылка на карточку мероприятия: вся карточка кликабельна. */
   href?: string;
+  /** Действие в правом верхнем углу поверх ссылки (например, «Не интересно» в подборке). */
+  action?: React.ReactNode;
 }) {
   const large = size === "lg";
   const titleBox = large ? 31 : titleLines === 2 ? 43 : 21.5;
   return (
     <Card className={cn("relative overflow-hidden p-0", className)}>
       {href && <Link to={href} aria-label={event.title} className="absolute inset-0 z-10" />}
+      {action && <div className="absolute top-3 right-3 z-20">{action}</div>}
       <div
         className={cn(
           "relative aspect-[16/10] w-full grow overflow-hidden border-b-2 border-ink",

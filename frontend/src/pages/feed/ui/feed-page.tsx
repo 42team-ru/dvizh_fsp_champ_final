@@ -20,6 +20,7 @@ import type { EventSummaryResponse, EventsListParams } from "@/shared/api/genera
 import { toCardData, formatWhen } from "@/entity/event/lib/event-format";
 import { FEED_CHIPS, FOR_YOU_CHIP, useFeedFilters, type FeedChip } from "@/entity/event/model/use-feed-filters";
 import { useFeedEvents } from "@/entity/event/model/use-feed-events";
+import { DismissButton, useDismissRecommendation } from "@/features/dismiss-recommendation/ui/dismiss-button";
 import { EventsMap, type MapFilters } from "@/widgets/events-map/ui/events-map";
 import { FeedExtraFilters } from "@/widgets/feed-filters/ui/feed-extra-filters";
 import { LayoutGrid, Map as MapIcon, Sparkles } from "lucide-react";
@@ -135,11 +136,12 @@ function NearbyPeople() {
   );
 }
 
-function BikeCard({ event, className }: { event: EventSummaryResponse; className?: string }) {
+function BikeCard({ event, className, onDismiss }: { event: EventSummaryResponse; className?: string; onDismiss?: (id: string) => void }) {
   const data = toCardData(event, SLOT_COVERS[6]);
   return (
     <Card className={cn("relative min-h-[330px] flex-row overflow-hidden p-0", className)}>
       <Link to={`/events/${event.id}`} aria-label={event.title} className="absolute inset-0 z-10" />
+      {onDismiss && <DismissButton onDismiss={() => onDismiss(event.id)} className="absolute top-3 right-3" />}
       <div className="relative w-1/2 shrink-0 overflow-hidden border-r-2 border-ink">
         <EventCover cover={data.cover} />
         <EventChips sport={data.sport} time={formatWhen(event.startAt)} />
@@ -198,17 +200,20 @@ function CtaCard({ className }: { className?: string }) {
 }
 
 /** Карточка события из ленты по индексу; обложка-заглушка — по тому же слоту. */
-function Slot({ events, i, reasonOf, ...props }: {
+function Slot({ events, i, reasonOf, onDismiss, ...props }: {
   events: EventSummaryResponse[] | undefined;
   i: number;
   /** У рекомендаций под названием — главная причина «почему вам это». */
   reasonOf?: (id: string) => string | undefined;
-} & Omit<React.ComponentProps<typeof EventCard>, "event" | "href">) {
+  /** Только в подборке «Для вас»: кнопка «Не интересно» на карточке. */
+  onDismiss?: (id: string) => void;
+} & Omit<React.ComponentProps<typeof EventCard>, "event" | "href" | "action">) {
   const event = events?.[i];
   if (!event) return null;
   const data = toCardData(event, SLOT_COVERS[i % SLOT_COVERS.length]);
   const reason = reasonOf?.(event.id);
-  return <EventCard href={`/events/${event.id}`} event={reason ? { ...data, place: reason } : data} {...props} />;
+  return <EventCard href={`/events/${event.id}`} event={reason ? { ...data, place: reason } : data} {...props}
+    action={onDismiss ? <DismissButton onDismiss={() => onDismiss(event.id)} /> : undefined} />;
 }
 
 /** Карта понимает не все фильтры ленты: формат и «Для меня» ей не передаём (на карте только очные). */
@@ -221,6 +226,8 @@ export default function FeedPage() {
   const [more, setMore] = useState(false);
   const list = useFeedEvents(filters.params, filters);
   const { events, reasonOf } = list;
+  const { dismiss } = useDismissRecommendation();
+  const onDismiss = filters.forYou ? dismiss : undefined;
   return (
     <>
     <FeedMobile />
@@ -243,24 +250,24 @@ export default function FeedPage() {
           {list.isError && <p role="alert" className="text-lg font-semibold text-destructive">Не удалось загрузить ленту.</p>}
           {/* Ряды — отдельные сетки: если событий мало, пустеет конец ряда, а не съезжает раскладка. */}
           <div className="grid grid-cols-12 gap-5">
-            <Slot reasonOf={reasonOf} events={events} i={0} size="lg" className="col-span-6" />
+            <Slot reasonOf={reasonOf} onDismiss={onDismiss} events={events} i={0} size="lg" className="col-span-6" />
             {/* В стопках обложки 2:1, чтобы ряд не вытягивал большую карточку и соседей в квадрат. */}
             <div className="col-span-3 flex flex-col gap-5">
-              <Slot reasonOf={reasonOf} events={events} i={1} coverClassName="aspect-[2/1]" className="grow" />
-              <Slot reasonOf={reasonOf} events={events} i={2} titleLines={2} coverClassName="aspect-[2/1]" className="grow" />
+              <Slot reasonOf={reasonOf} onDismiss={onDismiss} events={events} i={1} coverClassName="aspect-[2/1]" className="grow" />
+              <Slot reasonOf={reasonOf} onDismiss={onDismiss} events={events} i={2} titleLines={2} coverClassName="aspect-[2/1]" className="grow" />
             </div>
             <div className="col-span-3 flex flex-col gap-5">
-              <Slot reasonOf={reasonOf} events={events} i={3} coverClassName="aspect-[2/1]" className="grow" />
+              <Slot reasonOf={reasonOf} onDismiss={onDismiss} events={events} i={3} coverClassName="aspect-[2/1]" className="grow" />
               <NearbyPeople />
             </div>
           </div>
           <div className="grid grid-cols-12 gap-5">
-            <Slot reasonOf={reasonOf} events={events} i={4} className="col-span-4" />
-            <Slot reasonOf={reasonOf} events={events} i={5} className="col-span-4" />
-            <Slot reasonOf={reasonOf} events={events} i={6} className="col-span-4" />
+            <Slot reasonOf={reasonOf} onDismiss={onDismiss} events={events} i={4} className="col-span-4" />
+            <Slot reasonOf={reasonOf} onDismiss={onDismiss} events={events} i={5} className="col-span-4" />
+            <Slot reasonOf={reasonOf} onDismiss={onDismiss} events={events} i={6} className="col-span-4" />
           </div>
           <div className="grid grid-cols-12 gap-5">
-            {events?.[7] && <BikeCard event={events[7]} className="col-span-7" />}
+            {events?.[7] && <BikeCard event={events[7]} className="col-span-7" onDismiss={onDismiss} />}
             <CtaCard className="col-span-5 col-start-8" />
           </div>
         </div>

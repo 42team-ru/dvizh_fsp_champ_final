@@ -39,19 +39,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 class EventScorer {
 
-	/** Причина попадает в ответ, если её признак дал хотя бы столько итоговой оценки. */
-	private static final double REASON_THRESHOLD = 0.03;
-	private static final int MAX_REASONS = 3;
-	/** Доля интереса, которую даёт похожий вид спорта. */
-	private static final double RELATED_SPORT_SHARE = 0.6;
-	/** Доля лояльности, которую даёт похожий организатор. */
-	private static final double RELATED_ORGANIZER_SHARE = 0.5;
-	/** Онлайн при известной точке: не рядом, но и не далеко. */
-	private static final double ONLINE_DISTANCE_VALUE = 0.6;
-	/** Множитель, если уровень совсем не подходит (новичку — профи). */
-	private static final double LEVEL_GATE = 0.3;
-	/** Привычки учитываются, если посещений хотя бы столько. */
-	private static final int MIN_HABIT = 3;
+	/* Константы формулы — в app.recommendations.scoring и app.recommendations.dismiss (application.yml). */
 	private static final Locale RU = Locale.forLanguageTag("ru");
 
 	private final RecommendationProperties properties;
@@ -107,20 +95,20 @@ class EventScorer {
 
 		// SPORT: max(p(u,s), 0.6 · max_t p(u,t)·sim(t,s)); при холодном старте выключен.
 		if (!profile.coldStart()) {
-			raws.add(sport(profile, population, candidate, weights.sport()));
+			raws.add(sport(profile, population, candidate, weights.sport(), properties.scoring().relatedSportShare()));
 		}
 
 		// LEVEL и «ворота» за совсем неподходящий уровень.
 		var userLevel = profile.levelIn(sportId);
 		var levelValue = levelFit(userLevel, event.getLevel());
 		raws.add(new Raw(RecommendationFeatureCode.LEVEL, levelValue, weights.level(), levelReason(userLevel, event.getLevel())));
-		var levelGate = levelValue < 0.1 ? LEVEL_GATE : 1;
+		var levelGate = levelValue < 0.1 ? properties.scoring().levelGate() : 1;
 
 		// DISTANCE: гауссово ядро с половиной на радиусе; без точки отсчёта выключен.
 		Double distanceKm = null;
 		if (profile.origin() != null) {
 			if (event.getFormat() == EventFormat.ONLINE) {
-				raws.add(new Raw(RecommendationFeatureCode.DISTANCE, ONLINE_DISTANCE_VALUE, weights.distance(),
+				raws.add(new Raw(RecommendationFeatureCode.DISTANCE, properties.scoring().onlineDistanceValue(), weights.distance(),
 						reason(RecommendationReasonCode.ONLINE, "Онлайн — можно присоединиться из дома")));
 			} else if (event.getLat() != null && event.getLon() != null) {
 				distanceKm = Geo.distanceKm(profile.origin(), new Geo.Point(event.getLat(), event.getLon()));
@@ -148,7 +136,7 @@ class EventScorer {
 
 		// ORGANIZER: лояльность к организатору или к похожему (общая аудитория).
 		if (!profile.organizerVisits().isEmpty()) {
-			raws.add(organizer(profile, population, candidate, weights.organizer()));
+			raws.add(organizer(profile, population, candidate, weights.organizer(), properties.scoring().relatedOrganizerShare()));
 		}
 
 		// TRUST: h / (h + 5), у организации +0.1.
@@ -178,11 +166,49 @@ class EventScorer {
 		raws.add(new Raw(RecommendationFeatureCode.URGENCY, urgency(hours), weights.urgency(), hours <= 48 ? soon : null));
 
 		var base = weighted(raws, null);
-		var penalty = Math.pow(0.5, profile.sportDismissals().getOrDefault(sportId, 0.0));
+		var penalty = dismissPenalty(profile, population, candidate);
 		var discovery = weighted(raws, RecommendationFeatureCode.SPORT) * levelGate * penalty;
 		var features = features(raws);
 		return new Scored(candidate, base * levelGate * penalty, base, levelGate, penalty, discovery,
-				!profile.coldStart() && profile.affinity(sportId) == 0, distanceKm, features, reasons(raws, features, soon));
+				!profile.coldStart() && profile.affinity(sportId) == 0, distanceKm, features,
+				reasons(raws, features, soon, properties.scoring()));
+	}
+
+	/**
+	 * Штраф за «Не интересно»: sportFactor^k за скрытия «Не мой вид спорта» этого вида и Π(1 − strength · sim · decay)
+	 * по похожим скрытым событиям. Не ниже floor: похожие встречи уходят вниз, но не исчезают из подборки совсем.
+	 */
+	double dismissPenalty(RecommendationSignals.Profile profile, RecommendationSignals.Population population,
+			Candidate candidate) {
+		var dismiss = properties.dismiss();
+		var penalty = Math.pow(dismiss.sportFactor(), profile.sportDismissals().getOrDefault(candidate.event().getSportId(), 0.0));
+		for (var sample : profile.dismissed()) {
+			var sim = similarity(sample, population, candidate, profile.zone());
+			if (sim >= dismiss.minSimilarity()) {
+				penalty *= 1 - RecommendationMath.clamp01(dismiss.similarStrength() * sim * sample.weight());
+			}
+		}
+		return Math.max(dismiss.floor(), penalty);
+	}
+
+	/** Похожесть кандидата на скрытое событие в [0, 1]: вид спорта, организатор, день и время, место. */
+	private double similarity(RecommendationSignals.Dismissed sample, RecommendationSignals.Population population,
+			Candidate candidate, ZoneId fallbackZone) {
+		var w = properties.dismiss().similarity();
+		var event = candidate.event();
+		var sport = sample.sportId().equals(event.getSportId()) ? 1
+				: population.sportSimilarity(sample.sportId(), event.getSportId());
+		var organizer = sample.organizerKey().equals(candidate.organizerKey()) ? 1 : 0;
+		var local = candidate.startAt().atZone(zoneOf(event, fallbackZone));
+		var time = local.getDayOfWeek() == sample.day()
+				&& RecommendationSignals.daytimeOf(local.getHour()) == sample.daytime() ? 1 : 0;
+		double place = 0;
+		if (sample.place() != null && event.getLat() != null && event.getLon() != null) {
+			place = Geo.distanceKm(sample.place(), new Geo.Point(event.getLat(), event.getLon()))
+					<= properties.dismiss().nearKm() ? 1 : 0;
+		}
+		var total = w.sport() + w.organizer() + w.time() + w.place();
+		return total == 0 ? 0 : (w.sport() * sport + w.organizer() * organizer + w.time() * time + w.place() * place) / total;
 	}
 
 	/** Уровень пользователя → уровень мероприятия: «Любой» 0.85, совпал 1, проще 0.6, сложнее 0.4, через ступень 0.05. */
@@ -211,7 +237,7 @@ class EventScorer {
 	}
 
 	private Raw sport(RecommendationSignals.Profile profile, RecommendationSignals.Population population,
-			Candidate candidate, double weight) {
+			Candidate candidate, double weight, double relatedShare) {
 		var sportId = candidate.event().getSportId();
 		var direct = profile.affinity(sportId);
 		double related = 0;
@@ -220,7 +246,7 @@ class EventScorer {
 			if (entry.getKey().equals(sportId)) {
 				continue;
 			}
-			var value = RELATED_SPORT_SHARE * entry.getValue() * population.sportSimilarity(entry.getKey(), sportId);
+			var value = relatedShare * entry.getValue() * population.sportSimilarity(entry.getKey(), sportId);
 			if (value > related) {
 				related = value;
 				relatedTo = entry.getKey();
@@ -267,7 +293,7 @@ class EventScorer {
 			pref = 0.6 * dayMatch + 0.4 * daytimeMatch;
 		}
 		Double habit = null;
-		if (profile.habitTotal() >= MIN_HABIT) {
+		if (profile.habitTotal() >= properties.scoring().minHabit()) {
 			int max = 0;
 			for (int cell : profile.habit()) {
 				max = Math.max(max, cell);
@@ -315,7 +341,7 @@ class EventScorer {
 	}
 
 	private static Raw organizer(RecommendationSignals.Profile profile, RecommendationSignals.Population population,
-			Candidate candidate, double weight) {
+			Candidate candidate, double weight, double relatedShare) {
 		var key = candidate.organizerKey();
 		var direct = RecommendationMath.saturate(profile.organizerVisits().getOrDefault(key, 0), 2);
 		double related = 0;
@@ -323,7 +349,7 @@ class EventScorer {
 			if (entry.getKey().equals(key)) {
 				continue;
 			}
-			var value = RELATED_ORGANIZER_SHARE * RecommendationMath.saturate(entry.getValue(), 2)
+			var value = relatedShare * RecommendationMath.saturate(entry.getValue(), 2)
 					* population.organizerSimilarity(entry.getKey(), key);
 			related = Math.max(related, value);
 		}
@@ -371,7 +397,7 @@ class EventScorer {
 	 * Если ни одна не прошла — «через сколько начнётся».
 	 */
 	private static List<RecommendationReason> reasons(List<Raw> raws, List<Feature> features,
-			RecommendationReason fallback) {
+			RecommendationReason fallback, RecommendationProperties.Scoring scoring) {
 		var contributionByCode = new EnumMap<RecommendationFeatureCode, Double>(RecommendationFeatureCode.class);
 		features.forEach(f -> contributionByCode.put(f.code(), f.contribution()));
 		record Ranked(RecommendationReason reason, double contribution) {
@@ -382,12 +408,12 @@ class EventScorer {
 				continue;
 			}
 			var contribution = raw.weight() == 0 ? 0.04 : contributionByCode.get(raw.code());
-			if (contribution >= REASON_THRESHOLD) {
+			if (contribution >= scoring.reasonThreshold()) {
 				ranked.add(new Ranked(raw.reason(), contribution));
 			}
 		}
 		ranked.sort(Comparator.comparingDouble(Ranked::contribution).reversed());
-		var result = ranked.stream().limit(MAX_REASONS).map(Ranked::reason).toList();
+		var result = ranked.stream().limit(scoring.maxReasons()).map(Ranked::reason).toList();
 		return result.isEmpty() ? List.of(fallback) : result;
 	}
 

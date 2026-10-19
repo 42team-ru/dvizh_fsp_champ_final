@@ -1,3 +1,4 @@
+import { DismissButton, useDismissRecommendation } from "@/features/dismiss-recommendation/ui/dismiss-button";
 import { Link } from "react-router";
 import { BrandPlate } from "@/shared/components/ui/brand-plate";
 import { useUser } from "@/entity/user/model/use-user";
@@ -192,6 +193,7 @@ function Tip() {
 /** Карусель «Подобрали для тебя»: первые рекомендации, под названием — главная причина. */
 function EventScroller() {
   const { items, isPending, isError } = useRecommendationPreview(5);
+  const { dismiss } = useDismissRecommendation();
   if (isPending) return <p className="px-4 text-base font-semibold text-muted-foreground">Подбираем встречи…</p>;
   if (isError) return <p role="alert" className="px-4 text-base font-semibold text-destructive">Не удалось загрузить подборку.</p>;
   if (items.length === 0) {
@@ -211,6 +213,7 @@ function EventScroller() {
         return (
           <Card key={e.id} className="relative w-[290px] shrink-0 overflow-hidden rounded-[22px]">
             <Link to={`/events/${e.id}`} aria-label={e.title} className="absolute inset-0 z-10" />
+            <DismissButton onDismiss={() => dismiss(e.id)} className="absolute top-3 right-3" />
             <div className={cn("relative h-[120px] shrink-0 overflow-hidden", TONES[index % TONES.length])}>
               {e.coverUrl ? (
                 <img src={e.coverUrl} alt="" className="absolute inset-0 size-full object-cover" />

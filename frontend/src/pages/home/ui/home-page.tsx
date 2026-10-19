@@ -1,3 +1,4 @@
+import { DismissButton, useDismissRecommendation } from "@/features/dismiss-recommendation/ui/dismiss-button";
 import { Link } from "react-router";
 import { HomeMobile } from "./home-mobile";
 import { AppHeader } from "@/widgets/app-header/ui/app-header";
@@ -208,7 +209,7 @@ function Tip() {
 }
 
 /** Карточка рекомендации: та же вёрстка, что в макете, данные — из recommendations_events. */
-function EventCard({ item, index }: { item: RecommendedEventResponse; index: number }) {
+function EventCard({ item, index, onDismiss }: { item: RecommendedEventResponse; index: number; onDismiss(id: string): void }) {
   const { event } = item;
   const cover = event.coverUrl ? { photo: event.coverUrl } : COVERS[index % COVERS.length];
   const card = toCardData(event, { bg: "bg-sky" });
@@ -216,6 +217,7 @@ function EventCard({ item, index }: { item: RecommendedEventResponse; index: num
   return (
     <Card className="relative h-[323.5px] overflow-hidden p-0">
       <Link to={`/events/${event.id}`} aria-label={event.title} className="absolute inset-0 z-10" />
+      <DismissButton onDismiss={() => onDismiss(event.id)} className="absolute top-3 right-3" />
       <div className="relative h-[180px] w-full shrink-0 overflow-hidden border-b-2 border-ink">
         <div className={`absolute inset-x-0 top-0 h-[178px] ${"bg" in cover ? cover.bg : ""}`}>
           {"photo" in cover ? (
@@ -260,6 +262,7 @@ function EventCard({ item, index }: { item: RecommendedEventResponse; index: num
 
 function Recommendations() {
   const { items, isPending, isError } = useRecommendationPreview(3);
+  const { dismiss } = useDismissRecommendation();
   if (isPending) {
     return <p className="text-lg font-semibold text-muted-foreground">Подбираем встречи…</p>;
   }
@@ -276,7 +279,7 @@ function Recommendations() {
   return (
     <div className="grid grid-cols-3 gap-5">
       {items.map((item, i) => (
-        <EventCard key={item.event.id} item={item} index={i} />
+        <EventCard key={item.event.id} item={item} index={i} onDismiss={dismiss} />
       ))}
     </div>
   );
