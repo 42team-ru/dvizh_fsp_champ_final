@@ -61,15 +61,12 @@ public class OrganizationService {
 		var org = organizations.findByAccountId(userId).orElse(null);
 		var now = dbTime.now();
 		if (org == null) {
-			org = mapper.toEntity(r, userId);
-			org.setStatus(OrganizationStatus.PENDING);
-			org.setSubmittedAt(now);
+			org = mapper.toEntity(r, userId, OrganizationStatus.PENDING, now);
 		}
 		else {
 			mapper.update(org, r);
 			if (org.getStatus() == OrganizationStatus.REJECTED) {
-				org.setStatus(OrganizationStatus.PENDING);
-				org.setSubmittedAt(now);
+				mapper.resubmit(org, OrganizationStatus.PENDING, now);
 			}
 		}
 		org.getContacts().clear();

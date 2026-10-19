@@ -1,5 +1,6 @@
 package com.hackathon.app.domain.mapper;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -12,6 +13,7 @@ import com.hackathon.app.domain.dto.PublicOrganizationResponse;
 import com.hackathon.app.domain.dto.SaveOrganizationRequest;
 import com.hackathon.app.domain.entity.AppUser;
 import com.hackathon.app.domain.entity.Organization;
+import com.hackathon.app.domain.enums.OrganizationStatus;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
@@ -23,11 +25,19 @@ import org.mapstruct.MappingTarget;
 @Mapper(config = MappingConfig.class, uses = FileMapper.class)
 public interface OrganizationMapper {
 
+	/** Первая анкета: статус и время подачи выбирает сервис. */
 	@Mapping(target = "contacts", ignore = true)
-	Organization toEntity(SaveOrganizationRequest request, UUID accountId);
+	Organization toEntity(SaveOrganizationRequest request, UUID accountId, OrganizationStatus status, Instant submittedAt);
 
 	@Mapping(target = "contacts", ignore = true)
 	void update(@MappingTarget Organization organization, SaveOrganizationRequest request);
+
+	/** Правка после отказа: заявка снова уходит на проверку. */
+	void resubmit(@MappingTarget Organization organization, OrganizationStatus status, Instant submittedAt);
+
+	/** Решение админа: статус, причина отказа (null при одобрении), когда и кто. */
+	void decide(@MappingTarget Organization organization, OrganizationStatus status, String rejectReason,
+			Instant reviewedAt, UUID reviewedById);
 
 	@Mapping(target = "logoUrl", source = "organization.logoFileId", qualifiedByName = "fileUrl")
 	OrganizationResponse toResponse(Organization organization, List<FileResponse> documents);

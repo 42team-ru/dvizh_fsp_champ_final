@@ -1,10 +1,12 @@
 package com.hackathon.app.service;
 
 import java.time.Clock;
+import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.temporal.TemporalAdjusters;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,8 +14,11 @@ import java.util.UUID;
 
 import com.hackathon.app.config.DemoProperties;
 import com.hackathon.app.domain.dto.EventRequest;
+import com.hackathon.app.domain.dto.ScheduleRequest;
+import com.hackathon.app.domain.dto.ScheduleRuleRequest;
 import com.hackathon.app.domain.dto.SaveOrganizationRequest;
 import com.hackathon.app.domain.entity.Event;
+import com.hackathon.app.domain.entity.EventOccurrence;
 import com.hackathon.app.domain.entity.Registration;
 import com.hackathon.app.domain.enums.ContactType;
 import com.hackathon.app.domain.enums.EventFormat;
@@ -26,13 +31,16 @@ import com.hackathon.app.domain.enums.RegistrationStatus;
 import com.hackathon.app.domain.enums.SystemRole;
 import com.hackathon.app.domain.mapper.CommentMapper;
 import com.hackathon.app.domain.mapper.EventMapper;
+import com.hackathon.app.domain.mapper.OccurrenceMapper;
 import com.hackathon.app.domain.mapper.OrganizerMapper;
 import com.hackathon.app.domain.mapper.RegistrationMapper;
 import com.hackathon.app.domain.mapper.UserMapper;
 import com.hackathon.app.repository.AppUserRepository;
 import com.hackathon.app.repository.CommentRepository;
 import com.hackathon.app.repository.EventOrganizerRepository;
+import com.hackathon.app.repository.EventOccurrenceRepository;
 import com.hackathon.app.repository.EventRepository;
+import com.hackathon.app.repository.OccurrenceAttendanceRepository;
 import com.hackathon.app.repository.RegistrationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -93,6 +101,11 @@ public class DemoSeeder {
 	private final EventOrganizerRepository organizers;
 	private final CommentRepository comments;
 	private final SportService sportService;
+	private final OccurrenceService occurrenceService;
+	private final EventOccurrenceRepository occurrences;
+	private final OccurrenceAttendanceRepository attendances;
+	private final OccurrenceMapper occurrenceMapper;
+	private final ScheduleExpander scheduleExpander;
 	private final OrganizationService organizationService;
 	private final AdminOrganizationService adminOrganizationService;
 	private final DemoPetSeeder demoPets;
@@ -139,7 +152,7 @@ public class DemoSeeder {
 				CITY + ", улица Карла Маркса, 49, клуб «Ладья»", "Третий этаж, кабинет 305",
 				null, 56.0110, 92.8830, EventLevel.AMATEUR, EventKind.AMATEUR_TOURNAMENT,
 				"Знать правила и нотацию", "Ничего: доски и часы клуба",
-				16, JoinMode.REQUEST, "Жеребьёвка и чат участников: https://t.me/ladya_tournament"));
+				16, JoinMode.REQUEST, "Жеребьёвка и чат участников: https://t.me/ladya_tournament", null, null));
 		if (clubTournament != null) {
 			pending(clubTournament, ids.get("olga"), "Играла в молодости, хочу вспомнить");
 			pending(clubTournament, ids.get("nikolai"), "Есть второй разряд");
@@ -154,7 +167,7 @@ public class DemoSeeder {
 				CITY + ", улица Карла Маркса, 49, клуб «Ладья»", "Третий этаж, кабинет 305",
 				null, 56.0110, 92.8830, EventLevel.BEGINNER, EventKind.TRAINING,
 				"Никаких: учим с нуля", null,
-				12, JoinMode.FREE, null));
+				12, JoinMode.FREE, null, null, null));
 		if (chessLesson != null) {
 			confirmed(chessLesson, ids.get("anna"), now);
 			confirmed(chessLesson, ids.get("elena"), now);
@@ -168,7 +181,7 @@ public class DemoSeeder {
 				CITY + ", остров Татышев, футбольное поле у центрального входа", "Синие ворота, встречаемся у скамеек",
 				null, 56.0275, 92.9301, EventLevel.AMATEUR, EventKind.GAME,
 				"Уверенно держите мяч, играем без грубости", "Сменная обувь (шиповки или сороконожки), вода",
-				14, JoinMode.FREE, "Чат игры: https://t.me/demo_football_tatyshev"));
+				14, JoinMode.FREE, "Чат игры: https://t.me/demo_football_tatyshev", null, null));
 		if (football != null) {
 			coOrganizer(football, ids.get("nikolai"));
 			confirmed(football, ids.get("petr"), now);
@@ -188,7 +201,7 @@ public class DemoSeeder {
 				CITY + ", проспект Мира, 10, читальный зал", "Вход со двора, второй этаж",
 				null, 56.0105, 92.8710, EventLevel.AMATEUR, EventKind.AMATEUR_TOURNAMENT,
 				"Знать правила и уметь пользоваться часами", "Доски и часы есть, свои тоже приносите",
-				12, JoinMode.REQUEST, "Точная аудитория и жеребьёвка: https://t.me/demo_chess_blitz"));
+				12, JoinMode.REQUEST, "Точная аудитория и жеребьёвка: https://t.me/demo_chess_blitz", null, null));
 		if (chess != null) {
 			pending(chess, ids.get("anna"), "Играю с дедушкой, хочу попробовать турнир");
 			pending(chess, ids.get("dmitry"), "Рейтинг на lichess около 1500");
@@ -207,7 +220,7 @@ public class DemoSeeder {
 				CITY + ", Центральная набережная, у Часовни", null,
 				null, 56.0097, 92.8890, EventLevel.BEGINNER, EventKind.TRAINING,
 				null, "Удобные кроссовки, вода",
-				null, JoinMode.FREE, null));
+				null, JoinMode.FREE, null, null, null));
 		if (run != null) {
 			confirmed(run, ids.get("anna"), now);
 			confirmed(run, ids.get("dmitry"), now);
@@ -220,13 +233,14 @@ public class DemoSeeder {
 				CITY + ", улица Ленина, 113, двор", "Площадка за детской горкой",
 				null, 56.0140, 92.8560, EventLevel.ANY, EventKind.TRAINING,
 				"Никаких: подойдёт любой уровень и возраст", "Коврик по желанию",
-				null, JoinMode.FREE, null));
+				null, JoinMode.FREE, null, null, null));
 		if (morningExercise != null) {
 			confirmed(morningExercise, ids.get("nikolai"), now);
 			confirmed(morningExercise, ids.get("elena"), now);
 		}
 
 		// Сценарий 1, вторая часть: нишевый вид, которого нет в справочнике, создаётся как custom.
+		// Кворум 4 при двух записавшихся: «Состоится, если наберём 4».
 		var petanque = event(ids.get("nikolai"), "Петанк", new EventRequest(
 				"Петанк в парке: научим за 10 минут",
 				"Французская игра с металлическими шарами. Правила объясню на месте, шары дам.",
@@ -234,10 +248,44 @@ public class DemoSeeder {
 				CITY + ", Центральный парк, площадка у фонтана", null,
 				null, 56.0118, 92.8790, EventLevel.BEGINNER, EventKind.MEETUP,
 				null, null,
-				10, JoinMode.FREE, null));
+				10, JoinMode.FREE, null, null, 4));
 		if (petanque != null) {
 			confirmed(petanque, ids.get("olga"), now);
 			confirmed(petanque, ids.get("anna"), now);
+		}
+
+		// Повторяющееся мероприятие: серия с двумя правилами, отметками на даты и одним отменённым занятием.
+		// Кворум 3 на занятие: первое набрано (трое отметились), следующие — собираем.
+		var today = LocalDate.now(clock.withZone(CITY_ZONE));
+		var firstTuesday = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.TUESDAY));
+		var firstSunday = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
+		var basketball = seriesEvent(ids.get("petr"), "Баскетбол", new EventRequest(
+				"Баскетбол по вечерам",
+				"Регулярные игры 3×3 и 5×5 в школьном зале. Вступите в серию и отмечайте, на какие даты придёте.",
+				null, null, null, null, EventFormat.OFFLINE,
+				CITY + ", улица Урицкого, 61, спортзал школы", "Вход со стороны стадиона, охране сказать «на баскетбол»",
+				null, 56.0127, 92.8864, EventLevel.AMATEUR, EventKind.TRAINING,
+				"Знать правила, играть без грубости", "Сменная обувь для зала, вода",
+				10, JoinMode.FREE, "Чат серии: https://t.me/demo_basketball_evenings",
+				new ScheduleRequest(CITY_ZONE.getId(), today, today.plusMonths(3), List.of(
+						new ScheduleRuleRequest(firstTuesday.atTime(20, 0), 90, "FREQ=WEEKLY;BYDAY=TU"),
+						new ScheduleRuleRequest(firstSunday.atTime(14, 0), 120, "FREQ=WEEKLY;INTERVAL=2;BYDAY=SU"))), 3));
+		if (basketball != null) {
+			confirmed(basketball, ids.get("anna"), now);
+			confirmed(basketball, ids.get("sergey"), now);
+			confirmed(basketball, ids.get("dmitry"), now);
+			var dates = occurrences.findByEventIdOrderByStartAt(basketball.getId());
+			attend(dates.get(0), ids.get("anna"));
+			attend(dates.get(0), ids.get("sergey"));
+			attend(dates.get(0), ids.get("dmitry"));
+			attend(dates.get(1), ids.get("anna"));
+			attend(dates.get(2), ids.get("sergey"));
+			var cancelled = dates.get(3);
+			attend(cancelled, ids.get("anna"));
+			occurrenceMapper.cancel(cancelled, "Зал занят: в школе соревнования", now, ids.get("petr"));
+			occurrences.save(cancelled);
+			comment(basketball, ids.get("anna"), "Если пропущу вторник, можно прийти в воскресенье?");
+			comment(basketball, ids.get("petr"), "Да, отмечайтесь на любые даты — главное, чтобы были места.");
 		}
 
 		// Сценарий 6: снятое с публикации — нет в ленте, у записавшейся Анны видно с причиной.
@@ -248,7 +296,7 @@ public class DemoSeeder {
 				CITY + ", остров Татышев, пляжные площадки", null,
 				null, 56.0262, 92.9420, EventLevel.AMATEUR, EventKind.GAME,
 				null, "Купальник или шорты, вода",
-				8, JoinMode.FREE, null));
+				8, JoinMode.FREE, null, null, null));
 		if (volleyball != null) {
 			confirmed(volleyball, ids.get("anna"), now);
 			comment(volleyball, ids.get("anna"), "А когда будет следующая игра?");
@@ -310,7 +358,30 @@ public class DemoSeeder {
 			return null;
 		}
 		var sport = sportService.resolve(null, sportName, authorId);
-		return events.save(eventMapper.toEntity(request, authorId, sport.getId(), organizationId));
+		var saved = events.saveAndFlush(eventMapper.toEntity(request, authorId, sport.getId(), organizationId,
+				request.startAt(), request.endAt()));
+		occurrenceService.apply(saved, null, clock.instant());
+		return saved;
+	}
+
+	/** Повторяющееся мероприятие: расписание разворачивается в занятия, как при создании через API. */
+	private Event seriesEvent(UUID authorId, String sportName, EventRequest request) {
+		if (events.existsByAuthorIdAndTitle(authorId, request.title())) {
+			return null;
+		}
+		var now = clock.instant();
+		var plan = scheduleExpander.expand(request.schedule());
+		var first = plan.after(now).getFirst();
+		var sport = sportService.resolve(null, sportName, authorId);
+		var saved = events.saveAndFlush(eventMapper.toEntity(request, authorId, sport.getId(), null, first.start(),
+				first.end()));
+		occurrenceService.apply(saved, plan, now);
+		return saved;
+	}
+
+	/** Отметка «приду» участника серии на занятие. */
+	private void attend(EventOccurrence occurrence, UUID userId) {
+		attendances.save(occurrenceMapper.toAttendance(occurrence.getId(), occurrence.getEventId(), userId));
 	}
 
 	/** saveAndFlush по одному: порядок createdAt — порядок реплик в обсуждении. */

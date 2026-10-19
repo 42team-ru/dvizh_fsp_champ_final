@@ -1,6 +1,7 @@
 package com.hackathon.app.domain.entity;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 import com.hackathon.app.domain.enums.EventFormat;
@@ -56,13 +57,29 @@ public class Event extends AuditEntity {
      */
     private UUID organizationId;
     /**
-     * Время начала.
+     * Время начала; у серии — начало первого занятия.
      */
     private Instant startAt;
     /**
-     * Время окончания; null — не указано.
+     * Время окончания; null — не указано. У серии — окончание первого занятия.
      */
     private Instant endAt;
+    /**
+     * Повторяющееся мероприятие (серия занятий по расписанию); false — разовое.
+     */
+    private boolean recurring;
+    /**
+     * Часовой пояс расписания серии (IANA, например Asia/Krasnoyarsk); у разового — null.
+     */
+    private String timeZone;
+    /**
+     * Первый день серии (включительно), в часовом поясе серии; у разового — null.
+     */
+    private LocalDate seriesStartDate;
+    /**
+     * Последний день серии (включительно), в часовом поясе серии; у разового — null.
+     */
+    private LocalDate seriesEndDate;
     /**
      * Формат проведения: очно или онлайн.
      */
@@ -107,9 +124,14 @@ public class Event extends AuditEntity {
      */
     private String equipment;
     /**
-     * Лимит мест; null — без лимита.
+     * Лимит мест; null — без лимита. У серии — на каждое занятие (считаются отметки).
      */
     private Integer capacity;
+    /**
+     * Кворум: занятие состоится, если наберётся столько участников; null — без кворума. Не больше capacity.
+     * У серии считается на каждое занятие (по отметкам), у разового — по подтверждённым записям.
+     */
+    private Integer minParticipants;
     /**
      * Режим записи.
      */

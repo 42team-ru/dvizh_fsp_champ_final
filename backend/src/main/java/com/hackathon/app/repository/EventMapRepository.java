@@ -26,7 +26,8 @@ public class EventMapRepository {
 	private final JdbcClient jdbc;
 
 	/**
-	 * id опубликованных очных мероприятий, у которых точка внутри области и начало в [from, to], ближайшие первыми.
+	 * id опубликованных очных мероприятий, у которых точка внутри области и хоть одно занятие (SCHEDULED) начинается
+	 * в [from, to]; серия — одна точка. Ближайшие (по подходящему занятию) первыми.
 	 * minLon больше maxLon — область пересекает 180-й меридиан, ищем в двух прямоугольниках.
 	 * Null-фильтры не применяются.
 	 */
@@ -34,8 +35,9 @@ public class EventMapRepository {
 			Instant to, String searchText, UUID sportId, EventLevel level, JoinMode joinMode, int limit) {
 		var sql = new StringBuilder("""
 				select e.id from events e
+				join event_occurrences o on o.event_id = e.id
+				  and o.status = 'SCHEDULED' and o.start_at >= :from and o.start_at <= :to
 				where e.status = 'PUBLISHED' and e.format = 'OFFLINE'
-				  and e.start_at >= :from and e.start_at <= :to
 				""");
 		if (minLon <= maxLon) {
 			sql.append(" and e.location && ST_MakeEnvelope(:minLon, :minLat, :maxLon, :maxLat, 4326)");
@@ -56,7 +58,7 @@ public class EventMapRepository {
 		if (joinMode != null) {
 			sql.append(" and e.join_mode = :joinMode");
 		}
-		sql.append(" order by e.start_at, e.id limit :limit");
+		sql.append(" group by e.id order by min(o.start_at), e.id limit :limit");
 
 		var statement = jdbc.sql(sql.toString())
 				.param("minLon", minLon)

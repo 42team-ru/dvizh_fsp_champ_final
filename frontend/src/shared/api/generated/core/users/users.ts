@@ -6,13 +6,22 @@
  * OpenAPI spec version: v1
  */
 import {
-  useMutation
+  useMutation,
+  useQuery
 } from '@tanstack/react-query';
 import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
   MutationFunction,
   QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
   UseMutationOptions,
-  UseMutationResult
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult
 } from '@tanstack/react-query';
 
 import type {
@@ -28,6 +37,21 @@ import type { ErrorType } from '../../../mutators/authMutator';
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
+
+const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
+  const result = { queryKey } as T & { queryKey: K };
+  for (const key of Object.keys(query)) {
+    // The explicit queryKey always wins, matching the previous
+    // `{ ...query, queryKey }` spread where it was set last.
+    if (key === 'queryKey') continue;
+    Object.defineProperty(result, key, {
+      enumerable: true,
+      configurable: true,
+      get: () => (query as Record<string, unknown>)[key],
+    });
+  }
+  return result;
+};
 
 export type usersUploadAvatarResponse400 = {
   data: ProblemDetail
@@ -204,3 +228,116 @@ export const useUsersDeleteAvatar = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getUsersDeleteAvatarMutationOptions(options), queryClient);
     }
+    export type usersGetResponse404 = {
+  data: ProblemDetail
+  status: 404
+}
+
+;
+export type usersGetResponseError = (usersGetResponse404) & {
+  headers: Headers;
+};
+
+export type usersGetResponse = (usersGetResponseError)
+
+export const getUsersGetUrl = (id: string,) => {
+
+
+
+
+  return `/api/users/${id}`
+}
+
+/**
+ * Имя, аватар, город, о себе и ближайшие опубликованные мероприятия. Без email.
+ * @summary Публичный профиль организатора
+ */
+export const usersGet = async (id: string, options?: Parameters<typeof authMutator>[1]): Promise<usersGetResponse> => {
+
+  return authMutator<usersGetResponse>(getUsersGetUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getUsersGetQueryKey = (id: string,) => {
+    return [
+    `/api/users/${id}`
+    ] as const;
+    }
+
+
+export const getUsersGetQueryOptions = <TData = Awaited<ReturnType<typeof usersGet>>, TError = ErrorType<ProblemDetail>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersGet>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getUsersGetQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof usersGet>>> = ({ signal }) => usersGet(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof usersGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type UsersGetQueryResult = NonNullable<Awaited<ReturnType<typeof usersGet>>>
+export type UsersGetQueryError = ErrorType<ProblemDetail>
+
+
+export function useUsersGet<TData = Awaited<ReturnType<typeof usersGet>>, TError = ErrorType<ProblemDetail>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersGet>>,
+          TError,
+          Awaited<ReturnType<typeof usersGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUsersGet<TData = Awaited<ReturnType<typeof usersGet>>, TError = ErrorType<ProblemDetail>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersGet>>,
+          TError,
+          Awaited<ReturnType<typeof usersGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUsersGet<TData = Awaited<ReturnType<typeof usersGet>>, TError = ErrorType<ProblemDetail>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersGet>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Публичный профиль организатора
+ */
+
+export function useUsersGet<TData = Awaited<ReturnType<typeof usersGet>>, TError = ErrorType<ProblemDetail>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersGet>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getUsersGetQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+

@@ -27,8 +27,13 @@ public record EventResponse(
 		List<OrganizerResponse> organizers,
 		@Schema(description = "Организация, от имени которой мероприятие; null — от частного лица") UUID organizationId,
 		@Schema(description = "Организация для ссылки на её страницу; null — от частного лица") OrganizationShortResponse organization,
-		@Schema(description = "Начало", requiredMode = REQUIRED) Instant startAt,
-		@Schema(description = "Окончание") Instant endAt,
+		@Schema(description = "Начало; у серии — первого занятия (ближайшее — в nextOccurrence)", requiredMode = REQUIRED)
+		Instant startAt,
+		@Schema(description = "Окончание; у серии — первого занятия") Instant endAt,
+		@Schema(description = "Повторяющееся мероприятие (серия занятий)", requiredMode = REQUIRED) boolean recurring,
+		@Schema(description = "Расписание серии; null — разовое") ScheduleResponse schedule,
+		@Schema(description = "Ближайшее будущее занятие, которое состоится; null — таких нет. Все занятия — occurrences_list")
+		OccurrenceShortResponse nextOccurrence,
 		@Schema(description = "Очно или онлайн", requiredMode = REQUIRED) EventFormat format,
 		@Schema(description = "Адрес") String address,
 		@Schema(description = "Как найти место") String locationNote,
@@ -40,9 +45,16 @@ public record EventResponse(
 		@Schema(description = "Требования к участникам") String requirements,
 		@Schema(description = "Что взять с собой") String equipment,
 		@Schema(description = "Детали для участников; null, если viewer.canSeePrivateDetails = false") String privateDetails,
-		@Schema(description = "Лимит мест; null — без лимита") Integer capacity,
-		@Schema(description = "Подтверждённых участников", requiredMode = REQUIRED) long participantsCount,
-		@Schema(description = "Подтверждённые участники", requiredMode = REQUIRED) List<UserShortResponse> participants,
+		@Schema(description = "Лимит мест; null — без лимита. У серии — на каждое занятие") Integer capacity,
+		@Schema(description = "Кворум: состоится, если наберём столько; null — без кворума. У серии — на каждое занятие")
+		Integer minParticipants,
+		@Schema(description = "Занятие разового мероприятия: статус (отменено организатором — с причиной), кворум и кнопки; "
+				+ "у серии — null, её занятия — occurrences_list")
+		OccurrenceResponse singleOccurrence,
+		@Schema(description = "Подтверждённых участников (у серии — принятых в серию)", requiredMode = REQUIRED)
+		long participantsCount,
+		@Schema(description = "Подтверждённые участники (у серии — принятые в серию)", requiredMode = REQUIRED)
+		List<UserShortResponse> participants,
 		@Schema(description = "Режим записи", requiredMode = REQUIRED) JoinMode joinMode,
 		@Schema(description = "Статус мероприятия", requiredMode = REQUIRED) EventStatus status,
 		@Schema(description = "Причина снятия с публикации или удаления") String moderationReason,

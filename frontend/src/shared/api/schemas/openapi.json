@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:8099",
+      "url": "http://localhost:8080",
       "description": "Generated server url"
     }
   ],
@@ -43,6 +43,10 @@
     {
       "name": "users",
       "description": "Профиль пользователя"
+    },
+    {
+      "name": "occurrences",
+      "description": "Занятия мероприятия: даты серии, отметки «приду», отмена и перенос занятий"
     },
     {
       "name": "files",
@@ -426,6 +430,88 @@
           },
           "409": {
             "description": "Удалено или лимит мест меньше уже записанных",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/{id}/occurrences/{occurrenceId}": {
+      "put": {
+        "tags": [
+          "occurrences"
+        ],
+        "summary": "Перенести занятие серии",
+        "description": "Только организатор. Будущее занятие, которое состоится, переносится в будущее в границах серии; отметки сохраняются. Без endAt длительность прежняя.",
+        "operationId": "occurrences_reschedule",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "occurrenceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OccurrenceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Не в будущем, вне границ серии или окончание раньше начала",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Не организатор",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Мероприятия или занятия нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Занятие отменено или уже началось, в это время уже есть занятие, разовое или удалённое мероприятие",
             "content": {
               "application/json": {
                 "schema": {
@@ -1047,6 +1133,388 @@
         }
       }
     },
+    "/api/events/{id}/occurrences": {
+      "get": {
+        "tags": [
+          "occurrences"
+        ],
+        "summary": "Занятия мероприятия",
+        "description": "Все занятия в [from, to] по порядку, включая отменённые. Без from — с текущего момента, без to — до конца серии. У разового мероприятия одно занятие. Блок viewer говорит, какие кнопки показать.",
+        "operationId": "occurrences_list",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "Начало не раньше",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "example": "2027-06-01T00:00:00Z"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "Начало не позже",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "example": "2027-06-30T23:59:59Z"
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Конец периода раньше начала",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Мероприятия нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "occurrences"
+        ],
+        "summary": "Добавить разовую дату в серию",
+        "description": "Только организатор серии. Занятие вне правил: в будущем, в границах серии, не в одно время с другим занятием. Правка правил его не трогает.",
+        "operationId": "occurrences_add",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OccurrenceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OccurrenceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Не в будущем, вне границ серии или окончание раньше начала",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Не организатор",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Мероприятия нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Разовое мероприятие, удалено, в это время уже есть занятие или занятий слишком много",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/{id}/occurrences/{occurrenceId}/confirm": {
+      "post": {
+        "tags": [
+          "occurrences"
+        ],
+        "summary": "Подтвердить: занятие состоится",
+        "description": "Только организатор, если у мероприятия задан кворум. Можно и пока кворум не набран; подтверждение не снимается. Повторно — ничего не меняет.",
+        "operationId": "occurrences_confirm",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "occurrenceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "403": {
+            "description": "Не организатор",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Мероприятия или занятия нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Кворум не задан, занятие отменено или началось, мероприятие снято или удалено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/{id}/occurrences/{occurrenceId}/cancel": {
+      "post": {
+        "tags": [
+          "occurrences"
+        ],
+        "summary": "Отменить занятие",
+        "description": "Только организатор. Необратимо; отметки и записи остаются, участники видят причину. У разового мероприятия это отмена всего мероприятия: оно уходит из ленты, запись закрывается.",
+        "operationId": "occurrences_cancel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "occurrenceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelOccurrenceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "403": {
+            "description": "Не организатор",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Мероприятия или занятия нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Уже отменено или началось, мероприятие удалено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/{id}/occurrences/{occurrenceId}/attendance": {
+      "post": {
+        "tags": [
+          "occurrences"
+        ],
+        "summary": "Отметиться «приду» на занятие серии",
+        "description": "Только принятому в серию, до начала занятия и пока есть места на него. Повторно — ничего не меняет.",
+        "operationId": "occurrences_attend",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "occurrenceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Мероприятия или занятия нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Не в серии, мест нет, занятие отменено или началось, мероприятие снято или разовое",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "occurrences"
+        ],
+        "summary": "Снять отметку «приду»",
+        "description": "До начала занятия; место освобождается. Если отметки нет — ничего не меняет.",
+        "operationId": "occurrences_unattend",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "occurrenceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Мероприятия или занятия нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Занятие отменено или началось, мероприятие разовое",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/events/{id}/comments": {
       "get": {
         "tags": [
@@ -1534,6 +2002,39 @@
         }
       }
     },
+    "/api/users/{id}": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Публичный профиль организатора",
+        "description": "Имя, аватар, город, о себе и ближайшие опубликованные мероприятия. Без email.",
+        "operationId": "users_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Пользователь не найден",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/users/{id}/pet": {
       "get": {
         "tags": [
@@ -1772,6 +2273,58 @@
             "description": "Файла нет или нет доступа",
             "content": {
               "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/{id}/occurrences/{occurrenceId}/attendees": {
+      "get": {
+        "tags": [
+          "occurrences"
+        ],
+        "summary": "Кто придёт на занятие",
+        "description": "Только организатору. У серии — отметившиеся, у разового — подтверждённые участники.",
+        "operationId": "occurrences_attendees",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "occurrenceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "403": {
+            "description": "Не организатор",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Мероприятия или занятия нет",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetail"
                 }
@@ -2754,13 +3307,13 @@
           "startAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Начало, в будущем",
+            "description": "Начало разового мероприятия, в будущем; у повторяющегося не передаётся",
             "example": "2027-05-01T16:00:00Z"
           },
           "endAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Окончание, позже начала",
+            "description": "Окончание разового мероприятия, позже начала; у повторяющегося не передаётся",
             "example": "2027-05-01T18:00:00Z"
           },
           "format": {
@@ -2846,7 +3399,7 @@
           "capacity": {
             "type": "integer",
             "format": "int32",
-            "description": "Лимит мест; пусто — без лимита",
+            "description": "Лимит мест; пусто — без лимита. У повторяющегося — на каждое занятие",
             "example": 10,
             "maximum": 10000,
             "minimum": 1
@@ -2865,12 +3418,116 @@
             "example": "Чат: https://t.me/example",
             "maxLength": 2000,
             "minLength": 0
+          },
+          "schedule": {
+            "$ref": "#/components/schemas/ScheduleRequest",
+            "description": "Расписание повторяющегося мероприятия; null — разовое"
+          },
+          "minParticipants": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Кворум: состоится, если наберём столько; пусто — без кворума. Не больше лимита мест. У повторяющегося — на каждое занятие",
+            "example": 6,
+            "maximum": 10000,
+            "minimum": 1
           }
         },
         "required": [
           "format",
-          "startAt",
           "title"
+        ]
+      },
+      "ScheduleRequest": {
+        "type": "object",
+        "description": "Расписание серии: часовой пояс, границы по датам и правила повторения",
+        "properties": {
+          "timeZone": {
+            "type": "string",
+            "description": "Часовой пояс (IANA), в нём считаются даты и время правил",
+            "example": "Asia/Krasnoyarsk",
+            "maxLength": 64,
+            "minLength": 0
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Первый день серии, включительно",
+            "example": "2027-06-01"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Последний день серии, включительно; не позже чем через год после первого",
+            "example": "2027-08-31"
+          },
+          "rules": {
+            "type": "array",
+            "description": "Правила повторения, от 1 до 10",
+            "items": {
+              "$ref": "#/components/schemas/ScheduleRuleRequest"
+            },
+            "maxItems": 10,
+            "minItems": 0
+          }
+        },
+        "required": [
+          "endDate",
+          "rules",
+          "startDate",
+          "timeZone"
+        ]
+      },
+      "ScheduleRuleRequest": {
+        "type": "object",
+        "description": "Правило расписания: первое занятие, длительность и RRULE",
+        "properties": {
+          "firstStart": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Первое занятие по правилу: местные дата и время в часовом поясе серии, без смещения. Должно попадать в границы серии; от него считается «раз в N недель»",
+            "example": "2027-06-01T20:00:00"
+          },
+          "durationMinutes": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Длительность каждого занятия, минуты",
+            "example": 90,
+            "maximum": 1440,
+            "minimum": 1
+          },
+          "rrule": {
+            "type": "string",
+            "description": "Правило повторения по RFC 5545 (префикс RRULE: можно не писать). Не чаще раза в день; COUNT и UNTIL можно, но занятия всё равно режутся границами серии",
+            "example": "FREQ=WEEKLY;INTERVAL=2;BYDAY=SU",
+            "maxLength": 500,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "durationMinutes",
+          "firstStart",
+          "rrule"
+        ]
+      },
+      "OccurrenceRequest": {
+        "type": "object",
+        "description": "Время занятия: для добавления разовой даты или переноса",
+        "properties": {
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Начало, в будущем и в границах серии",
+            "example": "2027-06-12T13:00:00Z"
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Окончание, позже начала. При переносе можно не указывать — длительность сохранится; у разовой даты обязательно",
+            "example": "2027-06-12T14:30:00Z"
+          }
+        },
+        "required": [
+          "startAt"
         ]
       },
       "RejectRegistrationRequest": {
@@ -2929,12 +3586,24 @@
           "startAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Начало"
+            "description": "Начало; у серии — первого занятия (ближайшее — в nextOccurrence)"
           },
           "endAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Окончание"
+            "description": "Окончание; у серии — первого занятия"
+          },
+          "recurring": {
+            "type": "boolean",
+            "description": "Повторяющееся мероприятие (серия занятий)"
+          },
+          "schedule": {
+            "$ref": "#/components/schemas/ScheduleResponse",
+            "description": "Расписание серии; null — разовое"
+          },
+          "nextOccurrence": {
+            "$ref": "#/components/schemas/OccurrenceShortResponse",
+            "description": "Ближайшее будущее занятие, которое состоится; null — таких нет. Все занятия — occurrences_list"
           },
           "format": {
             "type": "string",
@@ -3002,16 +3671,25 @@
           "capacity": {
             "type": "integer",
             "format": "int32",
-            "description": "Лимит мест; null — без лимита"
+            "description": "Лимит мест; null — без лимита. У серии — на каждое занятие"
+          },
+          "minParticipants": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Кворум: состоится, если наберём столько; null — без кворума. У серии — на каждое занятие"
+          },
+          "singleOccurrence": {
+            "$ref": "#/components/schemas/OccurrenceResponse",
+            "description": "Занятие разового мероприятия: статус (отменено организатором — с причиной), кворум и кнопки; у серии — null, её занятия — occurrences_list"
           },
           "participantsCount": {
             "type": "integer",
             "format": "int64",
-            "description": "Подтверждённых участников"
+            "description": "Подтверждённых участников (у серии — принятых в серию)"
           },
           "participants": {
             "type": "array",
-            "description": "Подтверждённые участники",
+            "description": "Подтверждённые участники (у серии — принятые в серию)",
             "items": {
               "$ref": "#/components/schemas/UserShortResponse"
             }
@@ -3073,12 +3751,168 @@
           "participants",
           "participantsCount",
           "photos",
+          "recurring",
           "sport",
           "startAt",
           "status",
           "title",
           "updatedAt",
           "viewer"
+        ]
+      },
+      "OccurrenceResponse": {
+        "type": "object",
+        "description": "Занятие мероприятия",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "eventId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Мероприятие"
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Начало (после переноса — новое)"
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Окончание"
+          },
+          "rescheduled": {
+            "type": "boolean",
+            "description": "Перенесено: начало отличается от исходного по расписанию"
+          },
+          "originalStartAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Исходное начало по расписанию; null — не из правила"
+          },
+          "source": {
+            "type": "string",
+            "description": "Откуда занятие: разовое мероприятие, правило или добавленная дата",
+            "enum": [
+              "SINGLE",
+              "RULE",
+              "EXTRA"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "description": "Состоится или отменено",
+            "enum": [
+              "SCHEDULED",
+              "CANCELLED"
+            ]
+          },
+          "cancelReason": {
+            "type": "string",
+            "description": "Причина отмены"
+          },
+          "attendeesCount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Сколько придёт: отметки (у разового — подтверждённые записи)"
+          },
+          "capacity": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Лимит мест на занятие; null — без лимита"
+          },
+          "quorum": {
+            "$ref": "#/components/schemas/QuorumResponse",
+            "description": "Кворум занятия; null — у мероприятия кворума нет"
+          },
+          "confirmedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Когда организатор подтвердил, что занятие состоится"
+          },
+          "viewer": {
+            "$ref": "#/components/schemas/OccurrenceViewerResponse",
+            "description": "Что могу делать я"
+          }
+        },
+        "required": [
+          "attendeesCount",
+          "eventId",
+          "id",
+          "rescheduled",
+          "source",
+          "startAt",
+          "status",
+          "viewer"
+        ]
+      },
+      "OccurrenceShortResponse": {
+        "type": "object",
+        "description": "Занятие коротко: когда",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Начало"
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Окончание"
+          }
+        },
+        "required": [
+          "id",
+          "startAt"
+        ]
+      },
+      "OccurrenceViewerResponse": {
+        "type": "object",
+        "description": "Мои права на занятие: фронт рисует кнопки только по этому блоку",
+        "properties": {
+          "attending": {
+            "type": "boolean",
+            "description": "Я приду: отметился на занятие (у разового — подтверждённая запись)"
+          },
+          "canAttend": {
+            "type": "boolean",
+            "description": "Можно отметиться «приду»"
+          },
+          "attendBlockedReason": {
+            "type": "string",
+            "description": "Почему нельзя отметиться; null — можно",
+            "example": "Мест нет"
+          },
+          "canUnattend": {
+            "type": "boolean",
+            "description": "Можно снять отметку"
+          },
+          "canCancel": {
+            "type": "boolean",
+            "description": "Могу отменить занятие (организатор; у разового — всё мероприятие)"
+          },
+          "canReschedule": {
+            "type": "boolean",
+            "description": "Могу перенести занятие (организатор серии)"
+          },
+          "canConfirm": {
+            "type": "boolean",
+            "description": "Могу подтвердить «Состоится» (организатор, у мероприятия есть кворум)"
+          }
+        },
+        "required": [
+          "attending",
+          "canAttend",
+          "canCancel",
+          "canConfirm",
+          "canReschedule",
+          "canUnattend"
         ]
       },
       "OrganizationShortResponse": {
@@ -3116,6 +3950,115 @@
         "required": [
           "author",
           "user"
+        ]
+      },
+      "QuorumResponse": {
+        "type": "object",
+        "description": "Кворум занятия: состоится, если наберём required",
+        "properties": {
+          "required": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Сколько нужно, чтобы занятие состоялось",
+            "example": 6
+          },
+          "count": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Сколько уже придёт: отметки (у разового — подтверждённые записи)",
+            "example": 3
+          },
+          "status": {
+            "type": "string",
+            "description": "Собираем, набрали или организатор подтвердил",
+            "enum": [
+              "GATHERING",
+              "REACHED",
+              "CONFIRMED"
+            ]
+          },
+          "takesPlace": {
+            "type": "boolean",
+            "description": "Состоится: набрали или подтвердил организатор"
+          }
+        },
+        "required": [
+          "count",
+          "required",
+          "status",
+          "takesPlace"
+        ]
+      },
+      "ScheduleResponse": {
+        "type": "object",
+        "description": "Расписание серии",
+        "properties": {
+          "timeZone": {
+            "type": "string",
+            "description": "Часовой пояс (IANA)",
+            "example": "Asia/Krasnoyarsk"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Первый день серии"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Последний день серии"
+          },
+          "rules": {
+            "type": "array",
+            "description": "Правила по порядку",
+            "items": {
+              "$ref": "#/components/schemas/ScheduleRuleResponse"
+            }
+          },
+          "description": {
+            "type": "string",
+            "description": "Всё расписание словами",
+            "example": "по вторникам в 20:00; по воскресеньям раз в 2 недели в 14:00"
+          }
+        },
+        "required": [
+          "description",
+          "endDate",
+          "rules",
+          "startDate",
+          "timeZone"
+        ]
+      },
+      "ScheduleRuleResponse": {
+        "type": "object",
+        "description": "Правило расписания серии",
+        "properties": {
+          "firstStart": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Первое занятие по правилу, местное время серии"
+          },
+          "durationMinutes": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Длительность занятия, минуты"
+          },
+          "rrule": {
+            "type": "string",
+            "description": "Правило повторения RFC 5545",
+            "example": "FREQ=WEEKLY;BYDAY=TU"
+          },
+          "description": {
+            "type": "string",
+            "description": "Правило словами",
+            "example": "по вторникам в 20:00"
+          }
+        },
+        "required": [
+          "description",
+          "durationMinutes",
+          "firstStart",
+          "rrule"
         ]
       },
       "SportResponse": {
@@ -3338,6 +4281,22 @@
         },
         "required": [
           "login"
+        ]
+      },
+      "CancelOccurrenceRequest": {
+        "type": "object",
+        "description": "Отмена занятия серии",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "Причина; участники увидят её у занятия",
+            "example": "Зал закрыт на праздники",
+            "maxLength": 1000,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "reason"
         ]
       },
       "CommentRequest": {
@@ -3769,12 +4728,26 @@
           "startAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Начало"
+            "description": "Начало; у серии — ближайшего подходящего занятия"
           },
           "endAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Окончание"
+            "description": "Окончание; у серии — ближайшего подходящего занятия"
+          },
+          "occurrenceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Занятие, к которому относятся startAt и endAt; null — подходящих нет"
+          },
+          "recurring": {
+            "type": "boolean",
+            "description": "Повторяющееся мероприятие (серия занятий)"
+          },
+          "scheduleDescription": {
+            "type": "string",
+            "description": "Расписание словами; null — разовое",
+            "example": "по вторникам в 20:00"
           },
           "format": {
             "type": "string",
@@ -3824,12 +4797,35 @@
           "capacity": {
             "type": "integer",
             "format": "int32",
-            "description": "Лимит мест; null — без лимита"
+            "description": "Лимит мест; null — без лимита. У серии — на каждое занятие"
           },
           "participantsCount": {
             "type": "integer",
             "format": "int64",
-            "description": "Подтверждённых участников («записались 8 из 16»)"
+            "description": "Подтверждённых участников («записались 8 из 16»); у серии — принятых в серию"
+          },
+          "occurrenceAttendeesCount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "У серии — сколько отметились на занятие occurrenceId («придут 7 из 10»); у разового — null"
+          },
+          "minParticipants": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Кворум: состоится, если наберём столько; null — без кворума"
+          },
+          "quorumStatus": {
+            "type": "string",
+            "description": "Кворум ближайшего подходящего занятия; null — без кворума или занятия нет",
+            "enum": [
+              "GATHERING",
+              "REACHED",
+              "CONFIRMED"
+            ]
+          },
+          "cancelledByOrganizer": {
+            "type": "boolean",
+            "description": "Разовое мероприятие отменено организатором (у серии отменяются отдельные занятия)"
           },
           "status": {
             "type": "string",
@@ -3871,11 +4867,13 @@
         },
         "required": [
           "authorId",
+          "cancelledByOrganizer",
           "format",
           "id",
           "joinMode",
           "level",
           "participantsCount",
+          "recurring",
           "sport",
           "startAt",
           "status",
@@ -3920,6 +4918,10 @@
           "event": {
             "$ref": "#/components/schemas/EventSummaryResponse",
             "description": "Мероприятие; event.status — снято ли оно с публикации"
+          },
+          "myNextOccurrence": {
+            "$ref": "#/components/schemas/OccurrenceShortResponse",
+            "description": "У серии — моё ближайшее отмеченное занятие; null — не отмечен или разовое"
           }
         },
         "required": [
@@ -4037,12 +5039,25 @@
           "startAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Начало"
+            "description": "Начало; у серии — ближайшего занятия в периоде"
           },
           "endAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Окончание"
+            "description": "Окончание; у серии — ближайшего занятия в периоде"
+          },
+          "occurrenceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Занятие, к которому относятся startAt и endAt"
+          },
+          "recurring": {
+            "type": "boolean",
+            "description": "Повторяющееся мероприятие (серия занятий)"
+          },
+          "scheduleDescription": {
+            "type": "string",
+            "description": "Расписание словами; null — разовое"
           },
           "address": {
             "type": "string",
@@ -4093,6 +5108,7 @@
           "joinMode",
           "level",
           "participantsCount",
+          "recurring",
           "sport",
           "startAt",
           "title"

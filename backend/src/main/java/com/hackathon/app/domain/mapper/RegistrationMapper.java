@@ -6,6 +6,7 @@ import java.util.UUID;
 import com.hackathon.app.domain.dto.EventRegistrationResponse;
 import com.hackathon.app.domain.dto.EventSummaryResponse;
 import com.hackathon.app.domain.dto.MyRegistrationResponse;
+import com.hackathon.app.domain.dto.OccurrenceShortResponse;
 import com.hackathon.app.domain.dto.RegistrationResponse;
 import com.hackathon.app.domain.entity.AppUser;
 import com.hackathon.app.domain.entity.Registration;
@@ -44,5 +45,7 @@ public interface RegistrationMapper {
 
 	@Mapping(target = "id", source = "registration.id")
 	@Mapping(target = "status", source = "registration.status")
-	MyRegistrationResponse toMine(Registration registration, EventSummaryResponse event);
+	@Mapping(target = "createdAt", source = "registration.createdAt")
+	MyRegistrationResponse toMine(Registration registration, EventSummaryResponse event,
+			OccurrenceShortResponse myNextOccurrence);
 }

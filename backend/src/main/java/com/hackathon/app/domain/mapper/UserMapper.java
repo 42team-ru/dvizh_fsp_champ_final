@@ -1,8 +1,11 @@
 package com.hackathon.app.domain.mapper;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
+import com.hackathon.app.domain.dto.EventSummaryResponse;
+import com.hackathon.app.domain.dto.PublicUserResponse;
 import com.hackathon.app.domain.dto.UserShortResponse;
 import com.hackathon.app.domain.entity.AppUser;
 import com.hackathon.app.domain.enums.SystemRole;
@@ -13,6 +16,8 @@ import org.mapstruct.Mapping;
 public interface UserMapper {
 
 	UserShortResponse toShort(AppUser user);
+
+	PublicUserResponse toPublic(AppUser user, List<EventSummaryResponse> events);
 
 	/** Активный аккаунт со входом по логину и паролю; пароль уже захеширован. */
 	@Mapping(target = "active", constant = "true")

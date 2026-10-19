@@ -1,11 +1,13 @@
 package com.hackathon.app.e2e.support;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -14,6 +16,10 @@ import com.hackathon.app.domain.dto.AdminEventResponse;
 import com.hackathon.app.domain.dto.AdminOrganizationResponse;
 import com.hackathon.app.domain.dto.AvailabilityCheckResponse;
 import com.hackathon.app.domain.dto.CommentResponse;
+import com.hackathon.app.domain.dto.CancelOccurrenceRequest;
+import com.hackathon.app.domain.dto.OccurrenceRequest;
+import com.hackathon.app.domain.dto.OccurrenceResponse;
+import com.hackathon.app.domain.dto.UserShortResponse;
 import com.hackathon.app.domain.dto.EventMapResponse;
 import com.hackathon.app.domain.dto.EventRegistrationResponse;
 import com.hackathon.app.domain.dto.EventResponse;
@@ -28,9 +34,11 @@ import com.hackathon.app.domain.dto.RegistrationResponse;
 import com.hackathon.app.domain.dto.SportResponse;
 import com.hackathon.app.domain.dto.UserResponse;
 import jakarta.servlet.http.Cookie;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import tools.jackson.databind.JavaType;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Участник сценария: человек, организация, админ или гость. Методы названы действиями из ТЗ
@@ -165,6 +173,94 @@ public class Actor {
 	public List<OrganizerResponse> removeOrganizer(UUID eventId, UUID userId) {
 		return send("DELETE /api/events/" + eventId + "/organizers/" + userId,
 				delete("/api/events/{id}/organizers/{userId}", eventId, userId), null, listOf(OrganizerResponse.class));
+	}
+
+
+	// ---------- занятия ----------
+
+	/** Все будущие занятия, включая отменённые. */
+	public List<OccurrenceResponse> occurrences(UUID eventId) {
+		return occurrences(eventId, null, null);
+	}
+
+	/** Занятия в периоде; null оставляет соответствующую границу по умолчанию. */
+	public List<OccurrenceResponse> occurrences(UUID eventId, Instant from, Instant to) {
+		var request = get("/api/events/{id}/occurrences", eventId);
+		if (from != null) {
+			request.param("from", from.toString());
+		}
+		if (to != null) {
+			request.param("to", to.toString());
+		}
+		return send("GET /api/events/" + eventId + "/occurrences", request, null, listOf(OccurrenceResponse.class));
+	}
+
+	/** Отметиться «приду» на занятие серии. */
+	public OccurrenceResponse attend(UUID eventId, UUID occurrenceId) {
+		return send("POST attendance " + occurrenceId,
+				post("/api/events/{id}/occurrences/{occurrenceId}/attendance", eventId, occurrenceId),
+				null, type(OccurrenceResponse.class));
+	}
+
+	/** Снять отметку и освободить место на занятии. */
+	public OccurrenceResponse unattend(UUID eventId, UUID occurrenceId) {
+		return send("DELETE attendance " + occurrenceId,
+				delete("/api/events/{id}/occurrences/{occurrenceId}/attendance", eventId, occurrenceId),
+				null, type(OccurrenceResponse.class));
+	}
+
+	/** Именной список тех, кто придёт; доступен организатору. */
+	public List<UserShortResponse> attendees(UUID eventId, UUID occurrenceId) {
+		return send("GET attendees " + occurrenceId,
+				get("/api/events/{id}/occurrences/{occurrenceId}/attendees", eventId, occurrenceId),
+				null, listOf(UserShortResponse.class));
+	}
+
+	/** Добавить в серию дату вне правил расписания. */
+	public OccurrenceResponse addOccurrence(UUID eventId, Instant startAt, Instant endAt) {
+		// TestApi пока считает создание занятия ответом 200; здесь проверяем контракт 201.
+		var json = JsonMapper.builder().findAndAddModules().build();
+		var label = "POST /api/events/" + eventId + "/occurrences";
+		var response = api.raw(post("/api/events/{id}/occurrences", eventId).contentType(APPLICATION_JSON)
+				.content(json.writeValueAsString(new OccurrenceRequest(startAt, endAt))), cookie)
+				.andReturn().getResponse();
+		try {
+			var status = HttpStatus.valueOf(response.getStatus());
+			var body = response.getContentAsString();
+			if (!status.is2xxSuccessful()) {
+				throw new ApiCallFailed(label, status, json.readTree(body).path("detail").asText(), body);
+			}
+			assertThat(status).as("HTTP %s", label).isEqualTo(HttpStatus.CREATED);
+			return json.readValue(body, OccurrenceResponse.class);
+		} catch (java.io.UnsupportedEncodingException e) {
+			throw new IllegalStateException(label + ": не удалось прочитать ответ", e);
+		}
+	}
+
+	/** Перенести занятие с сохранением прежней длительности. */
+	public OccurrenceResponse rescheduleOccurrence(UUID eventId, UUID occurrenceId, Instant startAt) {
+		return rescheduleOccurrence(eventId, occurrenceId, startAt, null);
+	}
+
+	/** Перенести занятие, при необходимости задав новое окончание. */
+	public OccurrenceResponse rescheduleOccurrence(UUID eventId, UUID occurrenceId, Instant startAt, Instant endAt) {
+		return send("PUT occurrence " + occurrenceId,
+				put("/api/events/{id}/occurrences/{occurrenceId}", eventId, occurrenceId),
+				new OccurrenceRequest(startAt, endAt), type(OccurrenceResponse.class));
+	}
+
+	/** Отменить занятие с причиной для участников. */
+	public OccurrenceResponse cancelOccurrence(UUID eventId, UUID occurrenceId, String reason) {
+		return send("POST cancel occurrence " + occurrenceId,
+				post("/api/events/{id}/occurrences/{occurrenceId}/cancel", eventId, occurrenceId),
+				new CancelOccurrenceRequest(reason), type(OccurrenceResponse.class));
+	}
+
+	/** Подтвердить проведение занятия независимо от набранного кворума. */
+	public OccurrenceResponse confirmOccurrence(UUID eventId, UUID occurrenceId) {
+		return send("POST confirm occurrence " + occurrenceId,
+				post("/api/events/{id}/occurrences/{occurrenceId}/confirm", eventId, occurrenceId),
+				null, type(OccurrenceResponse.class));
 	}
 
 	// ---------- запись ----------

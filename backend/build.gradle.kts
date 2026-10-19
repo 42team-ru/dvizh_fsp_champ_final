@@ -28,6 +28,8 @@ dependencies {
 	implementation("org.flywaydb:flyway-database-postgresql")
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1")
 	implementation("org.mapstruct:mapstruct:1.6.3")
+	// Расписание повторяющихся мероприятий: разбор и развёртка RRULE (RFC 5545) с учётом часового пояса
+	implementation("org.dmfs:lib-recur:0.17.1")
 	// S3-хранилище файлов (MinIO локально и на VPS, подойдёт любой S3). Только синхронный клиент, HTTP — из JDK.
 	implementation(platform("software.amazon.awssdk:bom:2.56.0"))
 	implementation("software.amazon.awssdk:s3") {

@@ -37,7 +37,8 @@ public class EventMapService {
 	private final EventMapper mapper;
 
 	/**
-	 * Опубликованные очные мероприятия с точкой в области и началом в [from, to], ближайшие первыми.
+	 * Опубликованные очные мероприятия с точкой в области и занятием в [from, to], ближайшие первыми; серия — одна точка
+	 * со временем ближайшего занятия в периоде.
 	 * Прошедшие не показываем: from не раньше текущего момента. Больше LIMIT — отдаём первые и truncated.
 	 */
 	@Transactional(readOnly = true)
@@ -58,18 +59,12 @@ public class EventMapService {
 		var truncated = ids.size() > LIMIT;
 		var shownIds = truncated ? ids.subList(0, LIMIT) : ids;
 
-		var eventList = sortedLike(events.findAllById(shownIds), shownIds);
-		var lookups = listLookups.load(eventList, userId);
+		var eventList = EventListLookups.sortedLike(events.findAllById(shownIds), shownIds);
+		var lookups = listLookups.load(eventList, userId, from, to);
 		var features = eventList.stream()
 				.map(event -> mapper.toMapFeature(event, lookups.sport(event), lookups.confirmed(event),
-						lookups.myStatus(event)))
+						lookups.myStatus(event), lookups.next(event), lookups.scheduleDescription(event)))
 				.toList();
 		return mapper.toMapResponse(features, truncated, LIMIT);
-	}
-
-	/** findAllById не сохраняет порядок: возвращаем порядок из запроса по карте (по времени начала). */
-	private static List<Event> sortedLike(List<Event> eventList, List<UUID> orderedIds) {
-		var byId = eventList.stream().collect(Collectors.toMap(Event::getId, Function.identity()));
-		return orderedIds.stream().map(byId::get).filter(Objects::nonNull).toList();
 	}
 }

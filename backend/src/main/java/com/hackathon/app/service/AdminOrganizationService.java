@@ -65,23 +65,18 @@ public class AdminOrganizationService {
 		if (org.getStatus() == OrganizationStatus.APPROVED) {
 			return toAdmin(org); // повторное нажатие
 		}
-		org.setStatus(OrganizationStatus.APPROVED);
-		org.setRejectReason(null);
-		return decide(org, adminId);
+		return decide(org, OrganizationStatus.APPROVED, null, adminId);
 	}
 
 	/** Повторный отказ просто обновляет причину. */
 	@Transactional
 	public AdminOrganizationResponse reject(UUID id, UUID adminId, String reason) {
 		var org = find(id);
-		org.setStatus(OrganizationStatus.REJECTED);
-		org.setRejectReason(reason.trim());
-		return decide(org, adminId);
+		return decide(org, OrganizationStatus.REJECTED, reason, adminId);
 	}
 
-	private AdminOrganizationResponse decide(Organization org, UUID adminId) {
-		org.setReviewedAt(dbTime.now());
-		org.setReviewedById(adminId);
+	private AdminOrganizationResponse decide(Organization org, OrganizationStatus status, String rejectReason, UUID adminId) {
+		mapper.decide(org, status, rejectReason, dbTime.now(), adminId);
 		organizations.saveAndFlush(org);
 		log.info("Решение по организации: organizationId={}, adminId={}, status={}", org.getId(), adminId,
 				org.getStatus());

@@ -1,6 +1,5 @@
 package com.hackathon.app.repository;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.UUID;
@@ -14,13 +13,16 @@ import jakarta.persistence.criteria.Predicate;
 import lombok.experimental.UtilityClass;
 import org.springframework.data.jpa.domain.Specification;
 
-/** Фильтры ленты на Criteria API. Те же фильтры для карты — в {@link EventMapRepository}: меняешь одно — поменяй и другое. */
+/**
+ * Фильтры ленты на Criteria API: условия на само мероприятие. Период по датам проверяется по занятиям
+ * в {@link EventFeedRepository}. Те же фильтры для карты — в {@link EventMapRepository}: меняешь одно — поменяй и другое.
+ */
 @UtilityClass
 public class EventSpecifications {
 
 	/** Только опубликованные; null-фильтры не применяются. Событие уровня ANY подходит под любой level. */
-	public Specification<Event> feed(String searchText, UUID sportId, Instant from, Instant to, EventLevel level,
-			JoinMode joinMode, EventFormat format, UUID organizationId) {
+	public Specification<Event> feed(String searchText, UUID sportId, EventLevel level, JoinMode joinMode,
+			EventFormat format, UUID organizationId) {
 		return (root, query, criteria) -> {
 			var conditions = new ArrayList<Predicate>();
 			conditions.add(criteria.equal(root.get("status"), EventStatus.PUBLISHED));
@@ -31,12 +33,6 @@ public class EventSpecifications {
 			}
 			if (sportId != null) {
 				conditions.add(criteria.equal(root.get("sportId"), sportId));
-			}
-			if (from != null) {
-				conditions.add(criteria.greaterThanOrEqualTo(root.get("startAt"), from));
-			}
-			if (to != null) {
-				conditions.add(criteria.lessThanOrEqualTo(root.get("startAt"), to));
 			}
 			if (level != null) {
 				conditions.add(root.get("level").in(level, EventLevel.ANY));
@@ -52,5 +48,11 @@ public class EventSpecifications {
 			}
 			return criteria.and(conditions.toArray(Predicate[]::new));
 		};
+	}
+
+	/** Опубликованные мероприятия автора — для его публичного профиля. */
+	public Specification<Event> publishedByAuthor(UUID authorId) {
+		return (root, query, criteria) -> criteria.and(criteria.equal(root.get("status"), EventStatus.PUBLISHED),
+				criteria.equal(root.get("authorId"), authorId));
 	}
 }

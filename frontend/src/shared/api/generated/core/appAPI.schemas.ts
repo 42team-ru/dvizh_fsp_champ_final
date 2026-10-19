@@ -154,6 +154,48 @@ export const EventRequestJoinMode = {
 } as const;
 
 /**
+ * Правило расписания: первое занятие, длительность и RRULE
+ */
+export interface ScheduleRuleRequest {
+  /** Первое занятие по правилу: местные дата и время в часовом поясе серии, без смещения. Должно попадать в границы серии; от него считается «раз в N недель» */
+  firstStart: string;
+  /**
+     * Длительность каждого занятия, минуты
+     * @minimum 1
+     * @maximum 1440
+     */
+  durationMinutes: number;
+  /**
+     * Правило повторения по RFC 5545 (префикс RRULE: можно не писать). Не чаще раза в день; COUNT и UNTIL можно, но занятия всё равно режутся границами серии
+     * @minLength 0
+     * @maxLength 500
+     */
+  rrule: string;
+}
+
+/**
+ * Расписание серии: часовой пояс, границы по датам и правила повторения
+ */
+export interface ScheduleRequest {
+  /**
+     * Часовой пояс (IANA), в нём считаются даты и время правил
+     * @minLength 0
+     * @maxLength 64
+     */
+  timeZone: string;
+  /** Первый день серии, включительно */
+  startDate: string;
+  /** Последний день серии, включительно; не позже чем через год после первого */
+  endDate: string;
+  /**
+     * Правила повторения, от 1 до 10
+     * @minItems 0
+     * @maxItems 10
+     */
+  rules: ScheduleRuleRequest[];
+}
+
+/**
  * Форма мероприятия: создание и полная замена при редактировании
  */
 export interface EventRequest {
@@ -177,9 +219,9 @@ export interface EventRequest {
      * @maxLength 100
      */
   sportName?: string;
-  /** Начало, в будущем */
-  startAt: string;
-  /** Окончание, позже начала */
+  /** Начало разового мероприятия, в будущем; у повторяющегося не передаётся */
+  startAt?: string;
+  /** Окончание разового мероприятия, позже начала; у повторяющегося не передаётся */
   endAt?: string;
   /** Очно или онлайн */
   format: EventRequestFormat;
@@ -230,7 +272,7 @@ export interface EventRequest {
      */
   equipment?: string;
   /**
-     * Лимит мест; пусто — без лимита
+     * Лимит мест; пусто — без лимита. У повторяющегося — на каждое занятие
      * @minimum 1
      * @maximum 10000
      */
@@ -243,6 +285,24 @@ export interface EventRequest {
      * @maxLength 2000
      */
   privateDetails?: string;
+  /** Расписание повторяющегося мероприятия; null — разовое */
+  schedule?: ScheduleRequest;
+  /**
+     * Кворум: состоится, если наберём столько; пусто — без кворума. Не больше лимита мест. У повторяющегося — на каждое занятие
+     * @minimum 1
+     * @maximum 10000
+     */
+  minParticipants?: number;
+}
+
+/**
+ * Время занятия: для добавления разовой даты или переноса
+ */
+export interface OccurrenceRequest {
+  /** Начало, в будущем и в границах серии */
+  startAt: string;
+  /** Окончание, позже начала. При переносе можно не указывать — длительность сохранится; у разовой даты обязательно */
+  endAt?: string;
 }
 
 /**
@@ -370,6 +430,149 @@ export interface OrganizationShortResponse {
 }
 
 /**
+ * Правило расписания серии
+ */
+export interface ScheduleRuleResponse {
+  /** Первое занятие по правилу, местное время серии */
+  firstStart: string;
+  /** Длительность занятия, минуты */
+  durationMinutes: number;
+  /** Правило повторения RFC 5545 */
+  rrule: string;
+  /** Правило словами */
+  description: string;
+}
+
+/**
+ * Расписание серии
+ */
+export interface ScheduleResponse {
+  /** Часовой пояс (IANA) */
+  timeZone: string;
+  /** Первый день серии */
+  startDate: string;
+  /** Последний день серии */
+  endDate: string;
+  /** Правила по порядку */
+  rules: ScheduleRuleResponse[];
+  /** Всё расписание словами */
+  description: string;
+}
+
+/**
+ * Занятие коротко: когда
+ */
+export interface OccurrenceShortResponse {
+  id: string;
+  /** Начало */
+  startAt: string;
+  /** Окончание */
+  endAt?: string;
+}
+
+/**
+ * Откуда занятие: разовое мероприятие, правило или добавленная дата
+ */
+export type OccurrenceResponseSource = typeof OccurrenceResponseSource[keyof typeof OccurrenceResponseSource];
+
+
+export const OccurrenceResponseSource = {
+  SINGLE: 'SINGLE',
+  RULE: 'RULE',
+  EXTRA: 'EXTRA',
+} as const;
+
+/**
+ * Состоится или отменено
+ */
+export type OccurrenceResponseStatus = typeof OccurrenceResponseStatus[keyof typeof OccurrenceResponseStatus];
+
+
+export const OccurrenceResponseStatus = {
+  SCHEDULED: 'SCHEDULED',
+  CANCELLED: 'CANCELLED',
+} as const;
+
+/**
+ * Собираем, набрали или организатор подтвердил
+ */
+export type QuorumResponseStatus = typeof QuorumResponseStatus[keyof typeof QuorumResponseStatus];
+
+
+export const QuorumResponseStatus = {
+  GATHERING: 'GATHERING',
+  REACHED: 'REACHED',
+  CONFIRMED: 'CONFIRMED',
+} as const;
+
+/**
+ * Кворум занятия: состоится, если наберём required
+ */
+export interface QuorumResponse {
+  /** Сколько нужно, чтобы занятие состоялось */
+  required: number;
+  /** Сколько уже придёт: отметки (у разового — подтверждённые записи) */
+  count: number;
+  /** Собираем, набрали или организатор подтвердил */
+  status: QuorumResponseStatus;
+  /** Состоится: набрали или подтвердил организатор */
+  takesPlace: boolean;
+}
+
+/**
+ * Мои права на занятие: фронт рисует кнопки только по этому блоку
+ */
+export interface OccurrenceViewerResponse {
+  /** Я приду: отметился на занятие (у разового — подтверждённая запись) */
+  attending: boolean;
+  /** Можно отметиться «приду» */
+  canAttend: boolean;
+  /** Почему нельзя отметиться; null — можно */
+  attendBlockedReason?: string;
+  /** Можно снять отметку */
+  canUnattend: boolean;
+  /** Могу отменить занятие (организатор; у разового — всё мероприятие) */
+  canCancel: boolean;
+  /** Могу перенести занятие (организатор серии) */
+  canReschedule: boolean;
+  /** Могу подтвердить «Состоится» (организатор, у мероприятия есть кворум) */
+  canConfirm: boolean;
+}
+
+/**
+ * Занятие мероприятия
+ */
+export interface OccurrenceResponse {
+  id: string;
+  /** Мероприятие */
+  eventId: string;
+  /** Начало (после переноса — новое) */
+  startAt: string;
+  /** Окончание */
+  endAt?: string;
+  /** Перенесено: начало отличается от исходного по расписанию */
+  rescheduled: boolean;
+  /** Исходное начало по расписанию; null — не из правила */
+  originalStartAt?: string;
+  /** Откуда занятие: разовое мероприятие, правило или добавленная дата */
+  source: OccurrenceResponseSource;
+  /** Состоится или отменено */
+  status: OccurrenceResponseStatus;
+  /** Причина отмены */
+  cancelReason?: string;
+  /** Сколько придёт: отметки (у разового — подтверждённые записи) */
+  attendeesCount: number;
+  /** Лимит мест на занятие; null — без лимита */
+  capacity?: number;
+  /** Кворум занятия; null — у мероприятия кворума нет */
+  quorum?: QuorumResponse;
+  /** Когда организатор подтвердил, что занятие состоится */
+  confirmedAt?: string;
+  /** Что могу делать я */
+  viewer: OccurrenceViewerResponse;
+}
+
+/**
  * Статус моей записи; null — не записан
  */
 export type ViewerResponseRegistrationStatus = typeof ViewerResponseRegistrationStatus[keyof typeof ViewerResponseRegistrationStatus];
@@ -425,10 +628,16 @@ export interface EventResponse {
   organizationId?: string;
   /** Организация для ссылки на её страницу; null — от частного лица */
   organization?: OrganizationShortResponse;
-  /** Начало */
+  /** Начало; у серии — первого занятия (ближайшее — в nextOccurrence) */
   startAt: string;
-  /** Окончание */
+  /** Окончание; у серии — первого занятия */
   endAt?: string;
+  /** Повторяющееся мероприятие (серия занятий) */
+  recurring: boolean;
+  /** Расписание серии; null — разовое */
+  schedule?: ScheduleResponse;
+  /** Ближайшее будущее занятие, которое состоится; null — таких нет. Все занятия — occurrences_list */
+  nextOccurrence?: OccurrenceShortResponse;
   /** Очно или онлайн */
   format: EventResponseFormat;
   /** Адрес */
@@ -451,11 +660,15 @@ export interface EventResponse {
   equipment?: string;
   /** Детали для участников; null, если viewer.canSeePrivateDetails = false */
   privateDetails?: string;
-  /** Лимит мест; null — без лимита */
+  /** Лимит мест; null — без лимита. У серии — на каждое занятие */
   capacity?: number;
-  /** Подтверждённых участников */
+  /** Кворум: состоится, если наберём столько; null — без кворума. У серии — на каждое занятие */
+  minParticipants?: number;
+  /** Занятие разового мероприятия: статус (отменено организатором — с причиной), кворум и кнопки; у серии — null, её занятия — occurrences_list */
+  singleOccurrence?: OccurrenceResponse;
+  /** Подтверждённых участников (у серии — принятых в серию) */
   participantsCount: number;
-  /** Подтверждённые участники */
+  /** Подтверждённые участники (у серии — принятые в серию) */
   participants: UserShortResponse[];
   /** Режим записи */
   joinMode: EventResponseJoinMode;
@@ -530,6 +743,18 @@ export interface AddOrganizerRequest {
      * @maxLength 255
      */
   login: string;
+}
+
+/**
+ * Отмена занятия серии
+ */
+export interface CancelOccurrenceRequest {
+  /**
+     * Причина; участники увидят её у занятия
+     * @minLength 0
+     * @maxLength 1000
+     */
+  reason: string;
 }
 
 /**
@@ -819,6 +1044,18 @@ export const EventSummaryResponseJoinMode = {
 } as const;
 
 /**
+ * Кворум ближайшего подходящего занятия; null — без кворума или занятия нет
+ */
+export type EventSummaryResponseQuorumStatus = typeof EventSummaryResponseQuorumStatus[keyof typeof EventSummaryResponseQuorumStatus];
+
+
+export const EventSummaryResponseQuorumStatus = {
+  GATHERING: 'GATHERING',
+  REACHED: 'REACHED',
+  CONFIRMED: 'CONFIRMED',
+} as const;
+
+/**
  * Статус мероприятия
  */
 export type EventSummaryResponseStatus = typeof EventSummaryResponseStatus[keyof typeof EventSummaryResponseStatus];
@@ -852,10 +1089,16 @@ export interface EventSummaryResponse {
   title: string;
   /** Вид спорта */
   sport: SportResponse;
-  /** Начало */
+  /** Начало; у серии — ближайшего подходящего занятия */
   startAt: string;
-  /** Окончание */
+  /** Окончание; у серии — ближайшего подходящего занятия */
   endAt?: string;
+  /** Занятие, к которому относятся startAt и endAt; null — подходящих нет */
+  occurrenceId?: string;
+  /** Повторяющееся мероприятие (серия занятий) */
+  recurring: boolean;
+  /** Расписание словами; null — разовое */
+  scheduleDescription?: string;
   /** Очно или онлайн */
   format: EventSummaryResponseFormat;
   /** Адрес */
@@ -868,10 +1111,18 @@ export interface EventSummaryResponse {
   kind?: EventSummaryResponseKind;
   /** Режим записи */
   joinMode: EventSummaryResponseJoinMode;
-  /** Лимит мест; null — без лимита */
+  /** Лимит мест; null — без лимита. У серии — на каждое занятие */
   capacity?: number;
-  /** Подтверждённых участников («записались 8 из 16») */
+  /** Подтверждённых участников («записались 8 из 16»); у серии — принятых в серию */
   participantsCount: number;
+  /** У серии — сколько отметились на занятие occurrenceId («придут 7 из 10»); у разового — null */
+  occurrenceAttendeesCount?: number;
+  /** Кворум: состоится, если наберём столько; null — без кворума */
+  minParticipants?: number;
+  /** Кворум ближайшего подходящего занятия; null — без кворума или занятия нет */
+  quorumStatus?: EventSummaryResponseQuorumStatus;
+  /** Разовое мероприятие отменено организатором (у серии отменяются отдельные занятия) */
+  cancelledByOrganizer: boolean;
   /** Статус мероприятия */
   status: EventSummaryResponseStatus;
   /** Причина снятия с публикации или удаления */
@@ -915,6 +1166,8 @@ export interface MyRegistrationResponse {
   createdAt: string;
   /** Мероприятие; event.status — снято ли оно с публикации */
   event: EventSummaryResponse;
+  /** У серии — моё ближайшее отмеченное занятие; null — не отмечен или разовое */
+  myNextOccurrence?: OccurrenceShortResponse;
 }
 
 export interface PingResponse {
@@ -1015,10 +1268,16 @@ export interface EventMapProperties {
   title: string;
   /** Вид спорта */
   sport: SportResponse;
-  /** Начало */
+  /** Начало; у серии — ближайшего занятия в периоде */
   startAt: string;
-  /** Окончание */
+  /** Окончание; у серии — ближайшего занятия в периоде */
   endAt?: string;
+  /** Занятие, к которому относятся startAt и endAt */
+  occurrenceId?: string;
+  /** Повторяющееся мероприятие (серия занятий) */
+  recurring: boolean;
+  /** Расписание словами; null — разовое */
+  scheduleDescription?: string;
   /** Адрес */
   address?: string;
   /** Для какого уровня */
@@ -1305,6 +1564,17 @@ export const RegistrationsListForEventStatus = {
 export type EventsAddPhotoBody = {
   /** Изображение */
   file: Blob | File;
+};
+
+export type OccurrencesListParams = {
+/**
+ * Начало не раньше
+ */
+from?: string;
+/**
+ * Начало не позже
+ */
+to?: string;
 };
 
 export type AdminCreatePetItemParams = {

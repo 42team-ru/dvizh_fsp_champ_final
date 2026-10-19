@@ -6,6 +6,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import com.hackathon.app.domain.dto.ScheduleRequest;
+
 /**
  * Форма мероприятия для тестов. По умолчанию валидная очная встреча по бегу через двое суток;
  * тест меняет только то, что важно для сценария:
@@ -92,6 +94,18 @@ public final class EventForm {
 		fields.remove("lat");
 		fields.remove("lon");
 		return with("format", "ONLINE").with("onlineUrl", url);
+	}
+
+	/** Расписание серии вместо времени разового события. */
+	public EventForm schedule(ScheduleRequest schedule) {
+		fields.put("startAt", null);
+		fields.remove("endAt");
+		return with("schedule", schedule);
+	}
+
+	/** Минимум участников, при котором занятие состоится. */
+	public EventForm minParticipants(int minParticipants) {
+		return with("minParticipants", minParticipants);
 	}
 
 	public EventForm capacity(int capacity) {

@@ -86,6 +86,7 @@ public class DemoBulkSeeder {
     private final CommentRepository comments;
     private final DemoDataRepository demoData;
     private final SportService sportService;
+    private final OccurrenceService occurrenceService;
     private final OrganizationService organizationService;
     private final AdminOrganizationService adminOrganizationService;
     private final PetService pets;
@@ -286,9 +287,13 @@ public class DemoBulkSeeder {
                 venue == null ? null : venue.lat() + (run.random.nextDouble() - 0.5) * 0.004,
                 venue == null ? null : venue.lon() + (run.random.nextDouble() - 0.5) * 0.004,
                 run.pick(template.levels()), template.kind(), template.requirements(), template.equipment(), capacity,
-                joinMode, "Чат участников: https://t.me/+" + Long.toString(run.random.nextLong() & 0xFFFFFFFFFFL, 36));
+                joinMode, "Чат участников: https://t.me/+" + Long.toString(run.random.nextLong() & 0xFFFFFFFFFFL, 36),
+                null, null);
         var sport = run.sports.computeIfAbsent(template.sport(), name -> sportService.resolve(null, name, author.id()));
-        var event = events.save(eventMapper.toEntity(request, author.id(), sport.getId(), organizationId));
+        var event = events.saveAndFlush(eventMapper.toEntity(request, author.id(), sport.getId(), organizationId,
+                startAt, endAt));
+        // занятие разового мероприятия: по нему лента и карта фильтруют по датам
+        occurrenceService.apply(event, null, run.now);
 
         // соорганизатор у части событий частных лиц
         UUID coOrganizerId = null;

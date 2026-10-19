@@ -42,9 +42,11 @@ public class RegistrationService {
     private final DbTimeRepository dbTime;
     private final EventAccessPolicy policy;
     private final RegistrationMapper mapper;
+    private final OccurrenceService occurrences;
 
     /**
      * FREE — сразу CONFIRMED, REQUEST — PENDING. После отмены та же строка переиспользуется.
+     * У серии это вступление в серию: на занятия участник отмечается отдельно (OccurrenceService.attend).
      */
     @Transactional
     public RegistrationResponse create(UUID eventId, UUID userId, String message) {
@@ -72,6 +74,7 @@ public class RegistrationService {
 
     /**
      * Отмена своей записи или заявки; повторное нажатие ничего не меняет.
+     * Выход из серии снимает будущие отметки на занятия, прошлые остаются.
      */
     @Transactional
     public RegistrationResponse cancel(UUID eventId, UUID userId) {
@@ -86,7 +89,11 @@ public class RegistrationService {
         if (blockedReason != null) {
             throw new ConflictException(blockedReason);
         }
-        return mapper.toResponse(registrations.saveAndFlush(mapper.cancel(myRegistration, now, userId)));
+        var cancelled = registrations.saveAndFlush(mapper.cancel(myRegistration, now, userId));
+        if (event.isRecurring()) {
+            occurrences.dropFutureAttendance(eventId, userId, now);
+        }
+        return mapper.toResponse(cancelled);
     }
 
     /**
@@ -129,6 +136,7 @@ public class RegistrationService {
 
     /**
      * Отклонить можно и подтверждённого (исключить из участников); причину участник увидит в своей записи.
+     * Исключённый из серии теряет будущие отметки на занятия.
      */
     @Transactional
     public RegistrationResponse reject(UUID registrationId, UUID userId, String reason) {
@@ -137,20 +145,28 @@ public class RegistrationService {
         if (blockedReason != null) {
             throw new ConflictException(blockedReason);
         }
-        return decide(managed.registration(), RegistrationStatus.REJECTED, reason, userId);
+        var response = decide(managed.registration(), RegistrationStatus.REJECTED, reason, userId);
+        if (managed.event().isRecurring()) {
+            occurrences.dropFutureAttendance(managed.event().getId(), managed.registration().getUserId(),
+                    dbTime.now());
+        }
+        return response;
     }
 
     /**
-     * Мои записи со статусом мероприятия: снятое с публикации тоже видно.
+     * Мои записи со статусом мероприятия: снятое с публикации тоже видно. У серии — моё ближайшее отмеченное занятие.
      */
     @Transactional(readOnly = true)
     public List<MyRegistrationResponse> mine(UUID userId) {
         var myRegistrations = registrations.findByUserIdOrderByCreatedAtDesc(userId);
         var eventIds = myRegistrations.stream().map(Registration::getEventId).toList();
-        var eventsById = eventService.summaries(events.findAllById(eventIds), userId).stream()
+        var eventList = events.findAllById(eventIds);
+        var eventsById = eventService.summaries(eventList, userId).stream()
                 .collect(Collectors.toMap(EventSummaryResponse::id, Function.identity()));
+        var myNextByEventId = occurrences.myNext(userId, eventList, dbTime.now());
         return myRegistrations.stream()
-                .map(registration -> mapper.toMine(registration, eventsById.get(registration.getEventId())))
+                .map(registration -> mapper.toMine(registration, eventsById.get(registration.getEventId()),
+                        myNextByEventId.get(registration.getEventId())))
                 .toList();
     }
 
@@ -170,8 +186,11 @@ public class RegistrationService {
         var registration = registrations.findById(registrationId)
                 .orElseThrow(() -> new NoSuchElementException("Заявка не найдена"));
         var event = events.findByIdForUpdate(registration.getEventId()).orElseThrow();
-        if (!policy.canManage(event, userId)) {
+        if (!policy.isOrganizer(event, userId)) {
             throw new ForbiddenException("Решение по заявке принимает только организатор");
+        }
+        if (!policy.canManage(event, userId)) {
+            throw new ConflictException("Мероприятие удалено, решать заявки нельзя");
         }
         return new ManagedRegistration(registration, event);
     }
