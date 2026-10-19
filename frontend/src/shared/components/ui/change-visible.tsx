@@ -1,5 +1,3 @@
-import { EyeIcon, EyeOffIcon } from "lucide-react";
-
 export default function ChangeVisible({
   show,
   changeShow,
@@ -15,9 +13,9 @@ export default function ChangeVisible({
       onClick={() => changeShow(!show)}
       disabled={disabled}
       aria-label={show ? "Скрыть пароль" : "Показать пароль"}
-      className="absolute inset-y-0 right-3 grid place-items-center text-muted-foreground"
+      className="absolute inset-y-0 right-4 text-[13px] font-extrabold text-primary"
     >
-      {show ? <EyeOffIcon className="size-4" /> : <EyeIcon className="size-4" />}
+      {show ? "Скрыть" : "Показать"}
     </button>
   );
 }

@@ -14,6 +14,8 @@ interface AuthPasswordInputProps {
   showPassword: boolean;
   onTogglePassword: (show: boolean) => void;
   disabled?: boolean;
+  /** Блок под полем (например, шкала надёжности). */
+  footer?: React.ReactNode;
 }
 
 export function AuthPasswordInput({
@@ -28,6 +30,7 @@ export function AuthPasswordInput({
   showPassword,
   onTogglePassword,
   disabled,
+  footer,
 }: AuthPasswordInputProps) {
   const errorId = `${name}-error`;
 
@@ -40,7 +43,7 @@ export function AuthPasswordInput({
     >
       <div className="relative">
         <Input
-          className="h-10 pr-10"
+          className="pr-24"
           id={name}
           name={name}
           type={showPassword ? "text" : "password"}
@@ -58,6 +61,7 @@ export function AuthPasswordInput({
           disabled={disabled}
         />
       </div>
+      {footer}
     </AuthField>
   );
 }

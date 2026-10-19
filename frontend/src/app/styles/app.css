@@ -3,121 +3,94 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: oklch(0.9195 0.0169 88.003);
-  --foreground: oklch(0.235 0 0);
-  --card: oklch(0.953 0.0156 86.4257);
-  --card-foreground: oklch(0.235 0 0);
-  --popover: oklch(0.953 0.0156 86.4257);
-  --popover-foreground: oklch(0.235 0 0);
-  --primary: oklch(0.3012 0 0);
-  --primary-foreground: oklch(0.9169 0.0175 99.616);
-  --secondary: oklch(0.8647 0.0201 87.5232);
-  --secondary-foreground: oklch(0.3012 0 0);
-  --muted: oklch(0.834 0.0232 87.163);
-  --muted-foreground: oklch(0.4688 0.0136 84.5932);
-  --accent: oklch(0.9169 0.0175 99.616);
-  --accent-foreground: oklch(0.3012 0 0);
-  --destructive: oklch(0.5771 0.2152 27.325);
-  --destructive-foreground: oklch(1 0 0);
-  --border: oklch(0.8434 0.0231 87.1621);
-  --input: oklch(0.8434 0.0231 87.1621);
-  --ring: oklch(0.3012 0 0);
-  --chart-1: oklch(0.6863 0.1743 34.2614);
-  --chart-2: oklch(0.235 0 0);
-  --chart-3: oklch(0.4688 0.0136 84.5932);
-  --chart-4: oklch(0.7057 0.025 82.0932);
-  --chart-5: oklch(0.834 0.0232 87.163);
-  --sidebar: oklch(0.8985 0.0199 87.5195);
-  --sidebar-foreground: oklch(0.235 0 0);
-  --sidebar-primary: oklch(0.3012 0 0);
-  --sidebar-primary-foreground: oklch(0.9169 0.0175 99.616);
-  --sidebar-accent: oklch(0.9169 0.0175 99.616);
-  --sidebar-accent-foreground: oklch(0.3012 0 0);
-  --sidebar-border: oklch(0.8434 0.0231 87.1621);
-  --sidebar-ring: oklch(0.3012 0 0);
-  --font-sans: "Inter", sans-serif;
-  --font-serif: "Playfair Display", serif;
-  --font-mono: "JetBrains Mono", monospace;
-  --radius: 0.5rem;
-  --shadow-x: 0px;
-  --shadow-y: 4px;
-  --shadow-blur: 10px;
-  --shadow-spread: 0px;
-  --shadow-opacity: 0.1;
-  --shadow-color: #000000;
-  --shadow-2xs: 0px 4px 10px 0px hsl(0 0% 0% / 0.05);
-  --shadow-xs: 0px 4px 10px 0px hsl(0 0% 0% / 0.05);
-  --shadow-sm:
-    0px 4px 10px 0px hsl(0 0% 0% / 0.1), 0px 1px 2px -1px hsl(0 0% 0% / 0.1);
-  --shadow:
-    0px 4px 10px 0px hsl(0 0% 0% / 0.1), 0px 1px 2px -1px hsl(0 0% 0% / 0.1);
-  --shadow-md:
-    0px 4px 10px 0px hsl(0 0% 0% / 0.1), 0px 2px 4px -1px hsl(0 0% 0% / 0.1);
-  --shadow-lg:
-    0px 4px 10px 0px hsl(0 0% 0% / 0.1), 0px 4px 6px -1px hsl(0 0% 0% / 0.1);
-  --shadow-xl:
-    0px 4px 10px 0px hsl(0 0% 0% / 0.1), 0px 8px 10px -1px hsl(0 0% 0% / 0.1);
-  --shadow-2xl: 0px 4px 10px 0px hsl(0 0% 0% / 0.25);
-  --tracking-normal: 0.01em;
+  /* Memphis: палитра из Figma «Главная — Memphis» */
+  --ink: #13142b;
+  --paper: #f6f4ff;
+  --ultramarine: #4b3fe0;
+  --orange: #ff7a1a;
+  --lime: #c6f135;
+  --sky: #9ed3ff;
+  --mint: #7ed9b4;
+  --ink-muted: #6a6c88;
+  --lavender: #e6e3f5;
+  --lavender-soft: #e3e0ff;
+  --lime-soft: #f0fac2;
+  --mint-soft: #d7f3e6;
+  --sky-soft: #ddeeff;
+  --peach: #ffe6d2;
+  --rose: #ffe3ec;
+  --lilac: #d6d1ff;
+  --track: #dcd8ee;
+  --photo-lime: #ddefa8;
+  --photo-mint: #c5ebdd;
+  --photo-lilac: #d9d4fa;
+  --photo-map: #e9ecfb;
+  --danger: #e5383b;
+
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: #ffffff;
+  --card-foreground: var(--ink);
+  --popover: #ffffff;
+  --popover-foreground: var(--ink);
+  --primary: var(--ultramarine);
+  --primary-foreground: #ffffff;
+  --secondary: var(--lime);
+  --secondary-foreground: var(--ink);
+  --muted: var(--lavender);
+  --muted-foreground: var(--ink-muted);
+  --accent: var(--orange);
+  --accent-foreground: var(--ink);
+  --destructive: var(--danger);
+  --destructive-foreground: #ffffff;
+  --border: var(--ink);
+  --input: var(--ink);
+  --ring: var(--ultramarine);
+  --chart-1: var(--ultramarine);
+  --chart-2: var(--orange);
+  --chart-3: var(--lime);
+  --chart-4: var(--sky);
+  --chart-5: var(--mint);
+  --sidebar: var(--paper);
+  --sidebar-foreground: var(--ink);
+  --sidebar-primary: var(--ultramarine);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--lavender);
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: var(--ink);
+  --sidebar-ring: var(--ultramarine);
+
+  --font-sans: "Manrope", sans-serif;
+  --font-display: "Unbounded", "Manrope", sans-serif;
+  --font-serif: "Manrope", serif;
+  --font-mono: "IBM Plex Mono", monospace;
+
+  /* Радиусы: 14 — поля и кнопки-плитки, 20–24 — карточки, 999 — пилюли */
+  --radius: 14px;
+  --radius-card: 24px;
+  --radius-pill: 999px;
+
+  /* Обводка 2px и жёсткие тени без blur */
+  --stroke: 2px;
+  --shadow-hard-sm: 3px 3px 0 0 var(--ink);
+  --shadow-hard: 6px 6px 0 0 var(--ink);
+  --shadow-hard-accent: 3px 3px 0 0 var(--ultramarine);
+
+  --shadow-2xs: none;
+  --shadow-xs: none;
+  --shadow-sm: var(--shadow-hard-sm);
+  --shadow: var(--shadow-hard-sm);
+  --shadow-md: var(--shadow-hard-sm);
+  --shadow-lg: var(--shadow-hard);
+  --shadow-xl: var(--shadow-hard);
+  --shadow-2xl: var(--shadow-hard);
+  --tracking-normal: 0em;
   --spacing: 0.25rem;
 }
 
+/* Тема одна: Memphis. Тёмной нет, .dark повторяет светлую палитру. */
 .dark {
-  --background: oklch(0.1913 0 0);
-  --foreground: oklch(0.9173 0.0133 82.4015);
-  --card: oklch(0.2264 0 0);
-  --card-foreground: oklch(0.9173 0.0133 82.4015);
-  --popover: oklch(0.2264 0 0);
-  --popover-foreground: oklch(0.9173 0.0133 82.4015);
-  --primary: oklch(0.852 0.0205 100.6306);
-  --primary-foreground: oklch(0.3329 0 0);
-  --secondary: oklch(0.252 0 0);
-  --secondary-foreground: oklch(0.852 0.0205 100.6306);
-  --muted: oklch(0.285 0 0);
-  --muted-foreground: oklch(0.6348 0.0113 81.7875);
-  --accent: oklch(0.3329 0 0);
-  --accent-foreground: oklch(0.852 0.0205 100.6306);
-  --destructive: oklch(0.6368 0.2078 25.3313);
-  --destructive-foreground: oklch(1 0 0);
-  --border: oklch(0.2931 0 0);
-  --input: oklch(0.2931 0 0);
-  --ring: oklch(0.852 0.0205 100.6306);
-  --chart-1: oklch(0.6863 0.1743 34.2614);
-  --chart-2: oklch(0.859 0.0209 74.6369);
-  --chart-3: oklch(0.6348 0.0113 81.7875);
-  --chart-4: oklch(0.4681 0.0069 84.5829);
-  --chart-5: oklch(0.3523 0 0);
-  --sidebar: oklch(0.173 0 0);
-  --sidebar-foreground: oklch(0.9173 0.0133 82.4015);
-  --sidebar-primary: oklch(0.852 0.0205 100.6306);
-  --sidebar-primary-foreground: oklch(0.3329 0 0);
-  --sidebar-accent: oklch(0.3329 0 0);
-  --sidebar-accent-foreground: oklch(0.852 0.0205 100.6306);
-  --sidebar-border: oklch(0.2931 0 0);
-  --sidebar-ring: oklch(0.852 0.0205 100.6306);
-  --font-sans: "Inter", sans-serif;
-  --font-serif: "Playfair Display", serif;
-  --font-mono: "JetBrains Mono", monospace;
-  --radius: 0.5rem;
-  --shadow-x: 0px;
-  --shadow-y: 6px;
-  --shadow-blur: 15px;
-  --shadow-spread: 0px;
-  --shadow-opacity: 0.3;
-  --shadow-color: #000000;
-  --shadow-2xs: 0px 6px 15px 0px hsl(0 0% 0% / 0.15);
-  --shadow-xs: 0px 6px 15px 0px hsl(0 0% 0% / 0.15);
-  --shadow-sm:
-    0px 6px 15px 0px hsl(0 0% 0% / 0.3), 0px 1px 2px -1px hsl(0 0% 0% / 0.3);
-  --shadow:
-    0px 6px 15px 0px hsl(0 0% 0% / 0.3), 0px 1px 2px -1px hsl(0 0% 0% / 0.3);
-  --shadow-md:
-    0px 6px 15px 0px hsl(0 0% 0% / 0.3), 0px 2px 4px -1px hsl(0 0% 0% / 0.3);
-  --shadow-lg:
-    0px 6px 15px 0px hsl(0 0% 0% / 0.3), 0px 4px 6px -1px hsl(0 0% 0% / 0.3);
-  --shadow-xl:
-    0px 6px 15px 0px hsl(0 0% 0% / 0.3), 0px 8px 10px -1px hsl(0 0% 0% / 0.3);
-  --shadow-2xl: 0px 6px 15px 0px hsl(0 0% 0% / 0.75);
+  color-scheme: light;
 }
 
 @theme inline {
@@ -154,14 +127,42 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
+  --color-ink: var(--ink);
+  --color-paper: var(--paper);
+  --color-ultramarine: var(--ultramarine);
+  --color-orange: var(--orange);
+  --color-lime: var(--lime);
+  --color-sky: var(--sky);
+  --color-mint: var(--mint);
+  --color-lavender: var(--lavender);
+  --color-lavender-soft: var(--lavender-soft);
+  --color-lime-soft: var(--lime-soft);
+  --color-mint-soft: var(--mint-soft);
+  --color-sky-soft: var(--sky-soft);
+  --color-peach: var(--peach);
+  --color-rose: var(--rose);
+  --color-lilac: var(--lilac);
+  --color-track: var(--track);
+  --color-photo-lime: var(--photo-lime);
+  --color-photo-mint: var(--photo-mint);
+  --color-photo-lilac: var(--photo-lilac);
+  --color-photo-map: var(--photo-map);
+
   --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
   --font-mono: var(--font-mono);
   --font-serif: var(--font-serif);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-xl: calc(var(--radius) + 6px);
+  --radius-card: var(--radius-card);
+  --radius-pill: var(--radius-pill);
+
+  --shadow-hard-sm: var(--shadow-hard-sm);
+  --shadow-hard: var(--shadow-hard);
+  --shadow-hard-accent: var(--shadow-hard-accent);
 
   --shadow-2xs: var(--shadow-2xs);
   --shadow-xs: var(--shadow-xs);
@@ -241,4 +242,12 @@ textarea:-moz-autofill,
 select:-moz-autofill {
   box-shadow: 0 0 0px 1000px transparent inset !important;
   -moz-text-fill-color: var(--foreground) !important;
+}
+
+/* Горизонтальные ленты без полосы прокрутки (мобильная версия) */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }

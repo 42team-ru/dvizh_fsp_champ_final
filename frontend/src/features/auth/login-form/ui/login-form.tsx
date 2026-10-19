@@ -11,12 +11,18 @@ export default function LoginForm() {
 
   return (
     <form
-      className="flex flex-col gap-6"
+      className="flex w-full max-w-[380px] flex-col gap-[14px] lg:gap-[18px]"
       onSubmit={(evt) => {
         evt.preventDefault();
         form.handleSubmit();
       }}
     >
+      <div className="flex flex-col gap-[6px] whitespace-nowrap">
+        <h1 className="font-display text-[28px] leading-[normal] font-extrabold lg:text-4xl tracking-[-0.5px] text-foreground">
+          Вход
+        </h1>
+        <p className="text-sm font-medium text-muted-foreground lg:text-[15px]">Рады видеть тебя снова</p>
+      </div>
       <form.Subscribe selector={(state) => state.isSubmitting}>
         {(isSubmitting) => (
           <>
@@ -32,9 +38,9 @@ export default function LoginForm() {
                 return (
                   <AuthTextInput
                     name={field.name}
-                    label="Имя пользователя"
+                    label="Логин"
                     value={field.state.value}
-                    placeholder="Введите ваше имя пользователя"
+                    placeholder="anna"
                     onBlur={field.handleBlur}
                     onChange={(e) => field.handleChange(e.target.value)}
                     isInvalid={isInvalid}
@@ -72,18 +78,17 @@ export default function LoginForm() {
               }}
             />
 
+            <AuthSubmitButton
+              isSubmitting={isSubmitting}
+              submittingText="Входим..."
+              idleText="Войти"
+            />
             <DemoAccounts
               disabled={isSubmitting}
               onPick={(username, password) => {
                 form.setFieldValue("username", username);
                 form.setFieldValue("password", password);
               }}
-            />
-
-            <AuthSubmitButton
-              isSubmitting={isSubmitting}
-              submittingText="Входим..."
-              idleText="Войти"
             />
             <LoginFormLinks />
           </>

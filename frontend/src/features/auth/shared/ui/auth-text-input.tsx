@@ -46,7 +46,7 @@ export function AuthTextInput({
           </span>
         )}
         <Input
-          className={cn("h-10", startIcon && "pl-9")}
+          className={cn(startIcon && "pl-9")}
           id={name}
           name={name}
           type={type}

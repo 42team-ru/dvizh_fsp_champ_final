@@ -15,7 +15,8 @@ export function AuthSubmitButton({
     <Button
       type="submit"
       disabled={isSubmitting}
-      className="bg-primary text-primary-foreground hover:bg-primary/90 w-full h-10"
+      size="lg"
+      className="h-14 w-full text-base lg:h-[54px] lg:text-[15px]"
     >
       {isSubmitting ? submittingText : idleText}
     </Button>
