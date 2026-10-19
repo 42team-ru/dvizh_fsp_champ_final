@@ -1,24 +1,22 @@
 package com.hackathon.app.e2e;
 
+import static com.hackathon.app.e2e.support.ApiAssertions.assertThatApi;
+import static com.hackathon.app.e2e.support.TestApi.uniqueName;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.nullValue;
-import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.http.HttpStatus.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.hackathon.app.TestcontainersConfiguration;
-import com.hackathon.app.domain.enums.AccountType;
-import com.hackathon.app.e2e.support.E2eSupport;
+import com.hackathon.app.e2e.support.EventForm;
+import com.hackathon.app.e2e.support.TestApi;
 import com.hackathon.app.repository.AppUserRepository;
-import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -28,7 +26,6 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import tools.jackson.databind.ObjectMapper;
 
 /** Сквозные проверки карты на настоящем PostGIS: вычисляемая точка и пространственный поиск. */
@@ -37,21 +34,15 @@ import tools.jackson.databind.ObjectMapper;
 @AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
 class EventMapE2ETest {
-
-	@Autowired
-	MockMvc mvc;
-	@Autowired
-	ObjectMapper json;
-	@Autowired
-	AppUserRepository users;
-	@Autowired
-	PasswordEncoder passwords;
-
-	private E2eSupport support;
+	@Autowired MockMvc mvc;
+	@Autowired ObjectMapper json;
+	@Autowired AppUserRepository users;
+	@Autowired PasswordEncoder passwords;
+	private TestApi api;
 
 	@BeforeEach
 	void setUp() {
-		support = new E2eSupport(mvc, json, users, passwords);
+		api = new TestApi(mvc, json, users, passwords);
 	}
 
 	/**
@@ -68,60 +59,53 @@ class EventMapE2ETest {
 	 */
 	@Test
 	void mapShowsOnlyOfflineEventsInAreaAndPeriodAndFiltersBySport() throws Exception {
-		// Создаём реальные аккаунты и изолируем события уникальной частью названия.
-		var organizer = support.registerAndLogin(E2eSupport.uniqueName("map"), AccountType.USER);
-		var participant = support.registerAndLogin(E2eSupport.uniqueName("map"), AccountType.USER);
-		var marker = E2eSupport.uniqueName("Карта ");
+		// 1. Две встречи в области и периоде, у первой есть участник.
+		var organizer = api.newUser("map");
+		var participant = api.newUser("map");
+		var marker = uniqueName("Карта ");
 		var start = Instant.now().plus(2, ChronoUnit.DAYS);
 		var from = start.minus(1, ChronoUnit.HOURS);
 		var to = start.plus(1, ChronoUnit.HOURS);
 		var firstForm = eventForm(marker + " бег", 92.8932, 56.0153, start);
-		var first = json.readTree(support.createEvent(organizer, firstForm)
-				.andExpect(status().isCreated()).andReturn().getResponse().getContentAsString());
-		var firstId = first.get("id").asText();
-		var sportId = first.get("sport").get("id").asText();
-		var sportName = first.get("sport").get("name").asText();
-		var secondForm = eventForm(marker + " шахматы", 92.894, 56.016, start);
-		secondForm.put("sportName", "Шахматы");
-		var secondId = support.createdEventId(organizer, secondForm);
-		support.registerForEvent(participant, firstId).andExpect(status().isCreated());
+		var first = organizer.createEvent(firstForm);
+		var second = organizer.createEvent(eventForm(marker + " шахматы", 92.894, 56.016, start).sport("Шахматы"));
+		participant.joinEvent(first.id());
 
-		// Контрольные встречи отличаются только причиной исключения из карты.
-		support.createdEventId(organizer, eventForm(marker + " вне области", 93.2, 56.0153, start));
-		var online = eventForm(marker + " онлайн", 92.8932, 56.0153, start);
-		online.put("format", "ONLINE");
-		online.put("onlineUrl", "https://meet.example.com/map");
-		support.createdEventId(organizer, online);
-		support.createdEventId(organizer, eventForm(marker + " позже", 92.8932, 56.0153,
-				to.plus(1, ChronoUnit.HOURS)));
-		var unpublishedId = support.createdEventId(organizer, eventForm(marker + " снято", 92.8932, 56.0153, start));
-		mvc.perform(post("/api/admin/events/{id}/unpublish", unpublishedId).cookie(support.createAdminAndLogin())
-				.contentType(APPLICATION_JSON).content("{\"reason\":\"Площадка закрыта\"}"))
-				.andExpect(status().isOk());
+		// 2. Контрольные встречи исключаются по месту, формату, времени и статусу.
+		organizer.createEvent(eventForm(marker + " вне области", 93.2, 56.0153, start));
+		organizer.createEvent(eventForm(marker + " онлайн", 92.8932, 56.0153, start)
+				.with("format", "ONLINE").with("onlineUrl", "https://meet.example.com/map"));
+		organizer.createEvent(eventForm(marker + " позже", 92.8932, 56.0153, to.plus(1, ChronoUnit.HOURS)));
+		var unpublished = organizer.createEvent(eventForm(marker + " снято", 92.8932, 56.0153, start));
+		api.newAdmin().unpublishEvent(unpublished.id(), "Площадка закрыта");
 
-		// Без фильтра спорта остаются ровно две подходящие встречи.
-		mvc.perform(area(participant, marker, "92.89", "56.01", "92.90", "56.02")
-				.param("from", from.toString()).param("to", to.toString()))
-				.andExpect(status().isOk())
+		// 3. Без фильтра спорта на карте ровно две встречи.
+		var params = area(marker, "92.89", "56.01", "92.90", "56.02");
+		params.put("from", from.toString());
+		params.put("to", to.toString());
+		var map = participant.map(params);
+		assertThat(map.type()).isEqualTo("FeatureCollection");
+		assertThat(map.features()).extracting(f -> f.id()).containsExactlyInAnyOrder(first.id(), second.id());
+		assertThat(map.truncated()).isFalse();
+		assertThat(map.limit()).isEqualTo(1000);
+
+		// 4. Вид спорта сужает выдачу; DTO проверяет свойства, raw — форму GeoJSON.
+		params.put("sportId", first.sport().id().toString());
+		var filtered = participant.map(params);
+		assertThat(filtered.features()).singleElement().satisfies(feature -> {
+			assertThat(feature.id()).isEqualTo(first.id());
+			assertThat(feature.properties().title()).isEqualTo(firstForm.get("title"));
+			assertThat(feature.properties().sport().id()).isEqualTo(first.sport().id());
+			assertThat(feature.properties().sport().name()).isEqualTo(first.sport().name());
+			assertThat(feature.properties().participantsCount()).isEqualTo(1);
+		});
+		var request = get("/api/events/map");
+		params.forEach(request::param);
+		participant.raw(request).andExpect(status().isOk())
 				.andExpect(jsonPath("$.type").value("FeatureCollection"))
-				.andExpect(jsonPath("$.features", hasSize(2)))
-				.andExpect(jsonPath("$.features[*].id", containsInAnyOrder(firstId, secondId)))
-				.andExpect(jsonPath("$.truncated").value(false))
-				.andExpect(jsonPath("$.limit").value(1000));
-
-		// Фильтр сужает выдачу; проверяем геометрию и содержимое карточки маркера.
-		mvc.perform(area(participant, marker, "92.89", "56.01", "92.90", "56.02")
-				.param("from", from.toString()).param("to", to.toString()).param("sportId", sportId))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.features", hasSize(1)))
-				.andExpect(jsonPath("$.features[0].id").value(firstId))
 				.andExpect(jsonPath("$.features[0].type").value("Feature"))
 				.andExpect(jsonPath("$.features[0].geometry.type").value("Point"))
-				.andExpect(jsonPath("$.features[0].geometry.coordinates", contains(92.8932, 56.0153)))
-				.andExpect(jsonPath("$.features[0].properties.title").value(firstForm.get("title")))
-				.andExpect(jsonPath("$.features[0].properties.sport.id").value(sportId))
-				.andExpect(jsonPath("$.features[0].properties.sport.name").value(sportName))
-				.andExpect(jsonPath("$.features[0].properties.participantsCount").value(1));
+				.andExpect(jsonPath("$.features[0].geometry.coordinates", contains(92.8932, 56.0153)));
 	}
 
 	/**
@@ -137,63 +121,43 @@ class EventMapE2ETest {
 	 *   и сохранённые координаты онлайн-встреч дают пустую либо вводящую в заблуждение карту.
 	 */
 	@Test
-	void mapCrossesAntimeridianAndRejectsInvalidBoundsAndCoordinates() throws Exception {
-		// Точки по обе стороны меридиана попадают в одну область с minLon > maxLon.
-		var access = support.registerAndLogin(E2eSupport.uniqueName("map"), AccountType.USER);
-		var marker = E2eSupport.uniqueName("Меридиан ");
+	void mapCrossesAntimeridianAndRejectsInvalidBoundsAndCoordinates() {
+		// 1. Область через 180-й меридиан включает обе стороны, исключая нулевую долготу.
+		var actor = api.newUser("map");
+		var marker = uniqueName("Меридиан ");
 		var start = Instant.now().plus(2, ChronoUnit.DAYS);
-		var eastId = support.createdEventId(access, eventForm(marker + " восток", 179.9, 12.345, start));
-		var westId = support.createdEventId(access, eventForm(marker + " запад", -179.9, 12.345, start));
-		support.createdEventId(access, eventForm(marker + " ноль", 0, 12.345, start));
-		mvc.perform(area(access, marker, "179.8", "12.34", "-179.8", "12.35"))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.features", hasSize(2)))
-				.andExpect(jsonPath("$.features[*].id", containsInAnyOrder(eastId, westId)));
+		var east = actor.createEvent(eventForm(marker + " восток", 179.9, 12.345, start));
+		var west = actor.createEvent(eventForm(marker + " запад", -179.9, 12.345, start));
+		actor.createEvent(eventForm(marker + " ноль", 0, 12.345, start));
+		var bounds = area(marker, "179.8", "12.34", "-179.8", "12.35");
+		assertThat(actor.map(bounds).features()).extracting(f -> f.id()).containsExactlyInAnyOrder(east.id(), west.id());
 
-		// Невалидные область и период отклоняются до пространственного поиска.
-		mvc.perform(area(access, marker, "179.8", "12.35", "-179.8", "12.34"))
-				.andExpect(status().isBadRequest());
-		mvc.perform(area(access, marker, "179.8", "12.34", "-179.8", "12.35")
-				.param("from", start.toString()).param("to", start.minusSeconds(1).toString()))
-				.andExpect(status().isBadRequest());
-		mvc.perform(get("/api/events/map").cookie(access)).andExpect(status().isBadRequest());
+		// 2. Перевёрнутые широты, период и отсутствие области отклоняются.
+		assertThatApi(() -> actor.map(area(marker, "179.8", "12.35", "-179.8", "12.34"))).fails(BAD_REQUEST);
+		bounds.put("from", start.toString());
+		bounds.put("to", start.minusSeconds(1).toString());
+		assertThatApi(() -> actor.map(bounds)).fails(BAD_REQUEST);
+		assertThatApi(() -> actor.map(Map.of())).fails(BAD_REQUEST);
 
-		// Очной встрече нужна полная пара координат.
-		var offline = support.eventForm();
-		offline.remove("lat");
-		offline.remove("lon");
-		support.createEvent(access, offline).andExpect(status().isBadRequest())
-				.andExpect(jsonPath("$.detail").value("Отметьте место на карте"));
-		offline.put("lat", 56.0153);
-		support.createEvent(access, offline).andExpect(status().isBadRequest());
+		// 3. Для OFFLINE обязательны обе координаты.
+		var offline = EventForm.free().without("lat").without("lon");
+		assertThatApi(() -> actor.createEvent(offline)).fails(BAD_REQUEST, "Отметьте место на карте");
+		assertThatApi(() -> actor.createEvent(offline.with("lat", 56.0153))).fails(BAD_REQUEST);
 
-		// Онлайн-встреча принимается, но переданные координаты не сохраняются.
-		var online = support.eventForm();
-		online.put("format", "ONLINE");
-		online.put("onlineUrl", "https://meet.example.com/map");
-		var onlineId = support.responseId(support.createEvent(access, online)
-				.andExpect(status().isCreated())
-				.andExpect(jsonPath("$.lat").value(nullValue()))
-				.andExpect(jsonPath("$.lon").value(nullValue())));
-		mvc.perform(get("/api/events/{id}", onlineId).cookie(access))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.lat").value(nullValue()))
-				.andExpect(jsonPath("$.lon").value(nullValue()));
+		// 4. ONLINE принимает переданные координаты, но не сохраняет их.
+		var online = actor.createEvent(EventForm.free().with("format", "ONLINE").with("onlineUrl", "https://meet.example.com/map"));
+		assertThat(online.lat()).isNull();
+		assertThat(online.lon()).isNull();
+		var card = actor.openEvent(online.id());
+		assertThat(card.lat()).isNull();
+		assertThat(card.lon()).isNull();
 	}
 
-	private Map<String, Object> eventForm(String title, double lon, double lat, Instant start) {
-		var form = support.eventForm();
-		form.put("title", title);
-		form.put("lon", lon);
-		form.put("lat", lat);
-		form.put("startAt", start.toString());
-		return form;
+	private EventForm eventForm(String title, double lon, double lat, Instant start) {
+		return EventForm.free().title(title).offline("Красноярск, спортивная площадка", lat, lon).startsAt(start);
 	}
 
-	private MockHttpServletRequestBuilder area(Cookie access, String marker,
-			String minLon, String minLat, String maxLon, String maxLat) {
-		return get("/api/events/map").cookie(access).param("searchText", marker)
-				.param("minLon", minLon).param("minLat", minLat)
-				.param("maxLon", maxLon).param("maxLat", maxLat);
+	private Map<String, String> area(String marker, String minLon, String minLat, String maxLon, String maxLat) {
+		return new LinkedHashMap<>(Map.of("searchText", marker, "minLon", minLon, "minLat", minLat, "maxLon", maxLon, "maxLat", maxLat));
 	}
 }
