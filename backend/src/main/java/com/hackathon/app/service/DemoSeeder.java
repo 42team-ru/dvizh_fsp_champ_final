@@ -11,20 +11,25 @@ import java.util.UUID;
 
 import com.hackathon.app.config.DemoProperties;
 import com.hackathon.app.domain.dto.EventRequest;
+import com.hackathon.app.domain.dto.SaveOrganizationRequest;
 import com.hackathon.app.domain.entity.Event;
 import com.hackathon.app.domain.entity.Registration;
+import com.hackathon.app.domain.enums.ContactType;
 import com.hackathon.app.domain.enums.EventFormat;
 import com.hackathon.app.domain.enums.EventKind;
 import com.hackathon.app.domain.enums.EventLevel;
 import com.hackathon.app.domain.enums.EventStatus;
 import com.hackathon.app.domain.enums.JoinMode;
+import com.hackathon.app.domain.enums.OrganizationStatus;
 import com.hackathon.app.domain.enums.RegistrationStatus;
 import com.hackathon.app.domain.enums.SystemRole;
+import com.hackathon.app.domain.mapper.CommentMapper;
 import com.hackathon.app.domain.mapper.EventMapper;
 import com.hackathon.app.domain.mapper.OrganizerMapper;
 import com.hackathon.app.domain.mapper.RegistrationMapper;
 import com.hackathon.app.domain.mapper.UserMapper;
 import com.hackathon.app.repository.AppUserRepository;
+import com.hackathon.app.repository.CommentRepository;
 import com.hackathon.app.repository.EventOrganizerRepository;
 import com.hackathon.app.repository.EventRepository;
 import com.hackathon.app.repository.RegistrationRepository;
@@ -71,15 +76,23 @@ public class DemoSeeder {
 			new Account("dmitry", "Дмитрий", "Орлов", SystemRole.USER, "Футбол и бег", false),
 			new Account("elena", "Елена", "Кузнецова", SystemRole.USER, "Бегаю полумарафоны", false),
 			new Account("sergey", "Сергей", "Белов", SystemRole.USER, "Волейбол, футбол, шахматы", false),
-			new Account("nikolai", "Николай", "Лебедев", SystemRole.USER, "Привёз петанк из Франции", false));
+			new Account("nikolai", "Николай", "Лебедев", SystemRole.USER, "Привёз петанк из Франции", false),
+			// аккаунты организаций: имя и фамилия — контактное лицо
+			new Account("ladya", "Игорь", "Савельев", SystemRole.ORG, null, true),
+			new Account("enisey", "Марина", "Соколова", SystemRole.ORG, null, true),
+			new Account("yoga", "Светлана", "Ким", SystemRole.ORG, null, false));
 
 	private final DemoProperties props;
 	private final AppUserRepository users;
 	private final EventRepository events;
 	private final RegistrationRepository registrations;
 	private final EventOrganizerRepository organizers;
+	private final CommentRepository comments;
 	private final SportService sportService;
+	private final OrganizationService organizationService;
+	private final AdminOrganizationService adminOrganizationService;
 	private final UserMapper userMapper;
+	private final CommentMapper commentMapper;
 	private final EventMapper eventMapper;
 	private final RegistrationMapper registrationMapper;
 	private final OrganizerMapper organizerMapper;
@@ -96,6 +109,51 @@ public class DemoSeeder {
 		var ids = seedAccounts();
 		var now = clock.instant();
 
+		// Сценарий 2: одобренный клуб с событиями, заявка на проверке (одобрить или отклонить), отказ с причиной.
+		var ladya = organization(ids.get("ladya"), new SaveOrganizationRequest("Шахматный клуб «Ладья»",
+				"Любительский шахматный клуб: турниры по выходным, занятия для начинающих и детей.", CITY,
+				Map.of(ContactType.TELEGRAM, "@ladya_krsk", ContactType.PHONE, "+7 391 200-10-10")),
+				OrganizationStatus.APPROVED, null, ids.get("admin"));
+		organization(ids.get("enisey"), new SaveOrganizationRequest("Беговое сообщество «Енисей»",
+				"Бегаем по набережной три раза в неделю, готовимся к полумарафонам вместе.", CITY,
+				Map.of(ContactType.TELEGRAM, "@enisey_run", ContactType.WEBSITE, "https://enisey-run.example.com")),
+				OrganizationStatus.PENDING, null, ids.get("admin"));
+		organization(ids.get("yoga"), new SaveOrganizationRequest("Йога на Татышеве",
+				"Йога на свежем воздухе.", CITY,
+				Map.of(ContactType.PHONE, "+7 900 300-40-50")),
+				OrganizationStatus.REJECTED,
+				"Добавьте описание занятий, расписание и ссылку на группу или сайт, чтобы участники понимали, куда идут",
+				ids.get("admin"));
+
+		// Запись по заявке от организации: несколько заявок ждут решения клуба.
+		var clubTournament = event(ids.get("ladya"), ladya, "Шахматы", new EventRequest(
+				"Турнир клуба «Ладья» по быстрым шахматам",
+				"Пять туров, контроль 10+5. Рейтинговый турнир клуба, приглашаем любителей.",
+				null, null, at(6, 12, 0), at(6, 17, 0), EventFormat.OFFLINE,
+				CITY + ", улица Карла Маркса, 49, клуб «Ладья»", "Третий этаж, кабинет 305",
+				null, 56.0110, 92.8830, EventLevel.AMATEUR, EventKind.AMATEUR_TOURNAMENT,
+				"Знать правила и нотацию", "Ничего: доски и часы клуба",
+				16, JoinMode.REQUEST, "Жеребьёвка и чат участников: https://t.me/ladya_tournament"));
+		if (clubTournament != null) {
+			pending(clubTournament, ids.get("olga"), "Играла в молодости, хочу вспомнить");
+			pending(clubTournament, ids.get("nikolai"), "Есть второй разряд");
+			pending(clubTournament, ids.get("dmitry"), null);
+			comment(clubTournament, ids.get("elena"), "Нужно ли уметь записывать партии?");
+			comment(clubTournament, ids.get("ladya"), "Желательно, но не обязательно: бланки и подсказку по нотации дадим на месте.");
+		}
+		var chessLesson = event(ids.get("ladya"), ladya, "Шахматы", new EventRequest(
+				"Открытый урок шахмат для начинающих",
+				"Разберём, как ходят фигуры, и сыграем первые партии с тренером клуба.",
+				null, null, at(3, 11, 0), at(3, 12, 30), EventFormat.OFFLINE,
+				CITY + ", улица Карла Маркса, 49, клуб «Ладья»", "Третий этаж, кабинет 305",
+				null, 56.0110, 92.8830, EventLevel.BEGINNER, EventKind.TRAINING,
+				"Никаких: учим с нуля", null,
+				12, JoinMode.FREE, null));
+		if (chessLesson != null) {
+			confirmed(chessLesson, ids.get("anna"), now);
+			confirmed(chessLesson, ids.get("elena"), now);
+		}
+
 		// Сценарии 1 и 3: свободная запись от пользователя, есть соорганизатор и участники.
 		var football = event(ids.get("dmitry"), "Футбол", new EventRequest(
 				"Футбол 5×5 на Татышеве",
@@ -110,6 +168,10 @@ public class DemoSeeder {
 			confirmed(football, ids.get("petr"), now);
 			confirmed(football, ids.get("sergey"), now);
 			confirmed(football, ids.get("elena"), now);
+			// Сценарий 5: вопрос участника, ответы автора и соорганизатора с меткой «Организатор».
+			comment(football, ids.get("anna"), "Давно не играла, можно прийти просто попробовать?");
+			comment(football, ids.get("dmitry"), "Конечно! Поставим в команду поопытнее, играем без жёстких стыков.");
+			comment(football, ids.get("nikolai"), "Возьмите сменную обувь: поле искусственное.");
 		}
 
 		// Сценарий 4: запись по заявке — автор Пётр, заявки в обоих исходах и ждущие решения.
@@ -183,6 +245,7 @@ public class DemoSeeder {
 				8, JoinMode.FREE, null));
 		if (volleyball != null) {
 			confirmed(volleyball, ids.get("anna"), now);
+			comment(volleyball, ids.get("anna"), "А когда будет следующая игра?");
 			eventMapper.moderate(volleyball, EventStatus.UNPUBLISHED,
 					"Площадки закрыты на ремонт до конца месяца, а другое место организатор не указал",
 					now, ids.get("admin"));
@@ -203,13 +266,43 @@ public class DemoSeeder {
 		return ids;
 	}
 
-	/** Новое мероприятие или null, если у автора такое уже есть (тогда и записи на него не трогаем). */
+	/**
+	 * Анкета организации через обычный сервис (статус PENDING) и решение админа. Уже поданную не трогаем.
+	 * Возвращает id организации.
+	 */
+	private UUID organization(UUID accountId, SaveOrganizationRequest request, OrganizationStatus decision,
+			String rejectReason, UUID adminId) {
+		var existing = organizationService.forAccount(accountId);
+		if (existing != null) {
+			return existing.getId();
+		}
+		var organizationId = organizationService.saveMine(accountId, request).id();
+		switch (decision) {
+			case APPROVED -> adminOrganizationService.approve(organizationId, adminId);
+			case REJECTED -> adminOrganizationService.reject(organizationId, adminId, rejectReason);
+			case PENDING -> {
+			} // ждёт решения: эксперт одобрит или отклонит сам
+		}
+		return organizationId;
+	}
+
+	/** Мероприятие частного лица. */
 	private Event event(UUID authorId, String sportName, EventRequest request) {
+		return event(authorId, null, sportName, request);
+	}
+
+	/** Новое мероприятие или null, если у автора такое уже есть (тогда и записи на него не трогаем). */
+	private Event event(UUID authorId, UUID organizationId, String sportName, EventRequest request) {
 		if (events.existsByAuthorIdAndTitle(authorId, request.title())) {
 			return null;
 		}
 		var sport = sportService.resolve(null, sportName, authorId);
-		return events.save(eventMapper.toEntity(request, authorId, sport.getId()));
+		return events.save(eventMapper.toEntity(request, authorId, sport.getId(), organizationId));
+	}
+
+	/** saveAndFlush по одному: порядок createdAt — порядок реплик в обсуждении. */
+	private void comment(Event event, UUID authorId, String text) {
+		comments.saveAndFlush(commentMapper.toEntity(event.getId(), authorId, text));
 	}
 
 	private void coOrganizer(Event event, UUID userId) {

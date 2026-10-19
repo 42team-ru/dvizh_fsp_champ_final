@@ -61,7 +61,7 @@ public class EventService {
     public List<EventSummaryResponse> list(EventFilter filter, UUID userId) {
         var startFrom = filter.from() != null ? filter.from() : dbTime.now();
         var feedSpec = EventSpecifications.feed(Strings.blankToNull(filter.searchText()), filter.sportId(), startFrom,
-                filter.to(), filter.level(), filter.joinMode(), filter.format());
+                filter.to(), filter.level(), filter.joinMode(), filter.format(), filter.organizationId());
         var feedEvents = events.findAll(feedSpec, PageRequest.of(0, FEED_LIMIT, Sort.by("startAt"))).getContent();
         return summaries(feedEvents, userId);
     }
@@ -82,6 +82,7 @@ public class EventService {
         var event = events.findById(eventId).orElseThrow(() -> new NoSuchElementException(NOT_FOUND));
         var sport = sportService.get(event.getSportId());
         var author = users.findById(event.getAuthorId()).orElseThrow();
+        var organization = event.getOrganizationId() != null ? organizations.find(event.getOrganizationId()) : null;
         var participants = registrations.findUsers(eventId, RegistrationStatus.CONFIRMED);
         var myRegistration = registrations.findByEventIdAndUserId(eventId, userId).orElse(null);
         var now = dbTime.now();
@@ -93,9 +94,10 @@ public class EventService {
                 policy.canManage(event, userId),
                 policy.canManageOrganizers(event, userId),
                 policy.cancelBlockedReason(event, myRegistration, now) == null,
-                canSeePrivateDetails);
-        return mapper.toResponse(event, sport, author, organizerService.list(event), participants, participants.size(),
-                viewer,
+                canSeePrivateDetails,
+                policy.commentBlockedReason(event) == null);
+        return mapper.toResponse(event, sport, author, organization, organizerService.list(event), participants,
+                participants.size(), viewer,
                 canSeePrivateDetails ? event.getOnlineUrl() : null,
                 canSeePrivateDetails ? event.getPrivateDetails() : null);
     }
@@ -115,9 +117,8 @@ public class EventService {
         }
         validate(request);
         var sport = sportService.resolve(request.sportId(), request.sportName(), userId);
-        var entity = mapper.toEntity(request, userId, sport.getId());
-        entity.setOrganizationId(organization != null ? organization.getId() : null);
-        var saved = events.saveAndFlush(entity);
+        var organizationId = organization != null ? organization.getId() : null;
+        var saved = events.saveAndFlush(mapper.toEntity(request, userId, sport.getId(), organizationId));
         return get(saved.getId(), userId);
     }
 

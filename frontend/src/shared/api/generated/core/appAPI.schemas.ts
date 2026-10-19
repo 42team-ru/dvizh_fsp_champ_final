@@ -5,6 +5,52 @@
  * Платформа совместных спортивных активностей. Ошибки — ProblemDetail (RFC 9457), текст для человека в поле detail.
  * OpenAPI spec version: v1
  */
+export type SaveOrganizationRequestContacts = {[key: string]: string};
+
+export interface SaveOrganizationRequest {
+  /**
+     * @minLength 0
+     * @maxLength 200
+     */
+  name: string;
+  /**
+     * @minLength 0
+     * @maxLength 5000
+     */
+  description: string;
+  /**
+     * @minLength 0
+     * @maxLength 100
+     */
+  city?: string;
+  contacts: SaveOrganizationRequestContacts;
+}
+
+export type OrganizationResponseContacts = {[key: string]: string};
+
+export type OrganizationResponseStatus = typeof OrganizationResponseStatus[keyof typeof OrganizationResponseStatus];
+
+
+export const OrganizationResponseStatus = {
+  PENDING: 'PENDING',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+} as const;
+
+export interface OrganizationResponse {
+  id?: string;
+  name?: string;
+  description?: string;
+  city?: string;
+  contacts?: OrganizationResponseContacts;
+  status?: OrganizationResponseStatus;
+  rejectReason?: string;
+  submittedAt?: string;
+  reviewedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 /**
  * Очно или онлайн
  */
@@ -271,6 +317,15 @@ export interface OrganizerResponse {
 }
 
 /**
+ * Организация в карточке мероприятия: ссылка на её публичную страницу
+ */
+export interface OrganizationShortResponse {
+  id: string;
+  /** Название */
+  name: string;
+}
+
+/**
  * Статус моей записи; null — не записан
  */
 export type ViewerResponseRegistrationStatus = typeof ViewerResponseRegistrationStatus[keyof typeof ViewerResponseRegistrationStatus];
@@ -303,6 +358,8 @@ export interface ViewerResponse {
   canCancel: boolean;
   /** Вижу onlineUrl и privateDetails */
   canSeePrivateDetails: boolean;
+  /** Могу написать в обсуждение */
+  canComment: boolean;
 }
 
 /**
@@ -322,6 +379,8 @@ export interface EventResponse {
   organizers: OrganizerResponse[];
   /** Организация, от имени которой мероприятие; null — от частного лица */
   organizationId?: string;
+  /** Организация для ссылки на её страницу; null — от частного лица */
+  organization?: OrganizationShortResponse;
   /** Начало */
   startAt: string;
   /** Окончание */
@@ -427,6 +486,40 @@ export interface AddOrganizerRequest {
   login: string;
 }
 
+/**
+ * Новый комментарий в обсуждении мероприятия
+ */
+export interface CommentRequest {
+  /**
+     * Текст
+     * @minLength 0
+     * @maxLength 2000
+     */
+  text: string;
+}
+
+/**
+ * Комментарий в обсуждении мероприятия
+ */
+export interface CommentResponse {
+  id: string;
+  /** Автор */
+  author: UserShortResponse;
+  /** Текст */
+  text: string;
+  /** Автор — организатор мероприятия: показать метку «Организатор» */
+  isOrganizer: boolean;
+  createdAt: string;
+}
+
+export type RegisterRequestAccountType = typeof RegisterRequestAccountType[keyof typeof RegisterRequestAccountType];
+
+
+export const RegisterRequestAccountType = {
+  USER: 'USER',
+  ORG: 'ORG',
+} as const;
+
 export interface RegisterRequest {
   /**
      * @minLength 3
@@ -453,6 +546,7 @@ export interface RegisterRequest {
      * @maxLength 128
      */
   password: string;
+  accountType?: RegisterRequestAccountType;
 }
 
 export type UserResponseSystemRole = typeof UserResponseSystemRole[keyof typeof UserResponseSystemRole];
@@ -460,6 +554,7 @@ export type UserResponseSystemRole = typeof UserResponseSystemRole[keyof typeof 
 
 export const UserResponseSystemRole = {
   USER: 'USER',
+  ORG: 'ORG',
   ADMIN: 'ADMIN',
 } as const;
 
@@ -492,6 +587,61 @@ export interface LoginRequest {
   username: string;
   /** @minLength 1 */
   password: string;
+}
+
+export interface RejectOrganizationRequest {
+  /**
+     * @minLength 0
+     * @maxLength 1000
+     */
+  reason: string;
+}
+
+export type AdminOrganizationResponseContacts = {[key: string]: string};
+
+export type AdminOrganizationResponseStatus = typeof AdminOrganizationResponseStatus[keyof typeof AdminOrganizationResponseStatus];
+
+
+export const AdminOrganizationResponseStatus = {
+  PENDING: 'PENDING',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+} as const;
+
+export interface OrganizationAccountResponse {
+  id?: string;
+  username?: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+}
+
+export interface AdminOrganizationResponse {
+  id?: string;
+  name?: string;
+  description?: string;
+  city?: string;
+  contacts?: AdminOrganizationResponseContacts;
+  status?: AdminOrganizationResponseStatus;
+  rejectReason?: string;
+  submittedAt?: string;
+  reviewedAt?: string;
+  reviewedById?: string;
+  account?: OrganizationAccountResponse;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+/**
+ * Снятие с публикации или удаление мероприятия админом
+ */
+export interface ModerateEventRequest {
+  /**
+     * Причина: её увидят записавшиеся и организатор
+     * @minLength 0
+     * @maxLength 1000
+     */
+  reason: string;
 }
 
 /**
@@ -645,11 +795,22 @@ export interface PingResponse {
   time?: string;
 }
 
+export type PublicOrganizationResponseContacts = {[key: string]: string};
+
+export interface PublicOrganizationResponse {
+  id?: string;
+  name?: string;
+  description?: string;
+  city?: string;
+  contacts?: PublicOrganizationResponseContacts;
+}
+
 export type DemoAccountResponseSystemRole = typeof DemoAccountResponseSystemRole[keyof typeof DemoAccountResponseSystemRole];
 
 
 export const DemoAccountResponseSystemRole = {
   USER: 'USER',
+  ORG: 'ORG',
   ADMIN: 'ADMIN',
 } as const;
 
@@ -670,6 +831,7 @@ export type MeResponseSystemRole = typeof MeResponseSystemRole[keyof typeof MeRe
 
 export const MeResponseSystemRole = {
   USER: 'USER',
+  ORG: 'ORG',
   ADMIN: 'ADMIN',
 } as const;
 
@@ -695,6 +857,86 @@ export interface MeResponse {
   bio?: string;
   avatarUrl?: string;
   city?: string;
+}
+
+/**
+ * Счётчики для дашборда админа
+ */
+export interface AdminStatsResponse {
+  /** Пользователей всего (люди и организации) */
+  users: number;
+  /** Заявок организаций ждут решения */
+  organizationsPending: number;
+  /** Одобренных организаций */
+  organizationsApproved: number;
+  /** Опубликованных мероприятий */
+  eventsPublished: number;
+  /** Снятых с публикации */
+  eventsUnpublished: number;
+  /** Удалённых */
+  eventsDeleted: number;
+  /** Подтверждённых записей */
+  registrationsConfirmed: number;
+  /** Заявок ждут решения организаторов */
+  registrationsPending: number;
+  /** Комментариев */
+  comments: number;
+}
+
+export interface PageResponseAdminOrganizationResponse {
+  items?: AdminOrganizationResponse[];
+  page?: number;
+  size?: number;
+  totalElements?: number;
+  totalPages?: number;
+}
+
+/**
+ * Статус
+ */
+export type AdminEventResponseStatus = typeof AdminEventResponseStatus[keyof typeof AdminEventResponseStatus];
+
+
+export const AdminEventResponseStatus = {
+  PUBLISHED: 'PUBLISHED',
+  UNPUBLISHED: 'UNPUBLISHED',
+  DELETED: 'DELETED',
+} as const;
+
+/**
+ * Мероприятие в админке: статус модерации и кто автор
+ */
+export interface AdminEventResponse {
+  id: string;
+  /** Название */
+  title: string;
+  /** Вид спорта */
+  sport: SportResponse;
+  /** Начало */
+  startAt: string;
+  /** Адрес */
+  address?: string;
+  /** Автор */
+  author: UserShortResponse;
+  /** Организация; null — от частного лица */
+  organizationId?: string;
+  /** Подтверждённых участников */
+  participantsCount: number;
+  /** Статус */
+  status: AdminEventResponseStatus;
+  /** Причина снятия или удаления */
+  moderationReason?: string;
+  /** Когда снято или удалено */
+  moderatedAt?: string;
+  createdAt: string;
+}
+
+export interface PageResponseAdminEventResponse {
+  items?: AdminEventResponse[];
+  page?: number;
+  size?: number;
+  totalElements?: number;
+  totalPages?: number;
 }
 
 export type EventsListParams = {
@@ -726,6 +968,10 @@ joinMode?: EventsListJoinMode;
  * Очно или онлайн
  */
 format?: EventsListFormat;
+/**
+ * Только мероприятия этой организации — для её публичной страницы
+ */
+organizationId?: string;
 };
 
 export type EventsListLevel = typeof EventsListLevel[keyof typeof EventsListLevel];
@@ -783,4 +1029,36 @@ username: string;
 export type AuthCheckEmailParams = {
 email: string;
 };
+
+export type AdminListOrganizationsParams = {
+status?: AdminListOrganizationsStatus;
+searchText?: string;
+page?: number;
+size?: number;
+};
+
+export type AdminListOrganizationsStatus = typeof AdminListOrganizationsStatus[keyof typeof AdminListOrganizationsStatus];
+
+
+export const AdminListOrganizationsStatus = {
+  PENDING: 'PENDING',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+} as const;
+
+export type AdminListEventsParams = {
+status?: AdminListEventsStatus;
+searchText?: string;
+page?: number;
+size?: number;
+};
+
+export type AdminListEventsStatus = typeof AdminListEventsStatus[keyof typeof AdminListEventsStatus];
+
+
+export const AdminListEventsStatus = {
+  PUBLISHED: 'PUBLISHED',
+  UNPUBLISHED: 'UNPUBLISHED',
+  DELETED: 'DELETED',
+} as const;
 

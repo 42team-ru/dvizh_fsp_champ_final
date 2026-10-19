@@ -16,6 +16,9 @@ public interface OrganizationRepository extends JpaRepository<Organization, UUID
 
 	Optional<Organization> findByIdAndStatus(UUID id, OrganizationStatus status);
 
+	/** Для дашборда админа. */
+	long countByStatus(OrganizationStatus status);
+
 	/** status необязателен; q — готовый шаблон в нижнем регистре вида %текст% (без поиска — "%"). */
 	@Query("""
 			select o from Organization o

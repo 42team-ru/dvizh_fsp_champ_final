@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:8080",
+      "url": "http://localhost:8099",
       "description": "Generated server url"
     }
   ],
@@ -20,6 +20,10 @@
     }
   ],
   "tags": [
+    {
+      "name": "comments",
+      "description": "Обсуждение под мероприятием: вопросы и ответы организатора"
+    },
     {
       "name": "sports",
       "description": "Справочник видов спорта"
@@ -34,6 +38,56 @@
     }
   ],
   "paths": {
+    "/api/organizations/me": {
+      "get": {
+        "tags": [
+          "organizations"
+        ],
+        "summary": "Анкета своей организации со статусом допуска",
+        "operationId": "organizations_me",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "organizations"
+        ],
+        "summary": "Сохранить анкету: первая и исправленная после отказа уходят на проверку",
+        "operationId": "organizations_saveMine",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveOrganizationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/events/{id}": {
       "get": {
         "tags": [
@@ -355,6 +409,17 @@
                 "ONLINE"
               ]
             }
+          },
+          {
+            "name": "organizationId",
+            "in": "query",
+            "description": "Только мероприятия этой организации — для её публичной страницы",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Только мероприятия этой организации — для её публичной страницы"
+            }
           }
         ],
         "responses": {
@@ -604,6 +669,110 @@
         }
       }
     },
+    "/api/events/{id}/comments": {
+      "get": {
+        "tags": [
+          "comments"
+        ],
+        "summary": "Обсуждение мероприятия",
+        "description": "Старые сверху. isOrganizer — показать у автора метку «Организатор».",
+        "operationId": "comments_list",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Мероприятия нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "comments"
+        ],
+        "summary": "Написать в обсуждение",
+        "description": "Любой вошедший, даже не записанный. У удалённого мероприятия обсуждение закрыто.",
+        "operationId": "comments_create",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Пустой или слишком длинный текст",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Мероприятия нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Мероприятие удалено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/auth/register": {
       "post": {
         "tags": [
@@ -717,6 +886,133 @@
         }
       }
     },
+    "/api/admin/organizations/{id}/reject": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Отклонить организацию с причиной",
+        "operationId": "admin_rejectOrganization",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectOrganizationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminOrganizationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/organizations/{id}/approve": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Одобрить организацию",
+        "operationId": "admin_approveOrganization",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminOrganizationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/events/{id}/unpublish": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Снять с публикации с причиной",
+        "description": "Пропадает из ленты, запись закрывается; записавшиеся видят статус и причину.",
+        "operationId": "admin_unpublishEvent",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModerateEventRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "404": {
+            "description": "Мероприятия нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Мероприятие уже удалено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/sports": {
       "get": {
         "tags": [
@@ -792,6 +1088,38 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PingResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/organizations/{id}": {
+      "get": {
+        "tags": [
+          "organizations"
+        ],
+        "summary": "Публичная страница одобренной организации",
+        "operationId": "organizations_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicOrganizationResponse"
                 }
               }
             }
@@ -927,6 +1255,187 @@
         }
       }
     },
+    "/api/admin/stats": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Счётчики для дашборда",
+        "operationId": "admin_stats",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminStatsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/organizations": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Заявки и организации: фильтр по статусу и поиск по названию",
+        "operationId": "admin_listOrganizations",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PENDING",
+                "APPROVED",
+                "REJECTED"
+              ]
+            }
+          },
+          {
+            "name": "searchText",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseAdminOrganizationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/organizations/{id}": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Карточка организации с аккаунтом заявителя",
+        "operationId": "admin_getOrganization",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminOrganizationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/events": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Мероприятия во всех статусах: фильтр по статусу и поиск по названию",
+        "operationId": "admin_listEvents",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PUBLISHED",
+                "UNPUBLISHED",
+                "DELETED"
+              ]
+            }
+          },
+          {
+            "name": "searchText",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseAdminEventResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/events/{id}/registrations/me": {
       "delete": {
         "tags": [
@@ -1031,10 +1540,136 @@
           }
         }
       }
+    },
+    "/api/admin/events/{id}": {
+      "delete": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Удалить с причиной",
+        "description": "Мягкое удаление: по прямой ссылке открывается с плашкой «Удалено» и причиной.",
+        "operationId": "admin_deleteEvent",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModerateEventRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "404": {
+            "description": "Мероприятия нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "SaveOrganizationRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 5000,
+            "minLength": 0
+          },
+          "city": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "contacts": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "minProperties": 1
+          }
+        },
+        "required": [
+          "contacts",
+          "description",
+          "name"
+        ]
+      },
+      "OrganizationResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "contacts": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "APPROVED",
+              "REJECTED"
+            ]
+          },
+          "rejectReason": {
+            "type": "string"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reviewedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "EventRequest": {
         "type": "object",
         "description": "Форма мероприятия: создание и полная замена при редактировании",
@@ -1263,6 +1898,10 @@
             "format": "uuid",
             "description": "Организация, от имени которой мероприятие; null — от частного лица"
           },
+          "organization": {
+            "$ref": "#/components/schemas/OrganizationShortResponse",
+            "description": "Организация для ссылки на её страницу; null — от частного лица"
+          },
           "startAt": {
             "type": "string",
             "format": "date-time",
@@ -1410,6 +2049,25 @@
           "viewer"
         ]
       },
+      "OrganizationShortResponse": {
+        "type": "object",
+        "description": "Организация в карточке мероприятия: ссылка на её публичную страницу",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "description": "Название",
+            "example": "Шахматный клуб «Ладья»"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
       "OrganizerResponse": {
         "type": "object",
         "description": "Организатор мероприятия: автор или соорганизатор",
@@ -1540,10 +2198,15 @@
           "canSeePrivateDetails": {
             "type": "boolean",
             "description": "Вижу onlineUrl и privateDetails"
+          },
+          "canComment": {
+            "type": "boolean",
+            "description": "Могу написать в обсуждение"
           }
         },
         "required": [
           "canCancel",
+          "canComment",
           "canManage",
           "canManageOrganizers",
           "canRegister",
@@ -1639,6 +2302,55 @@
           "login"
         ]
       },
+      "CommentRequest": {
+        "type": "object",
+        "description": "Новый комментарий в обсуждении мероприятия",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Текст",
+            "example": "Можно прийти без своих шиповок?",
+            "maxLength": 2000,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "text"
+        ]
+      },
+      "CommentResponse": {
+        "type": "object",
+        "description": "Комментарий в обсуждении мероприятия",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "author": {
+            "$ref": "#/components/schemas/UserShortResponse",
+            "description": "Автор"
+          },
+          "text": {
+            "type": "string",
+            "description": "Текст"
+          },
+          "isOrganizer": {
+            "type": "boolean",
+            "description": "Автор — организатор мероприятия: показать метку «Организатор»"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "author",
+          "createdAt",
+          "id",
+          "isOrganizer",
+          "text"
+        ]
+      },
       "RegisterRequest": {
         "type": "object",
         "properties": {
@@ -1667,6 +2379,13 @@
             "type": "string",
             "maxLength": 128,
             "minLength": 8
+          },
+          "accountType": {
+            "type": "string",
+            "enum": [
+              "USER",
+              "ORG"
+            ]
           }
         },
         "required": [
@@ -1703,6 +2422,7 @@
             "type": "string",
             "enum": [
               "USER",
+              "ORG",
               "ADMIN"
             ]
           },
@@ -1744,6 +2464,114 @@
         "required": [
           "password",
           "username"
+        ]
+      },
+      "RejectOrganizationRequest": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "AdminOrganizationResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "contacts": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "APPROVED",
+              "REJECTED"
+            ]
+          },
+          "rejectReason": {
+            "type": "string"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reviewedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reviewedById": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "account": {
+            "$ref": "#/components/schemas/OrganizationAccountResponse"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "OrganizationAccountResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "username": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          }
+        }
+      },
+      "ModerateEventRequest": {
+        "type": "object",
+        "description": "Снятие с публикации или удаление мероприятия админом",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "Причина: её увидят записавшиеся и организатор",
+            "example": "Нарушает правила площадки",
+            "maxLength": 1000,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "reason"
         ]
       },
       "EventSummaryResponse": {
@@ -1933,6 +2761,30 @@
           }
         }
       },
+      "PublicOrganizationResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "contacts": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "DemoAccountResponse": {
         "type": "object",
         "properties": {
@@ -1952,6 +2804,7 @@
             "type": "string",
             "enum": [
               "USER",
+              "ORG",
               "ADMIN"
             ]
           }
@@ -1991,6 +2844,7 @@
             "type": "string",
             "enum": [
               "USER",
+              "ORG",
               "ADMIN"
             ]
           },
@@ -2014,6 +2868,195 @@
           },
           "city": {
             "type": "string"
+          }
+        }
+      },
+      "AdminStatsResponse": {
+        "type": "object",
+        "description": "Счётчики для дашборда админа",
+        "properties": {
+          "users": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Пользователей всего (люди и организации)"
+          },
+          "organizationsPending": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Заявок организаций ждут решения"
+          },
+          "organizationsApproved": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Одобренных организаций"
+          },
+          "eventsPublished": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Опубликованных мероприятий"
+          },
+          "eventsUnpublished": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Снятых с публикации"
+          },
+          "eventsDeleted": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Удалённых"
+          },
+          "registrationsConfirmed": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Подтверждённых записей"
+          },
+          "registrationsPending": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Заявок ждут решения организаторов"
+          },
+          "comments": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Комментариев"
+          }
+        },
+        "required": [
+          "comments",
+          "eventsDeleted",
+          "eventsPublished",
+          "eventsUnpublished",
+          "organizationsApproved",
+          "organizationsPending",
+          "registrationsConfirmed",
+          "registrationsPending",
+          "users"
+        ]
+      },
+      "PageResponseAdminOrganizationResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminOrganizationResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "AdminEventResponse": {
+        "type": "object",
+        "description": "Мероприятие в админке: статус модерации и кто автор",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "description": "Название"
+          },
+          "sport": {
+            "$ref": "#/components/schemas/SportResponse",
+            "description": "Вид спорта"
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Начало"
+          },
+          "address": {
+            "type": "string",
+            "description": "Адрес"
+          },
+          "author": {
+            "$ref": "#/components/schemas/UserShortResponse",
+            "description": "Автор"
+          },
+          "organizationId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Организация; null — от частного лица"
+          },
+          "participantsCount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Подтверждённых участников"
+          },
+          "status": {
+            "type": "string",
+            "description": "Статус",
+            "enum": [
+              "PUBLISHED",
+              "UNPUBLISHED",
+              "DELETED"
+            ]
+          },
+          "moderationReason": {
+            "type": "string",
+            "description": "Причина снятия или удаления"
+          },
+          "moderatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Когда снято или удалено"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "author",
+          "createdAt",
+          "id",
+          "participantsCount",
+          "sport",
+          "startAt",
+          "status",
+          "title"
+        ]
+      },
+      "PageResponseAdminEventResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminEventResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       }

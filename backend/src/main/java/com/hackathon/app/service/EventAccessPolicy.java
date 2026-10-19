@@ -1,6 +1,8 @@
 package com.hackathon.app.service;
 
 import java.time.Instant;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 import com.hackathon.app.domain.entity.AppUser;
@@ -148,5 +150,23 @@ public class EventAccessPolicy {
 
 	public String rejectBlockedReason(Registration registration) {
 		return registration.getStatus() == RegistrationStatus.CANCELLED ? "Участник сам отменил запись" : null;
+	}
+
+	/** Писать в обсуждение может любой вошедший, даже не записанный; у удалённого мероприятия обсуждение закрыто. */
+	public String commentBlockedReason(Event event) {
+		return event.getStatus() == EventStatus.DELETED ? "Мероприятие удалено, обсуждение закрыто" : null;
+	}
+
+	/** Все организаторы мероприятия одним запросом: автор и соорганизаторы. Для меток «Организатор» в обсуждении. */
+	public Set<UUID> organizerIds(Event event) {
+		var ids = new HashSet<UUID>();
+		ids.add(event.getAuthorId());
+		organizers.findByEventIdOrderByCreatedAt(event.getId()).forEach(organizer -> ids.add(organizer.getUserId()));
+		return ids;
+	}
+
+	/** Админ снимает с публикации только опубликованное: удалённое вернуть нельзя. */
+	public String unpublishBlockedReason(Event event) {
+		return event.getStatus() == EventStatus.DELETED ? "Мероприятие удалено, снимать нечего" : null;
 	}
 }

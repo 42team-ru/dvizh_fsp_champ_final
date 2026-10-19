@@ -25,5 +25,7 @@ public record EventFilter(
 		@Schema(description = "Режим записи")
 		JoinMode joinMode,
 		@Schema(description = "Очно или онлайн")
-		EventFormat format) {
+		EventFormat format,
+		@Schema(description = "Только мероприятия этой организации — для её публичной страницы")
+		UUID organizationId) {
 }

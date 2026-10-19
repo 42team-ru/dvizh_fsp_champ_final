@@ -97,6 +97,12 @@ public class OrganizationService {
 		return organizations.findByAccountId(accountId).orElse(null);
 	}
 
+	/** Организация мероприятия для карточки (в любом статусе) или null. */
+	@Transactional(readOnly = true)
+	public Organization find(UUID id) {
+		return organizations.findById(id).orElse(null);
+	}
+
 	private void requireOrgAccount(UUID userId) {
 		var user = users.findById(userId).orElseThrow(() -> new NoSuchElementException("Пользователь не найден"));
 		if (user.getSystemRole() != SystemRole.ORG) {

@@ -28,5 +28,7 @@ public record ViewerResponse(
 		@Schema(description = "Могу отменить свою запись", requiredMode = REQUIRED)
 		boolean canCancel,
 		@Schema(description = "Вижу onlineUrl и privateDetails", requiredMode = REQUIRED)
-		boolean canSeePrivateDetails) {
+		boolean canSeePrivateDetails,
+		@Schema(description = "Могу написать в обсуждение", requiredMode = REQUIRED)
+		boolean canComment) {
 }

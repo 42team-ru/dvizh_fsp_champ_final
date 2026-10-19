@@ -6,6 +6,7 @@
 | [deploy.md](deploy.md) | Как устроен автодеплой (GitHub Actions + GHCR) и почему он быстрый |
 | [development.md](development.md) | Локальная разработка, демо-режим, git-хуки |
 | [architecture.md](architecture.md) | Структура бэкенда по слоям, Orval и контракт API |
+| [postman.md](postman.md) | Postman-коллекция: проверка сценариев приёмки через API одной командой |
 | [final.md](final.md) | **Финал хакатона**: чеклист проверок и команда финальной очистки репозитория |
 | [orval.md](orval.md) | Генерация API-клиента для фронта |
 | [frontend.md](frontend.md) | Исходный README шаблона React Router |

@@ -26,6 +26,7 @@ public record EventResponse(
 		@Schema(description = "Все организаторы: автор первым, дальше соорганизаторы", requiredMode = REQUIRED)
 		List<OrganizerResponse> organizers,
 		@Schema(description = "Организация, от имени которой мероприятие; null — от частного лица") UUID organizationId,
+		@Schema(description = "Организация для ссылки на её страницу; null — от частного лица") OrganizationShortResponse organization,
 		@Schema(description = "Начало", requiredMode = REQUIRED) Instant startAt,
 		@Schema(description = "Окончание") Instant endAt,
 		@Schema(description = "Очно или онлайн", requiredMode = REQUIRED) EventFormat format,
