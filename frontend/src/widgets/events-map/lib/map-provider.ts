@@ -10,8 +10,12 @@ import "./map-pins.css";
 export type Bbox = { minLon: number; minLat: number; maxLon: number; maxLat: number };
 export type MapPoint = { id: string; coordinates: [number, number]; data: EventMapProperties };
 
+/** fetch — область для запроса (видимая с запасом), visible — что на экране сейчас. */
+export type Viewport = { fetch: Bbox; visible: Bbox };
+
 export interface MapProvider {
-  onViewportChange(cb: (bbox: Bbox) => void): () => void;
+  /** Не чаще раза в 500 мс после остановки карты; fetch меняется, только когда экран выходит за уже загруженное. */
+  onViewportChange(cb: (viewport: Viewport) => void): () => void;
   setPoints(points: MapPoint[]): void;
   onPointClick(cb: (point: MapPoint) => void): void;
   /** Показать точку: сдвинуть карту и подсветить метку (выбор в ленте времени). */
@@ -127,6 +131,18 @@ function pinIcon(dg: DgApi, point: MapPoint, active: boolean) {
 const clusterIcon = (dg: DgApi, count: number) =>
   dg.divIcon({ className: "map-pin-host", iconSize: null, html: `<span class="map-cluster">${count}</span>` });
 
+/** Запас вокруг экрана: сдвиги и приближение внутри него не ходят на бэк. */
+const PAD = 0.5;
+const pad = (b: Bbox): Bbox => {
+  const dx = (b.maxLon - b.minLon) * PAD;
+  const dy = (b.maxLat - b.minLat) * PAD;
+  return { minLon: b.minLon - dx, minLat: b.minLat - dy, maxLon: b.maxLon + dx, maxLat: b.maxLat + dy };
+};
+const contains = (outer: Bbox, inner: Bbox) =>
+  inner.minLon >= outer.minLon && inner.maxLon <= outer.maxLon && inner.minLat >= outer.minLat && inner.maxLat <= outer.maxLat;
+export const inBbox = (b: Bbox, [lon, lat]: [number, number]) =>
+  lon >= b.minLon && lon <= b.maxLon && lat >= b.minLat && lat <= b.maxLat;
+
 /** Простая кластеризация по экрану: точки ближе RADIUS пикселей собираются в кружок с числом. */
 const RADIUS = 56;
 function clusterize(map: DgMap, points: MapPoint[]) {
@@ -150,9 +166,11 @@ export async function createEventsMap(container: HTMLElement, center = DEFAULT_C
   let layers: DgLayer[] = [];
   let clickHandler: ((point: MapPoint) => void) | undefined;
 
+  // Рисуем только то, что на экране (с небольшим запасом), и один раз после остановки карты.
   const render = () => {
     layers.forEach((layer) => layer.remove());
-    layers = clusterize(map, points).map((group) => {
+    const view = pad(readBbox(map));
+    layers = clusterize(map, points.filter((p) => inBbox(view, p.coordinates))).map((group) => {
       if (group.points.length === 1) {
         const point = group.points[0];
         return dg.marker([point.coordinates[1], point.coordinates[0]], { icon: pinIcon(dg, point, point.id === activeId), riseOnHover: true })
@@ -165,17 +183,28 @@ export async function createEventsMap(container: HTMLElement, center = DEFAULT_C
         .addTo(map).on("click", () => map.setView([lat, lon], map.getZoom() + 2));
     });
   };
-  map.on("zoomend", render);
+  let renderTimer: number | undefined;
+  const scheduleRender = () => {
+    window.clearTimeout(renderTimer);
+    renderTimer = window.setTimeout(render, 120);
+  };
+  map.on("moveend", scheduleRender);
 
   return {
     onViewportChange(cb) {
       let timer: number | undefined;
+      let fetched: Bbox | null = null;
+      const emit = () => {
+        const visible = readBbox(map);
+        if (!fetched || !contains(fetched, visible)) fetched = pad(visible);
+        cb({ fetch: fetched, visible });
+      };
       const handler = () => {
         window.clearTimeout(timer);
-        timer = window.setTimeout(() => cb(readBbox(map)), 300);
+        timer = window.setTimeout(emit, 500);
       };
       map.on("moveend", handler);
-      cb(readBbox(map));
+      emit();
       return () => {
         window.clearTimeout(timer);
         map.off("moveend", handler);
@@ -194,6 +223,7 @@ export async function createEventsMap(container: HTMLElement, center = DEFAULT_C
       render();
     },
     destroy() {
+      window.clearTimeout(renderTimer);
       layers.forEach((layer) => layer.remove());
       map.remove();
       el.remove();
@@ -207,12 +237,23 @@ export interface PointPicker {
   destroy(): void;
 }
 
-/** Мини-карта места: клик ставит маркер и вызывает onPick([lon, lat]); без onPick — только показ точки. */
+/** Карта, которую нельзя двигать: только показать точку (страница события). */
+const LOCKED = {
+  dragging: false,
+  touchZoom: false,
+  scrollWheelZoom: false,
+  doubleClickZoom: false,
+  boxZoom: false,
+  keyboard: false,
+  zoomControl: false,
+};
+
+/** Мини-карта места: клик ставит маркер и вызывает onPick([lon, lat]); без onPick — залоченный показ точки. */
 export async function createPointPicker(container: HTMLElement, initial: [number, number] | null,
   onPick?: (point: [number, number]) => void): Promise<PointPicker> {
   const { dg } = await loadDg();
   const el = mount(container);
-  const map = dg.map(el, mapOptions(initial ?? DEFAULT_CENTER, initial ? 15 : 12));
+  const map = dg.map(el, { ...mapOptions(initial ?? DEFAULT_CENTER, initial ? 15 : 12), ...(onPick ? {} : LOCKED) });
   const icon = dg.divIcon({ className: "map-pin-host", iconSize: null, html: '<span class="map-dot"></span>' });
   let marker: DgLayer | undefined;
   const setPoint = (point: [number, number] | null) => {

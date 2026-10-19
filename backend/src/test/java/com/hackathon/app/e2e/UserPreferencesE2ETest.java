@@ -127,10 +127,10 @@ class UserPreferencesE2ETest {
         var saved = owner.saveMyPreferences(form());
         assertThat(owner.mySports()).isEqualTo(sports);
         owner.saveMySports(new SaveUserSportsRequest(List.of(
-                new UserSportRequest(sports.getFirst().sport().id(), null, SportLevel.ADVANCED))));
+                new UserSportRequest(sports.getFirst().sport().id(), null, SportLevel.AMATEUR))));
         assertThat(owner.myPreferences()).isEqualTo(saved);
         assertThat(other.myPreferences().level()).isEqualTo(SportLevel.AMATEUR);
-        var otherSaved = other.saveMyPreferences(new SaveUserPreferencesRequest(SportLevel.ADVANCED,
+        var otherSaved = other.saveMyPreferences(new SaveUserPreferencesRequest(SportLevel.AMATEUR,
                 List.of(FRIDAY), Daytime.DAY, 12, new HelpersPreferences(false, true, true)));
         assertThat(other.myPreferences()).isEqualTo(otherSaved);
         assertThat(owner.myPreferences()).isEqualTo(saved);

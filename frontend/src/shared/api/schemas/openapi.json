@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:8081",
+      "url": "http://localhost:8082",
       "description": "Generated server url"
     }
   ],
@@ -23,6 +23,10 @@
     {
       "name": "comments",
       "description": "Обсуждение под мероприятием как чат: сообщения, ответы на сообщения, правка и удаление своего"
+    },
+    {
+      "name": "notifications",
+      "description": "Входящие, long polling, внешние каналы и Telegram"
     },
     {
       "name": "pets",
@@ -596,6 +600,56 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/OrganizationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/settings": {
+      "get": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Свои настройки уведомлений",
+        "operationId": "notifications_settings",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationSettingsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Заменить настройки внешней доставки",
+        "operationId": "notifications_saveSettings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveNotificationSettingsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationSettingsResponse"
                 }
               }
             }
@@ -1342,6 +1396,90 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/{id}/read": {
+      "post": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Прочитать своё уведомление",
+        "operationId": "notifications_read",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationPollResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/telegram/link": {
+      "post": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Одноразовая ссылка подключения Telegram",
+        "operationId": "notifications_telegramLink",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelegramLinkResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/read-all": {
+      "post": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Прочитать уведомления до показанной ревизии",
+        "operationId": "notifications_readAll",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReadNotificationsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationPollResponse"
                 }
               }
             }
@@ -3380,6 +3518,143 @@
         }
       }
     },
+    "/api/notifications": {
+      "get": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Свои уведомления, новые сверху",
+        "operationId": "notifications_list",
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          },
+          {
+            "name": "unreadOnly",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationPageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/telegram": {
+      "get": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Состояние подключения Telegram",
+        "operationId": "notifications_telegram",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelegramConnectionResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Отключить Telegram",
+        "operationId": "notifications_disconnectTelegram",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelegramConnectionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/poll": {
+      "get": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Ждать изменения входящих",
+        "description": "После changed=true перечитайте список. Timeout возвращает 200 с changed=false. Отменяйте запрос при выходе.",
+        "operationId": "notifications_poll",
+        "parameters": [
+          {
+            "name": "revision",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 0,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "timeoutSeconds",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 25,
+              "maximum": 30,
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationPollResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/files/{id}": {
       "get": {
         "tags": [
@@ -4738,7 +5013,6 @@
             "enum": [
               "BEGINNER",
               "AMATEUR",
-              "ADVANCED",
               "PRO"
             ]
           }
@@ -4793,7 +5067,6 @@
             "enum": [
               "BEGINNER",
               "AMATEUR",
-              "ADVANCED",
               "PRO"
             ]
           }
@@ -4832,7 +5105,6 @@
             "enum": [
               "BEGINNER",
               "AMATEUR",
-              "ADVANCED",
               "PRO"
             ]
           },
@@ -4888,7 +5160,6 @@
             "enum": [
               "BEGINNER",
               "AMATEUR",
-              "ADVANCED",
               "PRO"
             ]
           },
@@ -5106,6 +5377,117 @@
             }
           }
         }
+      },
+      "SaveNotificationSettingsRequest": {
+        "type": "object",
+        "properties": {
+          "channels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "TELEGRAM",
+                "MAX",
+                "EMAIL"
+              ]
+            },
+            "uniqueItems": true
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "REMINDERS",
+                "EVENTS",
+                "REGISTRATIONS",
+                "DISCUSSIONS",
+                "ORGANIZATIONS",
+                "ORGANIZERS"
+              ]
+            },
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "categories",
+          "channels"
+        ]
+      },
+      "Channel": {
+        "type": "object",
+        "properties": {
+          "channel": {
+            "type": "string",
+            "enum": [
+              "TELEGRAM",
+              "MAX",
+              "EMAIL"
+            ]
+          },
+          "mode": {
+            "type": "string"
+          },
+          "available": {
+            "type": "boolean"
+          },
+          "connected": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "available",
+          "channel",
+          "connected",
+          "mode"
+        ]
+      },
+      "NotificationSettingsResponse": {
+        "type": "object",
+        "properties": {
+          "channels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "TELEGRAM",
+                "MAX",
+                "EMAIL"
+              ]
+            },
+            "uniqueItems": true
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "REMINDERS",
+                "EVENTS",
+                "REGISTRATIONS",
+                "DISCUSSIONS",
+                "ORGANIZATIONS",
+                "ORGANIZERS"
+              ]
+            },
+            "uniqueItems": true
+          },
+          "reminders": {
+            "type": "boolean"
+          },
+          "availableChannels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Channel"
+            }
+          }
+        },
+        "required": [
+          "availableChannels",
+          "categories",
+          "channels",
+          "reminders"
+        ]
       },
       "EventRequest": {
         "type": "object",
@@ -6320,6 +6702,56 @@
           "owned",
           "price",
           "slot"
+        ]
+      },
+      "NotificationPollResponse": {
+        "type": "object",
+        "properties": {
+          "changed": {
+            "type": "boolean"
+          },
+          "revision": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "unreadCount": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "changed",
+          "revision",
+          "unreadCount"
+        ]
+      },
+      "TelegramLinkResponse": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "expiresAt",
+          "url"
+        ]
+      },
+      "ReadNotificationsRequest": {
+        "type": "object",
+        "properties": {
+          "throughRevision": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "throughRevision"
         ]
       },
       "RegistrationRequest": {
@@ -7574,6 +8006,142 @@
           "id",
           "name",
           "period"
+        ]
+      },
+      "NotificationPageResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationResponse"
+            }
+          },
+          "nextCursor": {
+            "type": "string"
+          },
+          "unreadCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "revision": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "items",
+          "revision",
+          "unreadCount"
+        ]
+      },
+      "NotificationResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "actorId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "REMINDER",
+              "EVENT_CHANGED",
+              "EVENT_UNPUBLISHED",
+              "EVENT_DELETED",
+              "OCCURRENCE_CANCELLED",
+              "OCCURRENCE_RESCHEDULED",
+              "REGISTRATION_CREATED",
+              "REGISTRATION_CANCELLED",
+              "REGISTRATION_APPROVED",
+              "REGISTRATION_REJECTED",
+              "COMMENT_REPLY",
+              "ORGANIZATION_SUBMITTED",
+              "ORGANIZATION_APPROVED",
+              "ORGANIZATION_REJECTED",
+              "ORGANIZER_ADDED",
+              "ORGANIZER_REMOVED",
+              "QUORUM_REACHED",
+              "QUORUM_LOST",
+              "OCCURRENCE_CONFIRMED"
+            ]
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "REMINDERS",
+              "EVENTS",
+              "REGISTRATIONS",
+              "DISCUSSIONS",
+              "ORGANIZATIONS",
+              "ORGANIZERS"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "targetPath": {
+            "type": "string"
+          },
+          "eventId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "occurrenceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "organizationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "readAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "revision": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "body",
+          "category",
+          "createdAt",
+          "id",
+          "revision",
+          "targetPath",
+          "title",
+          "type"
+        ]
+      },
+      "TelegramConnectionResponse": {
+        "type": "object",
+        "properties": {
+          "available": {
+            "type": "boolean"
+          },
+          "connected": {
+            "type": "boolean"
+          },
+          "username": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "available",
+          "connected"
         ]
       },
       "EventRegistrationResponse": {
