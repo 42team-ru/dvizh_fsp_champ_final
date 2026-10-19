@@ -11,3 +11,4 @@
 | [orval.md](orval.md) | Генерация API-клиента для фронта |
 | [frontend.md](frontend.md) | Исходный README шаблона React Router |
 | [beaver-pet.md](beaver-pet.md) | **Бобр-маскот**: как рисовать вещи, предметы, активности и настроения (гайд для агентов) |
+| [beaver-backend-integration.md](beaver-backend-integration.md) | **Бобр в профиле: задача для бэкенда** — JSON-контракт, каталог id, API, валидация, хранение и тесты |
