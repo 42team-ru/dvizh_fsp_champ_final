@@ -263,7 +263,7 @@
         "operationId": "events_list",
         "parameters": [
           {
-            "name": "q",
+            "name": "searchText",
             "in": "query",
             "description": "Поиск по названию и описанию без учёта регистра",
             "required": false,
@@ -530,6 +530,69 @@
           },
           "409": {
             "description": "Запись закрыта: снято, уже началось, уже записан, отклонён, мест нет, своё мероприятие",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/{id}/organizers": {
+      "post": {
+        "tags": [
+          "events"
+        ],
+        "summary": "Добавить соорганизатора",
+        "description": "Только автор. Соорганизатор правит мероприятие и решает заявки наравне с автором. Возвращает новый состав.",
+        "operationId": "events_addOrganizer",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddOrganizerRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "403": {
+            "description": "Не автор",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Мероприятия или пользователя нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Уже организатор, администратор, записан участником или мероприятие удалено",
             "content": {
               "application/json": {
                 "schema": {
@@ -906,6 +969,68 @@
           }
         }
       }
+    },
+    "/api/events/{id}/organizers/{userId}": {
+      "delete": {
+        "tags": [
+          "events"
+        ],
+        "summary": "Убрать соорганизатора",
+        "description": "Автор убирает любого соорганизатора, соорганизатор может выйти сам. Автора убрать нельзя. Возвращает новый состав.",
+        "operationId": "events_removeOrganizer",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "403": {
+            "description": "Не автор и не сам соорганизатор",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Мероприятия нет или пользователь не организатор",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Это автор или мероприятие удалено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1124,7 +1249,14 @@
           },
           "author": {
             "$ref": "#/components/schemas/UserShortResponse",
-            "description": "Организатор-человек"
+            "description": "Автор мероприятия"
+          },
+          "organizers": {
+            "type": "array",
+            "description": "Все организаторы: автор первым, дальше соорганизаторы",
+            "items": {
+              "$ref": "#/components/schemas/OrganizerResponse"
+            }
           },
           "organizationId": {
             "type": "string",
@@ -1267,6 +1399,7 @@
           "id",
           "joinMode",
           "level",
+          "organizers",
           "participants",
           "participantsCount",
           "sport",
@@ -1275,6 +1408,24 @@
           "title",
           "updatedAt",
           "viewer"
+        ]
+      },
+      "OrganizerResponse": {
+        "type": "object",
+        "description": "Организатор мероприятия: автор или соорганизатор",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/UserShortResponse",
+            "description": "Кто"
+          },
+          "author": {
+            "type": "boolean",
+            "description": "Автор мероприятия; его нельзя убрать, только он меняет состав организаторов"
+          }
+        },
+        "required": [
+          "author",
+          "user"
         ]
       },
       "SportResponse": {
@@ -1329,6 +1480,15 @@
             "type": "string",
             "description": "Фамилия",
             "example": "Петров"
+          },
+          "avatarUrl": {
+            "type": "string",
+            "description": "Ссылка на аватар"
+          },
+          "city": {
+            "type": "string",
+            "description": "Город",
+            "example": "Красноярск"
           }
         },
         "required": [
@@ -1363,11 +1523,15 @@
           },
           "isOrganizer": {
             "type": "boolean",
-            "description": "Я организатор"
+            "description": "Я организатор: автор или соорганизатор"
           },
           "canManage": {
             "type": "boolean",
-            "description": "Могу редактировать и решать заявки"
+            "description": "Могу редактировать и решать заявки (автор или соорганизатор)"
+          },
+          "canManageOrganizers": {
+            "type": "boolean",
+            "description": "Могу добавлять и убирать соорганизаторов (только автор)"
           },
           "canCancel": {
             "type": "boolean",
@@ -1381,6 +1545,7 @@
         "required": [
           "canCancel",
           "canManage",
+          "canManageOrganizers",
           "canRegister",
           "canSeePrivateDetails",
           "isOrganizer"
@@ -1456,6 +1621,22 @@
           "id",
           "status",
           "userId"
+        ]
+      },
+      "AddOrganizerRequest": {
+        "type": "object",
+        "description": "Добавить соорганизатора",
+        "properties": {
+          "login": {
+            "type": "string",
+            "description": "Логин или email пользователя",
+            "example": "maria",
+            "maxLength": 255,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "login"
         ]
       },
       "RegisterRequest": {
@@ -1536,6 +1717,15 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "bio": {
+            "type": "string"
+          },
+          "avatarUrl": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
           }
         }
       },
@@ -1815,6 +2005,15 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "bio": {
+            "type": "string"
+          },
+          "avatarUrl": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
           }
         }
       }

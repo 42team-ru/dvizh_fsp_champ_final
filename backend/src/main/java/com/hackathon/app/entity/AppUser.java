@@ -36,4 +36,10 @@ public class AppUser {
 	@Enumerated(EnumType.STRING)
 	private AuthProvider authProvider;
 	private Instant createdAt;
+	/** О себе. */
+	private String bio;
+	/** Ссылка на аватар. */
+	private String avatarUrl;
+	/** Город. */
+	private String city;
 }

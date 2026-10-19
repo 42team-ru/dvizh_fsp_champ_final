@@ -25,10 +25,10 @@ docker-compose.dev.yml  только БД для разработки
 | `config` | Security, OpenAPI, `@ConfigurationProperties` |
 | `exception` | Свои исключения и единый `ApiExceptionHandler` (RFC 9457) |
 
-Зависимости идут только вниз: `rest → service → repository → entity`. Миграции БД: `backend/src/main/resources/db/migration` (Flyway, только вперёд; применённые миграции не править, добавлять новые `V4__...`).
+Зависимости идут только вниз: `rest → service → repository → entity`. Миграции БД: `backend/src/main/resources/db/migration` (Flyway, только вперёд; применённые миграции не править, добавлять новые `V5__...`).
 Пример готового флоу: регистрация и вход (`AuthController`, `AuthService`).
 
-## Мероприятия, записи, виды спорта (`EventController`, `RegistrationController`, `SportController`; миграция `V3__events.sql`)
+## Мероприятия, записи, виды спорта (`EventController`, `RegistrationController`, `SportController`; миграции `V3__events.sql`, `V4__organizers_and_profile.sql`)
 - Мероприятие (`events`) — центр модели. Вид спорта — справочник `sports` в БД; в форме можно выбрать из списка (`sportId`) или ввести свой (`sportName`):
   сервер нормализует имя (пробелы, регистр, ё → е), ищет по `normalized_name` и при отсутствии создаёт вид с `custom = true` (`SportService.resolve`).
 - Все правила «можно ли» — в `service.EventAccessPolicy`. Команды бросают исключение с её текстом, карточка отдаёт те же решения в блоке `viewer`
@@ -38,7 +38,9 @@ docker-compose.dev.yml  только БД для разработки
 |---|---|---|
 | `GET /api/sports?query=` | `sports_search` | справочник, поиск без учёта регистра и ё/е |
 | `GET /api/events?q&sportId&from&to&level&joinMode&format` | `events_list` | лента: только PUBLISHED, по умолчанию с текущего момента; уровень ANY подходит под любой фильтр |
-| `GET /api/events/mine` | `events_mine` | мои как организатора, все статусы |
+| `GET /api/events/mine` | `events_mine` | где я автор или соорганизатор, все статусы |
+| `POST /api/events/{id}/organizers` `{"login"}` | `events_addOrganizer` | только автор; по логину или email; нельзя админа, уже организатора, записанного участника |
+| `DELETE /api/events/{id}/organizers/{userId}` | `events_removeOrganizer` | автор убирает любого, соорганизатор может выйти сам; автора убрать нельзя |
 | `GET /api/events/{id}` | `events_get` | карточка в любом статусе (снятое — с `moderationReason`), участники, `viewer`; `onlineUrl`/`privateDetails` — только организатору и подтверждённым |
 | `POST /api/events` | `events_create` | сразу PUBLISHED; админ — 403; очному нужен `address` |
 | `PUT /api/events/{id}` | `events_update` | только организатор (403); удалённое — 409; `capacity` не меньше подтверждённых — 409 |
@@ -49,6 +51,8 @@ docker-compose.dev.yml  только БД для разработки
 | `POST /api/registrations/{id}/reject` `{"reason"?}` | `registrations_reject` | организатор; причину участник видит в «моих записях» |
 | `GET /api/registrations/mine` | `registrations_mine` | мои записи вместе со статусом мероприятия |
 
+- Организаторы: автор + соорганизаторы (`event_organizers`). Соорганизатор правит мероприятие, видит и решает заявки, видит приватные детали — как автор;
+  состав меняет только автор (`viewer.canManageOrganizers`). В карточке список `organizers`, автор первым.
 - Отказы записи (409, текст для человека): снято/удалено, организатор на своё, уже началось, уже записан, заявка ждёт, отклонена, «Мест нет».
   Админ заявки не решает и события не создаёт (403). Сам отклонённый повторно подать не может — исправляет организатор через approve.
 - Запись и одобрение — под блокировкой строки мероприятия (`EventRepository.findByIdForUpdate`), лимит мест не превысить параллельно.

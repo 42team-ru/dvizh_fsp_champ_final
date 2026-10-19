@@ -18,5 +18,10 @@ public interface EventRepository extends JpaRepository<Event, UUID>, JpaSpecific
 	@Query("select e from Event e where e.id = :id")
 	Optional<Event> findByIdForUpdate(UUID id);
 
-	List<Event> findByAuthorIdOrderByStartAtDesc(UUID authorId);
+	/** Где я автор или соорганизатор. */
+	@Query("""
+			select e from Event e
+			where e.authorId = :userId or e.id in (select o.eventId from EventOrganizer o where o.userId = :userId)
+			order by e.startAt desc""")
+	List<Event> findOrganizedBy(UUID userId);
 }

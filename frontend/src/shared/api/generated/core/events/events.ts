@@ -25,6 +25,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AddOrganizerRequest,
   EventRequest,
   EventResponse,
   EventSummaryResponse,
@@ -516,6 +517,117 @@ export const useEventsCreate = <TError = ErrorType<ProblemDetail>,
       > => {
       return useMutation(getEventsCreateMutationOptions(options), queryClient);
     }
+    export type eventsAddOrganizerResponse403 = {
+  data: ProblemDetail
+  status: 403
+}
+
+export type eventsAddOrganizerResponse404 = {
+  data: ProblemDetail
+  status: 404
+}
+
+export type eventsAddOrganizerResponse409 = {
+  data: ProblemDetail
+  status: 409
+}
+
+;
+export type eventsAddOrganizerResponseError = (eventsAddOrganizerResponse403 | eventsAddOrganizerResponse404 | eventsAddOrganizerResponse409) & {
+  headers: Headers;
+};
+
+export type eventsAddOrganizerResponse = (eventsAddOrganizerResponseError)
+
+export const getEventsAddOrganizerUrl = (id: string,) => {
+
+
+
+
+  return `/api/events/${id}/organizers`
+}
+
+/**
+ * Только автор. Соорганизатор правит мероприятие и решает заявки наравне с автором. Возвращает новый состав.
+ * @summary Добавить соорганизатора
+ */
+export const eventsAddOrganizer = async (id: string,
+    addOrganizerRequest: AddOrganizerRequest, options?: Parameters<typeof authMutator>[1]): Promise<eventsAddOrganizerResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return authMutator<eventsAddOrganizerResponse>(getEventsAddOrganizerUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(addOrganizerRequest)
+  }
+);}
+
+
+
+
+
+export const getEventsAddOrganizerMutationKey = () => ['eventsAddOrganizer'] as const;
+
+export const getEventsAddOrganizerMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAddOrganizer>>, TError,EventsAddOrganizerMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof eventsAddOrganizer>>, TError,EventsAddOrganizerMutationVariables, TContext> => {
+
+const mutationKey = getEventsAddOrganizerMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof eventsAddOrganizer>>, EventsAddOrganizerMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  eventsAddOrganizer(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type EventsAddOrganizerMutationResult = NonNullable<Awaited<ReturnType<typeof eventsAddOrganizer>>>
+    export type EventsAddOrganizerMutationBody = AddOrganizerRequest
+    export type EventsAddOrganizerMutationError = ErrorType<ProblemDetail>
+    export type EventsAddOrganizerMutationVariables = {id: string;data: AddOrganizerRequest}
+
+    /**
+ * @summary Добавить соорганизатора
+ */
+export const useEventsAddOrganizer = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAddOrganizer>>, TError,EventsAddOrganizerMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof eventsAddOrganizer>>,
+        TError,
+        EventsAddOrganizerMutationVariables,
+        TContext
+      > => {
+      return useMutation(getEventsAddOrganizerMutationOptions(options), queryClient);
+    }
     export type eventsMineResponse200 = {
   data: EventSummaryResponse[]
   status: 200
@@ -629,3 +741,101 @@ export function useEventsMine<TData = Awaited<ReturnType<typeof eventsMine>>, TE
 
 
 
+export type eventsRemoveOrganizerResponse403 = {
+  data: ProblemDetail
+  status: 403
+}
+
+export type eventsRemoveOrganizerResponse404 = {
+  data: ProblemDetail
+  status: 404
+}
+
+export type eventsRemoveOrganizerResponse409 = {
+  data: ProblemDetail
+  status: 409
+}
+
+;
+export type eventsRemoveOrganizerResponseError = (eventsRemoveOrganizerResponse403 | eventsRemoveOrganizerResponse404 | eventsRemoveOrganizerResponse409) & {
+  headers: Headers;
+};
+
+export type eventsRemoveOrganizerResponse = (eventsRemoveOrganizerResponseError)
+
+export const getEventsRemoveOrganizerUrl = (id: string,
+    userId: string,) => {
+
+
+
+
+  return `/api/events/${id}/organizers/${userId}`
+}
+
+/**
+ * Автор убирает любого соорганизатора, соорганизатор может выйти сам. Автора убрать нельзя. Возвращает новый состав.
+ * @summary Убрать соорганизатора
+ */
+export const eventsRemoveOrganizer = async (id: string,
+    userId: string, options?: Parameters<typeof authMutator>[1]): Promise<eventsRemoveOrganizerResponse> => {
+
+  return authMutator<eventsRemoveOrganizerResponse>(getEventsRemoveOrganizerUrl(id,userId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getEventsRemoveOrganizerMutationKey = () => ['eventsRemoveOrganizer'] as const;
+
+export const getEventsRemoveOrganizerMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsRemoveOrganizer>>, TError,EventsRemoveOrganizerMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof eventsRemoveOrganizer>>, TError,EventsRemoveOrganizerMutationVariables, TContext> => {
+
+const mutationKey = getEventsRemoveOrganizerMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof eventsRemoveOrganizer>>, EventsRemoveOrganizerMutationVariables> = (props) => {
+          const {id,userId} = props ?? {};
+
+          return  eventsRemoveOrganizer(id,userId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type EventsRemoveOrganizerMutationResult = NonNullable<Awaited<ReturnType<typeof eventsRemoveOrganizer>>>
+
+    export type EventsRemoveOrganizerMutationError = ErrorType<ProblemDetail>
+    export type EventsRemoveOrganizerMutationVariables = {id: string;userId: string}
+
+    /**
+ * @summary Убрать соорганизатора
+ */
+export const useEventsRemoveOrganizer = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsRemoveOrganizer>>, TError,EventsRemoveOrganizerMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof eventsRemoveOrganizer>>,
+        TError,
+        EventsRemoveOrganizerMutationVariables,
+        TContext
+      > => {
+      return useMutation(getEventsRemoveOrganizerMutationOptions(options), queryClient);
+    }

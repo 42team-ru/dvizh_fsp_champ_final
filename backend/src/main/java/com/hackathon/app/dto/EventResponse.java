@@ -18,7 +18,9 @@ public record EventResponse(
 		@Schema(description = "Название", requiredMode = REQUIRED) String title,
 		@Schema(description = "Описание") String description,
 		@Schema(description = "Вид спорта", requiredMode = REQUIRED) SportResponse sport,
-		@Schema(description = "Организатор-человек", requiredMode = REQUIRED) UserShortResponse author,
+		@Schema(description = "Автор мероприятия", requiredMode = REQUIRED) UserShortResponse author,
+		@Schema(description = "Все организаторы: автор первым, дальше соорганизаторы", requiredMode = REQUIRED)
+		List<OrganizerResponse> organizers,
 		@Schema(description = "Организация, от имени которой мероприятие; null — от частного лица") UUID organizationId,
 		@Schema(description = "Начало", requiredMode = REQUIRED) Instant startAt,
 		@Schema(description = "Окончание") Instant endAt,

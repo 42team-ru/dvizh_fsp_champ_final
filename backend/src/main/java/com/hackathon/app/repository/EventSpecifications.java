@@ -15,35 +15,35 @@ import org.springframework.data.jpa.domain.Specification;
 public class EventSpecifications {
 
 	/** Только опубликованные; null-фильтры не применяются. Событие уровня ANY подходит под любой level. */
-	public Specification<Event> feed(String q, UUID sportId, Instant from, Instant to, Event.Level level,
+	public Specification<Event> feed(String searchText, UUID sportId, Instant from, Instant to, Event.Level level,
 			Event.JoinMode joinMode, Event.Format format) {
-		return (root, query, cb) -> {
-			var where = new ArrayList<Predicate>();
-			where.add(cb.equal(root.get("status"), Event.Status.PUBLISHED));
-			if (q != null) {
-				var like = "%" + q.toLowerCase(Locale.ROOT) + "%";
-				where.add(cb.or(cb.like(cb.lower(root.get("title")), like),
-						cb.like(cb.lower(root.get("description")), like)));
+		return (root, query, criteria) -> {
+			var conditions = new ArrayList<Predicate>();
+			conditions.add(criteria.equal(root.get("status"), Event.Status.PUBLISHED));
+			if (searchText != null) {
+				var pattern = "%" + searchText.toLowerCase(Locale.ROOT) + "%";
+				conditions.add(criteria.or(criteria.like(criteria.lower(root.get("title")), pattern),
+						criteria.like(criteria.lower(root.get("description")), pattern)));
 			}
 			if (sportId != null) {
-				where.add(cb.equal(root.get("sportId"), sportId));
+				conditions.add(criteria.equal(root.get("sportId"), sportId));
 			}
 			if (from != null) {
-				where.add(cb.greaterThanOrEqualTo(root.get("startAt"), from));
+				conditions.add(criteria.greaterThanOrEqualTo(root.get("startAt"), from));
 			}
 			if (to != null) {
-				where.add(cb.lessThanOrEqualTo(root.get("startAt"), to));
+				conditions.add(criteria.lessThanOrEqualTo(root.get("startAt"), to));
 			}
 			if (level != null) {
-				where.add(root.get("level").in(level, Event.Level.ANY));
+				conditions.add(root.get("level").in(level, Event.Level.ANY));
 			}
 			if (joinMode != null) {
-				where.add(cb.equal(root.get("joinMode"), joinMode));
+				conditions.add(criteria.equal(root.get("joinMode"), joinMode));
 			}
 			if (format != null) {
-				where.add(cb.equal(root.get("format"), format));
+				conditions.add(criteria.equal(root.get("format"), format));
 			}
-			return cb.and(where.toArray(Predicate[]::new));
+			return criteria.and(conditions.toArray(Predicate[]::new));
 		};
 	}
 }

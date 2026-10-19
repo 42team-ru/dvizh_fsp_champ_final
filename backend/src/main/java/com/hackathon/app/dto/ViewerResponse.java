@@ -19,10 +19,12 @@ public record ViewerResponse(
 		String registerBlockedReason,
 		// имя в JSON фиксируем явно: у boolean с префиксом is Jackson и springdoc могут вывести «organizer»
 		@JsonProperty("isOrganizer")
-		@Schema(description = "Я организатор", requiredMode = REQUIRED)
+		@Schema(description = "Я организатор: автор или соорганизатор", requiredMode = REQUIRED)
 		boolean isOrganizer,
-		@Schema(description = "Могу редактировать и решать заявки", requiredMode = REQUIRED)
+		@Schema(description = "Могу редактировать и решать заявки (автор или соорганизатор)", requiredMode = REQUIRED)
 		boolean canManage,
+		@Schema(description = "Могу добавлять и убирать соорганизаторов (только автор)", requiredMode = REQUIRED)
+		boolean canManageOrganizers,
 		@Schema(description = "Могу отменить свою запись", requiredMode = REQUIRED)
 		boolean canCancel,
 		@Schema(description = "Вижу onlineUrl и privateDetails", requiredMode = REQUIRED)

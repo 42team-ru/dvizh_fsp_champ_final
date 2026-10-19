@@ -62,6 +62,7 @@ cd backend && ./gradlew postgresTest  # смоук миграций на нас�
 | `Organization` | `id`, `accountId` (unique, аккаунт роли ORG), `name`, `description`, `city?`, `website?`, `contacts`, `status` (`PENDING \| APPROVED \| REJECTED`), `rejectReason?`, `submittedAt`, `reviewedAt?`, `reviewedById?` |
 | `OrganizationSport` | `organizationId`, `sportId` |
 | `Event` | `id`, `title`, `description`, `sportId`, `authorId`, `organizationId?` (если создано от организации), `startAt`, `endAt?`, `format` (`OFFLINE \| ONLINE`), `address?`, `locationNote?`, `onlineUrl?`, `lat?`, `lon?`, `level` (`ANY \| BEGINNER \| AMATEUR \| ADVANCED \| PRO`), `kind?` (тренировка, игра, встреча, любительский турнир), `requirements?`, `equipment?`, `capacity?`, `joinMode` (`FREE \| REQUEST`), `privateDetails?`, `status` (`PUBLISHED \| UNPUBLISHED \| DELETED`), `moderationReason?`, `moderatedAt?`, `moderatedById?`, `createdAt`, `updatedAt` |
+| `EventOrganizer` (`event_organizers`) | `id`, `eventId`, `userId`, `addedById`, unique (`eventId`, `userId`) — соорганизаторы: правят событие и решают заявки наравне с автором, состав меняет только автор |
 | `Registration` | `id`, `eventId`, `userId`, unique (`eventId`, `userId`), `status` (`CONFIRMED \| PENDING \| REJECTED \| CANCELLED`), `message?` (сопроводительное к заявке), `decisionReason?`, `decidedAt?`, `decidedById?`, `createdAt` |
 | `Comment` | `id`, `eventId`, `authorId`, `text`, `createdAt`, `hidden` (модерация сообщений — доп. фича, пока не делаем) |
 
@@ -80,7 +81,7 @@ cd backend && ./gradlew postgresTest  # смоук миграций на нас�
 4. **Запись на событие:**
     - событие должно быть PUBLISHED и не начавшимся, иначе 409;
     - FREE → запись сразу CONFIRMED; REQUEST → PENDING;
-    - решение по заявке (CONFIRMED или REJECTED) принимает только автор события; для события организации — аккаунт этой организации. Админ заявки участников не рассматривает;
+    - решение по заявке (CONFIRMED или REJECTED) принимает организатор: автор события или его соорганизатор (`EventOrganizer`); для события организации — ещё и аккаунт этой организации. Админ заявки участников не рассматривает и соорганизатором быть не может;
     - организатор не может записаться на своё событие (409);
     - повторная запись не создаёт дубль: строка `Registration` переиспользуется (после CANCELLED можно записаться снова);
     - если задан `capacity` и мест нет — 409 «Мест нет»;
@@ -106,12 +107,12 @@ cd backend && ./gradlew postgresTest  # смоук миграций на нас�
 | Тег | Эндпоинты (operationId) |
 |---|---|
 | `sports` | `GET /api/sports?query=` (`sports_search`) |
-| `events` | `GET /api/events` с фильтрами `q, sportId, from, to, level, joinMode, format` (`events_list`) · `GET /api/events/{id}` с блоком `viewer` (`events_get`) · `POST /api/events` (`events_create`) · `PUT /api/events/{id}` (`events_update`) · `GET /api/events/mine` (`events_mine`) |
+| `events` | `GET /api/events` с фильтрами `searchText, sportId, from, to, level, joinMode, format` (`events_list`) · `GET /api/events/{id}` с блоком `viewer` (`events_get`) · `POST /api/events` (`events_create`) · `PUT /api/events/{id}` (`events_update`) · `GET /api/events/mine` — где я автор или соорганизатор (`events_mine`) · `POST /api/events/{id}/organizers` (`events_addOrganizer`) · `DELETE /api/events/{id}/organizers/{userId}` (`events_removeOrganizer`) |
 | `registrations` | `POST /api/events/{id}/registrations` (`registrations_create`) · `DELETE /api/events/{id}/registrations/me` (`registrations_cancel`) · `GET /api/events/{id}/registrations` — участники и заявки для организатора (`registrations_listForEvent`) · `POST /api/registrations/{id}/approve` (`registrations_approve`) · `POST /api/registrations/{id}/reject` (`registrations_reject`) · `GET /api/registrations/mine` (`registrations_mine`) |
 | `comments` | `GET /api/events/{id}/comments` (`comments_list`) · `POST /api/events/{id}/comments` (`comments_create`) |
 | `organizations` | `GET /api/organizations/me` (`organizations_me`) · `PUT /api/organizations/me` — анкета (`organizations_saveMine`) · `POST /api/organizations/me/submit` (`organizations_submit`) · `GET /api/organizations/{id}` — публичная, только APPROVED (`organizations_get`) |
 | `users` | `GET /api/users/{id}` — публичный профиль организатора (`users_get`) |
-| `admin` | `GET /api/admin/stats` (`admin_stats`) · `GET /api/admin/organizations?status=&q=` (`admin_listOrganizations`) · `POST /api/admin/organizations/{id}/approve` · `…/reject` с причиной (`admin_approveOrganization`, `admin_rejectOrganization`) · `GET /api/admin/events?q=&status=` (`admin_listEvents`) · `POST /api/admin/events/{id}/unpublish` · `DELETE /api/admin/events/{id}` с причиной (`admin_unpublishEvent`, `admin_deleteEvent`) |
+| `admin` | `GET /api/admin/stats` (`admin_stats`) · `GET /api/admin/organizations?status=&searchText=` (`admin_listOrganizations`) · `POST /api/admin/organizations/{id}/approve` · `…/reject` с причиной (`admin_approveOrganization`, `admin_rejectOrganization`) · `GET /api/admin/events?searchText=&status=` (`admin_listEvents`) · `POST /api/admin/events/{id}/unpublish` · `DELETE /api/admin/events/{id}` с причиной (`admin_unpublishEvent`, `admin_deleteEvent`) |
 
 - `/api/admin/**` закрывается в `SecurityConfig` через `hasRole("ADMIN")`. Остальные проверки прав — в сервисах.
 - Ошибки идут через `ApiExceptionHandler` (ProblemDetail): `NoSuchElementException` → 404, `UnauthorizedException` → 401, `ConflictException` → 409. **Добавить `ForbiddenException` → 403.**

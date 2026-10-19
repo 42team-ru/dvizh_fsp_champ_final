@@ -6,6 +6,7 @@ import java.util.UUID;
 import com.hackathon.app.dto.EventRequest;
 import com.hackathon.app.dto.EventResponse;
 import com.hackathon.app.dto.EventSummaryResponse;
+import com.hackathon.app.dto.OrganizerResponse;
 import com.hackathon.app.dto.ViewerResponse;
 import com.hackathon.app.entity.AppUser;
 import com.hackathon.app.entity.Event;
@@ -40,8 +41,9 @@ public interface EventMapper {
 	@Mapping(target = "privateDetails", source = "privateDetails")
 	@Mapping(target = "createdAt", source = "event.createdAt")
 	@Mapping(target = "updatedAt", source = "event.updatedAt")
-	EventResponse toResponse(Event event, Sport sport, AppUser author, List<AppUser> participants,
-			long participantsCount, ViewerResponse viewer, String onlineUrl, String privateDetails);
+	EventResponse toResponse(Event event, Sport sport, AppUser author, List<OrganizerResponse> organizers,
+			List<AppUser> participants, long participantsCount, ViewerResponse viewer, String onlineUrl,
+			String privateDetails);
 
 	@Mapping(target = "id", source = "event.id")
 	@Mapping(target = "status", source = "event.status")
@@ -52,5 +54,5 @@ public interface EventMapper {
 	@BeanMapping(nullValueMappingStrategy = NullValueMappingStrategy.RETURN_DEFAULT)
 	@Mapping(target = "canRegister", expression = "java(registerBlockedReason == null)")
 	ViewerResponse toViewer(Registration.Status registrationStatus, String registerBlockedReason, boolean isOrganizer,
-			boolean canManage, boolean canCancel, boolean canSeePrivateDetails);
+			boolean canManage, boolean canManageOrganizers, boolean canCancel, boolean canSeePrivateDetails);
 }

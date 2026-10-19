@@ -1,15 +1,5 @@
 package com.hackathon.app.service;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.time.Clock;
-import java.time.Instant;
-import java.util.Base64;
-import java.util.HexFormat;
-import java.util.UUID;
-
 import com.hackathon.app.config.AuthProperties;
 import com.hackathon.app.dto.LoginRequest;
 import com.hackathon.app.dto.RegisterRequest;
@@ -18,6 +8,7 @@ import com.hackathon.app.entity.RefreshToken;
 import com.hackathon.app.exception.ConflictException;
 import com.hackathon.app.exception.UnauthorizedException;
 import com.hackathon.app.repository.AppUserRepository;
+import com.hackathon.app.repository.DbTimeRepository;
 import com.hackathon.app.repository.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -29,6 +20,15 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.time.Instant;
+import java.util.Base64;
+import java.util.HexFormat;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -42,7 +42,7 @@ public class AuthService {
 	private final PasswordEncoder passwordEncoder;
 	private final JwtEncoder jwtEncoder;
 	private final AuthProperties props;
-	private final Clock clock;
+	private final DbTimeRepository dbTimeRepository;
 	private final SecureRandom random = new SecureRandom();
 
 	@Transactional
@@ -65,7 +65,7 @@ public class AuthService {
 		user.setActive(true);
 		user.setSystemRole(AppUser.SystemRole.USER);
 		user.setAuthProvider(AppUser.AuthProvider.LOCAL);
-		user.setCreatedAt(clock.instant());
+		user.setCreatedAt(dbTimeRepository.now());
 		try {
 			return users.saveAndFlush(user);
 		}
@@ -94,7 +94,7 @@ public class AuthService {
 			throw new UnauthorizedException(BAD_SESSION);
 		}
 		var token = refreshTokens.findByTokenHash(sha256(rawToken)).orElseThrow(() -> new UnauthorizedException(BAD_SESSION));
-		var now = clock.instant();
+		var now = dbTimeRepository.now();
 		if (token.getRevokedAt() != null) {
 			refreshTokens.revokeAllForUser(token.getUserId(), now);
 			throw new UnauthorizedException(BAD_SESSION);
@@ -114,7 +114,7 @@ public class AuthService {
 		}
 		refreshTokens.findByTokenHash(sha256(rawToken)).ifPresent(t -> {
 			if (t.getRevokedAt() == null) {
-				t.setRevokedAt(clock.instant());
+				t.setRevokedAt(dbTimeRepository.now());
 			}
 		});
 	}
@@ -135,7 +135,7 @@ public class AuthService {
 	}
 
 	private AuthSession newSession(AppUser user) {
-		var now = clock.instant();
+		var now = dbTimeRepository.now();
 		var raw = randomToken();
 		var rt = new RefreshToken();
 		rt.setId(UUID.randomUUID());

@@ -12,5 +12,7 @@ public record UserShortResponse(
 		@Schema(requiredMode = REQUIRED) UUID id,
 		@Schema(description = "Логин", example = "ivan", requiredMode = REQUIRED) String username,
 		@Schema(description = "Имя", example = "Иван", requiredMode = REQUIRED) String firstName,
-		@Schema(description = "Фамилия", example = "Петров", requiredMode = REQUIRED) String lastName) {
+		@Schema(description = "Фамилия", example = "Петров", requiredMode = REQUIRED) String lastName,
+		@Schema(description = "Ссылка на аватар") String avatarUrl,
+		@Schema(description = "Город", example = "Красноярск") String city) {
 }

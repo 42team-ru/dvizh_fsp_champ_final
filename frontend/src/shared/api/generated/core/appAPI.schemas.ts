@@ -254,6 +254,20 @@ export interface UserShortResponse {
   firstName: string;
   /** Фамилия */
   lastName: string;
+  /** Ссылка на аватар */
+  avatarUrl?: string;
+  /** Город */
+  city?: string;
+}
+
+/**
+ * Организатор мероприятия: автор или соорганизатор
+ */
+export interface OrganizerResponse {
+  /** Кто */
+  user: UserShortResponse;
+  /** Автор мероприятия; его нельзя убрать, только он меняет состав организаторов */
+  author: boolean;
 }
 
 /**
@@ -279,10 +293,12 @@ export interface ViewerResponse {
   canRegister: boolean;
   /** Почему нельзя записаться, текст для человека; null — можно */
   registerBlockedReason?: string;
-  /** Я организатор */
+  /** Я организатор: автор или соорганизатор */
   isOrganizer: boolean;
-  /** Могу редактировать и решать заявки */
+  /** Могу редактировать и решать заявки (автор или соорганизатор) */
   canManage: boolean;
+  /** Могу добавлять и убирать соорганизаторов (только автор) */
+  canManageOrganizers: boolean;
   /** Могу отменить свою запись */
   canCancel: boolean;
   /** Вижу onlineUrl и privateDetails */
@@ -300,8 +316,10 @@ export interface EventResponse {
   description?: string;
   /** Вид спорта */
   sport: SportResponse;
-  /** Организатор-человек */
+  /** Автор мероприятия */
   author: UserShortResponse;
+  /** Все организаторы: автор первым, дальше соорганизаторы */
+  organizers: OrganizerResponse[];
   /** Организация, от имени которой мероприятие; null — от частного лица */
   organizationId?: string;
   /** Начало */
@@ -397,6 +415,18 @@ export interface RegistrationResponse {
   createdAt: string;
 }
 
+/**
+ * Добавить соорганизатора
+ */
+export interface AddOrganizerRequest {
+  /**
+     * Логин или email пользователя
+     * @minLength 0
+     * @maxLength 255
+     */
+  login: string;
+}
+
 export interface RegisterRequest {
   /**
      * @minLength 3
@@ -452,6 +482,9 @@ export interface UserResponse {
   systemRole?: UserResponseSystemRole;
   authProvider?: UserResponseAuthProvider;
   createdAt?: string;
+  bio?: string;
+  avatarUrl?: string;
+  city?: string;
 }
 
 export interface LoginRequest {
@@ -659,13 +692,16 @@ export interface MeResponse {
   systemRole?: MeResponseSystemRole;
   authProvider?: MeResponseAuthProvider;
   createdAt?: string;
+  bio?: string;
+  avatarUrl?: string;
+  city?: string;
 }
 
 export type EventsListParams = {
 /**
  * Поиск по названию и описанию без учёта регистра
  */
-q?: string;
+searchText?: string;
 /**
  * Вид спорта
  */

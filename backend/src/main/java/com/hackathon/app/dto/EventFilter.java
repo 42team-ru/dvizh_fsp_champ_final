@@ -11,7 +11,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 @Schema(description = "Фильтры ленты, все необязательные")
 public record EventFilter(
 		@Schema(description = "Поиск по названию и описанию без учёта регистра", example = "футбол")
-		String q,
+		String searchText,
 		@Schema(description = "Вид спорта")
 		UUID sportId,
 		@Schema(description = "Начало не раньше; по умолчанию — сейчас (прошедшие не показываем)", example = "2027-05-01T00:00:00Z")
