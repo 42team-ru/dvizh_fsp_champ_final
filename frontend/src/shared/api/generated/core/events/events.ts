@@ -26,10 +26,13 @@ import type {
 
 import type {
   AddOrganizerRequest,
+  EventMapResponse,
   EventRequest,
   EventResponse,
   EventSummaryResponse,
+  EventsAddPhotoBody,
   EventsListParams,
+  EventsMapParams,
   ProblemDetail
 } from '../appAPI.schemas';
 
@@ -517,6 +520,114 @@ export const useEventsCreate = <TError = ErrorType<ProblemDetail>,
       > => {
       return useMutation(getEventsCreateMutationOptions(options), queryClient);
     }
+    export type eventsAddPhotoResponse201 = {
+  data: EventResponse
+  status: 201
+}
+
+export type eventsAddPhotoResponse400 = {
+  data: ProblemDetail
+  status: 400
+}
+
+export type eventsAddPhotoResponse403 = {
+  data: ProblemDetail
+  status: 403
+}
+
+export type eventsAddPhotoResponse409 = {
+  data: ProblemDetail
+  status: 409
+}
+
+export type eventsAddPhotoResponseSuccess = (eventsAddPhotoResponse201) & {
+  headers: Headers;
+};
+export type eventsAddPhotoResponseError = (eventsAddPhotoResponse400 | eventsAddPhotoResponse403 | eventsAddPhotoResponse409) & {
+  headers: Headers;
+};
+
+export type eventsAddPhotoResponse = (eventsAddPhotoResponseSuccess | eventsAddPhotoResponseError)
+
+export const getEventsAddPhotoUrl = (id: string,) => {
+
+
+
+
+  return `/api/events/${id}/photos`
+}
+
+/**
+ * В конец галереи; первое фото — обложка в ленте. Только организатор, не больше 6 фото.
+ * @summary Добавить фото в галерею (JPG, PNG, WebP до 5 МБ)
+ */
+export const eventsAddPhoto = async (id: string,
+    eventsAddPhotoBody?: EventsAddPhotoBody, options?: Parameters<typeof authMutator>[1]): Promise<eventsAddPhotoResponse> => {
+    const formData = new FormData();
+if(eventsAddPhotoBody?.file !== undefined) {
+ formData.append(`file`, eventsAddPhotoBody.file);
+ }
+
+  return authMutator<eventsAddPhotoResponse>(getEventsAddPhotoUrl(id),
+  {
+    ...options,
+    method: 'POST'
+    ,
+    body: formData
+  }
+);}
+
+
+
+
+
+export const getEventsAddPhotoMutationKey = () => ['eventsAddPhoto'] as const;
+
+export const getEventsAddPhotoMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAddPhoto>>, TError,EventsAddPhotoMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof eventsAddPhoto>>, TError,EventsAddPhotoMutationVariables, TContext> => {
+
+const mutationKey = getEventsAddPhotoMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof eventsAddPhoto>>, EventsAddPhotoMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  eventsAddPhoto(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type EventsAddPhotoMutationResult = NonNullable<Awaited<ReturnType<typeof eventsAddPhoto>>>
+    export type EventsAddPhotoMutationBody = EventsAddPhotoBody | undefined
+    export type EventsAddPhotoMutationError = ErrorType<ProblemDetail>
+    export type EventsAddPhotoMutationVariables = {id: string;data?: EventsAddPhotoBody}
+
+    /**
+ * @summary Добавить фото в галерею (JPG, PNG, WebP до 5 МБ)
+ */
+export const useEventsAddPhoto = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsAddPhoto>>, TError,EventsAddPhotoMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof eventsAddPhoto>>,
+        TError,
+        EventsAddPhotoMutationVariables,
+        TContext
+      > => {
+      return useMutation(getEventsAddPhotoMutationOptions(options), queryClient);
+    }
     export type eventsAddOrganizerResponse403 = {
   data: ProblemDetail
   status: 403
@@ -741,7 +852,214 @@ export function useEventsMine<TData = Awaited<ReturnType<typeof eventsMine>>, TE
 
 
 
-export type eventsRemoveOrganizerResponse403 = {
+export type eventsMapResponse200 = {
+  data: EventMapResponse
+  status: 200
+}
+
+export type eventsMapResponseSuccess = (eventsMapResponse200) & {
+  headers: Headers;
+};
+;
+
+export type eventsMapResponse = (eventsMapResponseSuccess)
+
+export const getEventsMapUrl = (params: EventsMapParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/events/map?${stringifiedParams}` : `/api/events/map`
+}
+
+/**
+ * GeoJSON FeatureCollection: опубликованные очные мероприятия с точкой внутри области и началом в [from, to]. Координаты [долгота, широта]. from по умолчанию и не раньше чем сейчас, to — from + 30 дней. Ближайшие первыми, не больше limit; если в области больше — truncated. minLon > maxLon — область через 180-й меридиан. Неверная область или период — 400.
+ * @summary Мероприятия на карте в видимой области
+ */
+export const eventsMap = async (params: EventsMapParams, options?: Parameters<typeof authMutator>[1]): Promise<eventsMapResponse> => {
+
+  return authMutator<eventsMapResponse>(getEventsMapUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getEventsMapQueryKey = (params?: EventsMapParams,) => {
+    return [
+    `/api/events/map`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getEventsMapQueryOptions = <TData = Awaited<ReturnType<typeof eventsMap>>, TError = ErrorType<unknown>>(params: EventsMapParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsMap>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getEventsMapQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof eventsMap>>> = ({ signal }) => eventsMap(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof eventsMap>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type EventsMapQueryResult = NonNullable<Awaited<ReturnType<typeof eventsMap>>>
+export type EventsMapQueryError = ErrorType<unknown>
+
+
+export function useEventsMap<TData = Awaited<ReturnType<typeof eventsMap>>, TError = ErrorType<unknown>>(
+ params: EventsMapParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsMap>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof eventsMap>>,
+          TError,
+          Awaited<ReturnType<typeof eventsMap>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useEventsMap<TData = Awaited<ReturnType<typeof eventsMap>>, TError = ErrorType<unknown>>(
+ params: EventsMapParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsMap>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof eventsMap>>,
+          TError,
+          Awaited<ReturnType<typeof eventsMap>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useEventsMap<TData = Awaited<ReturnType<typeof eventsMap>>, TError = ErrorType<unknown>>(
+ params: EventsMapParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsMap>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Мероприятия на карте в видимой области
+ */
+
+export function useEventsMap<TData = Awaited<ReturnType<typeof eventsMap>>, TError = ErrorType<unknown>>(
+ params: EventsMapParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsMap>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getEventsMapQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type eventsRemovePhotoResponse403 = {
+  data: ProblemDetail
+  status: 403
+}
+
+;
+export type eventsRemovePhotoResponseError = (eventsRemovePhotoResponse403) & {
+  headers: Headers;
+};
+
+export type eventsRemovePhotoResponse = (eventsRemovePhotoResponseError)
+
+export const getEventsRemovePhotoUrl = (id: string,
+    fileId: string,) => {
+
+
+
+
+  return `/api/events/${id}/photos/${fileId}`
+}
+
+/**
+ * @summary Удалить фото из галереи
+ */
+export const eventsRemovePhoto = async (id: string,
+    fileId: string, options?: Parameters<typeof authMutator>[1]): Promise<eventsRemovePhotoResponse> => {
+
+  return authMutator<eventsRemovePhotoResponse>(getEventsRemovePhotoUrl(id,fileId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getEventsRemovePhotoMutationKey = () => ['eventsRemovePhoto'] as const;
+
+export const getEventsRemovePhotoMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsRemovePhoto>>, TError,EventsRemovePhotoMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof eventsRemovePhoto>>, TError,EventsRemovePhotoMutationVariables, TContext> => {
+
+const mutationKey = getEventsRemovePhotoMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof eventsRemovePhoto>>, EventsRemovePhotoMutationVariables> = (props) => {
+          const {id,fileId} = props ?? {};
+
+          return  eventsRemovePhoto(id,fileId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type EventsRemovePhotoMutationResult = NonNullable<Awaited<ReturnType<typeof eventsRemovePhoto>>>
+
+    export type EventsRemovePhotoMutationError = ErrorType<ProblemDetail>
+    export type EventsRemovePhotoMutationVariables = {id: string;fileId: string}
+
+    /**
+ * @summary Удалить фото из галереи
+ */
+export const useEventsRemovePhoto = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsRemovePhoto>>, TError,EventsRemovePhotoMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof eventsRemovePhoto>>,
+        TError,
+        EventsRemovePhotoMutationVariables,
+        TContext
+      > => {
+      return useMutation(getEventsRemovePhotoMutationOptions(options), queryClient);
+    }
+    export type eventsRemoveOrganizerResponse403 = {
   data: ProblemDetail
   status: 403
 }

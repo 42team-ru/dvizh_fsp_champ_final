@@ -8,15 +8,17 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-/** Даты создания и изменения: Hibernate ставит их сам при вставке и обновлении. */
+/**
+ * Даты создания и изменения: Hibernate ставит их сам при вставке и обновлении.
+ */
 @MappedSuperclass
 @Getter
 @Setter
 public abstract class AuditEntity {
 
-	@CreationTimestamp
-	private Instant createdAt;
+    @CreationTimestamp
+    private Instant createdAt;
 
-	@UpdateTimestamp
-	private Instant updatedAt;
+    @UpdateTimestamp
+    private Instant updatedAt;
 }

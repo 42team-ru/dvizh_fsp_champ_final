@@ -5,13 +5,17 @@ import java.util.UUID;
 
 import com.hackathon.app.domain.dto.AddOrganizerRequest;
 import com.hackathon.app.domain.dto.EventFilter;
+import com.hackathon.app.domain.dto.EventMapFilter;
+import com.hackathon.app.domain.dto.EventMapResponse;
 import com.hackathon.app.domain.dto.EventRequest;
 import com.hackathon.app.domain.dto.EventResponse;
 import com.hackathon.app.domain.dto.EventSummaryResponse;
 import com.hackathon.app.domain.dto.OrganizerResponse;
+import com.hackathon.app.service.EventMapService;
 import com.hackathon.app.service.EventOrganizerService;
 import com.hackathon.app.service.EventService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -32,8 +36,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 @Tag(name = "events", description = "Мероприятия: лента, карточка, создание и редактирование")
@@ -44,6 +50,7 @@ class EventController {
 
     private final EventService events;
     private final EventOrganizerService organizers;
+    private final EventMapService eventMap;
 
     @GetMapping
     @Operation(operationId = "events_list", summary = "Лента мероприятий",
@@ -52,6 +59,20 @@ class EventController {
         log.info("Endpoint called: GET /api/events, userId={}, request={}", jwt.getSubject(), filter);
         var response = events.list(filter, userId(jwt));
         log.info("Endpoint response: GET /api/events, count={}", response.size());
+        return response;
+    }
+
+    @GetMapping("/map")
+    @Operation(operationId = "events_map", summary = "Мероприятия на карте в видимой области",
+            description = "GeoJSON FeatureCollection: опубликованные очные мероприятия с точкой внутри области и началом "
+                    + "в [from, to]. Координаты [долгота, широта]. from по умолчанию и не раньше чем сейчас, "
+                    + "to — from + 30 дней. Ближайшие первыми, не больше limit; если в области больше — truncated. "
+                    + "minLon > maxLon — область через 180-й меридиан. Неверная область или период — 400.")
+    EventMapResponse map(@AuthenticationPrincipal Jwt jwt, @ParameterObject @Valid EventMapFilter filter) {
+        log.info("Endpoint called: GET /api/events/map, userId={}, request={}", jwt.getSubject(), filter);
+        var response = eventMap.find(filter, userId(jwt));
+        log.info("Endpoint response: GET /api/events/map, count={}, truncated={}", response.features().size(),
+                response.truncated());
         return response;
     }
 
@@ -130,6 +151,31 @@ class EventController {
         log.info("Endpoint called: DELETE /api/events/{}/organizers/{}, userId={}", id, organizerId, jwt.getSubject());
         var response = organizers.remove(id, userId(jwt), organizerId);
         log.info("Endpoint response: DELETE /api/events/{}/organizers/{}, response={}", id, organizerId, response);
+        return response;
+    }
+
+    @PostMapping(path = "/{id}/photos", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(operationId = "events_addPhoto", summary = "Добавить фото в галерею (JPG, PNG, WebP до 5 МБ)",
+            description = "В конец галереи; первое фото — обложка в ленте. Только организатор, не больше 6 фото.")
+    @ApiResponse(responseCode = "400", description = "Не тот формат или слишком большой файл", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    @ApiResponse(responseCode = "403", description = "Не организатор", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    @ApiResponse(responseCode = "409", description = "Уже 6 фото или мероприятие удалено", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    @ResponseStatus(HttpStatus.CREATED)
+    EventResponse addPhoto(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,
+            @Parameter(description = "Изображение") @RequestPart("file") MultipartFile file) {
+        log.info("Endpoint called: POST /api/events/{}/photos, userId={}, request={}", id, jwt.getSubject(), Uploads.describe(file));
+        var response = events.addPhoto(id, userId(jwt), Uploads.of(file));
+        log.info("Endpoint response: POST /api/events/{}/photos, photos={}", id, response.photos().size());
+        return response;
+    }
+
+    @DeleteMapping("/{id}/photos/{fileId}")
+    @Operation(operationId = "events_removePhoto", summary = "Удалить фото из галереи")
+    @ApiResponse(responseCode = "403", description = "Не организатор", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    EventResponse removePhoto(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id, @PathVariable UUID fileId) {
+        log.info("Endpoint called: DELETE /api/events/{}/photos/{}, userId={}", id, fileId, jwt.getSubject());
+        var response = events.removePhoto(id, fileId, userId(jwt));
+        log.info("Endpoint response: DELETE /api/events/{}/photos/{}, photos={}", id, fileId, response.photos().size());
         return response;
     }
 

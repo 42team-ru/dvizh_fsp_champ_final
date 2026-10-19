@@ -1,20 +1,31 @@
 package com.hackathon.app.e2e;
 
+import static com.hackathon.app.domain.enums.SystemRole.USER;
+import static com.hackathon.app.e2e.support.ApiAssertions.assertThatApi;
+import static com.hackathon.app.e2e.support.TestApi.uniqueName;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.http.HttpStatus.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import java.util.Locale;
+import java.util.Map;
+
+import com.hackathon.app.domain.dto.UserResponse;
+import com.hackathon.app.e2e.support.TestApi;
+import com.hackathon.app.repository.AppUserRepository;
 import jakarta.servlet.http.Cookie;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Почти E2E: весь контекст приложения, настоящая цепочка Spring Security, JWT, cookie и JPA (H2 в памяти).
@@ -24,35 +35,22 @@ import org.springframework.test.web.servlet.MvcResult;
 @AutoConfigureMockMvc
 @ActiveProfiles("h2")
 class AuthFlowE2ETest {
+	@Autowired MockMvc mvc;
+	@Autowired ObjectMapper json;
+	@Autowired AppUserRepository users;
+	@Autowired PasswordEncoder passwords;
+	private TestApi api;
 
-	@Autowired
-	MockMvc mvc;
-
-	private static String registerJson(String username, String email, String password) {
-		return """
-				{"username":"%s","email":"%s","firstName":"Иван","lastName":"Иванов","password":"%s"}
-				""".formatted(username, email, password);
-	}
-
-	private static String loginJson(String username, String password) {
-		return """
-				{"username":"%s","password":"%s"}
-				""".formatted(username, password);
-	}
-
-	private Cookie cookieOf(MvcResult result, String name) {
-		var c = result.getResponse().getCookie(name);
-		if (c == null) {
-			throw new AssertionError("нет cookie " + name);
-		}
-		return c;
+	@BeforeEach
+	void setUp() {
+		api = new TestApi(mvc, json, users, passwords);
 	}
 
 	/**
 	 * ФЛОУ: новый пользователь регистрируется, входит, работает с защищённым API, продлевает сессию и выходит.
 	 * ШАГИ:
 	 *   1. Анонимный доступ: /api/ping открыт, /api/auth/me закрыт (401).
-	 *   2. Имя свободно -> регистрация (201) -> имя и email (без учёта регистра) уже заняты.
+	 *   2. Уникальное имя свободно -> регистрация (201) -> имя и email (без учёта регистра) уже заняты.
 	 *   3. Вход с неверным паролем (401), затем с верным (200) -> приходят HttpOnly cookie access_token и refresh_token.
 	 *   4. /api/auth/me по cookie возвращает профиль.
 	 *   5. refresh выдаёт новую пару токенов; старый refresh-токен после этого недействителен (ротация).
@@ -64,68 +62,55 @@ class AuthFlowE2ETest {
 	 */
 	@Test
 	void registerLoginMeRefreshRotationLogout() throws Exception {
-		mvc.perform(get("/api/ping")).andExpect(status().isOk());
-		mvc.perform(get("/api/auth/me")).andExpect(status().isUnauthorized());
+		// 1. Публичный API открыт, профиль требует входа; имя пока свободно.
+		var guest = api.guest();
+		guest.ping();
+		assertThatApi(guest::me).fails(UNAUTHORIZED);
+		var username = uniqueName("ivanov");
+		var email = username + "@example.com";
+		assertThat(guest.usernameAvailable(username)).isTrue();
 
-		mvc.perform(get("/api/auth/users/check/username").param("username", "ivanov"))
-				.andExpect(status().isOk()).andExpect(jsonPath("$.available").value(true));
+		// 2. Проверяем также отсутствие секретных полей в самом JSON регистрации.
+		var registered = guest.raw(post("/api/auth/register").contentType(APPLICATION_JSON)
+				.content(json.writeValueAsString(registration(username, email.toUpperCase(Locale.ROOT), "SecureP@ss1"))))
+				.andExpect(status().isCreated()).andExpect(jsonPath("$.passwordHash").doesNotExist())
+				.andExpect(jsonPath("$.password").doesNotExist()).andReturn();
+		var profile = json.readValue(registered.getResponse().getContentAsString(), UserResponse.class);
+		assertThat(profile.username()).isEqualTo(username);
+		assertThat(profile.email()).isEqualTo(email);
+		assertThat(profile.systemRole()).isEqualTo(USER);
+		assertThat(guest.usernameAvailable(username.toUpperCase(Locale.ROOT))).isFalse();
+		assertThat(guest.emailAvailable(email)).isFalse();
+		assertThatApi(() -> guest.login(username, "wrong-password")).fails(UNAUTHORIZED);
 
-		mvc.perform(post("/api/auth/register").contentType(APPLICATION_JSON)
-						.content(registerJson("ivanov", "Ivanov@Example.com", "SecureP@ss1")))
-				.andExpect(status().isCreated())
-				.andExpect(jsonPath("$.username").value("ivanov"))
-				.andExpect(jsonPath("$.email").value("ivanov@example.com"))
-				.andExpect(jsonPath("$.systemRole").value("USER"))
-				.andExpect(jsonPath("$.passwordHash").doesNotExist())
-				.andExpect(jsonPath("$.password").doesNotExist());
-
-		mvc.perform(get("/api/auth/users/check/username").param("username", "IVANOV"))
-				.andExpect(jsonPath("$.available").value(false));
-		mvc.perform(get("/api/auth/users/check/email").param("email", "ivanov@example.com"))
-				.andExpect(jsonPath("$.available").value(false));
-
-		mvc.perform(post("/api/auth/login").contentType(APPLICATION_JSON).content(loginJson("ivanov", "wrong-password")))
-				.andExpect(status().isUnauthorized());
-
-		var login = mvc.perform(post("/api/auth/login").contentType(APPLICATION_JSON).content(loginJson("ivanov", "SecureP@ss1")))
-				.andExpect(status().isOk())
-				.andExpect(cookie().httpOnly("access_token", true))
-				.andExpect(cookie().httpOnly("refresh_token", true))
-				.andReturn();
-		var access = cookieOf(login, "access_token");
+		// 3. Вход выдаёт HttpOnly cookie; профиль читается по access_token.
+		var login = loginCookies(username);
 		var refresh1 = cookieOf(login, "refresh_token");
+		var actor = api.withAccessToken(cookieOf(login, "access_token"));
+		var me = actor.me();
+		assertThat(me.username()).isEqualTo(username);
+		assertThat(me.firstName()).isEqualTo("Иван");
 
-		mvc.perform(get("/api/auth/me").cookie(access))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.username").value("ivanov"))
-				.andExpect(jsonPath("$.firstName").value("Иван"));
-
-		// refresh: выдаёт новую пару, старый refresh-токен больше не годится
-		var refreshed = mvc.perform(post("/api/auth/refresh").cookie(refresh1))
-				.andExpect(status().isOk())
-				.andReturn();
+		// 4. Refresh ротирует пару; повтор старого токена отзывает свежий.
+		var refreshed = guest.raw(post("/api/auth/refresh").cookie(refresh1)).andExpect(status().isOk()).andReturn();
 		var refresh2 = cookieOf(refreshed, "refresh_token");
-		mvc.perform(get("/api/auth/me").cookie(cookieOf(refreshed, "access_token"))).andExpect(status().isOk());
+		api.withAccessToken(cookieOf(refreshed, "access_token")).me();
+		assertThatApi(() -> guest.refresh(refresh1)).fails(UNAUTHORIZED);
+		assertThatApi(() -> guest.refresh(refresh2)).fails(UNAUTHORIZED);
 
-		// повторное предъявление уже использованного токена = подозрение на кражу: гасятся и новые токены
-		mvc.perform(post("/api/auth/refresh").cookie(refresh1)).andExpect(status().isUnauthorized());
-		mvc.perform(post("/api/auth/refresh").cookie(refresh2)).andExpect(status().isUnauthorized());
-
-		// logout гасит сессию и чистит cookie
-		var relogin = mvc.perform(post("/api/auth/login").contentType(APPLICATION_JSON).content(loginJson("ivanov@example.com", "SecureP@ss1")))
-				.andExpect(status().isOk()).andReturn(); // вход по email тоже работает
+		// 5. Вход по email работает; logout обнуляет cookie и отзывает refresh.
+		var relogin = loginCookies(email);
 		var refresh3 = cookieOf(relogin, "refresh_token");
-		mvc.perform(post("/api/auth/logout").cookie(refresh3))
-				.andExpect(status().isNoContent())
-				.andExpect(cookie().maxAge("refresh_token", 0));
-		mvc.perform(post("/api/auth/refresh").cookie(refresh3)).andExpect(status().isUnauthorized());
+		guest.raw(post("/api/auth/logout").cookie(refresh3))
+				.andExpect(status().isNoContent()).andExpect(cookie().maxAge("refresh_token", 0));
+		assertThatApi(() -> guest.refresh(refresh3)).fails(UNAUTHORIZED);
 	}
 
 	/**
 	 * ФЛОУ: некорректные данные и «грязные» cookie не ломают публичные эндпоинты и не пускают в закрытые.
 	 * ШАГИ:
 	 *   1. Регистрация с коротким именем, неверным email и коротким паролем -> 400.
-	 *   2. Регистрация petrov; повтор с тем же именем в другом регистре -> 409; повтор с тем же email -> 409.
+	 *   2. Регистрация уникального аккаунта; повтор с тем же именем в другом регистре -> 409; повтор с тем же email -> 409.
 	 *   3. Вход и проверка email с мусорным cookie access_token -> всё равно 200 (публичные пути токен не читают).
 	 *   4. /api/auth/me с мусорным токеном -> 401.
 	 * ПРОВЕРЯЕМ: валидацию входа, уникальность имени и email без учёта регистра, независимость публичных путей от cookie.
@@ -133,27 +118,39 @@ class AuthFlowE2ETest {
 	 *   проходит вход или обновление сессии, человек застрянет на странице логина.
 	 */
 	@Test
-	void badInputIsRejectedAndStaleCookieDoesNotBreakPublicEndpoints() throws Exception {
-		mvc.perform(post("/api/auth/register").contentType(APPLICATION_JSON)
-						.content(registerJson("ab", "not-an-email", "short")))
-				.andExpect(status().isBadRequest());
+	void badInputIsRejectedAndStaleCookieDoesNotBreakPublicEndpoints() {
+		// 1. Валидация и уникальность имени/email работают без учёта регистра.
+		var guest = api.guest();
+		assertThatApi(() -> guest.registerAccount(registration("ab", "not-an-email", "short"))).fails(BAD_REQUEST);
+		var username = uniqueName("petrov");
+		var email = username + "@example.com";
+		guest.registerAccount(registration(username, email, "SecureP@ss1"));
+		assertThatApi(() -> guest.registerAccount(registration(username.toUpperCase(Locale.ROOT), "other@example.com", "SecureP@ss1")))
+				.fails(CONFLICT);
+		assertThatApi(() -> guest.registerAccount(registration(username + "2", email.toUpperCase(Locale.ROOT), "SecureP@ss1")))
+				.fails(CONFLICT);
 
-		mvc.perform(post("/api/auth/register").contentType(APPLICATION_JSON)
-				.content(registerJson("petrov", "petrov@example.com", "SecureP@ss1"))).andExpect(status().isCreated());
-		mvc.perform(post("/api/auth/register").contentType(APPLICATION_JSON)
-						.content(registerJson("PETROV", "other@example.com", "SecureP@ss1")))
-				.andExpect(status().isConflict());
-		mvc.perform(post("/api/auth/register").contentType(APPLICATION_JSON)
-						.content(registerJson("petrov2", "PETROV@example.com", "SecureP@ss1")))
-				.andExpect(status().isConflict());
+		// 2. Мусорный access_token не ломает публичные пути, но не открывает профиль.
+		var stale = api.withAccessToken(new Cookie("access_token", "garbage.token.value"));
+		stale.login(username, "SecureP@ss1");
+		assertThat(stale.emailAvailable("free@example.com")).isTrue();
+		assertThatApi(stale::me).fails(UNAUTHORIZED);
+	}
 
-		// протухший/мусорный access_token не должен ломать логин, refresh и проверки доступности
-		var garbage = new Cookie("access_token", "garbage.token.value");
-		mvc.perform(post("/api/auth/login").cookie(garbage).contentType(APPLICATION_JSON).content(loginJson("petrov", "SecureP@ss1")))
-				.andExpect(status().isOk());
-		mvc.perform(get("/api/auth/users/check/email").cookie(garbage).param("email", "free@example.com"))
-				.andExpect(status().isOk()).andExpect(jsonPath("$.available").value(true));
-		// а защищённый эндпоинт с мусорным токеном — 401
-		mvc.perform(get("/api/auth/me").cookie(garbage)).andExpect(status().isUnauthorized());
+	private Map<String, String> registration(String username, String email, String password) {
+		return Map.of("username", username, "email", email, "firstName", "Иван", "lastName", "Иванов", "password", password);
+	}
+
+	private MvcResult loginCookies(String login) throws Exception {
+		return api.guest().raw(post("/api/auth/login").contentType(APPLICATION_JSON)
+				.content(json.writeValueAsString(Map.of("username", login, "password", "SecureP@ss1"))))
+				.andExpect(status().isOk()).andExpect(cookie().httpOnly("access_token", true))
+				.andExpect(cookie().httpOnly("refresh_token", true)).andReturn();
+	}
+
+	private Cookie cookieOf(MvcResult result, String name) {
+		var cookie = result.getResponse().getCookie(name);
+		assertThat(cookie).as("cookie %s", name).isNotNull();
+		return cookie;
 	}
 }

@@ -6,11 +6,11 @@ Java 25 + Spring Boot 4.1 (Gradle Kotlin DSL) · React Router 7 + Vite + Tailwin
 ```bash
 docker compose up --build      # нужен только Docker
 ```
-Откроется на http://localhost:8080 (Swagger: `/swagger-ui.html`). Первая сборка 2–3 минуты. Включён демо-режим: аккаунты `admin`, `anna`, `petr`, `olga` (пароль `demo-password-1`), на странице входа есть кнопки быстрого входа.
+Откроется на http://localhost:8080 (Swagger: `/swagger-ui.html`). Первая сборка 2–3 минуты. Включён демо-режим: аккаунты `admin`, `anna`, `petr`, `olga`, `ladya` (одобренный клуб), `enisey` (клуб ждёт одобрения) (пароль `demo-password-1`), на странице входа есть кнопки быстрого входа.
 
 ## Разработка
 ```bash
-make dev     # Postgres (порт 5440), один раз
+make dev     # Postgres (порт 5440) и S3/MinIO (порт 9440, консоль 9441), один раз
 make back    # бэкенд  :8080, в своём терминале
 make front   # фронт   :5173, в своём терминале
 ```

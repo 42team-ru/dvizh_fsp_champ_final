@@ -61,7 +61,12 @@ cd backend && ./gradlew postgresTest  # смоук миграций на нас�
 | `UserSport` | `userId`, `sportId`, `level?` (`BEGINNER \| AMATEUR \| ADVANCED \| PRO`) |
 | `Organization` | `id`, `accountId` (unique, аккаунт роли ORG), `name`, `description`, `city?`, `contacts` (`Map<ContactType, String>`, таблица `organization_contacts`; `ContactType = PHONE \| EMAIL \| TELEGRAM \| VK \| WHATSAPP \| MAX \| WEBSITE`, минимум один, формат проверяет сервис), `status` (`PENDING \| APPROVED \| REJECTED`), `rejectReason?`, `submittedAt`, `reviewedAt?`, `reviewedById?` |
 | `OrganizationSport` | `organizationId`, `sportId` |
-| `Event` | `id`, `title`, `description`, `sportId`, `authorId`, `organizationId?` (если создано от организации), `startAt`, `endAt?`, `format` (`OFFLINE \| ONLINE`), `address?`, `locationNote?`, `onlineUrl?`, `lat?`, `lon?`, `level` (`ANY \| BEGINNER \| AMATEUR \| ADVANCED \| PRO`), `kind?` (тренировка, игра, встреча, любительский турнир), `requirements?`, `equipment?`, `capacity?`, `joinMode` (`FREE \| REQUEST`), `privateDetails?`, `status` (`PUBLISHED \| UNPUBLISHED \| DELETED`), `moderationReason?`, `moderatedAt?`, `moderatedById?`, `createdAt`, `updatedAt` |
+| `Event` | `id`, `title`, `description`, `sportId`, `authorId`, `organizationId?` (если создано от организации), `startAt`, `endAt?`, `format` (`OFFLINE \| ONLINE`), `address?`, `locationNote?`, `onlineUrl?`, `lat?`, `lon?` (обязательны для OFFLINE, у ONLINE не хранятся; рядом в БД вычисляемая PostGIS-точка `location`), `level` (`ANY \| BEGINNER \| AMATEUR \| ADVANCED \| PRO`), `kind?` (тренировка, игра, встреча, любительский турнир), `requirements?`, `equipment?`, `capacity?`, `joinMode` (`FREE \| REQUEST`), `privateDetails?`, `status` (`PUBLISHED \| UNPUBLISHED \| DELETED`), `moderationReason?`, `moderatedAt?`, `moderatedById?`, `createdAt`, `updatedAt` |
+| `Event` (кворум) | + `minParticipants?` — «состоится, если наберём N», не больше `capacity` |
+| `Event` (серия) | + `recurring`, `timeZone` (IANA), `seriesStartDate`, `seriesEndDate`; у серии `startAt/endAt` — первое занятие, `capacity` — на каждое занятие |
+| `EventScheduleRule` (`event_schedule_rules`) | `id`, `eventId`, `sortOrder`, `firstStart` (`LocalDateTime`, местное время серии = DTSTART), `durationMinutes`, `rrule` (RFC 5545, без `RRULE:`) |
+| `EventOccurrence` (`event_occurrences`) | `id`, `eventId`, `startAt`, `endAt?`, `originalStartAt?` (время по правилу, ключ при пересчёте), `source` (`SINGLE \| RULE \| EXTRA`), `status` (`SCHEDULED \| CANCELLED`), `cancelReason?`, `cancelledAt?`, `cancelledById?`, `confirmedAt?`, `confirmedById?` (организатор подтвердил «Состоится»); unique (`eventId`, `originalStartAt`). У разового — одно занятие `SINGLE` |
+| `OccurrenceAttendance` (`occurrence_attendances`) | `id`, `occurrenceId`, `eventId`, `userId`; unique (`occurrenceId`, `userId`) — отметка «приду» участника серии |
 | `EventOrganizer` (`event_organizers`) | `id`, `eventId`, `userId`, `addedById`, unique (`eventId`, `userId`) — соорганизаторы: правят событие и решают заявки наравне с автором, состав меняет только автор |
 | `Registration` | `id`, `eventId`, `userId`, unique (`eventId`, `userId`), `status` (`CONFIRMED \| PENDING \| REJECTED \| CANCELLED`), `message?` (сопроводительное к заявке), `decisionReason?`, `decidedAt?`, `decidedById?`, `createdAt` |
 | `Comment` | `id`, `eventId`, `authorId`, `text`, `createdAt`, `hidden` (модерация сообщений — доп. фича, пока не делаем) |
@@ -95,6 +100,15 @@ cd backend && ./gradlew postgresTest  # смоук миграций на нас�
 7. **Админ** не создаёт события ни от своего, ни от чужого имени и не принимает решения по заявкам участников.
 8. **Одна политика на команду и на кнопку.** Правила «можно ли записаться, отменить, управлять, видеть приватные детали» живут в одном классе в `service`, например `EventAccessPolicy`. Им пользуются и сервис для команд, и сборка ответа: карточка события приходит с блоком `viewer` (`registrationStatus`, `canRegister`, `registerBlockedReason`, `isOrganizer`, `canManage`, `canSeePrivateDetails`). Фронт рисует кнопки по `viewer` и не дублирует правила.
 
+9. **Повторяющиеся мероприятия (серии).** Одно `Event` + правила RRULE (библиотека `lib-recur`, `ScheduleExpander`); занятия хранятся в `event_occurrences` и пересчитываются при сохранении (`OccurrenceService`).
+    - Границы серии обязательны: не длиннее года, не больше 500 занятий, правил 1–10, FREQ не чаще DAILY; первое занятие правила — внутри границ; совпавшие по времени занятия схлопываются.
+    - Лента, карта и профиль фильтруют по занятиям (`SCHEDULED` в периоде): серия — одна карточка со временем ближайшего подходящего занятия.
+    - Запись = вступление в серию (FREE/REQUEST как обычно, лимита на вступление нет). Дальше участник сам отмечается на даты; `capacity` — на занятие. Вступить можно, пока есть будущее занятие; отметиться и снять отметку — до начала занятия. Выход или исключение снимают будущие отметки, прошлые остаются.
+    - Организатор отменяет занятие (необратимо, отметки остаются), переносит (отметки сохраняются), добавляет разовую дату — в будущем и в границах серии.
+    - Правка правил: прошлые занятия не трогаем; будущие с тем же исходным временем остаются; исчезнувшие с отметками → `CANCELLED` «Расписание изменено», без отметок — удаляются. Разовое ↔ серия при правке — 409.
+    - Разовое событие: одно занятие, отметок нет, «кто придёт» = подтверждённые записи. Организатор может отменить его через отмену занятия: оно уходит из ленты, запись закрывается (409), у записавшихся — `cancelledByOrganizer` и причина.
+10. **Кворум** (`minParticipants`). Считается на каждое занятие: у серии — по отметкам, у разового — по подтверждённым записям. Статус (`QuorumStatus`, не хранится): `GATHERING` → набрали N — `REACHED` («Состоится» сразу) или организатор нажал «Подтвердить» — `CONFIRMED` (можно и до набора, не снимается). Автоотмены и дедлайна нет: не набрали — организатор решает сам (подтвердить или отменить). Кворум > лимита мест — 400.
+
 ## API
 
 Правила контроллеров из шаблона обязательны:
@@ -108,12 +122,14 @@ cd backend && ./gradlew postgresTest  # смоук миграций на нас�
 | Тег | Эндпоинты (operationId) |
 |---|---|
 | `sports` | `GET /api/sports?query=` (`sports_search`) |
-| `events` | `GET /api/events` с фильтрами `searchText, sportId, from, to, level, joinMode, format` (`events_list`) · `GET /api/events/{id}` с блоком `viewer` (`events_get`) · `POST /api/events` (`events_create`) · `PUT /api/events/{id}` (`events_update`) · `GET /api/events/mine` — где я автор или соорганизатор (`events_mine`) · `POST /api/events/{id}/organizers` (`events_addOrganizer`) · `DELETE /api/events/{id}/organizers/{userId}` (`events_removeOrganizer`) |
+| `events` | `GET /api/events` с фильтрами `searchText, sportId, from, to, level, joinMode, format, organizationId` (последний — для страницы организации) (`events_list`) · `GET /api/events/{id}` с блоком `viewer` (`events_get`) · `POST /api/events` (`events_create`) · `PUT /api/events/{id}` (`events_update`) · `GET /api/events/mine` — где я автор или соорганизатор (`events_mine`) · `POST /api/events/{id}/organizers` (`events_addOrganizer`) · `DELETE /api/events/{id}/organizers/{userId}` (`events_removeOrganizer`) |
 | `registrations` | `POST /api/events/{id}/registrations` (`registrations_create`) · `DELETE /api/events/{id}/registrations/me` (`registrations_cancel`) · `GET /api/events/{id}/registrations` — участники и заявки для организатора (`registrations_listForEvent`) · `POST /api/registrations/{id}/approve` (`registrations_approve`) · `POST /api/registrations/{id}/reject` (`registrations_reject`) · `GET /api/registrations/mine` (`registrations_mine`) |
+| `occurrences` | `GET /api/events/{id}/occurrences?from=&to=` (`occurrences_list`) · `POST /api/events/{id}/occurrences` — разовая дата (`occurrences_add`) · `PUT /api/events/{id}/occurrences/{occurrenceId}` — перенос (`occurrences_reschedule`) · `POST …/{occurrenceId}/cancel` с причиной, и для разового (`occurrences_cancel`) · `POST …/{occurrenceId}/confirm` — «Состоится» при кворуме (`occurrences_confirm`) · `POST`/`DELETE …/{occurrenceId}/attendance` (`occurrences_attend`, `occurrences_unattend`) · `GET …/{occurrenceId}/attendees` — организатору (`occurrences_attendees`) |
 | `comments` | `GET /api/events/{id}/comments` (`comments_list`) · `POST /api/events/{id}/comments` (`comments_create`) |
 | `organizations` | `GET /api/organizations/me` (`organizations_me`) · `PUT /api/organizations/me` — анкета (`organizations_saveMine`) · `GET /api/organizations/{id}` — публичная, только APPROVED (`organizations_get`) |
 | `users` | `GET /api/users/{id}` — публичный профиль организатора (`users_get`) |
-| `admin` | `GET /api/admin/stats` (`admin_stats`) · `GET /api/admin/organizations?status=&searchText=&page=&size=` — страница `PageResponse` (`admin_listOrganizations`) · `GET /api/admin/organizations/{id}` (`admin_getOrganization`) · `POST /api/admin/organizations/{id}/approve` · `…/reject` с причиной (`admin_approveOrganization`, `admin_rejectOrganization`) · `GET /api/admin/events?searchText=&status=` (`admin_listEvents`) · `POST /api/admin/events/{id}/unpublish` · `DELETE /api/admin/events/{id}` с причиной (`admin_unpublishEvent`, `admin_deleteEvent`) |
+| `pets` | `GET /api/pets/catalog` (`pets_catalog`) · `GET /api/users/me/pet` (`pets_getMine`) · `PUT /api/users/me/pet` — образ целиком (`pets_saveMine`) · `PUT /api/users/me/pet/slots/{slot}` — надеть или снять в одном слоте (`pets_equip`) · `GET /api/users/{id}/pet` (`pets_getUser`). Подробно: `docs/beaver-backend-integration.md` |
+| `admin` | `GET /api/admin/stats?days=` — счётчики и `signupsByDay` «сколько присоединилось по дням» (`admin_stats`) · `POST /api/admin/pets/slots`, `POST /api/admin/pets/slots/{slot}/items` (multipart, картинка в S3), `DELETE /api/admin/pets/slots/{slot}/items/{item}` (`admin_createPetSlot`, `admin_createPetItem`, `admin_deletePetItem`) · `GET /api/admin/organizations?status=&searchText=&page=&size=` — страница `PageResponse` (`admin_listOrganizations`) · `GET /api/admin/organizations/{id}` (`admin_getOrganization`) · `POST /api/admin/organizations/{id}/approve` · `…/reject` с причиной (`admin_approveOrganization`, `admin_rejectOrganization`) · `GET /api/admin/events?searchText=&status=` (`admin_listEvents`) · `POST /api/admin/events/{id}/unpublish` · `DELETE /api/admin/events/{id}` с причиной (`admin_unpublishEvent`, `admin_deleteEvent`) |
 
 - `/api/admin/**` закрывается в `SecurityConfig` через `hasRole("ADMIN")`. Остальные проверки прав — в сервисах.
 - Ошибки идут через `ApiExceptionHandler` (ProblemDetail): `NoSuchElementException` → 404, `UnauthorizedException` → 401, `ConflictException` → 409. **Добавить `ForbiddenException` → 403.**
@@ -154,7 +170,7 @@ cd backend && ./gradlew postgresTest  # смоук миграций на нас�
 
 ## Демо-данные
 
-Создаются в `DemoSeeder.seed()` при старте, только при `DEMO_MODE=true` (кнопки входа отдаёт `DemoService`). Сид идемпотентный: аккаунт ищется по логину, мероприятие — по автору и названию; существующее не трогаем, недостающее создаём. Аккаунты: `admin`, `anna`, `petr`, `olga` (кнопками на входе) и массовка `dmitry`, `elena`, `sergey`, `nikolai`. Даты событий задаются от `clock.instant()` («послезавтра в 19:00»), чтобы демо не устаревало. Полный сброс: `docker compose down -v`.
+Создаются в `DemoSeeder.seed()` при старте, только при `DEMO_MODE=true` (кнопки входа отдаёт `DemoService`). Сид идемпотентный: аккаунт ищется по логину, мероприятие — по автору и названию; существующее не трогаем, недостающее создаём. Аккаунты: `admin`, `anna`, `petr`, `olga`, `ladya` и `enisey` (кнопками на входе), массовка `dmitry`, `elena`, `sergey`, `nikolai` и `yoga`. Организации создаются через `OrganizationService` и решения `AdminOrganizationService`, как у живых пользователей. Даты событий задаются от `clock.instant()` («послезавтра в 19:00»), чтобы демо не устаревало. Полный сброс: `docker compose down -v`.
 
 - Пользователи: Анна (новичок), Пётр (любитель, автор события «по заявке»), Ольга (пенсионерка, любит зарядку), ещё 3–5 человек для заполненных списков участников.
 - Организации: шахматный клуб «Ладья» — APPROVED, с событиями; беговое сообщество «Енисей» — PENDING, для проверки одобрения; «Йога на Татышеве» — REJECTED, с причиной.
@@ -166,13 +182,17 @@ cd backend && ./gradlew postgresTest  # смоук миграций на нас�
     - зарядка во дворе, FREE, уровень «Любой»;
     - нишевый вид, например петанк, `custom = true`;
     - одно событие UNPUBLISHED с причиной и записанным пользователем;
+    - серия «Баскетбол по вечерам» от Петра: вт 20:00 еженедельно + вс 14:00 раз в 2 недели, на 3 месяца, отметки участников, одно занятие отменено;
     - в нескольких событиях есть комментарии, включая ответы организатора.
+- Кроме персонажей сценариев — массовые данные «живого проекта» (`DemoBulkSeeder` + справочник `DemoBulkData`): ~260 пользователей в 12 городах (Москва, Петербург, Новосибирск, Екатеринбург, Казань, Нижний, Красноярск, Самара, Краснодар, Владивосток, Сочи, Пермь) с регистрациями за полгода и всплеском «10 октября»; ~20 клубов во всех статусах; ~270 мероприятий на реальных площадках (прошедшие и будущие, онлайн, часть снята или удалена); ~2000 записей во всех статусах, соорганизаторы, ~500 комментариев; образы бобров. Генерация детерминированная (seed), даты от сегодняшнего дня; создаётся один раз (маркер — первый клуб), ~6 с при первом старте.
+- Бобр (`DemoPetSeeder`): слоты «Перчатки» и «За спиной», 15 вещей «от админа» с картинками-заглушками в S3, готовые образы у Анны, Петра и Ольги.
+- Даты создания в прошлом пишет `DemoDataRepository` (Hibernate ставит `createdAt` = «сейчас»). В тестах демо выключено (`application-h2.yml`).
 - На фронте в `demo-accounts.tsx` в `ROLE_LABEL` добавить `ORG: "организация"`.
 
 ## Чего не делаем
 
 - Восстановление пароля, OAuth, почта и SMS для входа. Маршруты `forgot-password`, `oauth2/callback` и блок `alternative-block` из шаблона убрать из навигации.
-- Загрузку учредительных документов и интеграцию с реестрами.
+- Интеграцию с реестрами (документы организация загружает файлами в S3, проверяет их админ вручную).
 - Нативное мобильное приложение.
 - Мессенджер в реальном времени и обмен файлами.
 - Подтверждение посещения, результаты и судейство.
@@ -197,7 +217,8 @@ cd backend && ./gradlew postgresTest  # смоук миграций на нас�
 - Номер миграции занимаем перед пушем: подтянуть `main` и взять следующий свободный. Два одинаковых номера Flyway не запустит.
 - В проде `ddl-auto: validate`: миграции должны точно совпадать с сущностями. Менялись миграции или сущности — запустить `./gradlew postgresTest`.
 - **Тесты идут на H2:** схема строится из сущностей, Flyway выключен. Поэтому запросы, которые проходят через тесты, пишем переносимо: JPQL, derived-методы Spring Data, `lower(...) like`. Никаких `pg_trgm`, `tsvector`, `jsonb`-операторов и PostGIS в таких запросах.
-- PostGIS нет: образ `postgres:18-alpine`. Координаты храним `lat/lon` (`double`), карта фильтрует по bbox в JPQL, расстояние считаем в Java.
+- PostGIS есть: образ `postgis/postgis:18-3.6-alpine` (только amd64). Источник правды — `events.lat/lon` в сущности; колонку `location geometry(Point,4326)` с GiST-индексом база вычисляет сама (`GENERATED ... STORED`), в сущности её нет. Пространственные запросы — только нативным SQL в `EventMapRepository`; H2 их не выполнит, поэтому такие тесты идут с тегом `postgres` (`./gradlew postgresTest`).
+- Карта: `GET /api/events/map` (`events_map`) отдаёт GeoJSON `FeatureCollection` по видимой области `minLon/minLat/maxLon/maxLat`, координаты `[lon, lat]`; кластеризует фронт. Фильтры совпадают с лентой: меняешь `EventSpecifications.feed` — поменяй и `EventMapRepository`.
 - Индексы и `create extension pg_trgm` в миграциях можно: H2 их не видит. Нечёткий поиск вида спорта — только как улучшение с фолбэком на `like`.
 
 ## Фронтенд
@@ -283,6 +304,7 @@ cd backend && ./gradlew postgresTest  # смоук миграций на нас�
 
 **Техника:**
 - Основной вид — «почти E2E»: `@SpringBootTest` + `MockMvc`, весь контекст, настоящая цепочка Security, ничего своего не мокаем.
+- **Тесты пишутся через тестовый API** `e2e/support` (`TestApi`, `Actor`, `EventForm`, `OrganizationForm`, `ApiAssertions`): участники и действия (`api.newUser("petya")`, `petya.joinEvent(id)`, `author.approve(id)`), ответы — настоящие DTO с проверками AssertJ, отказ — `assertThatApi(() -> ...).fails(FORBIDDEN, "текст")`. Нужного действия нет — добавить метод в `Actor`, а не писать `mvc.perform` и `jsonPath` в тесте. Сырой запрос (`actor.raw(...)`) — только для формата, который не выражается DTO (флаги cookie, GeoJSON).
 - База в тестах — H2 (`@ActiveProfiles("h2")`, `src/test/resources/application-h2.yml`): стартует мгновенно.
 - Testcontainers (настоящий Postgres) — **один** смоук-тест на миграции Flyway и соответствие схемы сущностям (`PostgresMigrationsTest`, тег `postgres`). Он **не входит** в обычный `./gradlew test` (быстрый, без Docker); запускается `./gradlew postgresTest`, а `./gradlew check` (и CI) гоняет оба. Менялись миграции или сущности — запустить `postgresTest`. Новые Testcontainers-тесты не добавлять без причины.
 - Ориентир: весь `./gradlew test` быстрее ~30 секунд. Если вырос, сначала искать лишние тесты, а не оптимизировать.
@@ -321,7 +343,7 @@ Codex (OpenAI) подключён как плагин Claude Code: `.claude/sett
 2. Шаг «Что» при создании события: вид спорта с автодополнением, подсказка «Возможно, «Падел»?» и кнопка «Добавить «Сапсёрфинг» как новый вид».
 3. Итог заявки без тупика: принято — «Вы участник» и приватные детали; отклонено — «Заявка отклонена», причина и блок «Похожие встречи».
 4. «Поделиться» после создания события: ссылка для мессенджеров, QR-код, карточка-афиша для печати.
-5. Онлайн-формат (`format = ONLINE`, ссылка видна только участникам) и карта (Leaflet + OSM, `lat/lon`, фильтр по bbox).
+5. Онлайн-формат (`format = ONLINE`, ссылка видна только участникам) и карта (бэкенд готов: `events_map`, PostGIS; фронт — 2ГИС MapGL + Clusterer).
 6. Дальше по выбору: кворум «состоится, если наберём N», «Кто что берёт», подписки на почту и Telegram, подбор встреч, команды, пэт-помощник.
 
 ## Конец хакатона: очистка репозитория

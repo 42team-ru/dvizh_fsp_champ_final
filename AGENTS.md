@@ -19,6 +19,8 @@
 
 ## Тесты (твоя основная задача)
 
+- **Тесты пишутся через тестовый API** `e2e/support` (`TestApi`, `Actor`, `EventForm`, `OrganizationForm`, `ApiAssertions`): участники и действия (`api.newUser("petya")`, `petya.joinEvent(id)`, `author.approve(id)`), ответы — настоящие DTO с проверками AssertJ, отказ — `assertThatApi(() -> ...).fails(FORBIDDEN, "текст")`. Нужного действия нет — добавить метод в `Actor`, а не писать `mvc.perform` и `jsonPath` в тесте. Сырой запрос (`actor.raw(...)`) — только для формата, который не выражается DTO (флаги cookie, GeoJSON).
+
 Тесты в этом проекте пишет Codex. Правила (полностью в `CLAUDE.md`, раздел «Тесты»):
 - Мало, но осмысленных: на фичу 2–4 теста (сквозной сценарий + ошибки/границы + неочевидные ветки). Не по тесту на метод, без тестов на геттеры и конфиги, **демо-режим (DemoService/DemoController) тестами не покрывать**.
 - Основной вид: `@SpringBootTest` + `MockMvc` на H2 (`@ActiveProfiles("h2")`), ничего своего не мокать. Testcontainers только в `PostgresMigrationsTest`.
@@ -47,3 +49,14 @@
 - Общие шаги (зарегистрировать и войти, создать админа, создать событие) вынеси в один хелпер в `e2e/support/`, чтобы не копировать их по классам.
 - Контекст Spring и H2 общие для тестов: давай пользователям уникальные имена (суффикс), чтобы тесты не мешали друг другу.
 - Даты событий — в будущем от текущего момента (`Instant.now().plus(2, DAYS)`). Событие «уже началось» через API не создать: если ветка нужна, подготовь его через репозиторий.
+
+## Иллюстрации видов спорта
+
+Стиль, сцены и устройство API — в `docs/sport-images.md`. Генерация одной картинки (stdin обязательно закрыть, иначе `codex exec` ждёт ввода):
+
+```bash
+codex exec --skip-git-repo-check -s workspace-write -C /tmp/sport-img \
+  "Generate ONE image with your image generation tool, then save it as ./<slug>.png in the current directory. Do nothing else. Prompt: <СТИЛЬ> Scene: <СЦЕНА>" < /dev/null
+```
+
+Одна картинка — около 24 тысяч токенов и 3–5 минут. Дальше конвертация в WebP 640×640 и файл `backend/src/main/resources/sport-images/<slug>.webp`.

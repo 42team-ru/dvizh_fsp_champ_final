@@ -6,6 +6,105 @@
  * OpenAPI spec version: v1
  */
 /**
+ * Код слота → код вещи. Чтобы снять вещь, не передавайте слот (null тоже снимает)
+ */
+export type PetRequestOutfit = {[key: string]: string};
+
+/**
+ * Полная замена образа бобра
+ */
+export interface PetRequest {
+  /** Настроение */
+  mood: string;
+  /** Инвентарь; none — без инвентаря */
+  activity: string;
+  /** Код слота → код вещи. Чтобы снять вещь, не передавайте слот (null тоже снимает) */
+  outfit: PetRequestOutfit;
+}
+
+export type ProblemDetailProperties = {[key: string]: unknown};
+
+export interface ProblemDetail {
+  type?: string;
+  title?: string;
+  status?: number;
+  detail?: string;
+  instance?: string;
+  properties?: ProblemDetailProperties;
+}
+
+/**
+ * Надеть вещь в один слот или снять её
+ */
+export interface PetEquipRequest {
+  /** Код вещи из этого слота; null — снять (настроение станет idle, инвентарь — none) */
+  item?: string;
+}
+
+export type SaveOrganizationRequestContacts = {[key: string]: string};
+
+export interface SaveOrganizationRequest {
+  /**
+     * @minLength 0
+     * @maxLength 200
+     */
+  name: string;
+  /**
+     * @minLength 0
+     * @maxLength 5000
+     */
+  description: string;
+  /**
+     * @minLength 0
+     * @maxLength 100
+     */
+  city?: string;
+  contacts: SaveOrganizationRequestContacts;
+}
+
+/**
+ * Загруженный файл
+ */
+export interface FileResponse {
+  id: string;
+  /** Адрес для скачивания и показа: /api/files/{id} */
+  url: string;
+  /** Имя файла, как его загрузили */
+  name: string;
+  /** MIME-тип */
+  contentType: string;
+  /** Размер в байтах */
+  size: number;
+}
+
+export type OrganizationResponseContacts = {[key: string]: string};
+
+export type OrganizationResponseStatus = typeof OrganizationResponseStatus[keyof typeof OrganizationResponseStatus];
+
+
+export const OrganizationResponseStatus = {
+  PENDING: 'PENDING',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+} as const;
+
+export interface OrganizationResponse {
+  id?: string;
+  name?: string;
+  description?: string;
+  city?: string;
+  contacts?: OrganizationResponseContacts;
+  status?: OrganizationResponseStatus;
+  rejectReason?: string;
+  submittedAt?: string;
+  reviewedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  logoUrl?: string;
+  documents?: FileResponse[];
+}
+
+/**
  * Очно или онлайн
  */
 export type EventRequestFormat = typeof EventRequestFormat[keyof typeof EventRequestFormat];
@@ -55,6 +154,48 @@ export const EventRequestJoinMode = {
 } as const;
 
 /**
+ * Правило расписания: первое занятие, длительность и RRULE
+ */
+export interface ScheduleRuleRequest {
+  /** Первое занятие по правилу: местные дата и время в часовом поясе серии, без смещения. Должно попадать в границы серии; от него считается «раз в N недель» */
+  firstStart: string;
+  /**
+     * Длительность каждого занятия, минуты
+     * @minimum 1
+     * @maximum 1440
+     */
+  durationMinutes: number;
+  /**
+     * Правило повторения по RFC 5545 (префикс RRULE: можно не писать). Не чаще раза в день; COUNT и UNTIL можно, но занятия всё равно режутся границами серии
+     * @minLength 0
+     * @maxLength 500
+     */
+  rrule: string;
+}
+
+/**
+ * Расписание серии: часовой пояс, границы по датам и правила повторения
+ */
+export interface ScheduleRequest {
+  /**
+     * Часовой пояс (IANA), в нём считаются даты и время правил
+     * @minLength 0
+     * @maxLength 64
+     */
+  timeZone: string;
+  /** Первый день серии, включительно */
+  startDate: string;
+  /** Последний день серии, включительно; не позже чем через год после первого */
+  endDate: string;
+  /**
+     * Правила повторения, от 1 до 10
+     * @minItems 0
+     * @maxItems 10
+     */
+  rules: ScheduleRuleRequest[];
+}
+
+/**
  * Форма мероприятия: создание и полная замена при редактировании
  */
 export interface EventRequest {
@@ -78,9 +219,9 @@ export interface EventRequest {
      * @maxLength 100
      */
   sportName?: string;
-  /** Начало, в будущем */
-  startAt: string;
-  /** Окончание, позже начала */
+  /** Начало разового мероприятия, в будущем; у повторяющегося не передаётся */
+  startAt?: string;
+  /** Окончание разового мероприятия, позже начала; у повторяющегося не передаётся */
   endAt?: string;
   /** Очно или онлайн */
   format: EventRequestFormat;
@@ -103,13 +244,13 @@ export interface EventRequest {
      */
   onlineUrl?: string;
   /**
-     * Широта
+     * Широта точки на карте; обязательна для очного, у онлайн не сохраняется
      * @minimum -90
      * @maximum 90
      */
   lat?: number;
   /**
-     * Долгота
+     * Долгота точки на карте; обязательна для очного, у онлайн не сохраняется
      * @minimum -180
      * @maximum 180
      */
@@ -131,7 +272,7 @@ export interface EventRequest {
      */
   equipment?: string;
   /**
-     * Лимит мест; пусто — без лимита
+     * Лимит мест; пусто — без лимита. У повторяющегося — на каждое занятие
      * @minimum 1
      * @maximum 10000
      */
@@ -144,17 +285,24 @@ export interface EventRequest {
      * @maxLength 2000
      */
   privateDetails?: string;
+  /** Расписание повторяющегося мероприятия; null — разовое */
+  schedule?: ScheduleRequest;
+  /**
+     * Кворум: состоится, если наберём столько; пусто — без кворума. Не больше лимита мест. У повторяющегося — на каждое занятие
+     * @minimum 1
+     * @maximum 10000
+     */
+  minParticipants?: number;
 }
 
-export type ProblemDetailProperties = {[key: string]: unknown};
-
-export interface ProblemDetail {
-  type?: string;
-  title?: string;
-  status?: number;
-  detail?: string;
-  instance?: string;
-  properties?: ProblemDetailProperties;
+/**
+ * Время занятия: для добавления разовой даты или переноса
+ */
+export interface OccurrenceRequest {
+  /** Начало, в будущем и в границах серии */
+  startAt: string;
+  /** Окончание, позже начала. При переносе можно не указывать — длительность сохранится; у разовой даты обязательно */
+  endAt?: string;
 }
 
 /**
@@ -241,6 +389,8 @@ export interface SportResponse {
   slug: string;
   /** Добавлен пользователем, а не из справочника */
   custom: boolean;
+  /** Иллюстрация вида спорта; у видов без своей картинки — общая */
+  imageUrl: string;
 }
 
 /**
@@ -268,6 +418,158 @@ export interface OrganizerResponse {
   user: UserShortResponse;
   /** Автор мероприятия; его нельзя убрать, только он меняет состав организаторов */
   author: boolean;
+}
+
+/**
+ * Организация в карточке мероприятия: ссылка на её публичную страницу
+ */
+export interface OrganizationShortResponse {
+  id: string;
+  /** Название */
+  name: string;
+}
+
+/**
+ * Правило расписания серии
+ */
+export interface ScheduleRuleResponse {
+  /** Первое занятие по правилу, местное время серии */
+  firstStart: string;
+  /** Длительность занятия, минуты */
+  durationMinutes: number;
+  /** Правило повторения RFC 5545 */
+  rrule: string;
+  /** Правило словами */
+  description: string;
+}
+
+/**
+ * Расписание серии
+ */
+export interface ScheduleResponse {
+  /** Часовой пояс (IANA) */
+  timeZone: string;
+  /** Первый день серии */
+  startDate: string;
+  /** Последний день серии */
+  endDate: string;
+  /** Правила по порядку */
+  rules: ScheduleRuleResponse[];
+  /** Всё расписание словами */
+  description: string;
+}
+
+/**
+ * Занятие коротко: когда
+ */
+export interface OccurrenceShortResponse {
+  id: string;
+  /** Начало */
+  startAt: string;
+  /** Окончание */
+  endAt?: string;
+}
+
+/**
+ * Откуда занятие: разовое мероприятие, правило или добавленная дата
+ */
+export type OccurrenceResponseSource = typeof OccurrenceResponseSource[keyof typeof OccurrenceResponseSource];
+
+
+export const OccurrenceResponseSource = {
+  SINGLE: 'SINGLE',
+  RULE: 'RULE',
+  EXTRA: 'EXTRA',
+} as const;
+
+/**
+ * Состоится или отменено
+ */
+export type OccurrenceResponseStatus = typeof OccurrenceResponseStatus[keyof typeof OccurrenceResponseStatus];
+
+
+export const OccurrenceResponseStatus = {
+  SCHEDULED: 'SCHEDULED',
+  CANCELLED: 'CANCELLED',
+} as const;
+
+/**
+ * Собираем, набрали или организатор подтвердил
+ */
+export type QuorumResponseStatus = typeof QuorumResponseStatus[keyof typeof QuorumResponseStatus];
+
+
+export const QuorumResponseStatus = {
+  GATHERING: 'GATHERING',
+  REACHED: 'REACHED',
+  CONFIRMED: 'CONFIRMED',
+} as const;
+
+/**
+ * Кворум занятия: состоится, если наберём required
+ */
+export interface QuorumResponse {
+  /** Сколько нужно, чтобы занятие состоялось */
+  required: number;
+  /** Сколько уже придёт: отметки (у разового — подтверждённые записи) */
+  count: number;
+  /** Собираем, набрали или организатор подтвердил */
+  status: QuorumResponseStatus;
+  /** Состоится: набрали или подтвердил организатор */
+  takesPlace: boolean;
+}
+
+/**
+ * Мои права на занятие: фронт рисует кнопки только по этому блоку
+ */
+export interface OccurrenceViewerResponse {
+  /** Я приду: отметился на занятие (у разового — подтверждённая запись) */
+  attending: boolean;
+  /** Можно отметиться «приду» */
+  canAttend: boolean;
+  /** Почему нельзя отметиться; null — можно */
+  attendBlockedReason?: string;
+  /** Можно снять отметку */
+  canUnattend: boolean;
+  /** Могу отменить занятие (организатор; у разового — всё мероприятие) */
+  canCancel: boolean;
+  /** Могу перенести занятие (организатор серии) */
+  canReschedule: boolean;
+  /** Могу подтвердить «Состоится» (организатор, у мероприятия есть кворум) */
+  canConfirm: boolean;
+}
+
+/**
+ * Занятие мероприятия
+ */
+export interface OccurrenceResponse {
+  id: string;
+  /** Мероприятие */
+  eventId: string;
+  /** Начало (после переноса — новое) */
+  startAt: string;
+  /** Окончание */
+  endAt?: string;
+  /** Перенесено: начало отличается от исходного по расписанию */
+  rescheduled: boolean;
+  /** Исходное начало по расписанию; null — не из правила */
+  originalStartAt?: string;
+  /** Откуда занятие: разовое мероприятие, правило или добавленная дата */
+  source: OccurrenceResponseSource;
+  /** Состоится или отменено */
+  status: OccurrenceResponseStatus;
+  /** Причина отмены */
+  cancelReason?: string;
+  /** Сколько придёт: отметки (у разового — подтверждённые записи) */
+  attendeesCount: number;
+  /** Лимит мест на занятие; null — без лимита */
+  capacity?: number;
+  /** Кворум занятия; null — у мероприятия кворума нет */
+  quorum?: QuorumResponse;
+  /** Когда организатор подтвердил, что занятие состоится */
+  confirmedAt?: string;
+  /** Что могу делать я */
+  viewer: OccurrenceViewerResponse;
 }
 
 /**
@@ -303,6 +605,8 @@ export interface ViewerResponse {
   canCancel: boolean;
   /** Вижу onlineUrl и privateDetails */
   canSeePrivateDetails: boolean;
+  /** Могу написать в обсуждение */
+  canComment: boolean;
 }
 
 /**
@@ -322,10 +626,18 @@ export interface EventResponse {
   organizers: OrganizerResponse[];
   /** Организация, от имени которой мероприятие; null — от частного лица */
   organizationId?: string;
-  /** Начало */
+  /** Организация для ссылки на её страницу; null — от частного лица */
+  organization?: OrganizationShortResponse;
+  /** Начало; у серии — первого занятия (ближайшее — в nextOccurrence) */
   startAt: string;
-  /** Окончание */
+  /** Окончание; у серии — первого занятия */
   endAt?: string;
+  /** Повторяющееся мероприятие (серия занятий) */
+  recurring: boolean;
+  /** Расписание серии; null — разовое */
+  schedule?: ScheduleResponse;
+  /** Ближайшее будущее занятие, которое состоится; null — таких нет. Все занятия — occurrences_list */
+  nextOccurrence?: OccurrenceShortResponse;
   /** Очно или онлайн */
   format: EventResponseFormat;
   /** Адрес */
@@ -348,11 +660,15 @@ export interface EventResponse {
   equipment?: string;
   /** Детали для участников; null, если viewer.canSeePrivateDetails = false */
   privateDetails?: string;
-  /** Лимит мест; null — без лимита */
+  /** Лимит мест; null — без лимита. У серии — на каждое занятие */
   capacity?: number;
-  /** Подтверждённых участников */
+  /** Кворум: состоится, если наберём столько; null — без кворума. У серии — на каждое занятие */
+  minParticipants?: number;
+  /** Занятие разового мероприятия: статус (отменено организатором — с причиной), кворум и кнопки; у серии — null, её занятия — occurrences_list */
+  singleOccurrence?: OccurrenceResponse;
+  /** Подтверждённых участников (у серии — принятых в серию) */
   participantsCount: number;
-  /** Подтверждённые участники */
+  /** Подтверждённые участники (у серии — принятые в серию) */
   participants: UserShortResponse[];
   /** Режим записи */
   joinMode: EventResponseJoinMode;
@@ -362,6 +678,8 @@ export interface EventResponse {
   moderationReason?: string;
   /** Когда снято или удалено */
   moderatedAt?: string;
+  /** Фото по порядку, первое — обложка; до 6 */
+  photos: FileResponse[];
   /** Что могу делать я */
   viewer: ViewerResponse;
   createdAt: string;
@@ -427,6 +745,52 @@ export interface AddOrganizerRequest {
   login: string;
 }
 
+/**
+ * Отмена занятия серии
+ */
+export interface CancelOccurrenceRequest {
+  /**
+     * Причина; участники увидят её у занятия
+     * @minLength 0
+     * @maxLength 1000
+     */
+  reason: string;
+}
+
+/**
+ * Новый комментарий в обсуждении мероприятия
+ */
+export interface CommentRequest {
+  /**
+     * Текст
+     * @minLength 0
+     * @maxLength 2000
+     */
+  text: string;
+}
+
+/**
+ * Комментарий в обсуждении мероприятия
+ */
+export interface CommentResponse {
+  id: string;
+  /** Автор */
+  author: UserShortResponse;
+  /** Текст */
+  text: string;
+  /** Автор — организатор мероприятия: показать метку «Организатор» */
+  isOrganizer: boolean;
+  createdAt: string;
+}
+
+export type RegisterRequestAccountType = typeof RegisterRequestAccountType[keyof typeof RegisterRequestAccountType];
+
+
+export const RegisterRequestAccountType = {
+  USER: 'USER',
+  ORG: 'ORG',
+} as const;
+
 export interface RegisterRequest {
   /**
      * @minLength 3
@@ -453,6 +817,7 @@ export interface RegisterRequest {
      * @maxLength 128
      */
   password: string;
+  accountType?: RegisterRequestAccountType;
 }
 
 export type UserResponseSystemRole = typeof UserResponseSystemRole[keyof typeof UserResponseSystemRole];
@@ -460,6 +825,7 @@ export type UserResponseSystemRole = typeof UserResponseSystemRole[keyof typeof 
 
 export const UserResponseSystemRole = {
   USER: 'USER',
+  ORG: 'ORG',
   ADMIN: 'ADMIN',
 } as const;
 
@@ -492,6 +858,140 @@ export interface LoginRequest {
   username: string;
   /** @minLength 1 */
   password: string;
+}
+
+/**
+ * Новый слот одежды бобра (атрибут)
+ */
+export interface PetSlotRequest {
+  /**
+     * Код: латиница в нижнем регистре, цифры, дефис; потом не меняется
+     * @minLength 1
+     * @pattern [a-z][a-z0-9-]{1,39}
+     */
+  code: string;
+  /**
+     * Подпись
+     * @minLength 0
+     * @maxLength 100
+     */
+  label: string;
+}
+
+/**
+ * Вещь бобра в каталоге
+ */
+export interface PetItemResponse {
+  /** Код вещи — его передают в образе */
+  id: string;
+  /** Подпись */
+  label: string;
+  /** Картинка вещи, добавленной админом (/api/files/{id}); null — встроенная, её рисует фронт */
+  imageUrl?: string;
+  /** Встроенная (рисует фронт) */
+  builtIn: boolean;
+}
+
+/**
+ * MOOD — поле mood, ACTIVITY — поле activity, OUTFIT — ключ в outfit
+ */
+export type PetSlotResponseKind = typeof PetSlotResponseKind[keyof typeof PetSlotResponseKind];
+
+
+export const PetSlotResponseKind = {
+  MOOD: 'MOOD',
+  ACTIVITY: 'ACTIVITY',
+  OUTFIT: 'OUTFIT',
+} as const;
+
+/**
+ * Слот бобра с вещами
+ */
+export interface PetSlotResponse {
+  /** Код слота: mood, activity или ключ в outfit */
+  id: string;
+  /** Подпись */
+  label: string;
+  /** MOOD — поле mood, ACTIVITY — поле activity, OUTFIT — ключ в outfit */
+  kind: PetSlotResponseKind;
+  /** Встроенный слот */
+  builtIn: boolean;
+  /** Вещи по порядку */
+  items: PetItemResponse[];
+}
+
+export interface RejectOrganizationRequest {
+  /**
+     * @minLength 0
+     * @maxLength 1000
+     */
+  reason: string;
+}
+
+export type AdminOrganizationResponseContacts = {[key: string]: string};
+
+export type AdminOrganizationResponseStatus = typeof AdminOrganizationResponseStatus[keyof typeof AdminOrganizationResponseStatus];
+
+
+export const AdminOrganizationResponseStatus = {
+  PENDING: 'PENDING',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+} as const;
+
+export interface OrganizationAccountResponse {
+  id?: string;
+  username?: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+}
+
+export interface AdminOrganizationResponse {
+  id?: string;
+  name?: string;
+  description?: string;
+  city?: string;
+  contacts?: AdminOrganizationResponseContacts;
+  status?: AdminOrganizationResponseStatus;
+  rejectReason?: string;
+  submittedAt?: string;
+  reviewedAt?: string;
+  reviewedById?: string;
+  account?: OrganizationAccountResponse;
+  createdAt?: string;
+  updatedAt?: string;
+  logoUrl?: string;
+  documents?: FileResponse[];
+}
+
+/**
+ * Снятие с публикации или удаление мероприятия админом
+ */
+export interface ModerateEventRequest {
+  /**
+     * Причина: её увидят записавшиеся и организатор
+     * @minLength 0
+     * @maxLength 1000
+     */
+  reason: string;
+}
+
+/**
+ * Надетое: код слота → код вещи. Пустой слот отсутствует в объекте
+ */
+export type PetResponseOutfit = {[key: string]: string};
+
+/**
+ * Образ бобра: коды вещей из каталога. Без сохранённых настроек — {mood: idle, activity: none, outfit: {}}
+ */
+export interface PetResponse {
+  /** Настроение */
+  mood: string;
+  /** Инвентарь; none — без инвентаря */
+  activity: string;
+  /** Надетое: код слота → код вещи. Пустой слот отсутствует в объекте */
+  outfit: PetResponseOutfit;
 }
 
 /**
@@ -544,6 +1044,18 @@ export const EventSummaryResponseJoinMode = {
 } as const;
 
 /**
+ * Кворум ближайшего подходящего занятия; null — без кворума или занятия нет
+ */
+export type EventSummaryResponseQuorumStatus = typeof EventSummaryResponseQuorumStatus[keyof typeof EventSummaryResponseQuorumStatus];
+
+
+export const EventSummaryResponseQuorumStatus = {
+  GATHERING: 'GATHERING',
+  REACHED: 'REACHED',
+  CONFIRMED: 'CONFIRMED',
+} as const;
+
+/**
  * Статус мероприятия
  */
 export type EventSummaryResponseStatus = typeof EventSummaryResponseStatus[keyof typeof EventSummaryResponseStatus];
@@ -577,10 +1089,16 @@ export interface EventSummaryResponse {
   title: string;
   /** Вид спорта */
   sport: SportResponse;
-  /** Начало */
+  /** Начало; у серии — ближайшего подходящего занятия */
   startAt: string;
-  /** Окончание */
+  /** Окончание; у серии — ближайшего подходящего занятия */
   endAt?: string;
+  /** Занятие, к которому относятся startAt и endAt; null — подходящих нет */
+  occurrenceId?: string;
+  /** Повторяющееся мероприятие (серия занятий) */
+  recurring: boolean;
+  /** Расписание словами; null — разовое */
+  scheduleDescription?: string;
   /** Очно или онлайн */
   format: EventSummaryResponseFormat;
   /** Адрес */
@@ -593,10 +1111,18 @@ export interface EventSummaryResponse {
   kind?: EventSummaryResponseKind;
   /** Режим записи */
   joinMode: EventSummaryResponseJoinMode;
-  /** Лимит мест; null — без лимита */
+  /** Лимит мест; null — без лимита. У серии — на каждое занятие */
   capacity?: number;
-  /** Подтверждённых участников («записались 8 из 16») */
+  /** Подтверждённых участников («записались 8 из 16»); у серии — принятых в серию */
   participantsCount: number;
+  /** У серии — сколько отметились на занятие occurrenceId («придут 7 из 10»); у разового — null */
+  occurrenceAttendeesCount?: number;
+  /** Кворум: состоится, если наберём столько; null — без кворума */
+  minParticipants?: number;
+  /** Кворум ближайшего подходящего занятия; null — без кворума или занятия нет */
+  quorumStatus?: EventSummaryResponseQuorumStatus;
+  /** Разовое мероприятие отменено организатором (у серии отменяются отдельные занятия) */
+  cancelledByOrganizer: boolean;
   /** Статус мероприятия */
   status: EventSummaryResponseStatus;
   /** Причина снятия с публикации или удаления */
@@ -607,6 +1133,8 @@ export interface EventSummaryResponse {
   organizationId?: string;
   /** Статус моей записи; null — не записан */
   myRegistrationStatus?: EventSummaryResponseMyRegistrationStatus;
+  /** Обложка (первое фото): /api/files/{id}; null — без фото */
+  coverUrl?: string;
 }
 
 /**
@@ -638,6 +1166,8 @@ export interface MyRegistrationResponse {
   createdAt: string;
   /** Мероприятие; event.status — снято ли оно с публикации */
   event: EventSummaryResponse;
+  /** У серии — моё ближайшее отмеченное занятие; null — не отмечен или разовое */
+  myNextOccurrence?: OccurrenceShortResponse;
 }
 
 export interface PingResponse {
@@ -645,11 +1175,160 @@ export interface PingResponse {
   time?: string;
 }
 
+/**
+ * Каталог бобра: слоты по порядку конструктора, в каждом — вещи
+ */
+export interface PetCatalogResponse {
+  slots: PetSlotResponse[];
+}
+
+export type PublicOrganizationResponseContacts = {[key: string]: string};
+
+export interface PublicOrganizationResponse {
+  id?: string;
+  name?: string;
+  description?: string;
+  city?: string;
+  contacts?: PublicOrganizationResponseContacts;
+  logoUrl?: string;
+  documents?: FileResponse[];
+}
+
+export type EventMapFeatureType = typeof EventMapFeatureType[keyof typeof EventMapFeatureType];
+
+
+export const EventMapFeatureType = {
+  Feature: 'Feature',
+} as const;
+
+export type PointGeometryType = typeof PointGeometryType[keyof typeof PointGeometryType];
+
+
+export const PointGeometryType = {
+  Point: 'Point',
+} as const;
+
+/**
+ * GeoJSON Point
+ */
+export interface PointGeometry {
+  type: PointGeometryType;
+  /**
+     * [долгота, широта] — именно в таком порядке
+     * @minItems 2
+     * @maxItems 2
+     */
+  coordinates: number[];
+}
+
+/**
+ * Для какого уровня
+ */
+export type EventMapPropertiesLevel = typeof EventMapPropertiesLevel[keyof typeof EventMapPropertiesLevel];
+
+
+export const EventMapPropertiesLevel = {
+  ANY: 'ANY',
+  BEGINNER: 'BEGINNER',
+  AMATEUR: 'AMATEUR',
+  ADVANCED: 'ADVANCED',
+  PRO: 'PRO',
+} as const;
+
+/**
+ * Режим записи
+ */
+export type EventMapPropertiesJoinMode = typeof EventMapPropertiesJoinMode[keyof typeof EventMapPropertiesJoinMode];
+
+
+export const EventMapPropertiesJoinMode = {
+  FREE: 'FREE',
+  REQUEST: 'REQUEST',
+} as const;
+
+/**
+ * Статус моей записи; null — не записан
+ */
+export type EventMapPropertiesMyRegistrationStatus = typeof EventMapPropertiesMyRegistrationStatus[keyof typeof EventMapPropertiesMyRegistrationStatus];
+
+
+export const EventMapPropertiesMyRegistrationStatus = {
+  CONFIRMED: 'CONFIRMED',
+  PENDING: 'PENDING',
+  REJECTED: 'REJECTED',
+  CANCELLED: 'CANCELLED',
+} as const;
+
+/**
+ * Свойства точки на карте: хватает на маркер и короткую карточку
+ */
+export interface EventMapProperties {
+  id: string;
+  /** Название */
+  title: string;
+  /** Вид спорта */
+  sport: SportResponse;
+  /** Начало; у серии — ближайшего занятия в периоде */
+  startAt: string;
+  /** Окончание; у серии — ближайшего занятия в периоде */
+  endAt?: string;
+  /** Занятие, к которому относятся startAt и endAt */
+  occurrenceId?: string;
+  /** Повторяющееся мероприятие (серия занятий) */
+  recurring: boolean;
+  /** Расписание словами; null — разовое */
+  scheduleDescription?: string;
+  /** Адрес */
+  address?: string;
+  /** Для какого уровня */
+  level: EventMapPropertiesLevel;
+  /** Режим записи */
+  joinMode: EventMapPropertiesJoinMode;
+  /** Подтверждённых участников */
+  participantsCount: number;
+  /** Лимит мест; null — без лимита */
+  capacity?: number;
+  /** Статус моей записи; null — не записан */
+  myRegistrationStatus?: EventMapPropertiesMyRegistrationStatus;
+}
+
+/**
+ * GeoJSON Feature: мероприятие на карте
+ */
+export interface EventMapFeature {
+  type: EventMapFeatureType;
+  /** id мероприятия */
+  id: string;
+  geometry: PointGeometry;
+  properties: EventMapProperties;
+}
+
+export type EventMapResponseType = typeof EventMapResponseType[keyof typeof EventMapResponseType];
+
+
+export const EventMapResponseType = {
+  FeatureCollection: 'FeatureCollection',
+} as const;
+
+/**
+ * GeoJSON FeatureCollection с мероприятиями в видимой области
+ */
+export interface EventMapResponse {
+  type: EventMapResponseType;
+  /** Ближайшие по времени начала, не больше limit */
+  features: EventMapFeature[];
+  /** В области больше limit мероприятий: показаны не все, стоит приблизить карту */
+  truncated: boolean;
+  /** Сколько точек отдаётся максимум */
+  limit: number;
+}
+
 export type DemoAccountResponseSystemRole = typeof DemoAccountResponseSystemRole[keyof typeof DemoAccountResponseSystemRole];
 
 
 export const DemoAccountResponseSystemRole = {
   USER: 'USER',
+  ORG: 'ORG',
   ADMIN: 'ADMIN',
 } as const;
 
@@ -670,6 +1349,7 @@ export type MeResponseSystemRole = typeof MeResponseSystemRole[keyof typeof MeRe
 
 export const MeResponseSystemRole = {
   USER: 'USER',
+  ORG: 'ORG',
   ADMIN: 'ADMIN',
 } as const;
 
@@ -695,7 +1375,115 @@ export interface MeResponse {
   bio?: string;
   avatarUrl?: string;
   city?: string;
+  pet?: PetResponse;
 }
+
+/**
+ * Значение за день
+ */
+export interface DailyCountResponse {
+  /** День (по Красноярску) */
+  date: string;
+  /** Сколько за этот день */
+  count: number;
+}
+
+/**
+ * Счётчики для дашборда админа
+ */
+export interface AdminStatsResponse {
+  /** Пользователей всего (люди и организации) */
+  users: number;
+  /** Заявок организаций ждут решения */
+  organizationsPending: number;
+  /** Одобренных организаций */
+  organizationsApproved: number;
+  /** Опубликованных мероприятий */
+  eventsPublished: number;
+  /** Снятых с публикации */
+  eventsUnpublished: number;
+  /** Удалённых */
+  eventsDeleted: number;
+  /** Подтверждённых записей */
+  registrationsConfirmed: number;
+  /** Заявок ждут решения организаторов */
+  registrationsPending: number;
+  /** Комментариев */
+  comments: number;
+  /** Сколько присоединилось по дням (регистрации), старые дни сначала, дни без регистраций — с нулём */
+  signupsByDay: DailyCountResponse[];
+}
+
+export interface PageResponseAdminOrganizationResponse {
+  items?: AdminOrganizationResponse[];
+  page?: number;
+  size?: number;
+  totalElements?: number;
+  totalPages?: number;
+}
+
+/**
+ * Статус
+ */
+export type AdminEventResponseStatus = typeof AdminEventResponseStatus[keyof typeof AdminEventResponseStatus];
+
+
+export const AdminEventResponseStatus = {
+  PUBLISHED: 'PUBLISHED',
+  UNPUBLISHED: 'UNPUBLISHED',
+  DELETED: 'DELETED',
+} as const;
+
+/**
+ * Мероприятие в админке: статус модерации и кто автор
+ */
+export interface AdminEventResponse {
+  id: string;
+  /** Название */
+  title: string;
+  /** Вид спорта */
+  sport: SportResponse;
+  /** Начало */
+  startAt: string;
+  /** Адрес */
+  address?: string;
+  /** Автор */
+  author: UserShortResponse;
+  /** Организация; null — от частного лица */
+  organizationId?: string;
+  /** Подтверждённых участников */
+  participantsCount: number;
+  /** Статус */
+  status: AdminEventResponseStatus;
+  /** Причина снятия или удаления */
+  moderationReason?: string;
+  /** Когда снято или удалено */
+  moderatedAt?: string;
+  createdAt: string;
+}
+
+export interface PageResponseAdminEventResponse {
+  items?: AdminEventResponse[];
+  page?: number;
+  size?: number;
+  totalElements?: number;
+  totalPages?: number;
+}
+
+export type UsersUploadAvatarBody = {
+  /** Изображение */
+  file: Blob | File;
+};
+
+export type OrganizationsUploadLogoBody = {
+  /** Изображение */
+  file: Blob | File;
+};
+
+export type OrganizationsAddDocumentBody = {
+  /** Документ */
+  file: Blob | File;
+};
 
 export type EventsListParams = {
 /**
@@ -726,6 +1514,10 @@ joinMode?: EventsListJoinMode;
  * Очно или онлайн
  */
 format?: EventsListFormat;
+/**
+ * Только мероприятия этой организации — для её публичной страницы
+ */
+organizationId?: string;
 };
 
 export type EventsListLevel = typeof EventsListLevel[keyof typeof EventsListLevel];
@@ -769,12 +1561,114 @@ export const RegistrationsListForEventStatus = {
   CANCELLED: 'CANCELLED',
 } as const;
 
+export type EventsAddPhotoBody = {
+  /** Изображение */
+  file: Blob | File;
+};
+
+export type OccurrencesListParams = {
+/**
+ * Начало не раньше
+ */
+from?: string;
+/**
+ * Начало не позже
+ */
+to?: string;
+};
+
+export type AdminCreatePetItemParams = {
+/**
+ * Код: латиница в нижнем регистре, цифры, дефис
+ */
+code: string;
+/**
+ * Подпись
+ */
+label: string;
+};
+
+export type AdminCreatePetItemBody = {
+  /** Картинка вещи */
+  file: Blob | File;
+};
+
 export type SportsSearchParams = {
 /**
  * Часть названия
  */
 query?: string;
 };
+
+export type EventsMapParams = {
+/**
+ * Западная граница (долгота юго-западного угла)
+ * @minimum -180
+ * @maximum 180
+ */
+minLon: number;
+/**
+ * Южная граница (широта юго-западного угла)
+ * @minimum -90
+ * @maximum 90
+ */
+minLat: number;
+/**
+ * Восточная граница (долгота северо-восточного угла)
+ * @minimum -180
+ * @maximum 180
+ */
+maxLon: number;
+/**
+ * Северная граница (широта северо-восточного угла)
+ * @minimum -90
+ * @maximum 90
+ */
+maxLat: number;
+/**
+ * Начало не раньше; по умолчанию и не раньше чем сейчас
+ */
+from?: string;
+/**
+ * Начало не позже; по умолчанию from + 30 дней
+ */
+to?: string;
+/**
+ * Поиск по названию и описанию без учёта регистра
+ */
+searchText?: string;
+/**
+ * Вид спорта
+ */
+sportId?: string;
+/**
+ * Уровень; мероприятия «Любой уровень» подходят под любой
+ */
+level?: EventsMapLevel;
+/**
+ * Режим записи
+ */
+joinMode?: EventsMapJoinMode;
+};
+
+export type EventsMapLevel = typeof EventsMapLevel[keyof typeof EventsMapLevel];
+
+
+export const EventsMapLevel = {
+  ANY: 'ANY',
+  BEGINNER: 'BEGINNER',
+  AMATEUR: 'AMATEUR',
+  ADVANCED: 'ADVANCED',
+  PRO: 'PRO',
+} as const;
+
+export type EventsMapJoinMode = typeof EventsMapJoinMode[keyof typeof EventsMapJoinMode];
+
+
+export const EventsMapJoinMode = {
+  FREE: 'FREE',
+  REQUEST: 'REQUEST',
+} as const;
 
 export type AuthCheckUsernameParams = {
 username: string;
@@ -783,4 +1677,43 @@ username: string;
 export type AuthCheckEmailParams = {
 email: string;
 };
+
+export type AdminStatsParams = {
+/**
+ * За сколько последних дней график регистраций (1–366)
+ */
+days?: number;
+};
+
+export type AdminListOrganizationsParams = {
+status?: AdminListOrganizationsStatus;
+searchText?: string;
+page?: number;
+size?: number;
+};
+
+export type AdminListOrganizationsStatus = typeof AdminListOrganizationsStatus[keyof typeof AdminListOrganizationsStatus];
+
+
+export const AdminListOrganizationsStatus = {
+  PENDING: 'PENDING',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+} as const;
+
+export type AdminListEventsParams = {
+status?: AdminListEventsStatus;
+searchText?: string;
+page?: number;
+size?: number;
+};
+
+export type AdminListEventsStatus = typeof AdminListEventsStatus[keyof typeof AdminListEventsStatus];
+
+
+export const AdminListEventsStatus = {
+  PUBLISHED: 'PUBLISHED',
+  UNPUBLISHED: 'UNPUBLISHED',
+  DELETED: 'DELETED',
+} as const;
 

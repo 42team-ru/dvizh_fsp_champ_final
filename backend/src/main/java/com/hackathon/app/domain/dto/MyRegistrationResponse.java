@@ -18,5 +18,7 @@ public record MyRegistrationResponse(
 		@Schema(description = "Когда решено") Instant decidedAt,
 		@Schema(requiredMode = REQUIRED) Instant createdAt,
 		@Schema(description = "Мероприятие; event.status — снято ли оно с публикации", requiredMode = REQUIRED)
-		EventSummaryResponse event) {
+		EventSummaryResponse event,
+		@Schema(description = "У серии — моё ближайшее отмеченное занятие; null — не отмечен или разовое")
+		OccurrenceShortResponse myNextOccurrence) {
 }

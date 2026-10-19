@@ -2,10 +2,10 @@
 #   docker compose up --build        ->  http://localhost:8080
 # Ничего ставить не нужно, кроме Docker. Всё собирается из исходников.
 # Тот же файл годится для ручного деплоя на сервер через git clone (docs/dev-faq.md): настройки через .env рядом с файлом
-# или переменные окружения: PORT, HTTPS_PORT, DOMAIN, DB_PASSWORD, JWT_SECRET, DEMO_MODE, CORS_ORIGINS.
+# или переменные окружения: PORT, HTTPS_PORT, DOMAIN, DB_PASSWORD, JWT_SECRET, S3_SECRET_KEY, DEMO_MODE, CORS_ORIGINS.
 services:
   db:
-    image: postgres:18-alpine
+    image: postgis/postgis:18-3.6-alpine
     restart: unless-stopped
     environment:
       POSTGRES_DB: app
@@ -15,6 +15,22 @@ services:
       - pgdata:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U app -d app"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  # S3-хранилище файлов. Наружу не публикуется: файлы отдаёт бэкенд через /api/files/{id}.
+  minio:
+    image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
+    restart: unless-stopped
+    command: server /data --console-address :9001
+    environment:
+      MINIO_ROOT_USER: app
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-demo-only-s3-secret}
+    volumes:
+      - miniodata:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
       interval: 3s
       timeout: 3s
       retries: 20
@@ -29,10 +45,15 @@ services:
       JWT_SECRET: ${JWT_SECRET:-demo-only-secret-demo-only-secret-demo}
       # Демо-режим для жюри: CORS открыт для любого origin. В проде (deploy/) остаётся строгий список.
       CORS_ORIGINS: ${CORS_ORIGINS:-*}
-      # Демо-режим: тестовые аккаунты admin / ivan / maria (пароль demo-password-1); кнопки на странице входа подставляют их в форму
+      # Демо-режим: тестовые аккаунты admin / anna / petr / olga / ladya / enisey (пароль demo-password-1); кнопки на странице входа подставляют их в форму
       DEMO_MODE: ${DEMO_MODE:-true}
+      S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY: app
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-demo-only-s3-secret}
     depends_on:
       db:
+        condition: service_healthy
+      minio:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health/readiness | grep -q UP"]
@@ -59,3 +80,4 @@ services:
 
 volumes:
   pgdata:
+  miniodata:

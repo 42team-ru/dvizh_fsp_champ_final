@@ -1,5 +1,6 @@
 package com.hackathon.app.service;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.function.Function;
@@ -37,8 +38,9 @@ public class AdminOrganizationService {
 	private final AppUserRepository users;
 	private final DbTimeRepository dbTime;
 	private final OrganizationMapper mapper;
+	private final FileService files;
 
-	/** Новые заявки сверху. q ищет по названию без учёта регистра. */
+	/** Новые заявки сверху. q ищет по названию без учёта регистра. Документы — только в карточке (get). */
 	@Transactional(readOnly = true)
 	public PageResponse<AdminOrganizationResponse> list(OrganizationStatus status, String q, int page, int size) {
 		var query = Strings.blankToNull(q);
@@ -49,7 +51,7 @@ public class AdminOrganizationService {
 		var accounts = users.findAllById(result.getContent().stream().map(Organization::getAccountId).toList())
 				.stream()
 				.collect(Collectors.toMap(AppUser::getId, Function.identity()));
-		return PageResponse.of(result, o -> mapper.toAdmin(o, accounts.get(o.getAccountId())));
+		return PageResponse.of(result, o -> mapper.toAdmin(o, accounts.get(o.getAccountId()), List.of()));
 	}
 
 	@Transactional(readOnly = true)
@@ -63,23 +65,18 @@ public class AdminOrganizationService {
 		if (org.getStatus() == OrganizationStatus.APPROVED) {
 			return toAdmin(org); // повторное нажатие
 		}
-		org.setStatus(OrganizationStatus.APPROVED);
-		org.setRejectReason(null);
-		return decide(org, adminId);
+		return decide(org, OrganizationStatus.APPROVED, null, adminId);
 	}
 
 	/** Повторный отказ просто обновляет причину. */
 	@Transactional
 	public AdminOrganizationResponse reject(UUID id, UUID adminId, String reason) {
 		var org = find(id);
-		org.setStatus(OrganizationStatus.REJECTED);
-		org.setRejectReason(reason.trim());
-		return decide(org, adminId);
+		return decide(org, OrganizationStatus.REJECTED, reason, adminId);
 	}
 
-	private AdminOrganizationResponse decide(Organization org, UUID adminId) {
-		org.setReviewedAt(dbTime.now());
-		org.setReviewedById(adminId);
+	private AdminOrganizationResponse decide(Organization org, OrganizationStatus status, String rejectReason, UUID adminId) {
+		mapper.decide(org, status, rejectReason, dbTime.now(), adminId);
 		organizations.saveAndFlush(org);
 		log.info("Решение по организации: organizationId={}, adminId={}, status={}", org.getId(), adminId,
 				org.getStatus());
@@ -91,6 +88,6 @@ public class AdminOrganizationService {
 	}
 
 	private AdminOrganizationResponse toAdmin(Organization org) {
-		return mapper.toAdmin(org, users.findById(org.getAccountId()).orElse(null));
+		return mapper.toAdmin(org, users.findById(org.getAccountId()).orElse(null), files.organizationDocuments(org.getId()));
 	}
 }

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Разработка: БД, бэкенд и фронт запускаются ОТДЕЛЬНО, чтобы каждый можно было быстро перезапустить.
-//   node scripts/dev.mjs          (make dev)    — Postgres в Docker (порт 5440), один раз; остаётся работать
+//   node scripts/dev.mjs          (make dev)    — Postgres (5440) и MinIO/S3 (9440, консоль 9441) в Docker, один раз; остаются работать
 //   node scripts/dev.mjs back     (make back)   — бэкенд :8080, свой терминал
 //   node scripts/dev.mjs front    (make front)  — фронт :5173, свой терминал
 // Ctrl+C останавливает только то, что запущено в этом терминале. Кроссплатформенно (Windows, macOS, Linux).
@@ -36,11 +36,14 @@ function runHere(cmd, args, cwd, env = {}) {
 }
 
 if (mode === 'db') {
-  console.log('▶ Postgres (docker, порт 5440)...')
+  console.log('▶ Postgres (порт 5440) и MinIO (порт 9440) в Docker...')
   const r = spawnSync('docker', ['compose', '-f', 'docker-compose.dev.yml', 'up', '-d', '--wait'], { cwd: root, stdio: 'inherit' })
-  if (r.status !== 0) die('Не удалось поднять БД. Запущен ли Docker?')
+  if (r.status !== 0) die('Не удалось поднять БД и S3. Запущен ли Docker?')
   console.log(`
-✔ БД готова: localhost:5440 (app / app / app). Она остаётся работать, остановить: make dev-down
+✔ БД готова: localhost:5440 (app / app / app)
+✔ S3 готов:  http://localhost:9440, бакет app-files создаст бэкенд
+   консоль MinIO: http://localhost:9441 (app / app-secret-dev)
+Они остаются работать, остановить: make dev-down
 
 Дальше в ОТДЕЛЬНЫХ терминалах (каждый перезапускается сам по себе):
   make back     бэкенд  http://localhost:8080   (swagger: /swagger-ui.html)
@@ -48,6 +51,7 @@ if (mode === 'db') {
 Бэкенд можно запускать и из IDE (класс TestAppApplication или AppApplication).`)
 } else if (mode === 'back') {
   if (!(await isOpen(5440))) die('БД не запущена. Сначала выполните: make dev')
+  if (!(await isOpen(9440))) die('S3 (MinIO) не запущен. Выполните: make dev (поднимет недостающее)')
   await ensurePortFree(8080, 'бэкенд')
   runHere(win ? 'gradlew.bat' : './gradlew', ['bootRun', '--console=plain'], join(root, 'backend'))
 } else if (mode === 'front') {

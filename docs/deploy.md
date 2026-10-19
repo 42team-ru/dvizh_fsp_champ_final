@@ -33,6 +33,7 @@ Push в `main` запускает `.github/workflows/deploy.yml`:
 | `.env` | настройки (пароль БД, домен, секрет JWT, версия образа); CI дописывает `IMAGE`, `TAG`, `JWT_SECRET` |
 | `data/caddy/` | сертификаты Let's Encrypt (обычная папка, переживает деплои и `docker compose down -v`) |
 | docker volume `pgdata` | данные Postgres |
+| `data/minio/` | файлы S3 (MinIO): аватарки, фото, документы; обычная папка, переживает `down -v` |
 
 ## Особенности
 - Образы приватные по умолчанию; на сервере деплой логинится в GHCR токеном самого workflow.

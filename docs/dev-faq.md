@@ -30,7 +30,7 @@
    sudo usermod -aG docker $USER          # затем выйти и зайти по SSH заново
    sudo apt-get install -y rsync
    sudo mkdir -p /opt/app && sudo chown $USER /opt/app
-   printf "DB_PASSWORD=$(openssl rand -hex 16)\nDOMAIN=:80\n" > /opt/app/.env
+   printf "DB_PASSWORD=$(openssl rand -hex 16)\nS3_SECRET_KEY=$(openssl rand -hex 24)\nDOMAIN=:80\n" > /opt/app/.env
    ```
    Проверьте, что `docker ps` работает без `sudo`. Откройте во внешнем файрволе (в Яндекс Облаке это группа безопасности) входящие TCP 80 и 443, и 22 для SSH.
 2. **Дать GitHub доступ.** Нужен SSH-ключ без пароля, публичная часть которого лежит в `~/.ssh/authorized_keys` нового сервера. Затем обновить секреты:
@@ -60,6 +60,7 @@ HTTPS_PORT=443
 DOMAIN=:80                      # или ваш домен для HTTPS
 DB_PASSWORD=придумайте-пароль
 JWT_SECRET=случайная-строка-не-короче-32-символов
+S3_SECRET_KEY=пароль-minio-от-8-символов
 DEMO_MODE=false
 CORS_ORIGINS=https://ваш-домен  # при DOMAIN=:80 можно http://IP
 EOF
@@ -84,6 +85,7 @@ IMAGE=ghcr.io/42team-ru/project_template
 TAG=latest                      # или полный sha коммита
 DB_PASSWORD=придумайте-пароль
 JWT_SECRET=случайная-строка-не-короче-32-символов
+S3_SECRET_KEY=пароль-minio-от-8-символов
 DOMAIN=:80                      # или домен
 DEMO_MODE=false
 EOF
@@ -107,7 +109,7 @@ docker compose pull && docker compose up -d --wait
 - Откатить код насовсем: `git revert <коммит>` и push, автодеплой выкатит откат сам.
 
 ## Как включить или выключить демо-режим
-Демо-режим создаёт аккаунты `admin`, `anna`, `petr`, `olga` с публичным паролем `demo-password-1` и показывает кнопки быстрого входа. На сервере с реальными пользователями он должен быть выключен.
+Демо-режим создаёт аккаунты `admin`, `anna`, `petr`, `olga`, `ladya` (одобренный клуб), `enisey` (клуб ждёт одобрения) с публичным паролем `demo-password-1` и показывает кнопки быстрого входа. На сервере с реальными пользователями он должен быть выключен.
 ```bash
 cd /opt/app
 sed -i '/^DEMO_MODE=/d' .env && echo "DEMO_MODE=true" >> .env    # включить (false: выключить)
@@ -155,7 +157,7 @@ docker compose up -d db
 docker compose exec -T db psql -U app -d app < backup.sql
 docker compose up -d --wait
 ```
-Это же работает как резервная копия перед важным демо: делайте `pg_dump` заранее. Данные Postgres живут в docker volume `pgdata` (удаляется только командой `docker compose down -v` или `docker volume rm`, обычный деплой его не трогает).
+Это же работает как резервная копия перед важным демо: делайте `pg_dump` заранее. Данные Postgres живут в docker volume `pgdata` (удаляется только командой `docker compose down -v` или `docker volume rm`, обычный деплой его не трогает). Файлы (S3) лежат в `/opt/app/data/minio`: для бэкапа достаточно скопировать эту папку вместе с дампом БД (`tar czf files.tgz data/minio`).
 
 ## Какие переменные есть в .env на сервере
 Файл `/opt/app/.env` (прод, образы из GHCR); для варианта А тот же набор лежит в `.env` в корне репозитория.
@@ -164,6 +166,7 @@ docker compose up -d --wait
 |---|---|---|
 | `DB_PASSWORD` | пароль Postgres | вы, при подготовке сервера |
 | `JWT_SECRET` | подпись токенов, не короче 32 символов; смена разлогинит всех | CI создаёт сам, если нет |
+| `S3_SECRET_KEY` | пароль MinIO (пользователь `app`); не меняйте после первого запуска — MinIO запоминает его в `data/minio` | CI создаёт сам, если нет |
 | `DOMAIN` | `:80` (HTTP по IP) или домены для HTTPS | вы |
 | `DEMO_MODE` | `true` включает демо-аккаунты, по умолчанию `false` | вы |
 | `IMAGE`, `TAG` | какие образы запускать | CI при каждом деплое |
@@ -180,4 +183,6 @@ docker compose up -d --wait
 | Сайт не открывается снаружи, а на сервере `curl localhost/api/ping` работает | закрыты порты 80/443 во внешнем файрволе |
 | Сертификат не выпускается | DNS ещё указывает не на сервер, закрыт порт 80/443 или исчерпан лимит Let's Encrypt (подождать час); логи: `docker compose logs web` |
 | При входе на сервер `System restart required` | обновление ядра, выполните `sudo reboot` когда удобно, контейнеры поднимутся сами |
-| `port is already allocated` на локальной машине | порт занят другим сервисом; при разработке БД на 5440, бэк на 8080, фронт на 5173 |
+| Бэкенд не стартует: `Migration checksum mismatch` | в вашей локальной базе старая версия уже применённой миграции. Локальную базу можно сбросить: `docker compose -f docker-compose.dev.yml rm -sf db && docker volume rm project_template_pgdata-dev && make dev` (данные пропадут) |
+| `type "geometry" does not exist` или `extension "postgis" is not available` | база запущена со старым образом `postgres`, а нужен `postgis/postgis`: `docker compose pull db && docker compose up -d db` (данные сохраняются, образ совместим) |
+| `port is already allocated` на локальной машине | порт занят другим сервисом; при разработке БД на 5440, MinIO на 9440/9441, бэк на 8080, фронт на 5173 |

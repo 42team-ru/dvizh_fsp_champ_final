@@ -21,6 +21,14 @@
   ],
   "tags": [
     {
+      "name": "pets",
+      "description": "Бобр-маскот: каталог вещей и образ"
+    },
+    {
+      "name": "comments",
+      "description": "Обсуждение под мероприятием: вопросы и ответы организатора"
+    },
+    {
       "name": "sports",
       "description": "Справочник видов спорта"
     },
@@ -31,9 +39,304 @@
     {
       "name": "events",
       "description": "Мероприятия: лента, карточка, создание и редактирование"
+    },
+    {
+      "name": "users",
+      "description": "Профиль пользователя"
+    },
+    {
+      "name": "occurrences",
+      "description": "Занятия мероприятия: даты серии, отметки «приду», отмена и перенос занятий"
+    },
+    {
+      "name": "files",
+      "description": "Загруженные файлы: аватарки, логотипы, документы, фото мероприятий"
     }
   ],
   "paths": {
+    "/api/users/me/pet": {
+      "get": {
+        "tags": [
+          "pets"
+        ],
+        "summary": "Мой бобр",
+        "operationId": "pets_getMine",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PetResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "pets"
+        ],
+        "summary": "Сохранить образ целиком",
+        "description": "Чего нет в outfit — снимается. Неверный образ отклоняется целиком (400), сохранённый не меняется.",
+        "operationId": "pets_saveMine",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Неизвестный слот или вещь, вещь ещё не получена",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/me/pet/slots/{slot}": {
+      "put": {
+        "tags": [
+          "pets"
+        ],
+        "summary": "Надеть или снять вещь в одном слоте",
+        "description": "Например, сменить головной убор: slot = hat, item = helmet. item = null — снять.",
+        "operationId": "pets_equip",
+        "parameters": [
+          {
+            "name": "slot",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PetEquipRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Нет такой вещи в слоте или она ещё не получена",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Нет такого слота",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/me/avatar": {
+      "put": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Загрузить аватар (JPG, PNG, WebP до 5 МБ)",
+        "description": "Заменяет прежний. Ссылка приходит в avatarUrl.",
+        "operationId": "users_uploadAvatar",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Изображение"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "Не тот формат или слишком большой файл",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Убрать аватар",
+        "operationId": "users_deleteAvatar",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/organizations/me": {
+      "get": {
+        "tags": [
+          "organizations"
+        ],
+        "summary": "Анкета своей организации со статусом допуска",
+        "operationId": "organizations_me",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "organizations"
+        ],
+        "summary": "Сохранить анкету: первая и исправленная после отказа уходят на проверку",
+        "operationId": "organizations_saveMine",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveOrganizationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/organizations/me/logo": {
+      "put": {
+        "tags": [
+          "organizations"
+        ],
+        "summary": "Загрузить логотип (JPG, PNG, WebP до 5 МБ)",
+        "description": "Заменяет прежний логотип. Статус допуска не меняется.",
+        "operationId": "organizations_uploadLogo",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Изображение"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "Не тот формат или слишком большой файл",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Анкета ещё не заполнена",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "organizations"
+        ],
+        "summary": "Убрать логотип",
+        "operationId": "organizations_deleteLogo",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/events/{id}": {
       "get": {
         "tags": [
@@ -127,6 +430,88 @@
           },
           "409": {
             "description": "Удалено или лимит мест меньше уже записанных",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/{id}/occurrences/{occurrenceId}": {
+      "put": {
+        "tags": [
+          "occurrences"
+        ],
+        "summary": "Перенести занятие серии",
+        "description": "Только организатор. Будущее занятие, которое состоится, переносится в будущее в границах серии; отметки сохраняются. Без endAt длительность прежняя.",
+        "operationId": "occurrences_reschedule",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "occurrenceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OccurrenceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Не в будущем, вне границ серии или окончание раньше начала",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Не организатор",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Мероприятия или занятия нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Занятие отменено или уже началось, в это время уже есть занятие, разовое или удалённое мероприятие",
             "content": {
               "application/json": {
                 "schema": {
@@ -253,6 +638,57 @@
         }
       }
     },
+    "/api/organizations/me/documents": {
+      "post": {
+        "tags": [
+          "organizations"
+        ],
+        "summary": "Загрузить документ (PDF, JPG, PNG до 10 МБ)",
+        "description": "Устав, свидетельство и т.п. Видят организация, админ при проверке и все вошедшие после одобрения. Не больше 10.",
+        "operationId": "organizations_addDocument",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Документ"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "Не тот формат или слишком большой файл",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Уже 10 документов",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/events": {
       "get": {
         "tags": [
@@ -354,6 +790,17 @@
                 "OFFLINE",
                 "ONLINE"
               ]
+            }
+          },
+          {
+            "name": "organizationId",
+            "in": "query",
+            "description": "Только мероприятия этой организации — для её публичной страницы",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Только мероприятия этой организации — для её публичной страницы"
             }
           }
         ],
@@ -541,6 +988,88 @@
         }
       }
     },
+    "/api/events/{id}/photos": {
+      "post": {
+        "tags": [
+          "events"
+        ],
+        "summary": "Добавить фото в галерею (JPG, PNG, WebP до 5 МБ)",
+        "description": "В конец галереи; первое фото — обложка в ленте. Только организатор, не больше 6 фото.",
+        "operationId": "events_addPhoto",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Изображение"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Не тот формат или слишком большой файл",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Не организатор",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Уже 6 фото или мероприятие удалено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/events/{id}/organizers": {
       "post": {
         "tags": [
@@ -593,6 +1122,492 @@
           },
           "409": {
             "description": "Уже организатор, администратор, записан участником или мероприятие удалено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/{id}/occurrences": {
+      "get": {
+        "tags": [
+          "occurrences"
+        ],
+        "summary": "Занятия мероприятия",
+        "description": "Все занятия в [from, to] по порядку, включая отменённые. Без from — с текущего момента, без to — до конца серии. У разового мероприятия одно занятие. Блок viewer говорит, какие кнопки показать.",
+        "operationId": "occurrences_list",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "Начало не раньше",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "example": "2027-06-01T00:00:00Z"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "Начало не позже",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "example": "2027-06-30T23:59:59Z"
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Конец периода раньше начала",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Мероприятия нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "occurrences"
+        ],
+        "summary": "Добавить разовую дату в серию",
+        "description": "Только организатор серии. Занятие вне правил: в будущем, в границах серии, не в одно время с другим занятием. Правка правил его не трогает.",
+        "operationId": "occurrences_add",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OccurrenceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OccurrenceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Не в будущем, вне границ серии или окончание раньше начала",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Не организатор",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Мероприятия нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Разовое мероприятие, удалено, в это время уже есть занятие или занятий слишком много",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/{id}/occurrences/{occurrenceId}/confirm": {
+      "post": {
+        "tags": [
+          "occurrences"
+        ],
+        "summary": "Подтвердить: занятие состоится",
+        "description": "Только организатор, если у мероприятия задан кворум. Можно и пока кворум не набран; подтверждение не снимается. Повторно — ничего не меняет.",
+        "operationId": "occurrences_confirm",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "occurrenceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "403": {
+            "description": "Не организатор",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Мероприятия или занятия нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Кворум не задан, занятие отменено или началось, мероприятие снято или удалено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/{id}/occurrences/{occurrenceId}/cancel": {
+      "post": {
+        "tags": [
+          "occurrences"
+        ],
+        "summary": "Отменить занятие",
+        "description": "Только организатор. Необратимо; отметки и записи остаются, участники видят причину. У разового мероприятия это отмена всего мероприятия: оно уходит из ленты, запись закрывается.",
+        "operationId": "occurrences_cancel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "occurrenceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelOccurrenceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "403": {
+            "description": "Не организатор",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Мероприятия или занятия нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Уже отменено или началось, мероприятие удалено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/{id}/occurrences/{occurrenceId}/attendance": {
+      "post": {
+        "tags": [
+          "occurrences"
+        ],
+        "summary": "Отметиться «приду» на занятие серии",
+        "description": "Только принятому в серию, до начала занятия и пока есть места на него. Повторно — ничего не меняет.",
+        "operationId": "occurrences_attend",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "occurrenceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Мероприятия или занятия нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Не в серии, мест нет, занятие отменено или началось, мероприятие снято или разовое",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "occurrences"
+        ],
+        "summary": "Снять отметку «приду»",
+        "description": "До начала занятия; место освобождается. Если отметки нет — ничего не меняет.",
+        "operationId": "occurrences_unattend",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "occurrenceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Мероприятия или занятия нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Занятие отменено или началось, мероприятие разовое",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/{id}/comments": {
+      "get": {
+        "tags": [
+          "comments"
+        ],
+        "summary": "Обсуждение мероприятия",
+        "description": "Старые сверху. isOrganizer — показать у автора метку «Организатор».",
+        "operationId": "comments_list",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Мероприятия нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "comments"
+        ],
+        "summary": "Написать в обсуждение",
+        "description": "Любой вошедший, даже не записанный. У удалённого мероприятия обсуждение закрыто.",
+        "operationId": "comments_create",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Пустой или слишком длинный текст",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Мероприятия нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Мероприятие удалено",
             "content": {
               "application/json": {
                 "schema": {
@@ -717,6 +1732,342 @@
         }
       }
     },
+    "/api/admin/pets/slots": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Добавить слот одежды (атрибут)",
+        "description": "Например «Перчатки». Появится в outfit под своим кодом.",
+        "operationId": "admin_createPetSlot",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PetSlotRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PetSlotResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Такой код уже есть",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/pets/slots/{slot}/items": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Добавить вещь с картинкой",
+        "description": "Картинка (PNG, WebP или JPG до 5 МБ) сохраняется в S3.",
+        "operationId": "admin_createPetItem",
+        "parameters": [
+          {
+            "name": "slot",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "code",
+            "in": "query",
+            "description": "Код: латиница в нижнем регистре, цифры, дефис",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "golden-crown"
+          },
+          {
+            "name": "label",
+            "in": "query",
+            "description": "Подпись",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "Золотая корона"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Картинка вещи"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PetItemResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Неверный код, подпись или картинка",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Нет такого слота",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Вещь с таким кодом уже есть в слоте",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/organizations/{id}/reject": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Отклонить организацию с причиной",
+        "operationId": "admin_rejectOrganization",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectOrganizationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminOrganizationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/organizations/{id}/approve": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Одобрить организацию",
+        "operationId": "admin_approveOrganization",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminOrganizationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/events/{id}/unpublish": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Снять с публикации с причиной",
+        "description": "Пропадает из ленты, запись закрывается; записавшиеся видят статус и причину.",
+        "operationId": "admin_unpublishEvent",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModerateEventRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "404": {
+            "description": "Мероприятия нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Мероприятие уже удалено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/{id}": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Публичный профиль организатора",
+        "description": "Имя, аватар, город, о себе и ближайшие опубликованные мероприятия. Без email.",
+        "operationId": "users_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Пользователь не найден",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/{id}/pet": {
+      "get": {
+        "tags": [
+          "pets"
+        ],
+        "summary": "Бобр другого пользователя",
+        "description": "Только образ, без данных аккаунта.",
+        "operationId": "pets_getUser",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Нет пользователя",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/sports": {
       "get": {
         "tags": [
@@ -799,6 +2150,156 @@
         }
       }
     },
+    "/api/pets/catalog": {
+      "get": {
+        "tags": [
+          "pets"
+        ],
+        "summary": "Каталог: слоты и вещи",
+        "description": "Все вещи доступны всем. imageUrl есть у вещей, добавленных админом (картинка в S3).",
+        "operationId": "pets_catalog",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PetCatalogResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/organizations/{id}": {
+      "get": {
+        "tags": [
+          "organizations"
+        ],
+        "summary": "Публичная страница одобренной организации",
+        "operationId": "organizations_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicOrganizationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/files/{id}": {
+      "get": {
+        "tags": [
+          "files"
+        ],
+        "summary": "Скачать или показать файл",
+        "description": "Картинки отдаются для показа (img src), документы — на скачивание. Чужие документы неодобренной организации — 404.",
+        "operationId": "files_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Содержимое файла",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Файла нет или нет доступа",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/{id}/occurrences/{occurrenceId}/attendees": {
+      "get": {
+        "tags": [
+          "occurrences"
+        ],
+        "summary": "Кто придёт на занятие",
+        "description": "Только организатору. У серии — отметившиеся, у разового — подтверждённые участники.",
+        "operationId": "occurrences_attendees",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "occurrenceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "403": {
+            "description": "Не организатор",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Мероприятия или занятия нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/events/mine": {
       "get": {
         "tags": [
@@ -817,6 +2318,170 @@
                   "items": {
                     "$ref": "#/components/schemas/EventSummaryResponse"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/map": {
+      "get": {
+        "tags": [
+          "events"
+        ],
+        "summary": "Мероприятия на карте в видимой области",
+        "description": "GeoJSON FeatureCollection: опубликованные очные мероприятия с точкой внутри области и началом в [from, to]. Координаты [долгота, широта]. from по умолчанию и не раньше чем сейчас, to — from + 30 дней. Ближайшие первыми, не больше limit; если в области больше — truncated. minLon > maxLon — область через 180-й меридиан. Неверная область или период — 400.",
+        "operationId": "events_map",
+        "parameters": [
+          {
+            "name": "minLon",
+            "in": "query",
+            "description": "Западная граница (долгота юго-западного угла)",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "description": "Западная граница (долгота юго-западного угла)",
+              "example": 92.7,
+              "maximum": 180,
+              "minimum": -180
+            },
+            "example": 92.7
+          },
+          {
+            "name": "minLat",
+            "in": "query",
+            "description": "Южная граница (широта юго-западного угла)",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "description": "Южная граница (широта юго-западного угла)",
+              "example": 55.9,
+              "maximum": 90,
+              "minimum": -90
+            },
+            "example": 55.9
+          },
+          {
+            "name": "maxLon",
+            "in": "query",
+            "description": "Восточная граница (долгота северо-восточного угла)",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "description": "Восточная граница (долгота северо-восточного угла)",
+              "example": 93.1,
+              "maximum": 180,
+              "minimum": -180
+            },
+            "example": 93.1
+          },
+          {
+            "name": "maxLat",
+            "in": "query",
+            "description": "Северная граница (широта северо-восточного угла)",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "description": "Северная граница (широта северо-восточного угла)",
+              "example": 56.1,
+              "maximum": 90,
+              "minimum": -90
+            },
+            "example": 56.1
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "Начало не раньше; по умолчанию и не раньше чем сейчас",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Начало не раньше; по умолчанию и не раньше чем сейчас",
+              "example": "2027-05-01T00:00:00Z"
+            },
+            "example": "2027-05-01T00:00:00Z"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "Начало не позже; по умолчанию from + 30 дней",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Начало не позже; по умолчанию from + 30 дней",
+              "example": "2027-05-31T23:59:59Z"
+            },
+            "example": "2027-05-31T23:59:59Z"
+          },
+          {
+            "name": "searchText",
+            "in": "query",
+            "description": "Поиск по названию и описанию без учёта регистра",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Поиск по названию и описанию без учёта регистра",
+              "example": "футбол"
+            },
+            "example": "футбол"
+          },
+          {
+            "name": "sportId",
+            "in": "query",
+            "description": "Вид спорта",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Вид спорта"
+            }
+          },
+          {
+            "name": "level",
+            "in": "query",
+            "description": "Уровень; мероприятия «Любой уровень» подходят под любой",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Уровень; мероприятия «Любой уровень» подходят под любой",
+              "enum": [
+                "ANY",
+                "BEGINNER",
+                "AMATEUR",
+                "ADVANCED",
+                "PRO"
+              ]
+            }
+          },
+          {
+            "name": "joinMode",
+            "in": "query",
+            "description": "Режим записи",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Режим записи",
+              "enum": [
+                "FREE",
+                "REQUEST"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventMapResponse"
                 }
               }
             }
@@ -927,6 +2592,233 @@
         }
       }
     },
+    "/api/admin/stats": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Счётчики для дашборда",
+        "description": "signupsByDay — сколько присоединилось по дням (например, 10 октября — 12), дни по Красноярску.",
+        "operationId": "admin_stats",
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "description": "За сколько последних дней график регистраций (1–366)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 30
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminStatsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/organizations": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Заявки и организации: фильтр по статусу и поиск по названию",
+        "operationId": "admin_listOrganizations",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PENDING",
+                "APPROVED",
+                "REJECTED"
+              ]
+            }
+          },
+          {
+            "name": "searchText",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseAdminOrganizationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/organizations/{id}": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Карточка организации с аккаунтом заявителя",
+        "operationId": "admin_getOrganization",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminOrganizationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/events": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Мероприятия во всех статусах: фильтр по статусу и поиск по названию",
+        "operationId": "admin_listEvents",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PUBLISHED",
+                "UNPUBLISHED",
+                "DELETED"
+              ]
+            }
+          },
+          {
+            "name": "searchText",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseAdminEventResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/organizations/me/documents/{fileId}": {
+      "delete": {
+        "tags": [
+          "organizations"
+        ],
+        "summary": "Удалить документ",
+        "operationId": "organizations_removeDocument",
+        "parameters": [
+          {
+            "name": "fileId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/events/{id}/registrations/me": {
       "delete": {
         "tags": [
@@ -959,6 +2851,47 @@
           },
           "409": {
             "description": "Заявка отклонена или мероприятие уже началось",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/{id}/photos/{fileId}": {
+      "delete": {
+        "tags": [
+          "events"
+        ],
+        "summary": "Удалить фото из галереи",
+        "operationId": "events_removePhoto",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "fileId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "403": {
+            "description": "Не организатор",
             "content": {
               "application/json": {
                 "schema": {
@@ -1031,10 +2964,282 @@
           }
         }
       }
+    },
+    "/api/admin/pets/slots/{slot}/items/{item}": {
+      "delete": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Удалить добавленную вещь",
+        "description": "Снимается со всех бобров, картинка удаляется из S3. Встроенные — 409.",
+        "operationId": "admin_deletePetItem",
+        "parameters": [
+          {
+            "name": "slot",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "item",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/admin/events/{id}": {
+      "delete": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Удалить с причиной",
+        "description": "Мягкое удаление: по прямой ссылке открывается с плашкой «Удалено» и причиной.",
+        "operationId": "admin_deleteEvent",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModerateEventRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "404": {
+            "description": "Мероприятия нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "PetRequest": {
+        "type": "object",
+        "description": "Полная замена образа бобра",
+        "properties": {
+          "mood": {
+            "type": "string",
+            "description": "Настроение",
+            "example": "happy"
+          },
+          "activity": {
+            "type": "string",
+            "description": "Инвентарь; none — без инвентаря",
+            "example": "hockey"
+          },
+          "outfit": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Код слота → код вещи. Чтобы снять вещь, не передавайте слот (null тоже снимает)",
+            "example": {
+              "shirt": "hc-sokol",
+              "hat": "helmet"
+            }
+          }
+        },
+        "required": [
+          "activity",
+          "mood",
+          "outfit"
+        ]
+      },
+      "ProblemDetail": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "type": "string",
+            "format": "uri"
+          },
+          "properties": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        }
+      },
+      "PetEquipRequest": {
+        "type": "object",
+        "description": "Надеть вещь в один слот или снять её",
+        "properties": {
+          "item": {
+            "type": "string",
+            "description": "Код вещи из этого слота; null — снять (настроение станет idle, инвентарь — none)",
+            "example": "helmet"
+          }
+        }
+      },
+      "SaveOrganizationRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 5000,
+            "minLength": 0
+          },
+          "city": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "contacts": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "minProperties": 1
+          }
+        },
+        "required": [
+          "contacts",
+          "description",
+          "name"
+        ]
+      },
+      "FileResponse": {
+        "type": "object",
+        "description": "Загруженный файл",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "url": {
+            "type": "string",
+            "description": "Адрес для скачивания и показа: /api/files/{id}"
+          },
+          "name": {
+            "type": "string",
+            "description": "Имя файла, как его загрузили"
+          },
+          "contentType": {
+            "type": "string",
+            "description": "MIME-тип"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Размер в байтах"
+          }
+        },
+        "required": [
+          "contentType",
+          "id",
+          "name",
+          "size",
+          "url"
+        ]
+      },
+      "OrganizationResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "contacts": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "APPROVED",
+              "REJECTED"
+            ]
+          },
+          "rejectReason": {
+            "type": "string"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reviewedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "logoUrl": {
+            "type": "string"
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FileResponse"
+            }
+          }
+        }
+      },
       "EventRequest": {
         "type": "object",
         "description": "Форма мероприятия: создание и полная замена при редактировании",
@@ -1068,13 +3273,13 @@
           "startAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Начало, в будущем",
+            "description": "Начало разового мероприятия, в будущем; у повторяющегося не передаётся",
             "example": "2027-05-01T16:00:00Z"
           },
           "endAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Окончание, позже начала",
+            "description": "Окончание разового мероприятия, позже начала; у повторяющегося не передаётся",
             "example": "2027-05-01T18:00:00Z"
           },
           "format": {
@@ -1109,7 +3314,7 @@
           "lat": {
             "type": "number",
             "format": "double",
-            "description": "Широта",
+            "description": "Широта точки на карте; обязательна для очного, у онлайн не сохраняется",
             "example": 56.0153,
             "maximum": 90,
             "minimum": -90
@@ -1117,7 +3322,7 @@
           "lon": {
             "type": "number",
             "format": "double",
-            "description": "Долгота",
+            "description": "Долгота точки на карте; обязательна для очного, у онлайн не сохраняется",
             "example": 92.8932,
             "maximum": 180,
             "minimum": -180
@@ -1160,7 +3365,7 @@
           "capacity": {
             "type": "integer",
             "format": "int32",
-            "description": "Лимит мест; пусто — без лимита",
+            "description": "Лимит мест; пусто — без лимита. У повторяющегося — на каждое занятие",
             "example": 10,
             "maximum": 10000,
             "minimum": 1
@@ -1179,40 +3384,117 @@
             "example": "Чат: https://t.me/example",
             "maxLength": 2000,
             "minLength": 0
+          },
+          "schedule": {
+            "$ref": "#/components/schemas/ScheduleRequest",
+            "description": "Расписание повторяющегося мероприятия; null — разовое"
+          },
+          "minParticipants": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Кворум: состоится, если наберём столько; пусто — без кворума. Не больше лимита мест. У повторяющегося — на каждое занятие",
+            "example": 6,
+            "maximum": 10000,
+            "minimum": 1
           }
         },
         "required": [
           "format",
-          "startAt",
           "title"
         ]
       },
-      "ProblemDetail": {
+      "ScheduleRequest": {
         "type": "object",
+        "description": "Расписание серии: часовой пояс, границы по датам и правила повторения",
         "properties": {
-          "type": {
+          "timeZone": {
             "type": "string",
-            "format": "uri"
+            "description": "Часовой пояс (IANA), в нём считаются даты и время правил",
+            "example": "Asia/Krasnoyarsk",
+            "maxLength": 64,
+            "minLength": 0
           },
-          "title": {
-            "type": "string"
-          },
-          "status": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "detail": {
-            "type": "string"
-          },
-          "instance": {
+          "startDate": {
             "type": "string",
-            "format": "uri"
+            "format": "date",
+            "description": "Первый день серии, включительно",
+            "example": "2027-06-01"
           },
-          "properties": {
-            "type": "object",
-            "additionalProperties": {}
+          "endDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Последний день серии, включительно; не позже чем через год после первого",
+            "example": "2027-08-31"
+          },
+          "rules": {
+            "type": "array",
+            "description": "Правила повторения, от 1 до 10",
+            "items": {
+              "$ref": "#/components/schemas/ScheduleRuleRequest"
+            },
+            "maxItems": 10,
+            "minItems": 0
           }
-        }
+        },
+        "required": [
+          "endDate",
+          "rules",
+          "startDate",
+          "timeZone"
+        ]
+      },
+      "ScheduleRuleRequest": {
+        "type": "object",
+        "description": "Правило расписания: первое занятие, длительность и RRULE",
+        "properties": {
+          "firstStart": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Первое занятие по правилу: местные дата и время в часовом поясе серии, без смещения. Должно попадать в границы серии; от него считается «раз в N недель»",
+            "example": "2027-06-01T20:00:00"
+          },
+          "durationMinutes": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Длительность каждого занятия, минуты",
+            "example": 90,
+            "maximum": 1440,
+            "minimum": 1
+          },
+          "rrule": {
+            "type": "string",
+            "description": "Правило повторения по RFC 5545 (префикс RRULE: можно не писать). Не чаще раза в день; COUNT и UNTIL можно, но занятия всё равно режутся границами серии",
+            "example": "FREQ=WEEKLY;INTERVAL=2;BYDAY=SU",
+            "maxLength": 500,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "durationMinutes",
+          "firstStart",
+          "rrule"
+        ]
+      },
+      "OccurrenceRequest": {
+        "type": "object",
+        "description": "Время занятия: для добавления разовой даты или переноса",
+        "properties": {
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Начало, в будущем и в границах серии",
+            "example": "2027-06-12T13:00:00Z"
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Окончание, позже начала. При переносе можно не указывать — длительность сохранится; у разовой даты обязательно",
+            "example": "2027-06-12T14:30:00Z"
+          }
+        },
+        "required": [
+          "startAt"
+        ]
       },
       "RejectRegistrationRequest": {
         "type": "object",
@@ -1263,15 +3545,31 @@
             "format": "uuid",
             "description": "Организация, от имени которой мероприятие; null — от частного лица"
           },
+          "organization": {
+            "$ref": "#/components/schemas/OrganizationShortResponse",
+            "description": "Организация для ссылки на её страницу; null — от частного лица"
+          },
           "startAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Начало"
+            "description": "Начало; у серии — первого занятия (ближайшее — в nextOccurrence)"
           },
           "endAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Окончание"
+            "description": "Окончание; у серии — первого занятия"
+          },
+          "recurring": {
+            "type": "boolean",
+            "description": "Повторяющееся мероприятие (серия занятий)"
+          },
+          "schedule": {
+            "$ref": "#/components/schemas/ScheduleResponse",
+            "description": "Расписание серии; null — разовое"
+          },
+          "nextOccurrence": {
+            "$ref": "#/components/schemas/OccurrenceShortResponse",
+            "description": "Ближайшее будущее занятие, которое состоится; null — таких нет. Все занятия — occurrences_list"
           },
           "format": {
             "type": "string",
@@ -1339,16 +3637,25 @@
           "capacity": {
             "type": "integer",
             "format": "int32",
-            "description": "Лимит мест; null — без лимита"
+            "description": "Лимит мест; null — без лимита. У серии — на каждое занятие"
+          },
+          "minParticipants": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Кворум: состоится, если наберём столько; null — без кворума. У серии — на каждое занятие"
+          },
+          "singleOccurrence": {
+            "$ref": "#/components/schemas/OccurrenceResponse",
+            "description": "Занятие разового мероприятия: статус (отменено организатором — с причиной), кворум и кнопки; у серии — null, её занятия — occurrences_list"
           },
           "participantsCount": {
             "type": "integer",
             "format": "int64",
-            "description": "Подтверждённых участников"
+            "description": "Подтверждённых участников (у серии — принятых в серию)"
           },
           "participants": {
             "type": "array",
-            "description": "Подтверждённые участники",
+            "description": "Подтверждённые участники (у серии — принятые в серию)",
             "items": {
               "$ref": "#/components/schemas/UserShortResponse"
             }
@@ -1379,6 +3686,13 @@
             "format": "date-time",
             "description": "Когда снято или удалено"
           },
+          "photos": {
+            "type": "array",
+            "description": "Фото по порядку, первое — обложка; до 6",
+            "items": {
+              "$ref": "#/components/schemas/FileResponse"
+            }
+          },
           "viewer": {
             "$ref": "#/components/schemas/ViewerResponse",
             "description": "Что могу делать я"
@@ -1402,12 +3716,188 @@
           "organizers",
           "participants",
           "participantsCount",
+          "photos",
+          "recurring",
           "sport",
           "startAt",
           "status",
           "title",
           "updatedAt",
           "viewer"
+        ]
+      },
+      "OccurrenceResponse": {
+        "type": "object",
+        "description": "Занятие мероприятия",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "eventId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Мероприятие"
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Начало (после переноса — новое)"
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Окончание"
+          },
+          "rescheduled": {
+            "type": "boolean",
+            "description": "Перенесено: начало отличается от исходного по расписанию"
+          },
+          "originalStartAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Исходное начало по расписанию; null — не из правила"
+          },
+          "source": {
+            "type": "string",
+            "description": "Откуда занятие: разовое мероприятие, правило или добавленная дата",
+            "enum": [
+              "SINGLE",
+              "RULE",
+              "EXTRA"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "description": "Состоится или отменено",
+            "enum": [
+              "SCHEDULED",
+              "CANCELLED"
+            ]
+          },
+          "cancelReason": {
+            "type": "string",
+            "description": "Причина отмены"
+          },
+          "attendeesCount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Сколько придёт: отметки (у разового — подтверждённые записи)"
+          },
+          "capacity": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Лимит мест на занятие; null — без лимита"
+          },
+          "quorum": {
+            "$ref": "#/components/schemas/QuorumResponse",
+            "description": "Кворум занятия; null — у мероприятия кворума нет"
+          },
+          "confirmedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Когда организатор подтвердил, что занятие состоится"
+          },
+          "viewer": {
+            "$ref": "#/components/schemas/OccurrenceViewerResponse",
+            "description": "Что могу делать я"
+          }
+        },
+        "required": [
+          "attendeesCount",
+          "eventId",
+          "id",
+          "rescheduled",
+          "source",
+          "startAt",
+          "status",
+          "viewer"
+        ]
+      },
+      "OccurrenceShortResponse": {
+        "type": "object",
+        "description": "Занятие коротко: когда",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Начало"
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Окончание"
+          }
+        },
+        "required": [
+          "id",
+          "startAt"
+        ]
+      },
+      "OccurrenceViewerResponse": {
+        "type": "object",
+        "description": "Мои права на занятие: фронт рисует кнопки только по этому блоку",
+        "properties": {
+          "attending": {
+            "type": "boolean",
+            "description": "Я приду: отметился на занятие (у разового — подтверждённая запись)"
+          },
+          "canAttend": {
+            "type": "boolean",
+            "description": "Можно отметиться «приду»"
+          },
+          "attendBlockedReason": {
+            "type": "string",
+            "description": "Почему нельзя отметиться; null — можно",
+            "example": "Мест нет"
+          },
+          "canUnattend": {
+            "type": "boolean",
+            "description": "Можно снять отметку"
+          },
+          "canCancel": {
+            "type": "boolean",
+            "description": "Могу отменить занятие (организатор; у разового — всё мероприятие)"
+          },
+          "canReschedule": {
+            "type": "boolean",
+            "description": "Могу перенести занятие (организатор серии)"
+          },
+          "canConfirm": {
+            "type": "boolean",
+            "description": "Могу подтвердить «Состоится» (организатор, у мероприятия есть кворум)"
+          }
+        },
+        "required": [
+          "attending",
+          "canAttend",
+          "canCancel",
+          "canConfirm",
+          "canReschedule",
+          "canUnattend"
+        ]
+      },
+      "OrganizationShortResponse": {
+        "type": "object",
+        "description": "Организация в карточке мероприятия: ссылка на её публичную страницу",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "description": "Название",
+            "example": "Шахматный клуб «Ладья»"
+          }
+        },
+        "required": [
+          "id",
+          "name"
         ]
       },
       "OrganizerResponse": {
@@ -1426,6 +3916,115 @@
         "required": [
           "author",
           "user"
+        ]
+      },
+      "QuorumResponse": {
+        "type": "object",
+        "description": "Кворум занятия: состоится, если наберём required",
+        "properties": {
+          "required": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Сколько нужно, чтобы занятие состоялось",
+            "example": 6
+          },
+          "count": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Сколько уже придёт: отметки (у разового — подтверждённые записи)",
+            "example": 3
+          },
+          "status": {
+            "type": "string",
+            "description": "Собираем, набрали или организатор подтвердил",
+            "enum": [
+              "GATHERING",
+              "REACHED",
+              "CONFIRMED"
+            ]
+          },
+          "takesPlace": {
+            "type": "boolean",
+            "description": "Состоится: набрали или подтвердил организатор"
+          }
+        },
+        "required": [
+          "count",
+          "required",
+          "status",
+          "takesPlace"
+        ]
+      },
+      "ScheduleResponse": {
+        "type": "object",
+        "description": "Расписание серии",
+        "properties": {
+          "timeZone": {
+            "type": "string",
+            "description": "Часовой пояс (IANA)",
+            "example": "Asia/Krasnoyarsk"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Первый день серии"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Последний день серии"
+          },
+          "rules": {
+            "type": "array",
+            "description": "Правила по порядку",
+            "items": {
+              "$ref": "#/components/schemas/ScheduleRuleResponse"
+            }
+          },
+          "description": {
+            "type": "string",
+            "description": "Всё расписание словами",
+            "example": "по вторникам в 20:00; по воскресеньям раз в 2 недели в 14:00"
+          }
+        },
+        "required": [
+          "description",
+          "endDate",
+          "rules",
+          "startDate",
+          "timeZone"
+        ]
+      },
+      "ScheduleRuleResponse": {
+        "type": "object",
+        "description": "Правило расписания серии",
+        "properties": {
+          "firstStart": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Первое занятие по правилу, местное время серии"
+          },
+          "durationMinutes": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Длительность занятия, минуты"
+          },
+          "rrule": {
+            "type": "string",
+            "description": "Правило повторения RFC 5545",
+            "example": "FREQ=WEEKLY;BYDAY=TU"
+          },
+          "description": {
+            "type": "string",
+            "description": "Правило словами",
+            "example": "по вторникам в 20:00"
+          }
+        },
+        "required": [
+          "description",
+          "durationMinutes",
+          "firstStart",
+          "rrule"
         ]
       },
       "SportResponse": {
@@ -1449,11 +4048,17 @@
           "custom": {
             "type": "boolean",
             "description": "Добавлен пользователем, а не из справочника"
+          },
+          "imageUrl": {
+            "type": "string",
+            "description": "Иллюстрация вида спорта; у видов без своей картинки — общая",
+            "example": "/api/sport-images/football.webp"
           }
         },
         "required": [
           "custom",
           "id",
+          "imageUrl",
           "name",
           "slug"
         ]
@@ -1540,10 +4145,15 @@
           "canSeePrivateDetails": {
             "type": "boolean",
             "description": "Вижу onlineUrl и privateDetails"
+          },
+          "canComment": {
+            "type": "boolean",
+            "description": "Могу написать в обсуждение"
           }
         },
         "required": [
           "canCancel",
+          "canComment",
           "canManage",
           "canManageOrganizers",
           "canRegister",
@@ -1639,6 +4249,71 @@
           "login"
         ]
       },
+      "CancelOccurrenceRequest": {
+        "type": "object",
+        "description": "Отмена занятия серии",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "Причина; участники увидят её у занятия",
+            "example": "Зал закрыт на праздники",
+            "maxLength": 1000,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "CommentRequest": {
+        "type": "object",
+        "description": "Новый комментарий в обсуждении мероприятия",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Текст",
+            "example": "Можно прийти без своих шиповок?",
+            "maxLength": 2000,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "text"
+        ]
+      },
+      "CommentResponse": {
+        "type": "object",
+        "description": "Комментарий в обсуждении мероприятия",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "author": {
+            "$ref": "#/components/schemas/UserShortResponse",
+            "description": "Автор"
+          },
+          "text": {
+            "type": "string",
+            "description": "Текст"
+          },
+          "isOrganizer": {
+            "type": "boolean",
+            "description": "Автор — организатор мероприятия: показать метку «Организатор»"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "author",
+          "createdAt",
+          "id",
+          "isOrganizer",
+          "text"
+        ]
+      },
       "RegisterRequest": {
         "type": "object",
         "properties": {
@@ -1667,6 +4342,13 @@
             "type": "string",
             "maxLength": 128,
             "minLength": 8
+          },
+          "accountType": {
+            "type": "string",
+            "enum": [
+              "USER",
+              "ORG"
+            ]
           }
         },
         "required": [
@@ -1703,6 +4385,7 @@
             "type": "string",
             "enum": [
               "USER",
+              "ORG",
               "ADMIN"
             ]
           },
@@ -1746,6 +4429,252 @@
           "username"
         ]
       },
+      "PetSlotRequest": {
+        "type": "object",
+        "description": "Новый слот одежды бобра (атрибут)",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Код: латиница в нижнем регистре, цифры, дефис; потом не меняется",
+            "example": "gloves",
+            "minLength": 1,
+            "pattern": "[a-z][a-z0-9-]{1,39}"
+          },
+          "label": {
+            "type": "string",
+            "description": "Подпись",
+            "example": "Перчатки",
+            "maxLength": 100,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "code",
+          "label"
+        ]
+      },
+      "PetItemResponse": {
+        "type": "object",
+        "description": "Вещь бобра в каталоге",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Код вещи — его передают в образе",
+            "example": "hc-sokol"
+          },
+          "label": {
+            "type": "string",
+            "description": "Подпись",
+            "example": "Хоккейная форма — Сокол (Красноярск)"
+          },
+          "imageUrl": {
+            "type": "string",
+            "description": "Картинка вещи, добавленной админом (/api/files/{id}); null — встроенная, её рисует фронт"
+          },
+          "builtIn": {
+            "type": "boolean",
+            "description": "Встроенная (рисует фронт)"
+          }
+        },
+        "required": [
+          "builtIn",
+          "id",
+          "label"
+        ]
+      },
+      "PetSlotResponse": {
+        "type": "object",
+        "description": "Слот бобра с вещами",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Код слота: mood, activity или ключ в outfit",
+            "example": "hat"
+          },
+          "label": {
+            "type": "string",
+            "description": "Подпись",
+            "example": "Головной убор"
+          },
+          "kind": {
+            "type": "string",
+            "description": "MOOD — поле mood, ACTIVITY — поле activity, OUTFIT — ключ в outfit",
+            "enum": [
+              "MOOD",
+              "ACTIVITY",
+              "OUTFIT"
+            ]
+          },
+          "builtIn": {
+            "type": "boolean",
+            "description": "Встроенный слот"
+          },
+          "items": {
+            "type": "array",
+            "description": "Вещи по порядку",
+            "items": {
+              "$ref": "#/components/schemas/PetItemResponse"
+            }
+          }
+        },
+        "required": [
+          "builtIn",
+          "id",
+          "items",
+          "kind",
+          "label"
+        ]
+      },
+      "RejectOrganizationRequest": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "AdminOrganizationResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "contacts": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "APPROVED",
+              "REJECTED"
+            ]
+          },
+          "rejectReason": {
+            "type": "string"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reviewedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reviewedById": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "account": {
+            "$ref": "#/components/schemas/OrganizationAccountResponse"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "logoUrl": {
+            "type": "string"
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FileResponse"
+            }
+          }
+        }
+      },
+      "OrganizationAccountResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "username": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          }
+        }
+      },
+      "ModerateEventRequest": {
+        "type": "object",
+        "description": "Снятие с публикации или удаление мероприятия админом",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "Причина: её увидят записавшиеся и организатор",
+            "example": "Нарушает правила площадки",
+            "maxLength": 1000,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "PetResponse": {
+        "type": "object",
+        "description": "Образ бобра: коды вещей из каталога. Без сохранённых настроек — {mood: idle, activity: none, outfit: {}}",
+        "properties": {
+          "mood": {
+            "type": "string",
+            "description": "Настроение",
+            "example": "happy"
+          },
+          "activity": {
+            "type": "string",
+            "description": "Инвентарь; none — без инвентаря",
+            "example": "hockey"
+          },
+          "outfit": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Надетое: код слота → код вещи. Пустой слот отсутствует в объекте",
+            "example": {
+              "shirt": "hc-sokol",
+              "hat": "helmet",
+              "bottom": "hockeypants"
+            }
+          }
+        },
+        "required": [
+          "activity",
+          "mood",
+          "outfit"
+        ]
+      },
       "EventSummaryResponse": {
         "type": "object",
         "description": "Мероприятие в списке: лента, мои мероприятия, мои записи",
@@ -1765,12 +4694,26 @@
           "startAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Начало"
+            "description": "Начало; у серии — ближайшего подходящего занятия"
           },
           "endAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Окончание"
+            "description": "Окончание; у серии — ближайшего подходящего занятия"
+          },
+          "occurrenceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Занятие, к которому относятся startAt и endAt; null — подходящих нет"
+          },
+          "recurring": {
+            "type": "boolean",
+            "description": "Повторяющееся мероприятие (серия занятий)"
+          },
+          "scheduleDescription": {
+            "type": "string",
+            "description": "Расписание словами; null — разовое",
+            "example": "по вторникам в 20:00"
           },
           "format": {
             "type": "string",
@@ -1820,12 +4763,35 @@
           "capacity": {
             "type": "integer",
             "format": "int32",
-            "description": "Лимит мест; null — без лимита"
+            "description": "Лимит мест; null — без лимита. У серии — на каждое занятие"
           },
           "participantsCount": {
             "type": "integer",
             "format": "int64",
-            "description": "Подтверждённых участников («записались 8 из 16»)"
+            "description": "Подтверждённых участников («записались 8 из 16»); у серии — принятых в серию"
+          },
+          "occurrenceAttendeesCount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "У серии — сколько отметились на занятие occurrenceId («придут 7 из 10»); у разового — null"
+          },
+          "minParticipants": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Кворум: состоится, если наберём столько; null — без кворума"
+          },
+          "quorumStatus": {
+            "type": "string",
+            "description": "Кворум ближайшего подходящего занятия; null — без кворума или занятия нет",
+            "enum": [
+              "GATHERING",
+              "REACHED",
+              "CONFIRMED"
+            ]
+          },
+          "cancelledByOrganizer": {
+            "type": "boolean",
+            "description": "Разовое мероприятие отменено организатором (у серии отменяются отдельные занятия)"
           },
           "status": {
             "type": "string",
@@ -1859,15 +4825,21 @@
               "REJECTED",
               "CANCELLED"
             ]
+          },
+          "coverUrl": {
+            "type": "string",
+            "description": "Обложка (первое фото): /api/files/{id}; null — без фото"
           }
         },
         "required": [
           "authorId",
+          "cancelledByOrganizer",
           "format",
           "id",
           "joinMode",
           "level",
           "participantsCount",
+          "recurring",
           "sport",
           "startAt",
           "status",
@@ -1912,6 +4884,10 @@
           "event": {
             "$ref": "#/components/schemas/EventSummaryResponse",
             "description": "Мероприятие; event.status — снято ли оно с публикации"
+          },
+          "myNextOccurrence": {
+            "$ref": "#/components/schemas/OccurrenceShortResponse",
+            "description": "У серии — моё ближайшее отмеченное занятие; null — не отмечен или разовое"
           }
         },
         "required": [
@@ -1933,6 +4909,238 @@
           }
         }
       },
+      "PetCatalogResponse": {
+        "type": "object",
+        "description": "Каталог бобра: слоты по порядку конструктора, в каждом — вещи",
+        "properties": {
+          "slots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PetSlotResponse"
+            }
+          }
+        },
+        "required": [
+          "slots"
+        ]
+      },
+      "PublicOrganizationResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "contacts": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "logoUrl": {
+            "type": "string"
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FileResponse"
+            }
+          }
+        }
+      },
+      "EventMapFeature": {
+        "type": "object",
+        "description": "GeoJSON Feature: мероприятие на карте",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "Feature"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "id мероприятия"
+          },
+          "geometry": {
+            "$ref": "#/components/schemas/PointGeometry"
+          },
+          "properties": {
+            "$ref": "#/components/schemas/EventMapProperties"
+          }
+        },
+        "required": [
+          "geometry",
+          "id",
+          "properties",
+          "type"
+        ]
+      },
+      "EventMapProperties": {
+        "type": "object",
+        "description": "Свойства точки на карте: хватает на маркер и короткую карточку",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "description": "Название"
+          },
+          "sport": {
+            "$ref": "#/components/schemas/SportResponse",
+            "description": "Вид спорта"
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Начало; у серии — ближайшего занятия в периоде"
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Окончание; у серии — ближайшего занятия в периоде"
+          },
+          "occurrenceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Занятие, к которому относятся startAt и endAt"
+          },
+          "recurring": {
+            "type": "boolean",
+            "description": "Повторяющееся мероприятие (серия занятий)"
+          },
+          "scheduleDescription": {
+            "type": "string",
+            "description": "Расписание словами; null — разовое"
+          },
+          "address": {
+            "type": "string",
+            "description": "Адрес"
+          },
+          "level": {
+            "type": "string",
+            "description": "Для какого уровня",
+            "enum": [
+              "ANY",
+              "BEGINNER",
+              "AMATEUR",
+              "ADVANCED",
+              "PRO"
+            ]
+          },
+          "joinMode": {
+            "type": "string",
+            "description": "Режим записи",
+            "enum": [
+              "FREE",
+              "REQUEST"
+            ]
+          },
+          "participantsCount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Подтверждённых участников"
+          },
+          "capacity": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Лимит мест; null — без лимита"
+          },
+          "myRegistrationStatus": {
+            "type": "string",
+            "description": "Статус моей записи; null — не записан",
+            "enum": [
+              "CONFIRMED",
+              "PENDING",
+              "REJECTED",
+              "CANCELLED"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "joinMode",
+          "level",
+          "participantsCount",
+          "recurring",
+          "sport",
+          "startAt",
+          "title"
+        ]
+      },
+      "EventMapResponse": {
+        "type": "object",
+        "description": "GeoJSON FeatureCollection с мероприятиями в видимой области",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "FeatureCollection"
+            ]
+          },
+          "features": {
+            "type": "array",
+            "description": "Ближайшие по времени начала, не больше limit",
+            "items": {
+              "$ref": "#/components/schemas/EventMapFeature"
+            }
+          },
+          "truncated": {
+            "type": "boolean",
+            "description": "В области больше limit мероприятий: показаны не все, стоит приблизить карту"
+          },
+          "limit": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Сколько точек отдаётся максимум",
+            "example": 1000
+          }
+        },
+        "required": [
+          "features",
+          "limit",
+          "truncated",
+          "type"
+        ]
+      },
+      "PointGeometry": {
+        "type": "object",
+        "description": "GeoJSON Point",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "Point"
+            ]
+          },
+          "coordinates": {
+            "type": "array",
+            "description": "[долгота, широта] — именно в таком порядке",
+            "items": {
+              "type": "number",
+              "format": "double"
+            },
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "required": [
+          "coordinates",
+          "type"
+        ]
+      },
       "DemoAccountResponse": {
         "type": "object",
         "properties": {
@@ -1952,6 +5160,7 @@
             "type": "string",
             "enum": [
               "USER",
+              "ORG",
               "ADMIN"
             ]
           }
@@ -1991,6 +5200,7 @@
             "type": "string",
             "enum": [
               "USER",
+              "ORG",
               "ADMIN"
             ]
           },
@@ -2014,6 +5224,228 @@
           },
           "city": {
             "type": "string"
+          },
+          "pet": {
+            "$ref": "#/components/schemas/PetResponse"
+          }
+        }
+      },
+      "AdminStatsResponse": {
+        "type": "object",
+        "description": "Счётчики для дашборда админа",
+        "properties": {
+          "users": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Пользователей всего (люди и организации)"
+          },
+          "organizationsPending": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Заявок организаций ждут решения"
+          },
+          "organizationsApproved": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Одобренных организаций"
+          },
+          "eventsPublished": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Опубликованных мероприятий"
+          },
+          "eventsUnpublished": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Снятых с публикации"
+          },
+          "eventsDeleted": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Удалённых"
+          },
+          "registrationsConfirmed": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Подтверждённых записей"
+          },
+          "registrationsPending": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Заявок ждут решения организаторов"
+          },
+          "comments": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Комментариев"
+          },
+          "signupsByDay": {
+            "type": "array",
+            "description": "Сколько присоединилось по дням (регистрации), старые дни сначала, дни без регистраций — с нулём",
+            "items": {
+              "$ref": "#/components/schemas/DailyCountResponse"
+            }
+          }
+        },
+        "required": [
+          "comments",
+          "eventsDeleted",
+          "eventsPublished",
+          "eventsUnpublished",
+          "organizationsApproved",
+          "organizationsPending",
+          "registrationsConfirmed",
+          "registrationsPending",
+          "signupsByDay",
+          "users"
+        ]
+      },
+      "DailyCountResponse": {
+        "type": "object",
+        "description": "Значение за день",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "description": "День (по Красноярску)",
+            "example": "2026-10-10"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Сколько за этот день",
+            "example": 12
+          }
+        },
+        "required": [
+          "count",
+          "date"
+        ]
+      },
+      "PageResponseAdminOrganizationResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminOrganizationResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "AdminEventResponse": {
+        "type": "object",
+        "description": "Мероприятие в админке: статус модерации и кто автор",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "description": "Название"
+          },
+          "sport": {
+            "$ref": "#/components/schemas/SportResponse",
+            "description": "Вид спорта"
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Начало"
+          },
+          "address": {
+            "type": "string",
+            "description": "Адрес"
+          },
+          "author": {
+            "$ref": "#/components/schemas/UserShortResponse",
+            "description": "Автор"
+          },
+          "organizationId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Организация; null — от частного лица"
+          },
+          "participantsCount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Подтверждённых участников"
+          },
+          "status": {
+            "type": "string",
+            "description": "Статус",
+            "enum": [
+              "PUBLISHED",
+              "UNPUBLISHED",
+              "DELETED"
+            ]
+          },
+          "moderationReason": {
+            "type": "string",
+            "description": "Причина снятия или удаления"
+          },
+          "moderatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Когда снято или удалено"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "author",
+          "createdAt",
+          "id",
+          "participantsCount",
+          "sport",
+          "startAt",
+          "status",
+          "title"
+        ]
+      },
+      "PageResponseAdminEventResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminEventResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       }

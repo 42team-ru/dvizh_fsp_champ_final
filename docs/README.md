@@ -6,6 +6,11 @@
 | [deploy.md](deploy.md) | Как устроен автодеплой (GitHub Actions + GHCR) и почему он быстрый |
 | [development.md](development.md) | Локальная разработка, демо-режим, git-хуки |
 | [architecture.md](architecture.md) | Структура бэкенда по слоям, Orval и контракт API |
+| [postman.md](postman.md) | Postman-коллекция: проверка сценариев приёмки через API одной командой |
 | [final.md](final.md) | **Финал хакатона**: чеклист проверок и команда финальной очистки репозитория |
 | [orval.md](orval.md) | Генерация API-клиента для фронта |
+| [map-frontend.md](map-frontend.md) | **Карта событий**: контракт `events_map`, как делать экран на 2ГИС MapGL, грабли |
 | [frontend.md](frontend.md) | Исходный README шаблона React Router |
+| [sport-images.md](sport-images.md) | **Иллюстрации видов спорта**: как устроены, API `imageUrl`, как сгенерировать новую в том же стиле |
+| [beaver-pet.md](beaver-pet.md) | **Бобр-маскот**: как рисовать вещи, предметы, активности и настроения (гайд для агентов) |
+| [beaver-backend-integration.md](beaver-backend-integration.md) | **Бобр в профиле: API бэкенда** — каталог, образ, случайная вещь, админка вещей (картинки в S3), контракт и подключение UI |

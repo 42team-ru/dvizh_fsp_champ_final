@@ -34,4 +34,5 @@ class SportController {
 		log.info("Endpoint response: GET /api/sports, count={}", response.size());
 		return response;
 	}
+
 }
