@@ -1,17 +1,18 @@
 package com.hackathon.app.domain.dto;
 
-import static io.swagger.v3.oas.annotations.media.Schema.RequiredMode.REQUIRED;
-
 import java.util.Map;
-
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.hackathon.app.domain.enums.PetMood;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-/** Образ бобра в формате docs/beaver-backend-integration.md: только коды из каталога, без картинок. */
-@Schema(description = "Образ бобра: коды вещей из каталога. Без сохранённых настроек — {mood: idle, activity: none, outfit: {}}")
+/** Образ и настроение бобра; личное состояние отдаётся только владельцу. */
 public record PetResponse(
-		@Schema(description = "Настроение", example = "happy", requiredMode = REQUIRED) String mood,
-		@Schema(description = "Инвентарь; none — без инвентаря", example = "hockey", requiredMode = REQUIRED) String activity,
-		@Schema(description = "Надетое: код слота → код вещи. Пустой слот отсутствует в объекте",
-				example = "{\"shirt\": \"hc-sokol\", \"hat\": \"helmet\", \"bottom\": \"hockeypants\"}", requiredMode = REQUIRED)
-		Map<String, String> outfit) {
+        /** Настроение, вычисленное сервером; в публичном ответе idle. */
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) PetMood mood,
+        /** Инвентарь; none — без инвентаря. */
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String activity,
+        /** Надетые вещи по кодам слотов. */
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Map<String, String> outfit,
+        /** Личная фраза и её причина; отсутствует в публичном ответе. */
+        @JsonInclude(JsonInclude.Include.NON_NULL) PetStatusResponse status) {
 }

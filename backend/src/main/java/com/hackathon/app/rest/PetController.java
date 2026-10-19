@@ -40,7 +40,7 @@ class PetController {
 
 	@GetMapping("/pets/catalog")
 	@Operation(operationId = "pets_catalog", summary = "Каталог: слоты и вещи",
-			description = "Все вещи доступны всем. imageUrl есть у вещей, добавленных админом (картинка в S3).")
+			description = "Все встроенные вещи доступны всем; настроение вычисляется отдельно.")
 	PetCatalogResponse catalog(@AuthenticationPrincipal Jwt jwt) {
 		log.info("Endpoint called: GET /api/pets/catalog, userId={}", jwt.getSubject());
 		var response = catalog.catalog();
@@ -60,7 +60,7 @@ class PetController {
 	@PutMapping("/users/me/pet")
 	@Operation(operationId = "pets_saveMine", summary = "Сохранить образ целиком",
 			description = "Чего нет в outfit — снимается. Неверный образ отклоняется целиком (400), сохранённый не меняется.")
-	@ApiResponse(responseCode = "400", description = "Неизвестный слот или вещь, вещь ещё не получена", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+	@ApiResponse(responseCode = "400", description = "Неизвестный слот или вещь", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
 	PetResponse saveMine(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody PetRequest request) {
 		log.info("Endpoint called: PUT /api/users/me/pet, userId={}, request={}", jwt.getSubject(), request);
 		var response = pets.save(userId(jwt), request);
@@ -71,7 +71,7 @@ class PetController {
 	@PutMapping("/users/me/pet/slots/{slot}")
 	@Operation(operationId = "pets_equip", summary = "Надеть или снять вещь в одном слоте",
 			description = "Например, сменить головной убор: slot = hat, item = helmet. item = null — снять.")
-	@ApiResponse(responseCode = "400", description = "Нет такой вещи в слоте или она ещё не получена", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+	@ApiResponse(responseCode = "400", description = "Нет такой вещи в слоте", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
 	@ApiResponse(responseCode = "404", description = "Нет такого слота", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
 	PetResponse equip(@AuthenticationPrincipal Jwt jwt, @PathVariable String slot,
 			@RequestBody PetEquipRequest request) {
@@ -87,7 +87,7 @@ class PetController {
 	@ApiResponse(responseCode = "404", description = "Нет пользователя", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
 	PetResponse getUser(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
 		log.info("Endpoint called: GET /api/users/{}/pet, userId={}", id, jwt.getSubject());
-		var response = pets.get(id);
+		var response = pets.getPublic(id);
 		log.info("Endpoint response: GET /api/users/{}/pet, response={}", id, response);
 		return response;
 	}

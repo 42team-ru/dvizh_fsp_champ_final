@@ -10,10 +10,10 @@ import jakarta.validation.constraints.NotNull;
 /** Полная замена образа: чего нет в outfit — снимается. */
 @Schema(description = "Полная замена образа бобра")
 public record PetRequest(
-		@Schema(description = "Настроение", example = "happy", requiredMode = REQUIRED)
-		@NotNull(message = "Укажите настроение") String mood,
+		/** Выбранный инвентарь. */
 		@Schema(description = "Инвентарь; none — без инвентаря", example = "hockey", requiredMode = REQUIRED)
 		@NotNull(message = "Укажите инвентарь (none — без инвентаря)") String activity,
+		/** Надетые вещи по слотам. */
 		@Schema(description = "Код слота → код вещи. Чтобы снять вещь, не передавайте слот (null тоже снимает)",
 				example = "{\"shirt\": \"hc-sokol\", \"hat\": \"helmet\"}", requiredMode = REQUIRED)
 		@NotNull(message = "Передайте outfit (пустой объект — ничего не надето)") Map<String, String> outfit) {

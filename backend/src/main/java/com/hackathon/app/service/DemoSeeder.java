@@ -184,7 +184,6 @@ public class DemoSeeder {
 				14, JoinMode.FREE, "Чат игры: https://t.me/demo_football_tatyshev", null, null));
 		if (football != null) {
 			coOrganizer(football, ids.get("nikolai"));
-			confirmed(football, ids.get("petr"), now);
 			confirmed(football, ids.get("sergey"), now);
 			confirmed(football, ids.get("elena"), now);
 			// Сценарий 5: вопрос участника, ответы автора и соорганизатора с меткой «Организатор».
@@ -290,7 +289,7 @@ public class DemoSeeder {
 			reply(basketball, ids.get("petr"), "Да, отмечайтесь на любые даты — главное, чтобы были места.", sundayQuestion);
 		}
 
-		// Сценарий 6: снятое с публикации — нет в ленте, у записавшейся Анны видно с причиной.
+		// Сценарий 6: снятое с публикации — нет в ленте, у записавшейся Елены видно с причиной.
 		var volleyball = event(ids.get("sergey"), "Волейбол", new EventRequest(
 				"Пляжный волейбол на Татышеве",
 				"Играем 2×2 и 4×4, сетка своя.",
@@ -300,7 +299,7 @@ public class DemoSeeder {
 				null, "Купальник или шорты, вода",
 				8, JoinMode.FREE, null, null, null));
 		if (volleyball != null) {
-			confirmed(volleyball, ids.get("anna"), now);
+			confirmed(volleyball, ids.get("elena"), now);
 			comment(volleyball, ids.get("anna"), "А когда будет следующая игра?");
 			eventMapper.moderate(volleyball, EventStatus.UNPUBLISHED,
 					"Площадки закрыты на ремонт до конца месяца, а другое место организатор не указал",
@@ -308,7 +307,7 @@ public class DemoSeeder {
 			events.save(volleyball);
 		}
 
-		// Бобр: коллекционные вещи с картинками в S3, новый слот «Перчатки», готовые образы.
+		// Бобр: готовые образы из встроенного гардероба.
 		demoPets.seed(ids);
 
 		// Живой проект: сотни людей в 12 городах, клубы, мероприятия, записи и обсуждения за полгода.

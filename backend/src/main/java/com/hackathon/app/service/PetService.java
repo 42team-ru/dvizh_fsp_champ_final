@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import com.hackathon.app.domain.dto.PetRequest;
 import com.hackathon.app.domain.dto.PetResponse;
+import com.hackathon.app.domain.enums.PetMood;
 import com.hackathon.app.domain.entity.PetItem;
 import com.hackathon.app.domain.entity.PetSlot;
 import com.hackathon.app.domain.entity.UserPetEquipment;
@@ -35,16 +36,27 @@ public class PetService {
     private final UserPetEquipmentRepository equipment;
     private final AppUserRepository users;
     private final PetMapper mapper;
+    /** Вычисление личного настроения и фразы. */
+    private final PetMoodService moods;
 
     /**
-     * Образ пользователя; без сохранённого — по умолчанию (idle, none, ничего не надето). Нет пользователя — 404.
+     * Образ пользователя; без сохранённого — none и ничего не надето, настроение вычисляется. Нет пользователя — 404.
      */
     @Transactional(readOnly = true)
     public PetResponse get(UUID userId) {
         if (!users.existsById(userId)) {
             throw new NoSuchElementException("Пользователь не найден");
         }
-        return toResponse(userId, catalogService.load());
+        return toResponse(userId, catalogService.load(), true);
+    }
+
+    /** Публичный образ без личных событий и причин настроения, даже при просмотре своего id. */
+    @Transactional(readOnly = true)
+    public PetResponse getPublic(UUID userId) {
+        if (!users.existsById(userId)) {
+            throw new NoSuchElementException("Пользователь не найден");
+        }
+        return toResponse(userId, catalogService.load(), false);
     }
 
     /**
@@ -54,7 +66,6 @@ public class PetService {
     public PetResponse save(UUID userId, PetRequest request) {
         var catalog = catalogService.load();
         var chosen = new LinkedHashMap<PetSlot, PetItem>();
-        chosen.put(slotOfKind(catalog, PetSlotKind.MOOD), resolve(catalog, PetCatalogService.MOOD, request.mood()));
         chosen.put(slotOfKind(catalog, PetSlotKind.ACTIVITY),
                 resolve(catalog, PetCatalogService.ACTIVITY, request.activity()));
         request.outfit().forEach((slotCode, itemCode) -> {
@@ -68,11 +79,11 @@ public class PetService {
         chosen.forEach((slot, item) -> equipment.save(mapper.toEquipment(userId, slot.getId(), item.getId())));
         equipment.flush();
         log.info("Pet saved: userId={}, items={}", userId, chosen.size());
-        return toResponse(userId, catalog);
+        return toResponse(userId, catalog, true);
     }
 
     /**
-     * Надеть вещь в один слот или снять (itemCode = null). Снятое настроение — idle, инвентарь — none.
+     * Надеть вещь в один слот или снять (itemCode = null). Снятый инвентарь — none.
      */
     @Transactional
     public PetResponse equip(UUID userId, String slotCode, String itemCode) {
@@ -87,7 +98,7 @@ public class PetService {
                     () -> equipment.save(mapper.toEquipment(userId, slot.getId(), item.getId())));
         }
         equipment.flush();
-        return toResponse(userId, catalog);
+        return toResponse(userId, catalog, true);
     }
 
     /**
@@ -109,12 +120,11 @@ public class PetService {
     /**
      * Образ из надетого; удалённые из каталога вещи просто не попадают в ответ.
      */
-    private PetResponse toResponse(UUID userId, Catalog catalog) {
+    private PetResponse toResponse(UUID userId, Catalog catalog, boolean own) {
         var itemsById = catalog.itemsById();
         Map<UUID, PetItem> equippedBySlot = equipment.findByUserId(userId).stream()
                 .filter(e -> itemsById.containsKey(e.getItemId()))
                 .collect(Collectors.toMap(UserPetEquipment::getSlotId, e -> itemsById.get(e.getItemId())));
-        var mood = PetCatalogService.DEFAULT_MOOD;
         var activity = PetCatalogService.NO_ACTIVITY;
         var outfit = new LinkedHashMap<String, String>();
         for (var slot : catalog.slots()) { // уже по порядку конструктора
@@ -123,11 +133,11 @@ public class PetService {
                 continue;
             }
             switch (slot.getKind()) {
-                case MOOD -> mood = item.getCode();
                 case ACTIVITY -> activity = item.getCode();
                 case OUTFIT -> outfit.put(slot.getCode(), item.getCode());
             }
         }
-        return new PetResponse(mood, activity, outfit);
+        var status = own ? moods.compute(userId) : null;
+        return new PetResponse(status == null ? PetMood.IDLE : status.mood(), activity, outfit, status);
     }
 }

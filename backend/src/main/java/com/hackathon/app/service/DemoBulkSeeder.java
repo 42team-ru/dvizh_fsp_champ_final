@@ -479,7 +479,6 @@ public class DemoBulkSeeder {
             codesBySlot.put(slot.getCode(), catalog.itemsBySlotId().getOrDefault(slot.getId(), List.of()).stream()
                     .map(i -> i.getCode()).toList());
         }
-        var moods = List.of("idle", "happy", "happy", "happy", "thinking", "sad");
         for (var person : people) {
             if (!run.chance(0.66)) {
                 continue;
@@ -498,7 +497,7 @@ public class DemoBulkSeeder {
             });
             var activities = codesBySlot.getOrDefault(PetCatalogService.ACTIVITY, List.of(PetCatalogService.NO_ACTIVITY));
             var activity = run.chance(0.3) ? PetCatalogService.NO_ACTIVITY : run.pick(activities);
-            pets.save(person.id(), new PetRequest(run.pick(moods), activity, outfit));
+            pets.save(person.id(), new PetRequest(activity, outfit));
         }
         demoData.flushAndClear();
     }

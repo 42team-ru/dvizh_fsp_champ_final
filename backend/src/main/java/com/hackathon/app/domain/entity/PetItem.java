@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * Вещь бобра в слоте. Встроенную рисует фронт; добавленную админом — картинка в S3 (imageFileId).
+ * Встроенная вещь бобра в слоте; изображение рисует фронт.
  */
 @Entity
 @Table(name = "pet_items")
@@ -40,11 +40,7 @@ public class PetItem extends AuditEntity {
      */
     private String label;
     /**
-     * Картинка в S3 (files); null — встроенная, её рисует фронт.
-     */
-    private UUID imageFileId;
-    /**
-     * Встроенная (рисует фронт); удалить можно только не встроенную.
+     * Встроенная вещь, которую рисует фронт.
      */
     private boolean builtIn;
     /**

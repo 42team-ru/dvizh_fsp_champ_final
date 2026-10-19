@@ -13,6 +13,9 @@ import java.util.Map;
 import java.util.UUID;
 
 import com.hackathon.app.domain.dto.AdminEventResponse;
+import com.hackathon.app.domain.dto.PetResponse;
+import com.hackathon.app.domain.dto.PetRequest;
+import com.hackathon.app.domain.dto.PetCatalogResponse;
 import com.hackathon.app.domain.dto.AdminOrganizationResponse;
 import com.hackathon.app.domain.dto.AvailabilityCheckResponse;
 import com.hackathon.app.domain.dto.CommentResponse;
@@ -79,6 +82,26 @@ public class Actor {
 	public MeResponse me() {
 		return send("GET /api/auth/me", get("/api/auth/me"), null, type(MeResponse.class));
 	}
+
+    /** Личный бобр с вычисляемой фразой. */
+    public PetResponse pet() {
+        return send("GET /api/users/me/pet", get("/api/users/me/pet"), null, type(PetResponse.class));
+    }
+
+    /** Публичный бобр без личного состояния. */
+    public PetResponse petOf(UUID userId) {
+        return send("GET /api/users/{id}/pet", get("/api/users/{id}/pet", userId), null, type(PetResponse.class));
+    }
+
+    /** Заменить гардероб без выбора настроения. */
+    public PetResponse savePet(PetRequest request) {
+        return send("PUT /api/users/me/pet", put("/api/users/me/pet"), request, type(PetResponse.class));
+    }
+
+    /** Встроенный каталог. */
+    public PetCatalogResponse petCatalog() {
+        return send("GET /api/pets/catalog", get("/api/pets/catalog"), null, type(PetCatalogResponse.class));
+    }
 
 	/** Проверить, что публичный API доступен без входа. */
 	public void ping() {

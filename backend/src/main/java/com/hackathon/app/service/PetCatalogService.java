@@ -34,9 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class PetCatalogService {
 
-	static final String MOOD = "mood";
 	static final String ACTIVITY = "activity";
-	static final String DEFAULT_MOOD = "idle";
 	static final String NO_ACTIVITY = "none";
 
 	private record BuiltInSlot(String code, String label, PetSlotKind kind, List<BuiltInItem> items) {
@@ -50,8 +48,6 @@ public class PetCatalogService {
 	}
 
 	private static final List<BuiltInSlot> BUILT_IN = List.of(
-			new BuiltInSlot(MOOD, "Настроение", PetSlotKind.MOOD, List.of(
-					item("idle", "Спокойный"), item("happy", "Радость"), item("sad", "Грусть"), item("thinking", "Думает"))),
 			new BuiltInSlot(ACTIVITY, "Инвентарь", PetSlotKind.ACTIVITY, List.of(
 					item("none", "Без инвентаря"), item("juggle", "Футбольный мяч"), item("dribble", "Баскетбольный мяч"),
 					item("lift", "Гантели"), item("chess", "Шахматная доска и фигуры"), item("ski", "Лыжи и палки"),
@@ -111,7 +107,7 @@ public class PetCatalogService {
 		}
 	}
 
-	/** Встроенные слоты и вещи, которых ещё нет. Существующие не трогаем (подписи мог поправить админ). */
+	/** Встроенные слоты и вещи, которых ещё нет. Существующие не трогаем. */
 	@Order(Ordered.HIGHEST_PRECEDENCE)
 	@EventListener(ApplicationReadyEvent.class)
 	@Transactional
@@ -125,7 +121,7 @@ public class PetCatalogService {
 			for (int itemPosition = 0; itemPosition < builtIn.items().size(); itemPosition++) {
 				var builtInItem = builtIn.items().get(itemPosition);
 				if (!items.existsBySlotIdAndCode(slot.getId(), builtInItem.code())) {
-					items.save(mapper.toItem(slot.getId(), builtInItem.code(), builtInItem.label(), null, true,
+					items.save(mapper.toItem(slot.getId(), builtInItem.code(), builtInItem.label(), true,
 							itemPosition));
 					created++;
 				}

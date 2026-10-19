@@ -507,7 +507,7 @@ export const getPetsCatalogUrl = () => {
 }
 
 /**
- * Все вещи доступны всем. imageUrl есть у вещей, добавленных админом (картинка в S3).
+ * Все встроенные вещи доступны всем; настроение вычисляется отдельно.
  * @summary Каталог: слоты и вещи
  */
 export const petsCatalog = async ( options?: Parameters<typeof authMutator>[1]): Promise<petsCatalogResponse> => {

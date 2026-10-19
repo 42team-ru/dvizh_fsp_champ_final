@@ -13,12 +13,12 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
-@Mapper(config = MappingConfig.class, uses = FileMapper.class)
+@Mapper(config = MappingConfig.class)
 public interface PetMapper {
 
 	PetSlot toSlot(String code, String label, PetSlotKind kind, int position, boolean builtIn);
 
-	PetItem toItem(UUID slotId, String code, String label, UUID imageFileId, boolean builtIn, int position);
+	PetItem toItem(UUID slotId, String code, String label, boolean builtIn, int position);
 
 	UserPetEquipment toEquipment(UUID userId, UUID slotId, UUID itemId);
 
@@ -26,7 +26,6 @@ public interface PetMapper {
 	void equip(@MappingTarget UserPetEquipment equipment, UUID itemId);
 
 	@Mapping(target = "id", source = "code")
-	@Mapping(target = "imageUrl", source = "imageFileId", qualifiedByName = "fileUrl")
 	PetItemResponse toItemResponse(PetItem item);
 
 	@Mapping(target = "id", source = "slot.code")

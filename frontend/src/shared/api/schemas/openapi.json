@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:8099",
+      "url": "http://localhost:8080",
       "description": "Generated server url"
     }
   ],
@@ -93,7 +93,7 @@
         },
         "responses": {
           "400": {
-            "description": "Неизвестный слот или вещь, вещь ещё не получена",
+            "description": "Неизвестный слот или вещь",
             "content": {
               "application/json": {
                 "schema": {
@@ -135,7 +135,7 @@
         },
         "responses": {
           "400": {
-            "description": "Нет такой вещи в слоте или она ещё не получена",
+            "description": "Нет такой вещи в слоте",
             "content": {
               "application/json": {
                 "schema": {
@@ -1878,149 +1878,6 @@
         }
       }
     },
-    "/api/admin/pets/slots": {
-      "post": {
-        "tags": [
-          "admin"
-        ],
-        "summary": "Добавить слот одежды (атрибут)",
-        "description": "Например «Перчатки». Появится в outfit под своим кодом.",
-        "operationId": "admin_createPetSlot",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PetSlotRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PetSlotResponse"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Такой код уже есть",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/admin/pets/slots/{slot}/items": {
-      "post": {
-        "tags": [
-          "admin"
-        ],
-        "summary": "Добавить вещь с картинкой",
-        "description": "Картинка (PNG, WebP или JPG до 5 МБ) сохраняется в S3.",
-        "operationId": "admin_createPetItem",
-        "parameters": [
-          {
-            "name": "slot",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "code",
-            "in": "query",
-            "description": "Код: латиница в нижнем регистре, цифры, дефис",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "golden-crown"
-          },
-          {
-            "name": "label",
-            "in": "query",
-            "description": "Подпись",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "Золотая корона"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "file": {
-                    "type": "string",
-                    "format": "binary",
-                    "description": "Картинка вещи"
-                  }
-                },
-                "required": [
-                  "file"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PetItemResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Неверный код, подпись или картинка",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Нет такого слота",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Вещь с таким кодом уже есть в слоте",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/admin/organizations/{id}/reject": {
       "post": {
         "tags": [
@@ -2302,7 +2159,7 @@
           "pets"
         ],
         "summary": "Каталог: слоты и вещи",
-        "description": "Все вещи доступны всем. imageUrl есть у вещей, добавленных админом (картинка в S3).",
+        "description": "Все встроенные вещи доступны всем; настроение вычисляется отдельно.",
         "operationId": "pets_catalog",
         "responses": {
           "200": {
@@ -3111,39 +2968,6 @@
         }
       }
     },
-    "/api/admin/pets/slots/{slot}/items/{item}": {
-      "delete": {
-        "tags": [
-          "admin"
-        ],
-        "summary": "Удалить добавленную вещь",
-        "description": "Снимается со всех бобров, картинка удаляется из S3. Встроенные — 409.",
-        "operationId": "admin_deletePetItem",
-        "parameters": [
-          {
-            "name": "slot",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "item",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "No Content"
-          }
-        }
-      }
-    },
     "/api/admin/events/{id}": {
       "delete": {
         "tags": [
@@ -3194,11 +3018,6 @@
         "type": "object",
         "description": "Полная замена образа бобра",
         "properties": {
-          "mood": {
-            "type": "string",
-            "description": "Настроение",
-            "example": "happy"
-          },
           "activity": {
             "type": "string",
             "description": "Инвентарь; none — без инвентаря",
@@ -3218,7 +3037,6 @@
         },
         "required": [
           "activity",
-          "mood",
           "outfit"
         ]
       },
@@ -3255,7 +3073,7 @@
         "properties": {
           "item": {
             "type": "string",
-            "description": "Код вещи из этого слота; null — снять (настроение станет idle, инвентарь — none)",
+            "description": "Код вещи из этого слота; null — снять (инвентарь станет none)",
             "example": "helmet"
           }
         }
@@ -4654,102 +4472,6 @@
           "username"
         ]
       },
-      "PetSlotRequest": {
-        "type": "object",
-        "description": "Новый слот одежды бобра (атрибут)",
-        "properties": {
-          "code": {
-            "type": "string",
-            "description": "Код: латиница в нижнем регистре, цифры, дефис; потом не меняется",
-            "example": "gloves",
-            "minLength": 1,
-            "pattern": "[a-z][a-z0-9-]{1,39}"
-          },
-          "label": {
-            "type": "string",
-            "description": "Подпись",
-            "example": "Перчатки",
-            "maxLength": 100,
-            "minLength": 0
-          }
-        },
-        "required": [
-          "code",
-          "label"
-        ]
-      },
-      "PetItemResponse": {
-        "type": "object",
-        "description": "Вещь бобра в каталоге",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "Код вещи — его передают в образе",
-            "example": "hc-sokol"
-          },
-          "label": {
-            "type": "string",
-            "description": "Подпись",
-            "example": "Хоккейная форма — Сокол (Красноярск)"
-          },
-          "imageUrl": {
-            "type": "string",
-            "description": "Картинка вещи, добавленной админом (/api/files/{id}); null — встроенная, её рисует фронт"
-          },
-          "builtIn": {
-            "type": "boolean",
-            "description": "Встроенная (рисует фронт)"
-          }
-        },
-        "required": [
-          "builtIn",
-          "id",
-          "label"
-        ]
-      },
-      "PetSlotResponse": {
-        "type": "object",
-        "description": "Слот бобра с вещами",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "Код слота: mood, activity или ключ в outfit",
-            "example": "hat"
-          },
-          "label": {
-            "type": "string",
-            "description": "Подпись",
-            "example": "Головной убор"
-          },
-          "kind": {
-            "type": "string",
-            "description": "MOOD — поле mood, ACTIVITY — поле activity, OUTFIT — ключ в outfit",
-            "enum": [
-              "MOOD",
-              "ACTIVITY",
-              "OUTFIT"
-            ]
-          },
-          "builtIn": {
-            "type": "boolean",
-            "description": "Встроенный слот"
-          },
-          "items": {
-            "type": "array",
-            "description": "Вещи по порядку",
-            "items": {
-              "$ref": "#/components/schemas/PetItemResponse"
-            }
-          }
-        },
-        "required": [
-          "builtIn",
-          "id",
-          "items",
-          "kind",
-          "label"
-        ]
-      },
       "RejectOrganizationRequest": {
         "type": "object",
         "properties": {
@@ -4869,35 +4591,92 @@
       },
       "PetResponse": {
         "type": "object",
-        "description": "Образ бобра: коды вещей из каталога. Без сохранённых настроек — {mood: idle, activity: none, outfit: {}}",
         "properties": {
           "mood": {
             "type": "string",
-            "description": "Настроение",
-            "example": "happy"
+            "enum": [
+              "idle",
+              "happy",
+              "surprised",
+              "thinking",
+              "sad",
+              "wink",
+              "offended",
+              "sleep"
+            ]
           },
           "activity": {
-            "type": "string",
-            "description": "Инвентарь; none — без инвентаря",
-            "example": "hockey"
+            "type": "string"
           },
           "outfit": {
             "type": "object",
             "additionalProperties": {
               "type": "string"
-            },
-            "description": "Надетое: код слота → код вещи. Пустой слот отсутствует в объекте",
-            "example": {
-              "shirt": "hc-sokol",
-              "hat": "helmet",
-              "bottom": "hockeypants"
             }
+          },
+          "status": {
+            "$ref": "#/components/schemas/PetStatusResponse"
           }
         },
         "required": [
           "activity",
           "mood",
           "outfit"
+        ]
+      },
+      "PetStatusResponse": {
+        "type": "object",
+        "properties": {
+          "mood": {
+            "type": "string",
+            "enum": [
+              "idle",
+              "happy",
+              "surprised",
+              "thinking",
+              "sad",
+              "wink",
+              "offended",
+              "sleep"
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "ORGANIZED_EVENT_MODERATED",
+              "REGISTERED_EVENT_MODERATED",
+              "REGISTRATION_REJECTED",
+              "REGISTRATION_APPROVED",
+              "EVENT_SOON",
+              "NEW_REQUESTS",
+              "AWAITING_APPROVAL",
+              "INACTIVE",
+              "DEFAULT"
+            ]
+          },
+          "eventId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "eventTitle": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "eventId",
+          "eventTitle",
+          "message",
+          "mood",
+          "reason"
         ]
       },
       "EventSummaryResponse": {
@@ -5147,6 +4926,73 @@
         },
         "required": [
           "slots"
+        ]
+      },
+      "PetItemResponse": {
+        "type": "object",
+        "description": "Вещь бобра в каталоге",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Код вещи — его передают в образе",
+            "example": "hc-sokol"
+          },
+          "label": {
+            "type": "string",
+            "description": "Подпись",
+            "example": "Хоккейная форма — Сокол (Красноярск)"
+          },
+          "builtIn": {
+            "type": "boolean",
+            "description": "Встроенная (рисует фронт)"
+          }
+        },
+        "required": [
+          "builtIn",
+          "id",
+          "label"
+        ]
+      },
+      "PetSlotResponse": {
+        "type": "object",
+        "description": "Слот бобра с вещами",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Код слота: activity или ключ в outfit",
+            "example": "hat"
+          },
+          "label": {
+            "type": "string",
+            "description": "Подпись",
+            "example": "Головной убор"
+          },
+          "kind": {
+            "type": "string",
+            "description": "ACTIVITY — поле activity, OUTFIT — ключ в outfit",
+            "enum": [
+              "ACTIVITY",
+              "OUTFIT"
+            ]
+          },
+          "builtIn": {
+            "type": "boolean",
+            "description": "Встроенный слот"
+          },
+          "items": {
+            "type": "array",
+            "description": "Вещи по порядку",
+            "items": {
+              "$ref": "#/components/schemas/PetItemResponse"
+            }
+          }
+        },
+        "required": [
+          "builtIn",
+          "id",
+          "items",
+          "kind",
+          "label"
         ]
       },
       "PublicOrganizationResponse": {

@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * Слот бобра: настроение, инвентарь или часть одежды. В слоте надет максимум один предмет.
+ * Слот бобра: инвентарь или часть одежды. В слоте надет максимум один предмет.
  */
 @Entity
 @Table(name = "pet_slots")
@@ -39,7 +39,7 @@ public class PetSlot extends AuditEntity {
      */
     private String label;
     /**
-     * Тип: настроение, инвентарь или одежда.
+     * Тип: инвентарь или одежда.
      */
     @Enumerated(EnumType.STRING)
     private PetSlotKind kind;
@@ -48,7 +48,7 @@ public class PetSlot extends AuditEntity {
      */
     private int position;
     /**
-     * Встроенный слот (рисует фронт); админ добавляет только не встроенные.
+     * Встроенный слот, который рисует фронт.
      */
     private boolean builtIn;
 }

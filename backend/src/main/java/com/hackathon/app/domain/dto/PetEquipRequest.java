@@ -4,7 +4,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "Надеть вещь в один слот или снять её")
 public record PetEquipRequest(
-		@Schema(description = "Код вещи из этого слота; null — снять (настроение станет idle, инвентарь — none)",
+		/** Код вещи или null, чтобы снять. */
+		@Schema(description = "Код вещи из этого слота; null — снять (инвентарь станет none)",
 				example = "helmet")
 		String item) {
 }
