@@ -25,17 +25,24 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AdminCreatePetItemBody,
+  AdminCreatePetItemParams,
   AdminEventResponse,
   AdminListEventsParams,
   AdminListOrganizationsParams,
   AdminListUsersParams,
   AdminOrganizationResponse,
+  AdminPreviewPetItemBody,
+  AdminPreviewPetItemParams,
   AdminStatsParams,
   AdminStatsResponse,
   ModerateEventRequest,
   PageResponseAdminEventResponse,
   PageResponseAdminOrganizationResponse,
   PageResponseAdminUserResponse,
+  PetArtPreviewResponse,
+  PetFitRequest,
+  PetItemResponse,
   ProblemDetail,
   RejectOrganizationRequest
 } from '../appAPI.schemas';
@@ -63,7 +70,446 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   return result;
 };
 
-export type adminRejectOrganizationResponse200 = {
+export type adminUpdatePetItemFitResponse200 = {
+  data: PetItemResponse
+  status: 200
+}
+
+export type adminUpdatePetItemFitResponse404 = {
+  data: ProblemDetail
+  status: 404
+}
+
+export type adminUpdatePetItemFitResponseSuccess = (adminUpdatePetItemFitResponse200) & {
+  headers: Headers;
+};
+export type adminUpdatePetItemFitResponseError = (adminUpdatePetItemFitResponse404) & {
+  headers: Headers;
+};
+
+export type adminUpdatePetItemFitResponse = (adminUpdatePetItemFitResponseSuccess | adminUpdatePetItemFitResponseError)
+
+export const getAdminUpdatePetItemFitUrl = (code: string,) => {
+
+
+
+
+  return `/api/admin/pets/items/${code}/fit`
+}
+
+/**
+ * @summary Подогнать посадку вещи
+ */
+export const adminUpdatePetItemFit = async (code: string,
+    petFitRequest: PetFitRequest, options?: Parameters<typeof authMutator>[1]): Promise<adminUpdatePetItemFitResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return authMutator<adminUpdatePetItemFitResponse>(getAdminUpdatePetItemFitUrl(code),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(petFitRequest)
+  }
+);}
+
+
+
+
+
+export const getAdminUpdatePetItemFitMutationKey = () => ['adminUpdatePetItemFit'] as const;
+
+export const getAdminUpdatePetItemFitMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminUpdatePetItemFit>>, TError,AdminUpdatePetItemFitMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminUpdatePetItemFit>>, TError,AdminUpdatePetItemFitMutationVariables, TContext> => {
+
+const mutationKey = getAdminUpdatePetItemFitMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminUpdatePetItemFit>>, AdminUpdatePetItemFitMutationVariables> = (props) => {
+          const {code,data} = props ?? {};
+
+          return  adminUpdatePetItemFit(code,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminUpdatePetItemFitMutationResult = NonNullable<Awaited<ReturnType<typeof adminUpdatePetItemFit>>>
+    export type AdminUpdatePetItemFitMutationBody = PetFitRequest
+    export type AdminUpdatePetItemFitMutationError = ErrorType<ProblemDetail>
+    export type AdminUpdatePetItemFitMutationVariables = {code: string;data: PetFitRequest}
+
+    /**
+ * @summary Подогнать посадку вещи
+ */
+export const useAdminUpdatePetItemFit = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminUpdatePetItemFit>>, TError,AdminUpdatePetItemFitMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adminUpdatePetItemFit>>,
+        TError,
+        AdminUpdatePetItemFitMutationVariables,
+        TContext
+      > => {
+      return useMutation(getAdminUpdatePetItemFitMutationOptions(options), queryClient);
+    }
+    export type adminListPetItemsResponse200 = {
+  data: PetItemResponse[]
+  status: 200
+}
+
+export type adminListPetItemsResponseSuccess = (adminListPetItemsResponse200) & {
+  headers: Headers;
+};
+;
+
+export type adminListPetItemsResponse = (adminListPetItemsResponseSuccess)
+
+export const getAdminListPetItemsUrl = () => {
+
+
+
+
+  return `/api/admin/pets/items`
+}
+
+/**
+ * @summary Вещи бобра, добавленные админом
+ */
+export const adminListPetItems = async ( options?: Parameters<typeof authMutator>[1]): Promise<adminListPetItemsResponse> => {
+
+  return authMutator<adminListPetItemsResponse>(getAdminListPetItemsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getAdminListPetItemsQueryKey = () => {
+    return [
+    `/api/admin/pets/items`
+    ] as const;
+    }
+
+
+export const getAdminListPetItemsQueryOptions = <TData = Awaited<ReturnType<typeof adminListPetItems>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListPetItems>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getAdminListPetItemsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof adminListPetItems>>> = ({ signal }) => adminListPetItems({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof adminListPetItems>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type AdminListPetItemsQueryResult = NonNullable<Awaited<ReturnType<typeof adminListPetItems>>>
+export type AdminListPetItemsQueryError = ErrorType<unknown>
+
+
+export function useAdminListPetItems<TData = Awaited<ReturnType<typeof adminListPetItems>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListPetItems>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminListPetItems>>,
+          TError,
+          Awaited<ReturnType<typeof adminListPetItems>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useAdminListPetItems<TData = Awaited<ReturnType<typeof adminListPetItems>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListPetItems>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminListPetItems>>,
+          TError,
+          Awaited<ReturnType<typeof adminListPetItems>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useAdminListPetItems<TData = Awaited<ReturnType<typeof adminListPetItems>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListPetItems>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Вещи бобра, добавленные админом
+ */
+
+export function useAdminListPetItems<TData = Awaited<ReturnType<typeof adminListPetItems>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListPetItems>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getAdminListPetItemsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type adminCreatePetItemResponse201 = {
+  data: PetItemResponse
+  status: 201
+}
+
+export type adminCreatePetItemResponse400 = {
+  data: ProblemDetail
+  status: 400
+}
+
+export type adminCreatePetItemResponse503 = {
+  data: ProblemDetail
+  status: 503
+}
+
+export type adminCreatePetItemResponseSuccess = (adminCreatePetItemResponse201) & {
+  headers: Headers;
+};
+export type adminCreatePetItemResponseError = (adminCreatePetItemResponse400 | adminCreatePetItemResponse503) & {
+  headers: Headers;
+};
+
+export type adminCreatePetItemResponse = (adminCreatePetItemResponseSuccess | adminCreatePetItemResponseError)
+
+export const getAdminCreatePetItemUrl = (params: AdminCreatePetItemParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/pets/items?${stringifiedParams}` : `/api/admin/pets/items`
+}
+
+/**
+ * x, y, scale — посадка из предпросмотра, если её подогнали руками; без них считается заново.
+ * @summary Добавить вещь бобра
+ */
+export const adminCreatePetItem = async (params: AdminCreatePetItemParams,
+    adminCreatePetItemBody?: AdminCreatePetItemBody, options?: Parameters<typeof authMutator>[1]): Promise<adminCreatePetItemResponse> => {
+    const formData = new FormData();
+if(adminCreatePetItemBody?.file !== undefined) {
+ formData.append(`file`, adminCreatePetItemBody.file);
+ }
+
+  return authMutator<adminCreatePetItemResponse>(getAdminCreatePetItemUrl(params),
+  {
+    ...options,
+    method: 'POST'
+    ,
+    body: formData
+  }
+);}
+
+
+
+
+
+export const getAdminCreatePetItemMutationKey = () => ['adminCreatePetItem'] as const;
+
+export const getAdminCreatePetItemMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminCreatePetItem>>, TError,AdminCreatePetItemMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminCreatePetItem>>, TError,AdminCreatePetItemMutationVariables, TContext> => {
+
+const mutationKey = getAdminCreatePetItemMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminCreatePetItem>>, AdminCreatePetItemMutationVariables> = (props) => {
+          const {params,data} = props ?? {};
+
+          return  adminCreatePetItem(params,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminCreatePetItemMutationResult = NonNullable<Awaited<ReturnType<typeof adminCreatePetItem>>>
+    export type AdminCreatePetItemMutationBody = AdminCreatePetItemBody | undefined
+    export type AdminCreatePetItemMutationError = ErrorType<ProblemDetail>
+    export type AdminCreatePetItemMutationVariables = {params: AdminCreatePetItemParams;data?: AdminCreatePetItemBody}
+
+    /**
+ * @summary Добавить вещь бобра
+ */
+export const useAdminCreatePetItem = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminCreatePetItem>>, TError,AdminCreatePetItemMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adminCreatePetItem>>,
+        TError,
+        AdminCreatePetItemMutationVariables,
+        TContext
+      > => {
+      return useMutation(getAdminCreatePetItemMutationOptions(options), queryClient);
+    }
+    export type adminPreviewPetItemResponse200 = {
+  data: PetArtPreviewResponse
+  status: 200
+}
+
+export type adminPreviewPetItemResponse400 = {
+  data: ProblemDetail
+  status: 400
+}
+
+export type adminPreviewPetItemResponse503 = {
+  data: ProblemDetail
+  status: 503
+}
+
+export type adminPreviewPetItemResponseSuccess = (adminPreviewPetItemResponse200) & {
+  headers: Headers;
+};
+export type adminPreviewPetItemResponseError = (adminPreviewPetItemResponse400 | adminPreviewPetItemResponse503) & {
+  headers: Headers;
+};
+
+export type adminPreviewPetItemResponse = (adminPreviewPetItemResponseSuccess | adminPreviewPetItemResponseError)
+
+export const getAdminPreviewPetItemUrl = (params: AdminPreviewPetItemParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/pets/items/preview?${stringifiedParams}` : `/api/admin/pets/items/preview`
+}
+
+/**
+ * PNG векторизуется, SVG очищается до контуров; считается посадка на часть тела.
+ * @summary Разобрать картинку без сохранения
+ */
+export const adminPreviewPetItem = async (params: AdminPreviewPetItemParams,
+    adminPreviewPetItemBody?: AdminPreviewPetItemBody, options?: Parameters<typeof authMutator>[1]): Promise<adminPreviewPetItemResponse> => {
+    const formData = new FormData();
+if(adminPreviewPetItemBody?.file !== undefined) {
+ formData.append(`file`, adminPreviewPetItemBody.file);
+ }
+
+  return authMutator<adminPreviewPetItemResponse>(getAdminPreviewPetItemUrl(params),
+  {
+    ...options,
+    method: 'POST'
+    ,
+    body: formData
+  }
+);}
+
+
+
+
+
+export const getAdminPreviewPetItemMutationKey = () => ['adminPreviewPetItem'] as const;
+
+export const getAdminPreviewPetItemMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminPreviewPetItem>>, TError,AdminPreviewPetItemMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminPreviewPetItem>>, TError,AdminPreviewPetItemMutationVariables, TContext> => {
+
+const mutationKey = getAdminPreviewPetItemMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminPreviewPetItem>>, AdminPreviewPetItemMutationVariables> = (props) => {
+          const {params,data} = props ?? {};
+
+          return  adminPreviewPetItem(params,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminPreviewPetItemMutationResult = NonNullable<Awaited<ReturnType<typeof adminPreviewPetItem>>>
+    export type AdminPreviewPetItemMutationBody = AdminPreviewPetItemBody | undefined
+    export type AdminPreviewPetItemMutationError = ErrorType<ProblemDetail>
+    export type AdminPreviewPetItemMutationVariables = {params: AdminPreviewPetItemParams;data?: AdminPreviewPetItemBody}
+
+    /**
+ * @summary Разобрать картинку без сохранения
+ */
+export const useAdminPreviewPetItem = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminPreviewPetItem>>, TError,AdminPreviewPetItemMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adminPreviewPetItem>>,
+        TError,
+        AdminPreviewPetItemMutationVariables,
+        TContext
+      > => {
+      return useMutation(getAdminPreviewPetItemMutationOptions(options), queryClient);
+    }
+    export type adminRejectOrganizationResponse200 = {
   data: AdminOrganizationResponse
   status: 200
 }
@@ -951,7 +1397,100 @@ export function useAdminListEvents<TData = Awaited<ReturnType<typeof adminListEv
 
 
 
-export type adminDeleteEventResponse200 = {
+export type adminDeletePetItemResponse204 = {
+  data: void
+  status: 204
+}
+
+export type adminDeletePetItemResponse404 = {
+  data: ProblemDetail
+  status: 404
+}
+
+export type adminDeletePetItemResponseSuccess = (adminDeletePetItemResponse204) & {
+  headers: Headers;
+};
+export type adminDeletePetItemResponseError = (adminDeletePetItemResponse404) & {
+  headers: Headers;
+};
+
+export type adminDeletePetItemResponse = (adminDeletePetItemResponseSuccess | adminDeletePetItemResponseError)
+
+export const getAdminDeletePetItemUrl = (code: string,) => {
+
+
+
+
+  return `/api/admin/pets/items/${code}`
+}
+
+/**
+ * Снимается со всех бобров.
+ * @summary Удалить вещь
+ */
+export const adminDeletePetItem = async (code: string, options?: Parameters<typeof authMutator>[1]): Promise<adminDeletePetItemResponse> => {
+
+  return authMutator<adminDeletePetItemResponse>(getAdminDeletePetItemUrl(code),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getAdminDeletePetItemMutationKey = () => ['adminDeletePetItem'] as const;
+
+export const getAdminDeletePetItemMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminDeletePetItem>>, TError,AdminDeletePetItemMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminDeletePetItem>>, TError,AdminDeletePetItemMutationVariables, TContext> => {
+
+const mutationKey = getAdminDeletePetItemMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminDeletePetItem>>, AdminDeletePetItemMutationVariables> = (props) => {
+          const {code} = props ?? {};
+
+          return  adminDeletePetItem(code,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminDeletePetItemMutationResult = NonNullable<Awaited<ReturnType<typeof adminDeletePetItem>>>
+
+    export type AdminDeletePetItemMutationError = ErrorType<ProblemDetail>
+    export type AdminDeletePetItemMutationVariables = {code: string}
+
+    /**
+ * @summary Удалить вещь
+ */
+export const useAdminDeletePetItem = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminDeletePetItem>>, TError,AdminDeletePetItemMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adminDeletePetItem>>,
+        TError,
+        AdminDeletePetItemMutationVariables,
+        TContext
+      > => {
+      return useMutation(getAdminDeletePetItemMutationOptions(options), queryClient);
+    }
+    export type adminDeleteEventResponse200 = {
   data: AdminEventResponse
   status: 200
 }

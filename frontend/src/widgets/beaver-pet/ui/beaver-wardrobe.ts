@@ -1,4 +1,5 @@
 import programmingEmblem from "./emblems/programming.svg?raw";
+import type { PetArtResponse, PetArtResponseBodyPart } from "@/shared/api/generated/core/appAPI.schemas";
 import { CLUBS, type ClubId } from "./beaver-clubs";
 import { HOCKEY_CLUBS, type HockeyClubId } from "./beaver-hockey-clubs";
 
@@ -493,18 +494,47 @@ const ACTIVITY: Record<BeaverActivity, () => SlotContent> = {
   ski: () => ({ "slot-scene": skis() }),
 };
 
-/** Собирает содержимое всех слотов для наряда и активности. */
-export function buildSlots(outfit: BeaverOutfit, activity: BeaverActivity): SlotContent {
+// ---------- Вещи от админа ----------
+
+/**
+ * Свои вещи из каталога: ключ «слот:код», например "hat:custom-1a2b3c4d". Рисунок уже очищен сервером
+ * до одних <path> и начинается в (0, 0); x, y, scale сажают его в рамку части тела (рамки — pet_item_import.py).
+ */
+export type BeaverArts = Record<string, PetArtResponse>;
+
+/** Часть тела → слот рисунка: вещь двигается вместе с этой частью. */
+const ART_SLOT: Record<PetArtResponseBodyPart, Slot> = {
+  HEAD: "slot-hat",
+  EYES: "slot-eyes",
+  NECK: "slot-neck",
+  CHEST: "slot-shirt",
+  LEGS: "slot-bottom",
+  PAW: "slot-hold-front-right",
+  GROUND: "slot-scene",
+};
+
+export const artSlotContent = (art: PetArtResponse): SlotContent => ({
+  [ART_SLOT[art.bodyPart]]: `<g transform="translate(${art.x} ${art.y}) scale(${art.scale})">${art.svg}</g>`,
+});
+
+/** Собирает содержимое всех слотов для наряда и активности. Неизвестный код (вещь удалили) просто не рисуется. */
+export function buildSlots(outfit: BeaverOutfit, activity: BeaverActivity, arts: BeaverArts = {}): SlotContent {
   const out: SlotContent = {};
   const add = (c: SlotContent) => {
     for (const [k, v] of Object.entries(c) as [Slot, string][]) out[k] = (out[k] ?? "") + v;
   };
-  if (outfit.shirt) add(SHIRTS[outfit.shirt]());
+  const art = (slot: string, code: string | undefined) => {
+    const found = code ? arts[`${slot}:${code}`] : undefined;
+    if (found) add(artSlotContent(found));
+    return Boolean(found);
+  };
+  if (outfit.shirt && !art("shirt", outfit.shirt)) add(SHIRTS[outfit.shirt]?.() ?? {});
   if (outfit.bottom === "hockeypants") add(hockeyPants());
-  if (outfit.bottom === "swimshorts") add({ "slot-bottom": swimshorts() });
-  if (outfit.neck) add({ "slot-neck": NECK[outfit.neck]() });
-  if (outfit.eyewear) add({ "slot-eyes": EYEWEAR[outfit.eyewear]() });
-  if (outfit.hat) add({ "slot-hat": HATS[outfit.hat]() });
-  add(ACTIVITY[activity]());
+  else if (outfit.bottom === "swimshorts") add({ "slot-bottom": swimshorts() });
+  else art("bottom", outfit.bottom);
+  if (outfit.neck && !art("neck", outfit.neck)) add({ "slot-neck": NECK[outfit.neck]?.() ?? "" });
+  if (outfit.eyewear && !art("eyewear", outfit.eyewear)) add({ "slot-eyes": EYEWEAR[outfit.eyewear]?.() ?? "" });
+  if (outfit.hat && !art("hat", outfit.hat)) add({ "slot-hat": HATS[outfit.hat]?.() ?? "" });
+  if (!art("activity", activity)) add(ACTIVITY[activity]?.() ?? {});
   return out;
 }

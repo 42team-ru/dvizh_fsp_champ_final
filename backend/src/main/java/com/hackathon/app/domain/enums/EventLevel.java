@@ -8,8 +8,6 @@ public enum EventLevel {
 	BEGINNER,
 	/** Любители. */
 	AMATEUR,
-	/** Опытные. */
-	ADVANCED,
 	/** Профессионалы. */
 	PRO
 }
