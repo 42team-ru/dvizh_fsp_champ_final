@@ -14,12 +14,15 @@ import { Participants } from "@/shared/components/ui/participants";
 import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 import { Link } from "react-router";
+import { cn } from "cn";
 import { useState } from "react";
 import { useEventsList } from "@/shared/api/generated/core/events/events";
-import type { EventSummaryResponse } from "@/shared/api/generated/core/appAPI.schemas";
+import type { EventSummaryResponse, EventsListParams } from "@/shared/api/generated/core/appAPI.schemas";
 import { toCardData, formatWhen } from "@/entity/event/lib/event-format";
 import { FEED_CHIPS, useFeedFilters, type FeedChip } from "@/entity/event/model/use-feed-filters";
-import { EventsMap } from "@/widgets/events-map/ui/events-map";
+import { EventsMap, type MapFilters } from "@/widgets/events-map/ui/events-map";
+import { FeedExtraFilters } from "@/widgets/feed-filters/ui/feed-extra-filters";
+import { LayoutGrid, Map as MapIcon } from "lucide-react";
 
 const ART = (n: string, className: string) => ({ src: `/feed/${n}.svg`, className });
 
@@ -40,9 +43,12 @@ const NEARBY = [
   { initials: "КЕ", name: "Катя Егорова", meta: "Йога, плавание · 2,3 км", top: 110 },
 ];
 
-function FilterBar({ chip, onChip, count, view, onView }: {
+function FilterBar({ chip, onChip, more, extraCount, onMore, count, view, onView }: {
   chip: FeedChip;
   onChip(chip: FeedChip): void;
+  more: boolean;
+  extraCount: number;
+  onMore(): void;
   count: number | undefined;
   view: "list" | "map";
   onView(view: "list" | "map"): void;
@@ -66,9 +72,10 @@ function FilterBar({ chip, onChip, count, view, onView }: {
             {label}
           </Button>
         ))}
-        <Button variant="soft" size="chip" className="border-dashed bg-transparent px-[14px]">
-          <Icon name="feed/icon-filter" className="size-4" />
-          Ещё
+        <Button variant={more || extraCount > 0 ? "ink" : "soft"} size="chip" aria-expanded={more} onClick={onMore}
+          className={cn("px-[14px]", !more && extraCount === 0 && "border-dashed bg-transparent")}>
+          <Icon name="feed/icon-filter" className={cn("size-4", (more || extraCount > 0) && "invert")} />
+          Ещё{extraCount > 0 && ` · ${extraCount}`}
         </Button>
       </div>
 
@@ -79,9 +86,9 @@ function FilterBar({ chip, onChip, count, view, onView }: {
         variant={view === "map" ? "ink" : "soft"}
         aria-pressed={view === "map"}
         onClick={() => onView(view === "map" ? "list" : "map")}
-        className="absolute top-[5px] left-[1112px] h-10 px-[18px] text-sm leading-[19px]"
+        className="absolute top-[5px] left-[1104px] h-10 w-[112px] gap-2 px-4 text-sm leading-[19px]"
       >
-        <Icon name="feed/icon-map" className="size-[18px]" />
+        {view === "map" ? <LayoutGrid className="size-[18px]" /> : <MapIcon className="size-[18px]" />}
         {view === "map" ? "Лента" : "Карта"}
       </Button>
     </div>
@@ -204,9 +211,14 @@ const SLOTS: { size?: "lg"; titleLines?: 2; coverHeight: number; distanceTop: nu
   { coverHeight: 256.5, distanceTop: 223.5, className: "top-[620px] left-[927px] h-[400px] w-[289px]" },
 ];
 
+/** Карта понимает не все фильтры ленты: формат и «Для меня» ей не передаём (на карте только очные). */
+const toMapFilters = ({ searchText, sportId, level, joinMode, from, to }: EventsListParams): MapFilters =>
+  ({ searchText, sportId, level, joinMode, from, to });
+
 export default function FeedPage() {
   const filters = useFeedFilters();
   const [view, setView] = useState<"list" | "map">("list");
+  const [more, setMore] = useState(false);
   const list = useEventsList(filters.params, { query: { enabled: filters.ready } });
   const events = list.data?.status === 200 ? list.data.data : undefined;
   return (
@@ -216,9 +228,11 @@ export default function FeedPage() {
       <MemphisBackground seed="feed" />
       <AppHeader current="feed" />
       <main className="mx-auto flex w-full max-w-[1280px] flex-col gap-7 px-8 pt-8 pb-12">
-        <FilterBar chip={filters.chip} onChip={filters.setChip} count={events?.length} view={view} onView={setView} />
+        <FilterBar chip={filters.chip} onChip={filters.setChip} more={more} extraCount={filters.extraCount}
+          onMore={() => setMore((m) => !m)} count={events?.length} view={view} onView={setView} />
+        {more && <FeedExtraFilters value={filters.extra} onChange={filters.setExtra} className="w-[1216px]" />}
         {view === "map" ? (
-          <EventsMap filters={filters.params} className="w-[1216px]" mapClassName="h-[680px]" />
+          <EventsMap filters={toMapFilters(filters.params)} className="w-[1216px]" mapClassName="h-[680px]" />
         ) : (
         <div className="relative h-[1370px] w-[1216px] shrink-0">
           {events?.length === 0 && (

@@ -36,7 +36,7 @@ export function HistoryCard() {
     .slice(0, 2);
 
   return (
-    <Card className="absolute top-[620px] left-0 h-[626px] w-[495px] gap-[18px] overflow-hidden rounded-[24px] p-[26px]">
+    <Card className="absolute top-[573px] left-0 h-[626px] w-[495px] gap-[18px] overflow-hidden rounded-[24px] p-[26px]">
       <div className="flex items-center justify-between font-bold whitespace-nowrap">
         <h2 className="font-display text-[22px] text-foreground">История</h2>
         <span className="text-[13px] text-muted-foreground">за всё время</span>

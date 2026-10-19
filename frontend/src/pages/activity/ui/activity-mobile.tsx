@@ -1,4 +1,5 @@
 import { MobileTabBar } from "@/widgets/mobile-shell/ui/mobile-tab-bar";
+import { BrandPlate } from "@/shared/components/ui/brand-plate";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Disc } from "@/shared/components/ui/disc";
@@ -79,12 +80,12 @@ export function ActivityMobile() {
     <div className="relative isolate flex min-h-dvh overflow-clip flex-col gap-4 bg-background pb-[110px] lg:hidden">
       <MemphisBackground variant="mobile" seed="activity" />
       <div className="flex h-16 shrink-0 items-center justify-between px-4">
-        <div className="flex items-center gap-2">
+        <BrandPlate>
           <img src="/icon.svg" alt="" className="size-9 shrink-0" />
           <span className="font-display text-xl leading-[normal] font-bold text-foreground">
             Активность
           </span>
-        </div>
+        </BrandPlate>
         <button
           type="button"
           aria-label="Поиск"

@@ -1,6 +1,10 @@
+import { useState } from "react";
 import { useUser } from "@/entity/user/model/use-user";
 import { UserAvatar } from "@/shared/components/ui/user-avatar";
 import { EditProfileDialog } from "@/features/edit-profile/ui/edit-profile-dialog";
+import { PetNameEditor } from "@/features/rename-pet/ui/pet-name-editor";
+import { WardrobeDialog } from "@/features/pet-wardrobe/ui/wardrobe-dialog";
+import { MyBeaverPet } from "@/widgets/beaver-pet/ui/my-beaver-pet";
 import { Button } from "@/shared/components/ui/button";
 import { useRegistrationsMine } from "@/shared/api/generated/core/registrations/registrations";
 import {
@@ -14,6 +18,7 @@ import type {
   UserSportResponse,
 } from "@/shared/api/generated/core/appAPI.schemas";
 import { cn } from "cn";
+import { useWardrobe } from "../model/use-wardrobe";
 import {
   KIND_LABEL,
   LEVEL_PIPS,
@@ -22,7 +27,6 @@ import {
   SPORT_LEVEL_LABEL,
   dateFull,
   dateShort,
-  mrzLines,
   passportNumber,
   whenLabel,
 } from "./passport-utils";
@@ -34,6 +38,9 @@ const CHIP_TONES = [
   "bg-peach",
   "bg-lavender-soft",
 ];
+
+/** Высота страницы паспорта; разворот выше на 2 × 12 px рамки. */
+const PAGE_H = 700;
 
 /** Вся подпись поля паспорта: мелкий заголовок и значение. */
 function Field({
@@ -105,173 +112,89 @@ function SportChip({
   );
 }
 
-/** Левая страница: данные владельца паспорта. */
-function DataPage() {
+/** Левая страница (стр. 2): питомец-сопровождающий. */
+function PetPage() {
   const { user } = useUser();
-  const sports = useUsersMySports();
-  const list = sports.data?.status === 200 ? sports.data.data : [];
-  const number = passportNumber(user?.id);
-  const issued = dateShort(user?.createdAt);
+  const { worn } = useWardrobe();
+  const [speechContainer, setSpeechContainer] = useState<HTMLDivElement | null>(
+    null,
+  );
   const mood = user?.pet
     ? (MOOD_LABEL[user.pet.mood] ?? user.pet.mood)
     : undefined;
-  const [mrz1, mrz2] = mrzLines(user ?? {});
+  const outfit =
+    worn.length > 0 ? worn.map((w) => w.item).join(" + ") : "без образа";
 
   return (
     <section
-      aria-label="Паспорт спортсмена: данные"
-      className="absolute top-[12px] left-[12px] flex h-[572px] w-[594px] flex-col gap-4 overflow-hidden rounded-tl-[20px] rounded-tr-[4px] rounded-br-[4px] rounded-bl-[20px] border-2 border-ink bg-card px-[26px] pt-6 pb-[22px]"
+      aria-label="Паспорт спортсмена: питомец"
+      style={{ height: PAGE_H }}
+      className="absolute top-[12px] left-[12px] flex w-[594px] flex-col gap-[14px] overflow-hidden rounded-tl-[20px] rounded-tr-[4px] rounded-br-[4px] rounded-bl-[20px] border-2 border-ink bg-card px-[26px] pt-6 pb-[22px]"
     >
       <img
         src={`${IMG}/guilloche.svg`}
         alt=""
-        className="pointer-events-none absolute top-[-2px] left-[-2px] h-[572px] w-[594px] max-w-none"
+        className="pointer-events-none absolute top-[-2px] left-[-2px] w-[594px] max-w-none"
+        style={{ height: PAGE_H }}
       />
 
       <header className="relative flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <img src={`${IMG}/ring-logo.svg`} alt="" className="size-[22px]" />
-          <h2 className="text-xs font-extrabold tracking-[2px] whitespace-nowrap text-foreground">
-            ПАСПОРТ СПОРТСМЕНА
-          </h2>
-        </div>
+        <h2 className="text-xs font-extrabold tracking-[2px] whitespace-nowrap text-foreground">
+          СОПРОВОЖДАЮЩИЙ
+        </h2>
         <span className="text-[9px] font-extrabold tracking-[1.5px] whitespace-nowrap text-muted-foreground">
-          SPORT PASSPORT · стр. 2
+          стр. 2
         </span>
       </header>
 
-      <div className="relative flex items-start gap-[22px]">
-        <UserAvatar
-          user={user}
-          className="h-[190px] w-[150px] shrink-0 rounded-xl border-2 border-ink object-cover"
-        />
-        <div className="flex min-w-0 flex-1 flex-col gap-3">
-          <div className="flex gap-4">
-            <Field
-              label="ФАМИЛИЯ / SURNAME"
-              value={user?.lastName ?? "—"}
-              large
-            />
-            <Field label="ИМЯ / NAME" value={user?.firstName ?? "—"} large />
-          </div>
-          <div className="flex gap-4">
-            <Field
-              label="ЛОГИН"
-              value={user?.username ? `@${user.username}` : "—"}
-            />
-            <Field label="ГОРОД" value={user?.city ?? "—"} />
-          </div>
-          <div className="flex gap-4">
-            <Field label="ДАТА ВЫДАЧИ" value={dateFull(user?.createdAt)} />
-            <Field label="ОРГАН ВЫДАЧИ" value="Движ" />
-          </div>
-          <div className="flex gap-4">
-            <Field
-              label="СТАТУС"
-              value={user?.systemRole ? ROLE_LABEL[user.systemRole] : "—"}
-            />
-            <Field label="№ ПАСПОРТА" value={number} />
-          </div>
-        </div>
-      </div>
-
-      {/* штамп «действителен» поверх фото */}
-      <div className="pointer-events-none absolute top-[157px] left-[102px] flex size-[99px] items-center justify-center">
-        <div className="relative size-[83px] -rotate-12 text-accent">
-          <img
-            src={`${IMG}/stamp-valid.svg`}
-            alt=""
-            className="absolute inset-0 size-full"
-          />
-          <p className="absolute inset-x-0 top-6 text-center text-[6.4px] font-extrabold tracking-[0.8px]">
-            ДЕЙСТВИТЕЛЕН
-          </p>
-          <p className="absolute inset-x-0 top-[35px] text-center font-display text-[11.2px] font-extrabold">
-            ГОДЕН
-          </p>
-          <p className="absolute inset-x-0 top-[51px] text-center text-[7.2px] font-extrabold">
-            с {issued}
-          </p>
-        </div>
-      </div>
-
-      <div className="relative flex flex-col gap-2">
-        <div className="flex items-center justify-between">
-          <p className="text-[9px] font-extrabold tracking-[1.2px] whitespace-nowrap text-muted-foreground">
-            ВИДЫ СПОРТА И РАЗРЯД
-          </p>
-          <EditProfileDialog user={user}>
-            <Button variant="soft" className="h-8 px-4 text-xs leading-[17px]">
-              Править
-            </Button>
-          </EditProfileDialog>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {list.length > 0 ? (
-            list.map((s, i) => (
-              <SportChip key={s.sport.id} sport={s} index={i} />
-            ))
-          ) : (
-            <span className="text-[13px] font-semibold text-muted-foreground">
-              Виды спорта пока не выбраны.
-            </span>
-          )}
-        </div>
-      </div>
-
-      <div className="relative flex items-start gap-4">
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <p className="text-[9px] font-extrabold tracking-[1.2px] whitespace-nowrap text-muted-foreground">
-            ОСОБЫЕ ОТМЕТКИ
-          </p>
-          <p className="text-[13px] leading-[18px] font-medium text-foreground">
-            {user?.bio || "Пока ничего не написано."}
-          </p>
-        </div>
-        <div className="flex shrink-0 items-center gap-[10px] rounded-[14px] border-[1.5px] border-ink bg-sky-soft py-[6px] pr-3 pl-[6px]">
-          <img
-            src={`${IMG}/wave.png`}
-            alt=""
-            className="size-12 object-contain"
-          />
-          <div className="flex flex-col gap-px whitespace-nowrap">
-            <span className="text-[8px] font-extrabold tracking-[1.2px] text-muted-foreground">
-              СОПРОВОЖДАЮЩИЙ
-            </span>
-            <span className="text-[13px] font-extrabold text-foreground">
-              Бобр Бублик
-            </span>
+      <div className="relative flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <PetNameEditor nameClassName="font-display text-[32px] leading-10">
             {mood ? (
-              <span className="text-[11px] font-bold text-muted-foreground">
+              <span className="mt-1 inline-flex rounded-pill border-[1.5px] border-ink bg-lavender-soft px-[10px] py-1 text-[11px] font-bold whitespace-nowrap text-foreground">
                 настроение: {mood}
               </span>
             ) : null}
-          </div>
+          </PetNameEditor>
         </div>
+        <WardrobeDialog>
+          <Button
+            variant="soft"
+            className="mt-1 h-10 shrink-0 px-4 text-[13px]"
+          >
+            Изменить образ
+          </Button>
+        </WardrobeDialog>
       </div>
 
-      <div className="relative mt-auto flex flex-col gap-[2px] overflow-hidden rounded-lg bg-lilac/30 px-3 py-[10px] font-mono text-[13px] font-medium whitespace-nowrap text-foreground">
-        {[mrz1, mrz2].map((line, i) => (
-          <p
-            key={i}
-            aria-label={`Машиночитаемая зона, строка ${i + 1}`}
-            className="flex w-full justify-between"
-          >
-            {Array.from(line).map((ch, j) => (
-              <span key={j} aria-hidden="true">
-                {ch}
-              </span>
-            ))}
-          </p>
-        ))}
+      <div className="relative min-h-0 flex-1 overflow-hidden rounded-[18px] border-2 border-ink bg-sky">
+        <img
+          src={`${IMG}/memphis1.svg`}
+          alt=""
+          className="pointer-events-none absolute bottom-0 left-1/2 size-[440px] max-w-none -translate-x-1/2"
+        />
+        <MyBeaverPet
+          speechContainer={speechContainer}
+          className="absolute top-[24px] left-1/2 h-[420px] w-[420px] -translate-x-1/2 [&_.beaver-pet]:h-full [&_svg]:h-full"
+        />
+        <div
+          ref={setSpeechContainer}
+          className="beaver-speech-corner absolute top-3 right-3 z-10 w-[170px]"
+        />
+        <div className="absolute bottom-[14px] left-[14px] flex items-center gap-2 rounded-pill border-[1.5px] border-ink bg-card py-[6px] pr-3 pl-[10px]">
+          <span className="text-[9px] font-extrabold tracking-[1.5px] text-muted-foreground">
+            ОБРАЗ
+          </span>
+          <span className="text-xs font-bold text-foreground">{outfit}</span>
+        </div>
       </div>
     </section>
   );
 }
 
-/* ---------- Правая страница: отметки о посещении ---------- */
+/* ---------- Правая страница: данные и отметки о посещении ---------- */
 
-type StampType = "round" | "rect" | "oval" | "star" | "rectGreen";
+type StampType = "round" | "rect" | "oval" | "star";
 
 /** Размеры оттиска, положение текста внутри и цвет — как в макете. */
 const STAMP: Record<
@@ -330,37 +253,29 @@ const STAMP: Record<
     place: 90,
     sportSize: 15,
   },
-  rectGreen: {
-    w: 172,
-    h: 104,
-    img: "stamp-rect-green",
-    color: "text-green",
-    kind: 16,
-    sport: 30,
-    date: 62,
-    sportSize: 19,
-  },
 };
 
-/** Шесть мест под печати: центр в px страницы, поворот и вид оттиска. */
+/** Холст штампов 753×278 (потом уменьшается до ширины страницы). */
+const STAMP_SCALE = 0.72;
+const STAMP_CANVAS = { w: 753, h: 278 };
+
+/** Четыре места под печати: центр на холсте, поворот и вид оттиска. */
 const STAMP_SLOTS: {
   type: StampType;
   cx: number;
   cy: number;
   rotate: number;
 }[] = [
-  { type: "round", cx: 64.7, cy: 82.5, rotate: 6 },
-  { type: "rect", cx: 267.4, cy: 71.9, rotate: -4 },
-  { type: "oval", cx: 451.2, cy: 62.3, rotate: 3 },
-  { type: "star", cx: 95.8, cy: 227.2, rotate: -7 },
-  { type: "round", cx: 257.2, cy: 242.4, rotate: 4 },
-  { type: "rectGreen", cx: 450.2, cy: 194.3, rotate: -5 },
+  { type: "round", cx: 80, cy: 78, rotate: 6 },
+  { type: "rect", cx: 275, cy: 72, rotate: -4 },
+  { type: "oval", cx: 470, cy: 70, rotate: 3 },
+  { type: "star", cx: 655, cy: 78, rotate: -7 },
 ];
 
 /** Места под визы (записи на будущие события). */
 const VISA_SLOTS = [
-  { cx: 104.3, cy: 371.2, rotate: 2 },
-  { cx: 308.3, cy: 359.1, rotate: -3 },
+  { cx: 110, cy: 205, rotate: 2 },
+  { cx: 330, cy: 200, rotate: -3 },
 ];
 
 /** Название вида спорта в оттиске: чем длиннее, тем мельче, чтобы влезло. */
@@ -469,8 +384,8 @@ function Visa({
   );
 }
 
-/** Правая страница: печати за посещённые занятия и визы на будущие. */
-function StampsPage() {
+/** Печати за посещённые занятия и визы на будущие. */
+function Stamps() {
   const history = useUsersHistory({ page: 0, size: STAMP_SLOTS.length });
   const summary = useUsersHistorySummary({});
   const mine = useRegistrationsMine();
@@ -498,76 +413,216 @@ function StampsPage() {
     )
     .slice(0, VISA_SLOTS.length);
 
-  // пустая печать «следующая»: на первом свободном месте, а когда все заняты — на отдельном, как в макете
+  // пустая печать «следующая»: на первом свободном месте, а когда все заняты — во втором ряду
   const emptyAt =
     attended.length < STAMP_SLOTS.length
       ? STAMP_SLOTS[attended.length]
-      : { cx: 470, cy: 358 };
+      : { cx: 570, cy: 205 };
+
+  return (
+    <div className="relative flex flex-col gap-2">
+      <div className="flex items-center gap-2">
+        <h3 className="text-[9px] font-extrabold tracking-[1.2px] whitespace-nowrap text-muted-foreground">
+          ОТМЕТКИ О ПОСЕЩЕНИИ
+        </h3>
+        <span className="rounded-pill border-[1.5px] border-ink bg-secondary px-[10px] py-[3px] text-[10px] font-extrabold tracking-[1px] whitespace-nowrap text-foreground">
+          ВСЕГО {total}
+        </span>
+        <span className="min-w-0 truncate text-[10px] font-semibold text-muted-foreground">
+          Печать ставится после занятия · виза — будущая запись
+        </span>
+      </div>
+
+      <div
+        className="relative w-full"
+        style={{ height: STAMP_CANVAS.h * STAMP_SCALE }}
+      >
+        <div
+          className="absolute top-0 left-0 origin-top-left"
+          style={{
+            width: STAMP_CANVAS.w,
+            height: STAMP_CANVAS.h,
+            transform: `scale(${STAMP_SCALE})`,
+          }}
+        >
+          {attended.slice(0, STAMP_SLOTS.length).map((item, i) => (
+            <Stamp key={item.occurrenceId} slot={STAMP_SLOTS[i]} item={item} />
+          ))}
+
+          {upcoming.map((reg, i) => (
+            <Visa key={reg.id} slot={VISA_SLOTS[i]} reg={reg} />
+          ))}
+
+          <div
+            className="absolute flex size-[116px] flex-col items-center justify-center rounded-full border-[2.5px] border-dashed border-track font-bold text-muted-foreground"
+            style={{ left: emptyAt.cx - 58, top: emptyAt.cy - 58 }}
+          >
+            <span className="font-display text-[22px]">+</span>
+            <span className="text-[10px]">следующая</span>
+            <span className="text-[10px]">печать</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Правая страница (стр. 3): данные владельца и отметки о посещении. */
+function DataPage() {
+  const { user } = useUser();
+  const sports = useUsersMySports();
+  const list = sports.data?.status === 200 ? sports.data.data : [];
+  const number = passportNumber(user?.id);
+  const issued = dateShort(user?.createdAt);
 
   return (
     <section
-      aria-label="Паспорт спортсмена: отметки о посещении"
-      className="absolute top-[12px] left-[606px] flex h-[572px] w-[594px] flex-col gap-[14px] overflow-hidden rounded-tl-[4px] rounded-tr-[20px] rounded-br-[20px] rounded-bl-[4px] border-2 border-ink bg-card px-[26px] pt-6 pb-[22px]"
+      aria-label="Паспорт спортсмена: данные и отметки"
+      style={{ height: PAGE_H }}
+      className="absolute top-[12px] left-[606px] flex w-[594px] flex-col gap-3 overflow-hidden rounded-tl-[4px] rounded-tr-[20px] rounded-br-[20px] rounded-bl-[4px] border-2 border-ink bg-card px-[26px] pt-6 pb-[22px]"
     >
       <img
         src={`${IMG}/guilloche.svg`}
         alt=""
-        className="pointer-events-none absolute top-[-2px] left-[-2px] h-[572px] w-[594px] max-w-none"
+        className="pointer-events-none absolute top-[-2px] left-[-2px] w-[594px] max-w-none"
+        style={{ height: PAGE_H }}
       />
 
       <header className="relative flex items-center justify-between">
-        <h2 className="text-xs font-extrabold tracking-[2px] whitespace-nowrap text-foreground">
-          ОТМЕТКИ О ПОСЕЩЕНИИ
-        </h2>
         <div className="flex items-center gap-2">
-          <span className="rounded-pill border-[1.5px] border-ink bg-secondary px-[10px] py-1 text-[10px] font-extrabold tracking-[1px] whitespace-nowrap text-foreground">
-            ВСЕГО {total}
-          </span>
-          <span className="text-[9px] font-extrabold tracking-[1.5px] whitespace-nowrap text-muted-foreground">
-            стр. 3
-          </span>
+          <img src={`${IMG}/ring-logo.svg`} alt="" className="size-[22px]" />
+          <h2 className="text-xs font-extrabold tracking-[2px] whitespace-nowrap text-foreground">
+            ПАСПОРТ СПОРТСМЕНА
+          </h2>
         </div>
+        <span className="text-[9px] font-extrabold tracking-[1.5px] whitespace-nowrap text-muted-foreground">
+          SPORT PASSPORT · стр. 3
+        </span>
       </header>
 
-      <div className="relative h-[440px] w-full">
-        {attended.slice(0, STAMP_SLOTS.length).map((item, i) => (
-          <Stamp key={item.occurrenceId} slot={STAMP_SLOTS[i]} item={item} />
-        ))}
-
-        {upcoming.map((reg, i) => (
-          <Visa key={reg.id} slot={VISA_SLOTS[i]} reg={reg} />
-        ))}
-
-        <div
-          className="absolute flex size-[116px] flex-col items-center justify-center rounded-full border-[2.5px] border-dashed border-track font-bold text-muted-foreground"
-          style={{ left: emptyAt.cx - 58, top: emptyAt.cy - 58 }}
-        >
-          <span className="font-display text-[22px]">+</span>
-          <span className="text-[10px]">следующая</span>
-          <span className="text-[10px]">печать</span>
+      <div className="relative flex items-start gap-[22px]">
+        <UserAvatar
+          user={user}
+          className="h-[190px] w-[150px] shrink-0 rounded-xl border-2 border-ink object-cover"
+        />
+        <div className="flex min-w-0 flex-1 flex-col gap-3">
+          <div className="flex gap-4">
+            <Field
+              label="ФАМИЛИЯ / SURNAME"
+              value={user?.lastName ?? "—"}
+              large
+            />
+            <Field label="ИМЯ / NAME" value={user?.firstName ?? "—"} large />
+          </div>
+          <div className="flex gap-4">
+            <Field
+              label="ЛОГИН"
+              value={user?.username ? `@${user.username}` : "—"}
+            />
+            <Field label="ГОРОД" value={user?.city ?? "—"} />
+          </div>
+          <div className="flex gap-4">
+            <Field label="ДАТА ВЫДАЧИ" value={dateFull(user?.createdAt)} />
+            <Field label="ОРГАН ВЫДАЧИ" value="Движ" />
+          </div>
+          <div className="flex gap-4">
+            <Field
+              label="СТАТУС"
+              value={user?.systemRole ? ROLE_LABEL[user.systemRole] : "—"}
+            />
+            <Field label="№ ПАСПОРТА" value={number} />
+          </div>
         </div>
       </div>
 
-      <footer className="relative flex items-center gap-2">
-        <img src={`${IMG}/icon-info.svg`} alt="" className="size-4" />
-        <p className="text-xs font-bold whitespace-nowrap text-muted-foreground">
-          Печать ставится сама после занятия. Виза — твоя будущая запись.
+      {/* штамп «действителен» поверх фото */}
+      <div className="pointer-events-none absolute top-[157px] left-[102px] flex size-[99px] items-center justify-center">
+        <div className="relative size-[83px] -rotate-12 text-accent">
+          <img
+            src={`${IMG}/stamp-valid.svg`}
+            alt=""
+            className="absolute inset-0 size-full"
+          />
+          <p className="absolute inset-x-0 top-6 text-center text-[6.4px] font-extrabold tracking-[0.8px]">
+            ДЕЙСТВИТЕЛЕН
+          </p>
+          <p className="absolute inset-x-0 top-[35px] text-center font-display text-[11.2px] font-extrabold">
+            ГОДЕН
+          </p>
+          <p className="absolute inset-x-0 top-[51px] text-center text-[7.2px] font-extrabold">
+            с {issued}
+          </p>
+        </div>
+      </div>
+
+      <div className="relative flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <p className="text-[9px] font-extrabold tracking-[1.2px] whitespace-nowrap text-muted-foreground">
+            ВИДЫ СПОРТА И РАЗРЯД
+          </p>
+          <EditProfileDialog user={user}>
+            <Button variant="soft" className="h-8 px-4 text-xs leading-[17px]">
+              Править
+            </Button>
+          </EditProfileDialog>
+        </div>
+        <div className="flex max-h-[72px] flex-wrap gap-2 overflow-hidden">
+          {list.length > 0 ? (
+            list.map((s, i) => (
+              <SportChip key={s.sport.id} sport={s} index={i} />
+            ))
+          ) : (
+            <span className="text-[13px] font-semibold text-muted-foreground">
+              Виды спорта пока не выбраны.
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="relative flex flex-col gap-1">
+        <p className="text-[9px] font-extrabold tracking-[1.2px] whitespace-nowrap text-muted-foreground">
+          ОСОБЫЕ ОТМЕТКИ
         </p>
-      </footer>
+        <p className="line-clamp-2 text-[13px] leading-[18px] font-medium text-foreground">
+          {user?.bio || "Пока ничего не написано."}
+        </p>
+      </div>
+
+      <div className="relative mt-auto">
+        <Stamps />
+      </div>
     </section>
   );
 }
 
-/** Разворот паспорта спортсмена: данные слева, отметки о посещении справа. */
+/** Во сколько раз разворот уменьшен, чтобы справа осталось место под достижения. */
+export const SPREAD_SCALE = 0.76;
+export const SPREAD_W = Math.round(1216 * SPREAD_SCALE);
+export const SPREAD_H = Math.round((PAGE_H + 28) * SPREAD_SCALE);
+
+/** Разворот паспорта спортсмена: питомец слева, данные и отметки справа. */
 export function PassportSpread() {
   return (
-    <div className="absolute top-0 left-0 h-[600px] w-[1216px] rounded-[28px] border-2 border-ink bg-primary shadow-hard">
-      <DataPage />
-      <StampsPage />
+    <div
+      className="absolute top-0 left-0"
+      style={{ width: SPREAD_W, height: SPREAD_H }}
+    >
       <div
-        aria-hidden="true"
-        className="absolute top-[12px] left-[605px] h-[572px] w-[2px] bg-ink"
-      />
+        className="absolute top-0 left-0 origin-top-left rounded-[28px] border-2 border-ink bg-primary shadow-hard"
+        style={{
+          width: 1216,
+          height: PAGE_H + 28,
+          transform: `scale(${SPREAD_SCALE})`,
+        }}
+      >
+        <PetPage />
+        <DataPage />
+        <div
+          aria-hidden="true"
+          className="absolute top-[12px] left-[605px] w-[2px] bg-ink"
+          style={{ height: PAGE_H }}
+        />
+      </div>
     </div>
   );
 }

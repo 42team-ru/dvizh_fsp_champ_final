@@ -4,9 +4,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { getPetsGetMineQueryKey, usePetsGetMine, usePetsRename } from "@/shared/api/generated/core/pets/pets";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
+import { cn } from "cn";
 
 /** Имя питомца и общая для двух вариантов профиля форма переименования. */
-export function PetNameEditor({ children }: { children?: ReactNode }) {
+export function PetNameEditor({ children, nameClassName }: { children?: ReactNode; nameClassName?: string }) {
   const { data } = usePetsGetMine();
   const queryClient = useQueryClient();
   const name = data?.data.name;
@@ -68,7 +69,7 @@ export function PetNameEditor({ children }: { children?: ReactNode }) {
   return (
     <>
     <div className="flex w-full min-w-0 items-center gap-1">
-      <p className="min-w-0 break-words font-display text-[22px] leading-tight font-extrabold text-foreground">{name ?? "…"}</p>
+      <p className={cn("min-w-0 break-words font-display text-[22px] leading-tight font-extrabold text-foreground", nameClassName)}>{name ?? "…"}</p>
       <Button
         ref={editButton}
         type="button"
