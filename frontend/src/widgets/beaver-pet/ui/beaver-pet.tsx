@@ -3,7 +3,8 @@ import { createPortal } from "react-dom";
 import { Link } from "react-router";
 import beaverSvg from "./beaver.svg?raw";
 import { createBeaverRig, type BeaverRig, type ReactOptions } from "./beaver-rig";
-import { buildSlots, SLOTS, type BeaverActivity, type BeaverOutfit } from "./beaver-wardrobe";
+import { usePetsCatalog } from "@/shared/api/generated/core/pets/pets";
+import { buildSlots, SLOTS, type BeaverActivity, type BeaverArts, type BeaverOutfit } from "./beaver-wardrobe";
 import { scopeSvgIds, svgResourceIds } from "./scope-svg-ids";
 import "./beaver-pet.css";
 
@@ -30,6 +31,8 @@ type Props = {
   outfit?: BeaverOutfit;
   /** Инвентарь рядом или в лапах: мяч, гантели, шахматы, лыжи, хоккей, ноутбук. */
   activity?: BeaverActivity;
+  /** Рисунки вещей не из каталога: предпросмотр в админке. Ключ «слот:код». */
+  extraArts?: BeaverArts;
   /** Глаза следят за курсором. */
   followCursor?: boolean;
   className?: string;
@@ -37,7 +40,7 @@ type Props = {
 };
 
 /** Анимированный маскот-бобр. Настроение, наряд и активность задаются пропсами, движение считает beaver-rig. */
-export function BeaverPet({ mood = "idle", outfit = {}, activity = "none", followCursor = true, className, onClick, say, sayHref, speechContainer, ref: handleRef }: Props) {
+export function BeaverPet({ mood = "idle", outfit = {}, activity = "none", followCursor = true, className, onClick, say, sayHref, speechContainer, extraArts, ref: handleRef }: Props) {
   const instanceId = useId();
   const svgPrefix = `beaver-${instanceId.replace(/[^a-zA-Z0-9_-]/g, (char) => `_${char.codePointAt(0)!.toString(16)}_`)}`;
   const scopedSvg = useMemo(() => scopeSvgIds(beaverSvg, svgPrefix, baseReferenceIds), [svgPrefix]);
@@ -46,6 +49,15 @@ export function BeaverPet({ mood = "idle", outfit = {}, activity = "none", follo
   const [speechVisible, setSpeechVisible] = useState(false);
   const interacted = useRef(false);
   const outfitKey = JSON.stringify(outfit);
+  // Вещи от админа рисуются по каталогу; встроенные знает сам гардероб.
+  const catalog = usePetsCatalog({ query: { staleTime: 5 * 60_000 } });
+  const arts = useMemo(() => {
+    const map: BeaverArts = { ...extraArts };
+    for (const slot of catalog.data?.data.slots ?? []) {
+      for (const item of slot.items) if (item.art) map[`${slot.id}:${item.id}`] = item.art;
+    }
+    return map;
+  }, [catalog.data, extraArts]);
 
   useImperativeHandle(handleRef, () => ({ react: (m, opts) => rig.current?.react(m, opts) }), []);
 
@@ -71,14 +83,14 @@ export function BeaverPet({ mood = "idle", outfit = {}, activity = "none", follo
   useEffect(() => {
     const root = ref.current;
     if (!root) return;
-    const content = buildSlots(JSON.parse(outfitKey) as BeaverOutfit, activity);
+    const content = buildSlots(JSON.parse(outfitKey) as BeaverOutfit, activity, arts);
     const referenceIds = new Set([...baseReferenceIds, ...svgResourceIds(Object.values(content).join(""))]);
     for (const id of SLOTS) {
       const slot = root.querySelector(`#${id}`);
       if (slot) slot.innerHTML = scopeSvgIds(content[id] ?? "", svgPrefix, referenceIds);
     }
     rig.current?.setActivity(activity);
-  }, [outfitKey, activity, followCursor, svgPrefix]);
+  }, [outfitKey, activity, followCursor, svgPrefix, arts]);
 
   const speech = (
     <>

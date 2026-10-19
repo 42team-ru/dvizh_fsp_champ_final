@@ -142,9 +142,6 @@ function Pet() {
           <div className="flex min-w-[180px] flex-1 flex-col items-start gap-1">
             <Eyebrow className={cn(small, "text-foreground")}>ТВОЙ ПИТОМЕЦ</Eyebrow>
             <PetNameEditor />
-            <p className="text-[13px] leading-[normal] font-bold whitespace-nowrap text-foreground">
-              Бобр · уровень 4
-            </p>
             <span className="box-border flex items-center gap-[6px] rounded-pill border-[1.5px] border-ink bg-card py-1 pr-3 pl-[6px]">
               <span className="box-border size-[18px] rounded-[9px] border-[1.5px] border-ink bg-secondary" />
               <span className="text-[13px] leading-[normal] font-extrabold text-foreground">150</span>
@@ -152,18 +149,6 @@ function Pet() {
           </div>
         </div>
         <div ref={setSpeechContainer} className="relative h-[72.5px] w-full" />
-        {[
-          { label: "Энергия", value: "4 из 5", pct: 80 },
-          { label: "Стиль", value: "1 из 5", pct: 20 },
-        ].map((m) => (
-          <div key={m.label} className="flex flex-col gap-1">
-            <div className="flex justify-between text-[13px] leading-[normal] whitespace-nowrap text-foreground">
-              <span className="font-extrabold">{m.label}</span>
-              <span className="font-bold">{m.value}</span>
-            </div>
-            <Progress value={m.pct} indicatorClassName="bg-secondary border-r-0" className="bg-card" />
-          </div>
-        ))}
       </div>
     </div>
   );

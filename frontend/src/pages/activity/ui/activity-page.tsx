@@ -253,7 +253,6 @@ function Tickets() {
               </p>
             </div>
             <div className="absolute top-[14px] left-[96px] h-[72px] w-[2px] border-l-2 border-dashed border-ink" />
-            <span className="absolute top-[-11px] left-[85px] box-border size-[22px] rounded-[11px] border-2 border-t-0 border-ink bg-card" />
             <span className="absolute top-[89px] left-[85px] box-border size-[22px] rounded-[11px] border-2 border-b-0 border-ink bg-card" />
             <div className="flex h-[100px] w-[265px] shrink-0 flex-col justify-center gap-1 py-[14px] pr-4 pl-[22px]">
               <div className={cn("w-[227px] shrink-0", t.titleBox)}>

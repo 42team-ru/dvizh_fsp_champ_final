@@ -57,4 +57,9 @@ app:
     access-key: ${S3_ACCESS_KEY:app}
     secret-key: ${S3_SECRET_KEY:app-secret-dev}
     bucket: ${S3_BUCKET:app-files}
+  pet-import:
+    # Python с vtracer, pillow и svgelements для импорта вещей бобра (src/main/resources/pet-import/requirements.txt).
+    # В Docker-образе — venv /opt/pet-import; на Windows обычно просто python.
+    python: ${PET_IMPORT_PYTHON:python3}
+    timeout: 30s
   cors-allowed-origins: ${CORS_ORIGINS:http://localhost:5173}

@@ -1,10 +1,12 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { getPetsGetMineQueryKey, usePetsGetMine, usePetsSaveMine } from "@/shared/api/generated/core/pets/pets";
+import { getPetsGetMineQueryKey, usePetsCatalog, usePetsGetMine, usePetsSaveMine } from "@/shared/api/generated/core/pets/pets";
 import { BeaverPet, type BeaverMood, type BeaverPetHandle } from "@/widgets/beaver-pet/ui/beaver-pet";
 import { CLUBS, type ClubId } from "@/widgets/beaver-pet/ui/beaver-clubs";
 import { HOCKEY_CLUBS, type HockeyClubId } from "@/widgets/beaver-pet/ui/beaver-hockey-clubs";
-import type { BeaverActivity, BeaverOutfit } from "@/widgets/beaver-pet/ui/beaver-wardrobe";
+import type { BeaverActivity, BeaverArts, BeaverOutfit } from "@/widgets/beaver-pet/ui/beaver-wardrobe";
+import { useUser } from "@/entity/user/model/use-user";
+import { PetItemsAdmin, type PetItemPreview } from "@/features/pet-items-admin/ui/pet-items-admin";
 
 const MOODS: { value: BeaverMood; label: string }[] = [
   { value: "idle", label: "Улыбается" },
@@ -87,6 +89,10 @@ function Choice({ label, value, options, onChange }: { label: string; value: str
 export default function PetPage() {
   const pet = useRef<BeaverPetHandle>(null);
   const query = usePetsGetMine();
+  const catalog = usePetsCatalog({ query: { staleTime: 5 * 60_000 } });
+  // Вещи от админа (с рисунком) добавляются в конец своих списков.
+  const custom = (slot: string): Option[] => catalog.data?.data.slots.find((s) => s.id === slot)?.items
+    .filter((item) => item.art).map((item) => ({ value: item.id, label: item.label })) ?? [];
   const queryClient = useQueryClient();
   const current = query.data?.data;
   const [draft, setDraft] = useState<Pick<Look, "outfit" | "activity"> | null>(null);
@@ -116,6 +122,13 @@ export default function PetPage() {
   };
   const matchesLook = (look: Look) => activity === look.activity && FIELDS.every((key) => outfit[key] === look.outfit[key]);
   const disabled = query.isPending || query.isError || save.isPending;
+  const { user } = useUser();
+  // Примерка админа: вещь под кодом "preview" временно занимает свой слот, образ не сохраняется.
+  const [adminPreview, setAdminPreview] = useState<PetItemPreview>(null);
+  const previewArts = useMemo<BeaverArts | undefined>(
+    () => adminPreview ? { [`${adminPreview.slot}:preview`]: adminPreview.art } : undefined, [adminPreview]);
+  const shownOutfit = adminPreview && adminPreview.slot !== "activity" ? { ...outfit, [adminPreview.slot]: "preview" } as BeaverOutfit : outfit;
+  const shownActivity = adminPreview?.slot === "activity" ? "preview" as BeaverActivity : activity;
 
   return (
     <main className="mx-auto min-h-dvh max-w-5xl px-4 py-8 sm:px-8">
@@ -127,7 +140,7 @@ export default function PetPage() {
         <div className="md:sticky md:top-6">
           <div className="rounded-[3rem] bg-[#F6EEE4] px-2 pb-5 pt-8 sm:px-4">
             {query.isPending ? <div className="aspect-square animate-pulse rounded-3xl bg-white/40" role="status" aria-label="Загружаем питомца" /> :
-              <BeaverPet ref={pet} mood={query.isError ? "idle" : mood} outfit={outfit} activity={activity}
+              <BeaverPet ref={pet} mood={query.isError ? "idle" : mood} outfit={shownOutfit} activity={shownActivity} extraArts={previewArts}
                 say={query.isError ? undefined : current?.status?.message}
                 sayHref={current?.status?.eventId ? `/events/${current.status.eventId}` : undefined} /> }
           </div>
@@ -142,6 +155,7 @@ export default function PetPage() {
           </fieldset>
         </div>
         <div className="space-y-7">
+          {user?.systemRole === "ADMIN" && <PetItemsAdmin onPreview={setAdminPreview} />}
           <div role="status" aria-live="polite" className="min-h-7 text-base font-medium">
             {query.isPending ? "Загружаем образ…" : query.isError ? "Не удалось загрузить питомца." : save.isPending ? "Сохраняем…" : save.isError ? "Не удалось сохранить образ." : "Сохранено"}
             {query.isError && <button type="button" onClick={() => void query.refetch()} className="ml-3 underline">Повторить загрузку</button>}
@@ -156,8 +170,8 @@ export default function PetPage() {
           <fieldset disabled={disabled} className="disabled:opacity-60">
             <legend className="mb-3 text-lg font-semibold">Отдельные элементы</legend>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2">
-              {FIELDS.map((field) => <Choice key={field} label={WARDROBE[field].label} value={outfit[field] ?? "none"} options={[{ value: "none", label: "Без элемента" }, ...WARDROBE[field].options]} onChange={(value) => update(field, value)} />)}
-              <Choice label="Инвентарь" value={activity} options={ACTIVITIES} onChange={(value) => update("activity", value)} />
+              {FIELDS.map((field) => <Choice key={field} label={WARDROBE[field].label} value={outfit[field] ?? "none"} options={[{ value: "none", label: "Без элемента" }, ...WARDROBE[field].options, ...custom(field)]} onChange={(value) => update(field, value)} />)}
+              <Choice label="Инвентарь" value={activity} options={[...ACTIVITIES, ...custom("activity")]} onChange={(value) => update("activity", value)} />
             </div>
           </fieldset>
           <button type="button" disabled={disabled} onClick={() => setLook("Без всего")} className="text-sm underline underline-offset-4">Снять все вещи и убрать инвентарь</button>
