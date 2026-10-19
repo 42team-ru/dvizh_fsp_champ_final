@@ -14,11 +14,12 @@ const NAV = [
   { key: "profile", to: "/profile", label: "Профиль", icon: "icon-user", w: "w-[126.5px]" },
 ];
 
-export function AppHeader({ current = "home" }: { current?: "home" | "feed" | "profile" | "activity" }) {
+/** `wide` — контейнер 1440px, как у ленты; остальные страницы 1280px. */
+export function AppHeader({ current = "home", wide }: { current?: "home" | "feed" | "profile" | "activity"; wide?: boolean }) {
   const { user } = useUser();
   return (
     <header className="box-border h-[76px] border-b-2 border-ink bg-background">
-      <div className="mx-auto flex h-full w-full max-w-[1280px] items-center px-8">
+      <div className={`mx-auto flex h-full w-full ${wide ? "max-w-[1440px]" : "max-w-[1280px]"} items-center px-8`}>
         <Link to="/" aria-label="Движ — на главную">
           <BrandPlate className="gap-[10px]">
             <img src="/icon.svg" alt="" className="size-10 shrink-0" />

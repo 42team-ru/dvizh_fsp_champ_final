@@ -24,23 +24,24 @@ import { EventsMap, type MapFilters } from "@/widgets/events-map/ui/events-map";
 import { FeedExtraFilters } from "@/widgets/feed-filters/ui/feed-extra-filters";
 import { LayoutGrid, Map as MapIcon } from "lucide-react";
 
-const ART = (n: string, className: string) => ({ src: `/feed/${n}.svg`, className });
+/** Узор заполняет обложку любого размера: карточки тянутся вместе с сеткой. */
+const ART = (n: string) => ({ src: `/feed/${n}.svg`, className: "inset-0 size-full object-cover" });
 
 /** Оформление слотов сетки по Figma: обложка, если у события нет своего фото. */
 const SLOT_COVERS: EventCardData["cover"][] = [
-  { bg: "bg-orange", art: ART("memphis", "top-[-3.5px] left-0 h-[445.5px] w-full") },
+  { bg: "bg-orange", art: ART("memphis") },
   { bg: "bg-primary" },
-  { bg: "bg-lime-soft", art: ART("memphis2", "top-[-57px] left-0 h-[368.5px] w-full") },
-  { bg: "bg-sky", art: ART("memphis1", "top-[-18.5px] left-0 h-[291px] w-full") },
-  { bg: "bg-lavender-soft", art: ART("memphis2", "top-[-57px] left-0 h-[368.5px] w-full") },
-  { bg: "bg-primary", art: ART("memphis3", "top-0 left-[-27px] h-[254.5px] w-[339px]") },
-  { bg: "bg-secondary", art: ART("memphis4", "top-[79px] left-0 h-[168px] w-[224px]") },
-  { bg: "bg-mint", art: ART("memphis5", "top-[-14.5px] left-0 h-[214px] w-full") },
+  { bg: "bg-lime-soft", art: ART("memphis2") },
+  { bg: "bg-sky", art: ART("memphis1") },
+  { bg: "bg-lavender-soft", art: ART("memphis2") },
+  { bg: "bg-primary", art: ART("memphis3") },
+  { bg: "bg-secondary", art: ART("memphis4") },
+  { bg: "bg-mint", art: ART("memphis5") },
 ];
 
 const NEARBY = [
-  { initials: "МС", name: "Макс Сидоров", meta: "Бег, вело · 1,1 км", top: 56 },
-  { initials: "КЕ", name: "Катя Егорова", meta: "Йога, плавание · 2,3 км", top: 110 },
+  { initials: "МС", name: "Макс Сидоров", meta: "Бег, вело · 1,1 км" },
+  { initials: "КЕ", name: "Катя Егорова", meta: "Йога, плавание · 2,3 км" },
 ];
 
 function FilterBar({ chip, onChip, more, extraCount, onMore, count, view, onView }: {
@@ -54,12 +55,12 @@ function FilterBar({ chip, onChip, more, extraCount, onMore, count, view, onView
   onView(view: "list" | "map"): void;
 }) {
   return (
-    <div className="relative h-[50px] w-[1216px] shrink-0">
-      <h1 className="absolute top-0 left-0 font-display text-[40px] leading-[50px] font-extrabold tracking-[-1px] whitespace-nowrap text-foreground">
+    <div className="flex h-[50px] w-full min-w-[1216px] shrink-0 items-center gap-8">
+      <h1 className="font-display text-[40px] leading-[50px] font-extrabold tracking-[-1px] whitespace-nowrap text-foreground">
         Лента
       </h1>
 
-      <div className="absolute top-[6px] left-[182px] flex gap-2">
+      <div className="flex gap-2">
         {FEED_CHIPS.map((label) => (
           <Button
             key={label}
@@ -79,14 +80,14 @@ function FilterBar({ chip, onChip, more, extraCount, onMore, count, view, onView
         </Button>
       </div>
 
-      <span className="absolute top-[15.5px] left-[970px] text-sm leading-[19px] font-bold whitespace-nowrap text-muted-foreground">
+      <span className="ml-auto text-sm leading-[19px] font-bold whitespace-nowrap text-muted-foreground">
         {count === undefined ? "Загружаем…" : `${count} ${count % 10 === 1 && count % 100 !== 11 ? "событие" : count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 12 || count % 100 > 14) ? "события" : "событий"}`}
       </span>
       <Button
         variant={view === "map" ? "ink" : "soft"}
         aria-pressed={view === "map"}
         onClick={() => onView(view === "map" ? "list" : "map")}
-        className="absolute top-[5px] left-[1104px] h-10 w-[112px] gap-2 px-4 text-sm leading-[19px]"
+        className="-ml-2 h-10 w-[112px] gap-2 px-4 text-sm leading-[19px]"
       >
         {view === "map" ? <LayoutGrid className="size-[18px]" /> : <MapIcon className="size-[18px]" />}
         {view === "map" ? "Лента" : "Карта"}
@@ -97,29 +98,25 @@ function FilterBar({ chip, onChip, more, extraCount, onMore, count, view, onView
 
 function NearbyPeople() {
   return (
-    <Card className="absolute top-[410px] left-[927px] h-[190px] w-[289px] overflow-hidden">
-      <div className="absolute top-5 left-5 flex h-[22px] w-[245px] items-center justify-between">
+    <Card className="shrink-0 gap-3 overflow-hidden p-5">
+      <div className="flex h-[22px] items-center justify-between">
         <h2 className="font-display text-[17px] leading-[21px] font-bold text-foreground">
           Люди рядом
         </h2>
         <Icon name="feed/icon-users" className="size-[22px]" />
       </div>
       {NEARBY.map((p) => (
-        <div
-          key={p.initials}
-          className="absolute left-5 flex h-10 w-[245px] items-center gap-3"
-          style={{ top: p.top }}
-        >
+        <div key={p.initials} className="flex h-10 items-center gap-3">
           <Avatar className="size-10 after:hidden">
             <AvatarFallback className="border-2 border-ink bg-sky text-[13px] leading-[18px] font-extrabold tracking-[-0.5px] text-foreground">
               {p.initials}
             </AvatarFallback>
           </Avatar>
-          <div className="w-[147px]">
-            <p className="text-sm leading-[19px] font-extrabold whitespace-nowrap text-foreground">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm leading-[19px] font-extrabold text-foreground">
               {p.name}
             </p>
-            <p className="text-xs leading-[17px] font-medium whitespace-nowrap text-muted-foreground">
+            <p className="truncate text-xs leading-[17px] font-medium text-muted-foreground">
               {p.meta}
             </p>
           </div>
@@ -137,24 +134,22 @@ function NearbyPeople() {
   );
 }
 
-function BikeCard({ event }: { event: EventSummaryResponse }) {
+function BikeCard({ event, className }: { event: EventSummaryResponse; className?: string }) {
   const data = toCardData(event, SLOT_COVERS[6]);
   return (
-    <Card className="absolute top-[1040px] left-0 h-[330px] w-[495px] flex-row items-start overflow-hidden p-0">
+    <Card className={cn("relative min-h-[330px] flex-row overflow-hidden p-0", className)}>
       <Link to={`/events/${event.id}`} aria-label={event.title} className="absolute inset-0 z-10" />
-      <div className="relative h-[326px] w-[226px] shrink-0 overflow-hidden border-r-2 border-ink">
-        <div className="absolute inset-y-0 left-0 w-[224px]">
-          <EventCover cover={data.cover} height={326} />
-        </div>
+      <div className="relative w-1/2 shrink-0 overflow-hidden border-r-2 border-ink">
+        <EventCover cover={data.cover} />
         <EventChips sport={data.sport} time={formatWhen(event.startAt)} />
-        <EventDistance top={295}>{data.distance}</EventDistance>
+        <EventDistance>{data.distance}</EventDistance>
       </div>
-      <div className="flex h-[326px] w-[265px] shrink-0 flex-col justify-between px-[18px] pt-4 pb-[18px]">
+      <div className="flex min-w-0 flex-1 flex-col justify-between px-[18px] pt-4 pb-[18px]">
         <div>
-          <h3 className="-mt-px w-[229px] font-display text-[18px] leading-[21.5px] font-bold text-foreground">
+          <h3 className="-mt-px line-clamp-3 font-display text-[18px] leading-[21.5px] font-bold text-foreground">
             {data.title}
           </h3>
-          <p className="mt-[7px] w-[210.5px] text-sm leading-[19px] font-medium text-muted-foreground">
+          <p className="mt-[7px] text-sm leading-[19px] font-medium text-muted-foreground">
             {data.place}
           </p>
         </div>
@@ -164,20 +159,20 @@ function BikeCard({ event }: { event: EventSummaryResponse }) {
   );
 }
 
-function CtaCard() {
+function CtaCard({ className }: { className?: string }) {
   return (
-    <Card className="absolute top-[1040px] left-[824px] h-[330px] w-[392px] justify-between overflow-hidden bg-secondary p-[26px]">
+    <Card className={cn("relative min-h-[330px] justify-between overflow-hidden bg-secondary p-[26px]", className)}>
       <img
         src="/feed/memphis6.svg"
         alt=""
-        className="absolute top-0 left-0 h-[380px] w-[400px] max-w-none"
+        className="absolute inset-0 size-full max-w-none object-cover object-left-top"
       />
       <img
         src="/feed/ask.png"
         alt=""
-        className="pointer-events-none absolute top-[92px] left-[233px] h-[150px] w-[145px] max-w-none object-cover"
+        className="pointer-events-none absolute top-[92px] right-[14px] h-[150px] w-[145px] max-w-none object-cover"
       />
-      <div className="relative w-[340px]">
+      <div className="relative">
         <div className="h-[64.5px]">
           <h2 className="w-[276px] font-display text-[28px] leading-8 font-extrabold text-foreground">
             Не нашёл
@@ -201,15 +196,14 @@ function CtaCard() {
   );
 }
 
-/** Слоты сетки по Figma: размеры карточек и обложек. Мероприятия раскладываются по порядку. */
-const SLOTS: { size?: "lg"; titleLines?: 2; coverHeight: number; distanceTop: number; className: string }[] = [
-  { size: "lg", coverHeight: 441, distanceTop: 405, className: "top-0 left-0 h-[600px] w-[598px]" },
-  { coverHeight: 456.5, distanceTop: 423.5, className: "top-0 left-[618px] h-[600px] w-[289px]" },
-  { titleLines: 2, coverHeight: 225, distanceTop: 192, className: "top-0 left-[927px] h-[390px] w-[289px]" },
-  { coverHeight: 256.5, distanceTop: 223.5, className: "top-[620px] left-0 h-[400px] w-[392px]" },
-  { coverHeight: 256.5, distanceTop: 223.5, className: "top-[620px] left-[412px] h-[400px] w-[495px]" },
-  { coverHeight: 256.5, distanceTop: 223.5, className: "top-[620px] left-[927px] h-[400px] w-[289px]" },
-];
+/** Карточка события из ленты по индексу; обложка-заглушка — по тому же слоту. */
+function Slot({ events, i, ...props }: { events: EventSummaryResponse[] | undefined; i: number } & Omit<
+  React.ComponentProps<typeof EventCard>, "event" | "href"
+>) {
+  const event = events?.[i];
+  if (!event) return null;
+  return <EventCard href={`/events/${event.id}`} event={toCardData(event, SLOT_COVERS[i % SLOT_COVERS.length])} {...props} />;
+}
 
 /** Карта понимает не все фильтры ленты: формат и «Для меня» ей не передаём (на карте только очные). */
 const toMapFilters = ({ searchText, sportId, level, joinMode, from, to }: EventsListParams): MapFilters =>
@@ -226,45 +220,43 @@ export default function FeedPage() {
     <FeedMobile />
     <div className="relative isolate hidden min-h-dvh overflow-clip bg-background lg:block">
       <MemphisBackground seed="feed" />
-      <AppHeader current="feed" />
-      <main className="mx-auto flex w-full max-w-[1280px] flex-col gap-7 px-8 pt-8 pb-12">
+      <AppHeader current="feed" wide />
+      <main className="mx-auto flex w-full max-w-[1440px] flex-col gap-7 px-8 pt-8 pb-12">
         <FilterBar chip={filters.chip} onChip={filters.setChip} more={more} extraCount={filters.extraCount}
           onMore={() => setMore((m) => !m)} count={events?.length} view={view} onView={setView} />
-        {more && <FeedExtraFilters value={filters.extra} onChange={filters.setExtra} className="w-[1216px]" />}
+        {more && <FeedExtraFilters value={filters.extra} onChange={filters.setExtra} className="w-full" />}
         {view === "map" ? (
-          <EventsMap filters={toMapFilters(filters.params)} className="w-[1216px]" mapClassName="h-[680px]" />
+          <EventsMap filters={toMapFilters(filters.params)} className="w-full" mapClassName="h-[680px]" />
         ) : (
-        <div className="relative h-[1370px] w-[1216px] shrink-0">
+        <div className="flex min-w-[1216px] flex-col gap-5">
           {events?.length === 0 && (
-            <p className="absolute top-0 left-0 text-lg font-semibold text-muted-foreground">
+            <p className="text-lg font-semibold text-muted-foreground">
               Ничего не нашлось — попробуйте другой фильтр или создайте своё событие.
             </p>
           )}
-          {list.isError && <p role="alert" className="absolute top-0 left-0 text-lg font-semibold text-destructive">Не удалось загрузить ленту.</p>}
-          {SLOTS.map((slot, i) => events?.[i] && (
-            <EventCard
-              key={events[i].id}
-              href={`/events/${events[i].id}`}
-              event={toCardData(events[i], SLOT_COVERS[i])}
-              size={slot.size}
-              titleLines={slot.titleLines}
-              coverHeight={slot.coverHeight}
-              distanceTop={slot.distanceTop}
-              className={slot.className}
-            />
-          ))}
-          <NearbyPeople />
-          {events?.[6] && <BikeCard event={events[6]} />}
-          {events?.[7] && (
-            <EventCard
-              href={`/events/${events[7].id}`}
-              event={toCardData(events[7], SLOT_COVERS[7])}
-              coverHeight={186.5}
-              distanceTop={153.5}
-              className="top-[1040px] left-[515px] h-[330px] w-[289px]"
-            />
-          )}
-          <CtaCard />
+          {list.isError && <p role="alert" className="text-lg font-semibold text-destructive">Не удалось загрузить ленту.</p>}
+          {/* Ряды — отдельные сетки: если событий мало, пустеет конец ряда, а не съезжает раскладка. */}
+          <div className="grid grid-cols-12 gap-5">
+            <Slot events={events} i={0} size="lg" className="col-span-6" />
+            {/* В стопках обложки 2:1, чтобы ряд не вытягивал большую карточку и соседей в квадрат. */}
+            <div className="col-span-3 flex flex-col gap-5">
+              <Slot events={events} i={1} coverClassName="aspect-[2/1]" className="grow" />
+              <Slot events={events} i={2} titleLines={2} coverClassName="aspect-[2/1]" className="grow" />
+            </div>
+            <div className="col-span-3 flex flex-col gap-5">
+              <Slot events={events} i={3} coverClassName="aspect-[2/1]" className="grow" />
+              <NearbyPeople />
+            </div>
+          </div>
+          <div className="grid grid-cols-12 gap-5">
+            <Slot events={events} i={4} className="col-span-4" />
+            <Slot events={events} i={5} className="col-span-4" />
+            <Slot events={events} i={6} className="col-span-4" />
+          </div>
+          <div className="grid grid-cols-12 gap-5">
+            {events?.[7] && <BikeCard event={events[7]} className="col-span-7" />}
+            <CtaCard className="col-span-5 col-start-8" />
+          </div>
         </div>
         )}
       </main>

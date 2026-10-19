@@ -27,10 +27,11 @@ export type EventCardData = {
   cover: EventCover;
 };
 
-export function EventCover({ cover, height }: { cover: EventCover; height: number }) {
+/** Обложка заполняет родителя: размер задаёт контейнер (`relative`). */
+export function EventCover({ cover }: { cover: EventCover }) {
   return (
     <>
-      <div className={cn("absolute inset-x-0 top-0", cover.bg)} style={{ height }}>
+      <div className={cn("absolute inset-0", cover.bg)}>
         {cover.photo ? (
           <img src={cover.photo} alt="" className="size-full max-w-none object-cover" />
         ) : null}
@@ -38,11 +39,8 @@ export function EventCover({ cover, height }: { cover: EventCover; height: numbe
           <img src={cover.art.src} alt="" className={cn("absolute max-w-none", cover.art.className)} />
         ) : null}
       </div>
-      <div
-        className="absolute inset-x-0 top-0 bg-[linear-gradient(180deg,rgba(22,24,31,0.08)_0%,rgba(22,24,31,0)_30%,rgba(22,24,31,0)_55%,rgba(22,24,31,0.62)_100%)]"
-        style={{ height }}
-      />
-      <div className="absolute inset-x-0 top-0 bg-[rgba(246,244,255,0.1)]" style={{ height }} />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(22,24,31,0.08)_0%,rgba(22,24,31,0)_30%,rgba(22,24,31,0)_55%,rgba(22,24,31,0.62)_100%)]" />
+      <div className="absolute inset-0 bg-[rgba(246,244,255,0.1)]" />
     </>
   );
 }
@@ -60,16 +58,14 @@ export function EventChips({ sport, time }: { sport: string; time: string }) {
 }
 
 export function EventDistance({
-  top,
   large,
   children,
 }: {
-  top: number;
   large?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <div className="absolute left-4 flex items-center gap-[6px]" style={{ top }}>
+    <div className="absolute bottom-[15px] left-4 flex items-center gap-[6px]">
       <Icon name="feed/icon-pin" className="size-4" />
       <span
         className={cn(
@@ -84,21 +80,20 @@ export function EventDistance({
 }
 
 /**
- * Карточка события ленты. Размер карточки и высота обложки (`coverHeight`, вместе с нижней
- * обводкой) задаются по Figma. `size="lg"` — крупная: заголовок 26px и отступы 20px.
+ * Карточка события ленты. Ширину задаёт сетка, обложка горизонтальная (`aspect-[16/10]`) и
+ * растягивается, если карточку тянет ряд. `coverClassName` меняет пропорции обложки.
+ * `size="lg"` — крупная: заголовок 26px и отступы 20px.
  */
 export function EventCard({
   event,
-  coverHeight,
-  distanceTop,
+  coverClassName,
   size = "md",
   titleLines = 1,
   className,
   href,
 }: {
   event: EventCardData;
-  coverHeight: number;
-  distanceTop: number;
+  coverClassName?: string;
   size?: "md" | "lg";
   titleLines?: 1 | 2;
   className?: string;
@@ -108,15 +103,17 @@ export function EventCard({
   const large = size === "lg";
   const titleBox = large ? 31 : titleLines === 2 ? 43 : 21.5;
   return (
-    <Card className={cn("absolute overflow-hidden p-0", className)}>
+    <Card className={cn("relative overflow-hidden p-0", className)}>
       {href && <Link to={href} aria-label={event.title} className="absolute inset-0 z-10" />}
       <div
-        className="relative w-full shrink-0 overflow-hidden border-b-2 border-ink"
-        style={{ height: coverHeight }}
+        className={cn(
+          "relative aspect-[16/10] w-full grow overflow-hidden border-b-2 border-ink",
+          coverClassName
+        )}
       >
-        <EventCover cover={event.cover} height={coverHeight - 2} />
+        <EventCover cover={event.cover} />
         <EventChips sport={event.sport} time={event.time} />
-        <EventDistance top={distanceTop} large={large}>
+        <EventDistance large={large}>
           {event.distance}
         </EventDistance>
       </div>
@@ -132,16 +129,16 @@ export function EventCard({
               className={cn(
                 "-mt-px font-display font-bold text-foreground",
                 large
-                  ? "text-[26px] leading-8 tracking-[-0.5px] whitespace-nowrap"
+                  ? "truncate text-[26px] leading-8 tracking-[-0.5px]"
                   : titleLines === 2
-                    ? "w-[226px] text-[18px] leading-[21.5px]"
-                    : "text-[18px] leading-[22px] whitespace-nowrap"
+                    ? "line-clamp-2 text-[18px] leading-[21.5px]"
+                    : "truncate text-[18px] leading-[22px]"
               )}
             >
               {event.title}
             </h3>
           </div>
-          <p className="mt-[6px] text-sm leading-[19px] font-medium whitespace-nowrap text-muted-foreground">
+          <p className="mt-[6px] truncate text-sm leading-[19px] font-medium text-muted-foreground">
             {event.place}
           </p>
         </div>

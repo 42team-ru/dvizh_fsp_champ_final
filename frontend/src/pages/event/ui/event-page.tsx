@@ -19,6 +19,38 @@ import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 type EventModel = ReturnType<typeof useEvent>;
 
 const FACT_WIDTHS = ["w-[199.5px]", "w-[201.5px] border-l-2 border-dashed border-track", "w-[201.5px] border-l-2 border-dashed border-track"];
+/**
+ * Вырезы «отрывного билета» на линии отрыва: центр — середина пунктира (912px + 1px внутри
+ * рамки 2px), отсюда 915px от внешнего края. Маска прорезает карточку вместе с рамкой и
+ * полосой талона, а дуги `TicketNotch` дорисовывают обводку выреза.
+ */
+const NOTCH = { x: 915, r: 15 };
+const notchMask = (height: number) => {
+  const image = [0, height]
+    .map((y) => `radial-gradient(circle at ${NOTCH.x}px ${y}px, transparent ${NOTCH.r}px, #000 ${NOTCH.r + 0.5}px)`)
+    .join(", ");
+  return { maskImage: image, maskComposite: "intersect", WebkitMaskImage: image, WebkitMaskComposite: "source-in" } as const;
+};
+const TICKET_HEIGHT = 400;
+
+/** Обводка выреза: окружность 2px по краю дыры, видна только половина внутри билета. */
+function TicketNotch({ side }: { side: "top" | "bottom" }) {
+  const size = (NOTCH.r + 2) * 2;
+  return (
+    <span
+      aria-hidden
+      className="pointer-events-none absolute box-border rounded-full border-2 border-ink"
+      style={{
+        width: size,
+        height: size,
+        left: NOTCH.x - size / 2,
+        top: side === "top" ? -size / 2 : `calc(100% - ${size / 2}px)`,
+        clipPath: side === "top" ? "inset(50% 0 0 0)" : "inset(0 0 50% 0)",
+      }}
+    />
+  );
+}
+
 const TONES = ["bg-sky", "bg-lime-soft", "bg-lavender-soft", "bg-peach", "bg-mint-soft"];
 const GOING_LEFT = [0, 114, 227.5, 341.5];
 const TAKE_TONES = ["bg-lime-soft", "bg-lavender-soft", "bg-sky-soft", "bg-mint-soft"];
@@ -80,7 +112,11 @@ function TicketHero({ m }: { m: EventModel }) {
   const e = m.event!;
   const cover = e.photos[0]?.url ?? e.sport.imageUrl;
   return (
-    <Card className="relative h-[400px] w-[1216px] shrink-0 flex-row items-start overflow-hidden rounded-[28px] p-0 shadow-hard">
+    // Тень — drop-shadow на обёртке (box-shadow маска срезала бы целиком). Внешняя обёртка
+    // шире на тень и вырезает те же дыры уже из тени, чтобы сквозь вырез был виден фон.
+    <div className="-mr-[6px] -mb-[6px] h-[406px] w-[1222px] shrink-0" style={notchMask(TICKET_HEIGHT)}>
+    <div className="relative h-[400px] w-[1216px] drop-shadow-[6px_6px_0_var(--ink)]">
+    <Card className="relative h-[400px] w-[1216px] flex-row items-start overflow-hidden rounded-[28px] p-0" style={notchMask(TICKET_HEIGHT)}>
       <div className="relative h-[396px] w-[270px] shrink-0 overflow-hidden border-r-2 border-ink">
         <img src={cover} alt="" className="absolute top-0 left-0 h-[396px] w-[268px] object-cover" />
         <div className="absolute top-0 left-0 h-[396px] w-[268px] bg-gradient-to-b from-[rgba(22,24,31,0.05)] via-[rgba(22,24,31,0.15)] via-55% to-[rgba(22,24,31,0.7)]" />
@@ -188,9 +224,11 @@ function TicketHero({ m }: { m: EventModel }) {
       </div>
 
       <div className="absolute top-[26px] left-[912px] h-[344px] w-[2px] border-l-2 border-dashed border-ink" />
-      <span className="absolute top-[-15px] left-[897px] box-border size-[30px] rounded-[15px] border-2 border-ink bg-background" />
-      <span className="absolute top-[381px] left-[897px] box-border size-[30px] rounded-[15px] border-2 border-ink bg-background" />
     </Card>
+    <TicketNotch side="top" />
+    <TicketNotch side="bottom" />
+    </div>
+    </div>
   );
 }
 
