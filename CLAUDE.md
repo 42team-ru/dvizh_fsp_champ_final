@@ -44,9 +44,12 @@ cd backend && ./gradlew postgresTest  # смоук миграций на нас�
 
 ## Модель данных
 
-Стиль как в шаблоне (`AppUser`, `RefreshToken`):
-- первичный ключ `UUID`, генерируется в сервисе;
-- время — `Instant` из бина `Clock`;
+Стиль новых сущностей (образец: `Event`, `Registration`, `Sport`; `AppUser` и `RefreshToken` из шаблона остаются как есть):
+- первичный ключ `UUID`, генерирует Hibernate: `@GeneratedValue(strategy = GenerationType.UUID)`;
+- `createdAt`/`updatedAt` — в базовом `entity.AuditEntity` (`@MappedSuperclass`, `@CreationTimestamp`/`@UpdateTimestamp`), сущность от него наследуется; время — `Instant`;
+- текущее время для бизнес-проверок («уже началось», `decidedAt`) — у базы: `DbTimeRepository.now()`, а не `Clock`;
+- `@Table` только с `name`; уникальность и индексы — в миграциях;
+- над каждым полем и значением enum — однострочный Javadoc, что это;
 - enum хранится как `varchar` с `@Enumerated(STRING)`;
 - Lombok `@Getter @Setter @NoArgsConstructor`;
 - внешние ключи — поля `UUID` (как `RefreshToken.userId`); `@ManyToOne` только если реально упрощает.
@@ -175,7 +178,10 @@ cd backend && ./gradlew postgresTest  # смоук миграций на нас�
 
 ## Структура бэкенда
 
-Пакеты по слоям в `com.hackathon.app`: `rest`, `service`, `repository`, `entity`, `dto`, `config`, `exception` (подробно в `docs/architecture.md`).
+Пакеты по слоям в `com.hackathon.app`: `rest`, `service`, `repository`, `entity`, `dto`, `mapper`, `util`, `config`, `exception` (подробно в `docs/architecture.md`).
+- **Заполнение полей — только в `mapper`** (MapStruct, `@Mapper(config = MappingConfig.class)`): сервис решает (статус, время, права) и передаёт значения в маппер, сеттеров в сервисах нет. Поля без источника пропускаются без `ignore = true`, каждая строка проходит через `util.Strings.blankToNull`.
+- `util` — статические утилиты (`@UtilityClass`, методы помечать `static` явно, иначе MapStruct внедряет класс как бин).
+- Логи в контроллерах на английском: `Endpoint called: <METHOD> <путь>, userId=..., request=...` и `Endpoint response: <METHOD> <путь>, response=...`.
 - Зависимости только вниз: `rest → service → repository → entity`. Контроллер не ходит в репозиторий напрямую, сервис не знает про HTTP/cookie.
 - Сущности наружу не возвращать, только `dto` (records). Новая фича = новые файлы в этих же пакетах, а не новый корневой пакет.
 - Контроллеры только под `/api/...`, с `produces = APPLICATION_JSON_VALUE` и `@Tag` + `@Operation(operationId = "<tag>_<действие>")` (от этого зависят имена хуков Orval).

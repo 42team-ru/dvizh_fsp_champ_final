@@ -11,7 +11,245 @@
     }
   ],
   "paths": {
+    "/api/events/{id}": {
+      "get": {
+        "tags": [
+          "events"
+        ],
+        "operationId": "events_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "events"
+        ],
+        "operationId": "events_update",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/registrations/{id}/reject": {
+      "post": {
+        "tags": [
+          "registrations"
+        ],
+        "operationId": "registrations_reject",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectRegistrationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/registrations/{id}/approve": {
+      "post": {
+        "tags": [
+          "registrations"
+        ],
+        "operationId": "registrations_approve",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/events": {
+      "get": {
+        "tags": [
+          "events"
+        ],
+        "operationId": "events_list",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sportId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "level",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ANY",
+                "BEGINNER",
+                "AMATEUR",
+                "ADVANCED",
+                "PRO"
+              ]
+            }
+          },
+          {
+            "name": "joinMode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "FREE",
+                "REQUEST"
+              ]
+            }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "OFFLINE",
+                "ONLINE"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EventSummaryResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "tags": [
           "events"
@@ -21,7 +259,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateEventRequest"
+                "$ref": "#/components/schemas/EventRequest"
               }
             }
           },
@@ -41,12 +279,58 @@
         }
       }
     },
-    "/api/events/{id}/join": {
+    "/api/events/{id}/registrations": {
+      "get": {
+        "tags": [
+          "registrations"
+        ],
+        "operationId": "registrations_listForEvent",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "CONFIRMED",
+                "PENDING",
+                "REJECTED",
+                "CANCELLED"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EventRegistrationResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "tags": [
-          "events"
+          "registrations"
         ],
-        "operationId": "events_join",
+        "operationId": "registrations_create",
         "parameters": [
           {
             "name": "id",
@@ -62,7 +346,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/JoinEventRequest"
+                "$ref": "#/components/schemas/RegistrationRequest"
               }
             }
           }
@@ -70,37 +354,6 @@
         "responses": {
           "201": {
             "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RegistrationResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/events/{id}/cancel": {
-      "post": {
-        "tags": [
-          "events"
-        ],
-        "operationId": "events_cancel",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
@@ -225,62 +478,22 @@
         }
       }
     },
-    "/api/events/{id}/registrations/{registrationId}": {
-      "patch": {
-        "tags": [
-          "events"
-        ],
-        "operationId": "events_decide",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "registrationId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DecideRegistrationRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RegistrationResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/sports": {
       "get": {
         "tags": [
           "sports"
         ],
-        "operationId": "sports_list",
+        "operationId": "sports_search",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -290,6 +503,29 @@
                   "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/SportResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/registrations/mine": {
+      "get": {
+        "tags": [
+          "registrations"
+        ],
+        "operationId": "registrations_mine",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MyRegistrationResponse"
                   }
                 }
               }
@@ -318,68 +554,12 @@
         }
       }
     },
-    "/api/events/{id}": {
+    "/api/events/mine": {
       "get": {
         "tags": [
           "events"
         ],
-        "operationId": "events_get",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/EventResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/events/{id}/registrations": {
-      "get": {
-        "tags": [
-          "events"
-        ],
-        "operationId": "events_registrations",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "status",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "CONFIRMED",
-                "PENDING",
-                "REJECTED",
-                "CANCELLED"
-              ]
-            }
-          }
-        ],
+        "operationId": "events_mine",
         "responses": {
           "200": {
             "description": "OK",
@@ -388,41 +568,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/EventRegistrationResponse"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/events/{id}/participants": {
-      "get": {
-        "tags": [
-          "events"
-        ],
-        "operationId": "events_participants",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ParticipantResponse"
+                    "$ref": "#/components/schemas/EventSummaryResponse"
                   }
                 }
               }
@@ -533,11 +679,42 @@
           }
         }
       }
+    },
+    "/api/events/{id}/registrations/me": {
+      "delete": {
+        "tags": [
+          "registrations"
+        ],
+        "operationId": "registrations_cancel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
-      "CreateEventRequest": {
+      "EventRequest": {
         "type": "object",
         "properties": {
           "title": {
@@ -551,8 +728,13 @@
             "minLength": 0
           },
           "sportId": {
-            "type": "integer",
-            "format": "int64"
+            "type": "string",
+            "format": "uuid"
+          },
+          "sportName": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
           },
           "startAt": {
             "type": "string",
@@ -562,8 +744,12 @@
             "type": "string",
             "format": "date-time"
           },
-          "offlineMode": {
-            "type": "boolean"
+          "format": {
+            "type": "string",
+            "enum": [
+              "OFFLINE",
+              "ONLINE"
+            ]
           },
           "address": {
             "type": "string",
@@ -575,13 +761,18 @@
             "maxLength": 1000,
             "minLength": 0
           },
-          "latitude": {
+          "onlineUrl": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 0
+          },
+          "lat": {
             "type": "number",
             "format": "double",
             "maximum": 90,
             "minimum": -90
           },
-          "longitude": {
+          "lon": {
             "type": "number",
             "format": "double",
             "maximum": 180,
@@ -593,10 +784,11 @@
               "ANY",
               "BEGINNER",
               "AMATEUR",
+              "ADVANCED",
               "PRO"
             ]
           },
-          "format": {
+          "kind": {
             "type": "string",
             "enum": [
               "TRAINING",
@@ -627,11 +819,15 @@
               "FREE",
               "REQUEST"
             ]
+          },
+          "privateDetails": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 0
           }
         },
         "required": [
-          "offlineMode",
-          "sportId",
+          "format",
           "startAt",
           "title"
         ]
@@ -652,9 +848,8 @@
           "sport": {
             "$ref": "#/components/schemas/SportResponse"
           },
-          "authorId": {
-            "type": "string",
-            "format": "uuid"
+          "author": {
+            "$ref": "#/components/schemas/UserShortResponse"
           },
           "organizationId": {
             "type": "string",
@@ -668,8 +863,12 @@
             "type": "string",
             "format": "date-time"
           },
-          "offlineMode": {
-            "type": "boolean"
+          "format": {
+            "type": "string",
+            "enum": [
+              "OFFLINE",
+              "ONLINE"
+            ]
           },
           "address": {
             "type": "string"
@@ -677,11 +876,14 @@
           "locationNote": {
             "type": "string"
           },
-          "latitude": {
+          "onlineUrl": {
+            "type": "string"
+          },
+          "lat": {
             "type": "number",
             "format": "double"
           },
-          "longitude": {
+          "lon": {
             "type": "number",
             "format": "double"
           },
@@ -691,10 +893,11 @@
               "ANY",
               "BEGINNER",
               "AMATEUR",
+              "ADVANCED",
               "PRO"
             ]
           },
-          "format": {
+          "kind": {
             "type": "string",
             "enum": [
               "TRAINING",
@@ -709,9 +912,22 @@
           "equipment": {
             "type": "string"
           },
+          "privateDetails": {
+            "type": "string"
+          },
           "capacity": {
             "type": "integer",
             "format": "int32"
+          },
+          "participantsCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "participants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserShortResponse"
+            }
           },
           "joinMode": {
             "type": "string",
@@ -731,18 +947,12 @@
           "moderationReason": {
             "type": "string"
           },
-          "participantsCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "myRegistrationStatus": {
+          "moderatedAt": {
             "type": "string",
-            "enum": [
-              "CONFIRMED",
-              "PENDING",
-              "REJECTED",
-              "CANCELLED"
-            ]
+            "format": "date-time"
+          },
+          "viewer": {
+            "$ref": "#/components/schemas/ViewerResponse"
           },
           "createdAt": {
             "type": "string",
@@ -758,21 +968,74 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "code": {
-            "type": "string"
+            "type": "string",
+            "format": "uuid"
           },
           "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "custom": {
+            "type": "boolean"
+          }
+        }
+      },
+      "UserShortResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "username": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
             "type": "string"
           }
         }
       },
-      "JoinEventRequest": {
+      "ViewerResponse": {
         "type": "object",
         "properties": {
-          "message": {
+          "registrationStatus": {
+            "type": "string",
+            "enum": [
+              "CONFIRMED",
+              "PENDING",
+              "REJECTED",
+              "CANCELLED"
+            ]
+          },
+          "canRegister": {
+            "type": "boolean"
+          },
+          "registerBlockedReason": {
+            "type": "string"
+          },
+          "isOrganizer": {
+            "type": "boolean"
+          },
+          "canManage": {
+            "type": "boolean"
+          },
+          "canCancel": {
+            "type": "boolean"
+          },
+          "canSeePrivateDetails": {
+            "type": "boolean"
+          }
+        }
+      },
+      "RejectRegistrationRequest": {
+        "type": "object",
+        "properties": {
+          "reason": {
             "type": "string",
             "maxLength": 1000,
             "minLength": 0
@@ -806,13 +1069,30 @@
           "message": {
             "type": "string"
           },
+          "decisionReason": {
+            "type": "string"
+          },
           "decidedAt": {
             "type": "string",
             "format": "date-time"
           },
+          "decidedById": {
+            "type": "string",
+            "format": "uuid"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "RegistrationRequest": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 0
           }
         }
       },
@@ -914,10 +1194,94 @@
           "username"
         ]
       },
-      "DecideRegistrationRequest": {
+      "EventSummaryResponse": {
         "type": "object",
         "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "sport": {
+            "$ref": "#/components/schemas/SportResponse"
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "OFFLINE",
+              "ONLINE"
+            ]
+          },
+          "address": {
+            "type": "string"
+          },
+          "locationNote": {
+            "type": "string"
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "ANY",
+              "BEGINNER",
+              "AMATEUR",
+              "ADVANCED",
+              "PRO"
+            ]
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "TRAINING",
+              "GAME",
+              "MEETUP",
+              "AMATEUR_TOURNAMENT"
+            ]
+          },
+          "joinMode": {
+            "type": "string",
+            "enum": [
+              "FREE",
+              "REQUEST"
+            ]
+          },
+          "capacity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "participantsCount": {
+            "type": "integer",
+            "format": "int64"
+          },
           "status": {
+            "type": "string",
+            "enum": [
+              "PUBLISHED",
+              "UNPUBLISHED",
+              "DELETED"
+            ]
+          },
+          "moderationReason": {
+            "type": "string"
+          },
+          "authorId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "organizationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "myRegistrationStatus": {
             "type": "string",
             "enum": [
               "CONFIRMED",
@@ -926,10 +1290,42 @@
               "CANCELLED"
             ]
           }
-        },
-        "required": [
-          "status"
-        ]
+        }
+      },
+      "MyRegistrationResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "CONFIRMED",
+              "PENDING",
+              "REJECTED",
+              "CANCELLED"
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "decisionReason": {
+            "type": "string"
+          },
+          "decidedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "event": {
+            "$ref": "#/components/schemas/EventSummaryResponse"
+          }
+        }
       },
       "PingResponse": {
         "type": "object",
@@ -951,7 +1347,7 @@
             "format": "uuid"
           },
           "participant": {
-            "$ref": "#/components/schemas/ParticipantResponse"
+            "$ref": "#/components/schemas/UserShortResponse"
           },
           "status": {
             "type": "string",
@@ -965,6 +1361,9 @@
           "message": {
             "type": "string"
           },
+          "decisionReason": {
+            "type": "string"
+          },
           "decidedAt": {
             "type": "string",
             "format": "date-time"
@@ -972,24 +1371,6 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
-          }
-        }
-      },
-      "ParticipantResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "username": {
-            "type": "string"
-          },
-          "firstName": {
-            "type": "string"
-          },
-          "lastName": {
-            "type": "string"
           }
         }
       },

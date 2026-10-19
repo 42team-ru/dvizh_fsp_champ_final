@@ -25,27 +25,38 @@ docker-compose.dev.yml  только БД для разработки
 | `config` | Security, OpenAPI, `@ConfigurationProperties` |
 | `exception` | Свои исключения и единый `ApiExceptionHandler` (RFC 9457) |
 
-Зависимости идут только вниз: `rest → service → repository → entity`. Миграции БД: `backend/src/main/resources/db/migration` (Flyway, только вперёд; применённые миграции не править, добавлять новые `V3__...`).
+Зависимости идут только вниз: `rest → service → repository → entity`. Миграции БД: `backend/src/main/resources/db/migration` (Flyway, только вперёд; применённые миграции не править, добавлять новые `V4__...`).
 Пример готового флоу: регистрация и вход (`AuthController`, `AuthService`).
 
-## Мероприятия (`EventController`, `SportController`, `EventService`, миграция `V3__events.sql`)
-- Мероприятие (`events`) — центр модели. Вид спорта — справочник `sports` в БД (сидится миграцией), новый вид не требует кода.
-- `GET /api/sports` — справочник; `POST /api/events` — создать (автор = текущий пользователь, сразу `PUBLISHED`);
-  `GET /api/events/{id}` — карточка с `participantsCount` и `myRegistrationStatus`; `GET /api/events/{id}/participants` — подтверждённые участники;
-  `POST /api/events/{id}/join` — записаться (`{"message"?}`); после отмены — та же ручка, запись возобновляется;
-  `POST /api/events/{id}/cancel` — отменить свою запись/заявку (место освобождается; повторное нажатие — 200; отклонённую — 409; после старта — 409);
-  `GET /api/events/{id}/registrations?status=` — все заявки (только организатор, иначе 403);
-  `PATCH /api/events/{id}/registrations/{registrationId}` `{"status":"CONFIRMED"|"REJECTED"}` — решение организатора.
-- Решение можно пересматривать сколько угодно: случайно отклонённого организатор находит в `?status=REJECTED` и подтверждает
-  (если есть места). Сам отклонённый повторно подать заявку не может (иначе отказ ничего не значит). Отменённую пользователем запись решение не трогает (409).
-- Офлайн-мероприятию обязателен `address` (координаты по желанию), онлайн — место/ссылка в `locationNote`.
-- Запись (`registrations`, unique(event_id, user_id)): `joinMode=FREE` → сразу `CONFIRMED`, `REQUEST` → `PENDING`.
-  Отказ (409): организатор на своё, уже началось, уже записан/заявка ждёт/отклонена, нет мест (`capacity`).
-  Строка мероприятия блокируется (`SELECT ... FOR UPDATE`), поэтому лимит мест не превышается при параллельной записи.
-- id генерирует Hibernate (UUID). `createdAt`/`updatedAt` — в базовом `entity.AuditEntity` (`@MappedSuperclass`), сущности от него наследуются.
-- Текущее время для бизнес-проверок («мероприятие уже началось», `decidedAt`) берётся у базы: `DbTimeRepository.now()`, а не `Clock`.
-- Контроллеры логируют на английском `Endpoint called: <METHOD> <путь>, userId=..., request=...` и `Endpoint response: <METHOD> <путь>, response=...`. Если сервис бросил исключение (4xx), строки `Endpoint response` не будет: ответ формирует `ApiExceptionHandler`.
-- `organization_id` и поля модерации уже в схеме, но API их пока не заполняет. Комментарии не реализованы.
+## Мероприятия, записи, виды спорта (`EventController`, `RegistrationController`, `SportController`; миграция `V3__events.sql`)
+- Мероприятие (`events`) — центр модели. Вид спорта — справочник `sports` в БД; в форме можно выбрать из списка (`sportId`) или ввести свой (`sportName`):
+  сервер нормализует имя (пробелы, регистр, ё → е), ищет по `normalized_name` и при отсутствии создаёт вид с `custom = true` (`SportService.resolve`).
+- Все правила «можно ли» — в `service.EventAccessPolicy`. Команды бросают исключение с её текстом, карточка отдаёт те же решения в блоке `viewer`
+  (`registrationStatus, canRegister, registerBlockedReason, isOrganizer, canManage, canCancel, canSeePrivateDetails`). Фронт рисует кнопки только по `viewer`.
+
+| Ручка | operationId | Кто / что |
+|---|---|---|
+| `GET /api/sports?query=` | `sports_search` | справочник, поиск без учёта регистра и ё/е |
+| `GET /api/events?q&sportId&from&to&level&joinMode&format` | `events_list` | лента: только PUBLISHED, по умолчанию с текущего момента; уровень ANY подходит под любой фильтр |
+| `GET /api/events/mine` | `events_mine` | мои как организатора, все статусы |
+| `GET /api/events/{id}` | `events_get` | карточка в любом статусе (снятое — с `moderationReason`), участники, `viewer`; `onlineUrl`/`privateDetails` — только организатору и подтверждённым |
+| `POST /api/events` | `events_create` | сразу PUBLISHED; админ — 403; очному нужен `address` |
+| `PUT /api/events/{id}` | `events_update` | только организатор (403); удалённое — 409; `capacity` не меньше подтверждённых — 409 |
+| `POST /api/events/{id}/registrations` | `registrations_create` | FREE → CONFIRMED, REQUEST → PENDING; после отмены та же строка переиспользуется |
+| `DELETE /api/events/{id}/registrations/me` | `registrations_cancel` | отмена своей записи/заявки до начала; повтор — 200; отклонённую — 409 |
+| `GET /api/events/{id}/registrations?status=` | `registrations_listForEvent` | заявки и участники — только организатор |
+| `POST /api/registrations/{id}/approve` | `registrations_approve` | организатор; можно подтвердить и ранее отклонённого (исправить ошибку); нет мест — 409 |
+| `POST /api/registrations/{id}/reject` `{"reason"?}` | `registrations_reject` | организатор; причину участник видит в «моих записях» |
+| `GET /api/registrations/mine` | `registrations_mine` | мои записи вместе со статусом мероприятия |
+
+- Отказы записи (409, текст для человека): снято/удалено, организатор на своё, уже началось, уже записан, заявка ждёт, отклонена, «Мест нет».
+  Админ заявки не решает и события не создаёт (403). Сам отклонённый повторно подать не может — исправляет организатор через approve.
+- Запись и одобрение — под блокировкой строки мероприятия (`EventRepository.findByIdForUpdate`), лимит мест не превысить параллельно.
+  Счётчики участников для списков — одним запросом (`RegistrationRepository.countByEventIds`).
+- id генерирует Hibernate (UUID). `createdAt`/`updatedAt` — в базовом `entity.AuditEntity`. Время для проверок («уже началось», `decidedAt`) — у базы: `DbTimeRepository.now()`.
+- Фильтры ленты — Criteria API (`EventSpecifications`), переносимо на H2.
+- Контроллеры логируют на английском `Endpoint called: <METHOD> <путь>, userId=..., request=...` и `Endpoint response: ...`. Если сервис бросил исключение (4xx), строки `Endpoint response` не будет.
+- Ещё не сделано: события от организации (`organization_id` есть в схеме; ждёт `Organization`), модерация админом (поля есть), комментарии.
 
 ## Правила для контроллеров
 - Только под `/api/...`, с `produces = APPLICATION_JSON_VALUE` (иначе в спецификации будет `*/*`, и Orval сгенерирует `string` вместо типа).

@@ -1,4 +1,7 @@
 package com.hackathon.app.dto;
 
-public record SportResponse(Long id, String code, String name) {
+import java.util.UUID;
+
+/** custom — вид добавлен пользователем. */
+public record SportResponse(UUID id, String name, String slug, boolean custom) {
 }

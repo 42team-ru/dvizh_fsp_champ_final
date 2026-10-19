@@ -20,7 +20,8 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  SportResponse
+  SportResponse,
+  SportsSearchParams
 } from '../appAPI.schemas';
 
 import { authMutator } from '../../../mutators/authMutator';
@@ -46,29 +47,36 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   return result;
 };
 
-export type sportsListResponse200 = {
+export type sportsSearchResponse200 = {
   data: SportResponse[]
   status: 200
 }
 
-export type sportsListResponseSuccess = (sportsListResponse200) & {
+export type sportsSearchResponseSuccess = (sportsSearchResponse200) & {
   headers: Headers;
 };
 ;
 
-export type sportsListResponse = (sportsListResponseSuccess)
+export type sportsSearchResponse = (sportsSearchResponseSuccess)
 
-export const getSportsListUrl = () => {
+export const getSportsSearchUrl = (params?: SportsSearchParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/sports`
+  return stringifiedParams.length > 0 ? `/api/sports?${stringifiedParams}` : `/api/sports`
 }
 
-export const sportsList = async ( options?: Parameters<typeof authMutator>[1]): Promise<sportsListResponse> => {
+export const sportsSearch = async (params?: SportsSearchParams, options?: Parameters<typeof authMutator>[1]): Promise<sportsSearchResponse> => {
 
-  return authMutator<sportsListResponse>(getSportsListUrl(),
+  return authMutator<sportsSearchResponse>(getSportsSearchUrl(params),
   {
     ...options,
     method: 'GET'
@@ -81,66 +89,66 @@ export const sportsList = async ( options?: Parameters<typeof authMutator>[1]): 
 
 
 
-export const getSportsListQueryKey = () => {
+export const getSportsSearchQueryKey = (params?: SportsSearchParams,) => {
     return [
-    `/api/sports`
+    `/api/sports`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getSportsListQueryOptions = <TData = Awaited<ReturnType<typeof sportsList>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof sportsList>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+export const getSportsSearchQueryOptions = <TData = Awaited<ReturnType<typeof sportsSearch>>, TError = ErrorType<unknown>>(params?: SportsSearchParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof sportsSearch>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getSportsListQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getSportsSearchQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof sportsList>>> = ({ signal }) => sportsList({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof sportsSearch>>> = ({ signal }) => sportsSearch(params, { signal, ...requestOptions });
 
 
 
 
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof sportsList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof sportsSearch>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type SportsListQueryResult = NonNullable<Awaited<ReturnType<typeof sportsList>>>
-export type SportsListQueryError = ErrorType<unknown>
+export type SportsSearchQueryResult = NonNullable<Awaited<ReturnType<typeof sportsSearch>>>
+export type SportsSearchQueryError = ErrorType<unknown>
 
 
-export function useSportsList<TData = Awaited<ReturnType<typeof sportsList>>, TError = ErrorType<unknown>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof sportsList>>, TError, TData>> & Pick<
+export function useSportsSearch<TData = Awaited<ReturnType<typeof sportsSearch>>, TError = ErrorType<unknown>>(
+ params: undefined |  SportsSearchParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof sportsSearch>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof sportsList>>,
+          Awaited<ReturnType<typeof sportsSearch>>,
           TError,
-          Awaited<ReturnType<typeof sportsList>>
+          Awaited<ReturnType<typeof sportsSearch>>
         > , 'initialData'
       >, request?: SecondParameter<typeof authMutator>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useSportsList<TData = Awaited<ReturnType<typeof sportsList>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof sportsList>>, TError, TData>> & Pick<
+export function useSportsSearch<TData = Awaited<ReturnType<typeof sportsSearch>>, TError = ErrorType<unknown>>(
+ params?: SportsSearchParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof sportsSearch>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof sportsList>>,
+          Awaited<ReturnType<typeof sportsSearch>>,
           TError,
-          Awaited<ReturnType<typeof sportsList>>
+          Awaited<ReturnType<typeof sportsSearch>>
         > , 'initialData'
       >, request?: SecondParameter<typeof authMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useSportsList<TData = Awaited<ReturnType<typeof sportsList>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof sportsList>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+export function useSportsSearch<TData = Awaited<ReturnType<typeof sportsSearch>>, TError = ErrorType<unknown>>(
+ params?: SportsSearchParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof sportsSearch>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
-export function useSportsList<TData = Awaited<ReturnType<typeof sportsList>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof sportsList>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+export function useSportsSearch<TData = Awaited<ReturnType<typeof sportsSearch>>, TError = ErrorType<unknown>>(
+ params?: SportsSearchParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof sportsSearch>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getSportsListQueryOptions(options)
+  const queryOptions = getSportsSearchQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

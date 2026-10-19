@@ -22,15 +22,35 @@ import lombok.Setter;
 @NoArgsConstructor
 public class Registration extends AuditEntity {
 
-	public enum Status { CONFIRMED, PENDING, REJECTED, CANCELLED }
+	/** Статус записи. */
+	public enum Status {
+		/** Подтверждена: участник занимает место. */
+		CONFIRMED,
+		/** Заявка ждёт решения организатора. */
+		PENDING,
+		/** Отклонена организатором. */
+		REJECTED,
+		/** Отменена самим участником. */
+		CANCELLED
+	}
 
+	/** Идентификатор записи. */
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
 	private UUID id;
+	/** Мероприятие (id). */
 	private UUID eventId;
+	/** Участник (id пользователя). */
 	private UUID userId;
+	/** Статус записи. */
 	@Enumerated(EnumType.STRING)
 	private Status status;
+	/** Сопроводительное сообщение к заявке. */
 	private String message;
+	/** Причина решения организатора (обычно отказа). */
+	private String decisionReason;
+	/** Когда принято решение (подтверждение, отказ или отмена); null — ещё не решено. */
 	private Instant decidedAt;
+	/** Кто принял решение (id пользователя); null — автоматически при свободной записи. */
+	private UUID decidedById;
 }

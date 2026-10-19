@@ -1,33 +1,35 @@
 package com.hackathon.app.service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.hackathon.app.dto.CreateEventRequest;
-import com.hackathon.app.dto.EventRegistrationResponse;
+import com.hackathon.app.dto.EventFilter;
+import com.hackathon.app.dto.EventRequest;
 import com.hackathon.app.dto.EventResponse;
-import com.hackathon.app.dto.ParticipantResponse;
-import com.hackathon.app.dto.RegistrationResponse;
-import com.hackathon.app.dto.SportResponse;
+import com.hackathon.app.dto.EventSummaryResponse;
 import com.hackathon.app.entity.AppUser;
 import com.hackathon.app.entity.Event;
 import com.hackathon.app.entity.Registration;
+import com.hackathon.app.entity.Sport;
 import com.hackathon.app.exception.BadRequestException;
 import com.hackathon.app.exception.ConflictException;
 import com.hackathon.app.exception.ForbiddenException;
+import com.hackathon.app.exception.UnauthorizedException;
 import com.hackathon.app.mapper.EventMapper;
 import com.hackathon.app.repository.AppUserRepository;
 import com.hackathon.app.repository.DbTimeRepository;
 import com.hackathon.app.repository.EventRepository;
+import com.hackathon.app.repository.EventSpecifications;
 import com.hackathon.app.repository.RegistrationRepository;
 import com.hackathon.app.repository.SportRepository;
 import com.hackathon.app.util.Strings;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,179 +37,126 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class EventService {
 
-    private static final String NOT_FOUND = "Мероприятие не найдено";
+    static final String NOT_FOUND = "Мероприятие не найдено";
+    private static final int FEED_LIMIT = 100;
 
     private final EventRepository events;
     private final RegistrationRepository registrations;
     private final SportRepository sports;
     private final AppUserRepository users;
+    private final SportService sportService;
     private final DbTimeRepository dbTime;
+    private final EventAccessPolicy policy;
     private final EventMapper mapper;
 
+    /**
+     * Лента: только опубликованные и ещё не начавшиеся (если from не задан), ближайшие первыми.
+     */
     @Transactional(readOnly = true)
-    public List<SportResponse> sports() {
-        return sports.findAllByOrderByNameAsc().stream().map(mapper::toResponse).toList();
+    public List<EventSummaryResponse> list(EventFilter f, UUID userId) {
+        var from = f.from() != null ? f.from() : dbTime.now();
+        var spec = EventSpecifications.feed(Strings.blankToNull(f.q()), f.sportId(), from, f.to(), f.level(),
+                f.joinMode(), f.format());
+        var found = events.findAll(spec, PageRequest.of(0, FEED_LIMIT, Sort.by("startAt"))).getContent();
+        return summaries(found, userId);
     }
 
     /**
-     * Организацию пока не принимаем: членство в ней ещё нечем проверить.
+     * Мои мероприятия как организатора, во всех статусах.
+     */
+    @Transactional(readOnly = true)
+    public List<EventSummaryResponse> mine(UUID userId) {
+        return summaries(events.findByAuthorIdOrderByStartAtDesc(userId), userId);
+    }
+
+    /**
+     * Карточка открывается в любом статусе (снятое — с причиной); что можно делать, говорит блок viewer.
+     */
+    @Transactional(readOnly = true)
+    public EventResponse get(UUID eventId, UUID userId) {
+        var e = events.findById(eventId).orElseThrow(() -> new NoSuchElementException(NOT_FOUND));
+        var sport = sportService.get(e.getSportId());
+        var author = users.findById(e.getAuthorId()).orElseThrow();
+        var participants = registrations.findUsers(eventId, Registration.Status.CONFIRMED);
+        var my = registrations.findByEventIdAndUserId(eventId, userId).orElse(null);
+        var now = dbTime.now();
+        boolean canSee = policy.canSeePrivateDetails(e, userId, my);
+        var viewer = mapper.toViewer(my != null ? my.getStatus() : null,
+                policy.registerBlockedReason(e, userId, my, participants.size(), now),
+                policy.isOrganizer(e, userId), policy.canManage(e, userId),
+                policy.cancelBlockedReason(e, my, now) == null, canSee);
+        return mapper.toResponse(e, sport, author, participants, participants.size(), viewer,
+                canSee ? e.getOnlineUrl() : null, canSee ? e.getPrivateDetails() : null);
+    }
+
+    /**
+     * Публикуется сразу. Админ не создаёт (403). Свой вид спорта создаётся в этой же транзакции.
      */
     @Transactional
-    public EventResponse create(UUID authorId, CreateEventRequest r) {
-        var sport = sports.findById(r.sportId()).orElseThrow(() -> new BadRequestException("Неизвестный вид спорта"));
+    public EventResponse create(UUID userId, EventRequest r) {
+        var user = users.findById(userId).filter(AppUser::isActive)
+                .orElseThrow(() -> new UnauthorizedException("Сессия недействительна, войдите заново"));
+        var blocked = policy.createBlockedReason(user);
+        if (blocked != null) {
+            throw new ForbiddenException(blocked);
+        }
+        validate(r);
+        var sport = sportService.resolve(r.sportId(), r.sportName(), userId);
+        var event = events.saveAndFlush(mapper.toEntity(r, userId, sport.getId()));
+        return get(event.getId(), userId);
+    }
+
+    /**
+     * Редактирует только организатор; удалённое — нельзя; лимит мест не меньше уже подтверждённых.
+     */
+    @Transactional
+    public EventResponse update(UUID eventId, UUID userId, EventRequest r) {
+        var e = events.findByIdForUpdate(eventId).orElseThrow(() -> new NoSuchElementException(NOT_FOUND));
+        if (!policy.isOrganizer(e, userId)) {
+            throw new ForbiddenException("Редактировать мероприятие может только организатор");
+        }
+        if (!policy.canManage(e, userId)) {
+            throw new ConflictException("Мероприятие удалено, редактировать нельзя");
+        }
+        validate(r);
+        var confirmed = registrations.countByEventIdAndStatus(eventId, Registration.Status.CONFIRMED);
+        if (r.capacity() != null && r.capacity() < confirmed) {
+            throw new ConflictException("Уже записано " + confirmed + ", лимит мест не может быть меньше");
+        }
+        var sport = sportService.resolve(r.sportId(), r.sportName(), userId);
+        mapper.update(e, r, sport.getId());
+        events.saveAndFlush(e);
+        return get(eventId, userId);
+    }
+
+    /**
+     * Список для ленты и «моих»: счётчики и мои статусы — по одному запросу на весь список.
+     */
+    @Transactional(readOnly = true)
+    public List<EventSummaryResponse> summaries(List<Event> list, UUID userId) {
+        if (list.isEmpty()) {
+            return List.of();
+        }
+        var ids = list.stream().map(Event::getId).toList();
+        Map<UUID, Sport> sportsById = sports.findAllById(list.stream().map(Event::getSportId).distinct().toList())
+                .stream().collect(Collectors.toMap(Sport::getId, Function.identity()));
+        var counts = registrations.countByEventIds(ids, Registration.Status.CONFIRMED).stream()
+                .collect(Collectors.toMap(RegistrationRepository.EventCount::getEventId,
+                        RegistrationRepository.EventCount::getCount));
+        var my = registrations.findByUserIdAndEventIdIn(userId, ids).stream()
+                .collect(Collectors.toMap(Registration::getEventId, Registration::getStatus));
+        return list.stream()
+                .map(e -> mapper.toSummary(e, sportsById.get(e.getSportId()), counts.getOrDefault(e.getId(), 0L),
+                        my.get(e.getId())))
+                .toList();
+    }
+
+    private static void validate(EventRequest r) {
         if (r.endAt() != null && !r.endAt().isAfter(r.startAt())) {
             throw new BadRequestException("Окончание должно быть позже начала");
         }
-        if (r.offlineMode() && Strings.blankToNull(r.address()) == null) {
-            throw new BadRequestException("Для офлайн-мероприятия нужен адрес");
+        if (r.format() == Event.Format.OFFLINE && Strings.blankToNull(r.address()) == null) {
+            throw new BadRequestException("Для очного мероприятия нужен адрес");
         }
-        var event = events.saveAndFlush(mapper.toEntity(r, authorId));
-        return mapper.toResponse(event, sport, 0, null);
-    }
-
-    @Transactional(readOnly = true)
-    public EventResponse get(UUID eventId, UUID userId) {
-        var event = visible(eventId, userId);
-        var sport = sports.findById(event.getSportId()).orElseThrow();
-        var count = registrations.countByEventIdAndStatus(eventId, Registration.Status.CONFIRMED);
-        var my = registrations.findByEventIdAndUserId(eventId, userId).map(Registration::getStatus).orElse(null);
-        return mapper.toResponse(event, sport, count, my);
-    }
-
-    @Transactional(readOnly = true)
-    public List<ParticipantResponse> participants(UUID eventId, UUID userId) {
-        visible(eventId, userId);
-        return registrations.findUsers(eventId, Registration.Status.CONFIRMED).stream().map(mapper::toParticipant).toList();
-    }
-
-    /**
-     * FREE — сразу CONFIRMED, REQUEST — PENDING (решает организатор). Строка мероприятия блокируется,
-     * поэтому подсчёт мест и запись идут атомарно. Отменённую ранее запись можно возобновить, отклонённую — нет.
-     */
-    @Transactional
-    public RegistrationResponse join(UUID eventId, UUID userId, String message) {
-        var e = events.findByIdForUpdate(eventId)
-                .filter(ev -> ev.getStatus() == Event.Status.PUBLISHED)
-                .orElseThrow(() -> new NoSuchElementException(NOT_FOUND));
-        if (e.getAuthorId().equals(userId)) {
-            throw new ConflictException("Организатор не может записаться на своё мероприятие");
-        }
-        var now = dbTime.now();
-        if (!e.getStartAt().isAfter(now)) {
-            throw new ConflictException("Мероприятие уже началось, запись закрыта");
-        }
-        var reg = registrations.findByEventIdAndUserId(eventId, userId).orElse(null);
-        if (reg != null) {
-            switch (reg.getStatus()) {
-                case CONFIRMED -> throw new ConflictException("Вы уже записаны на это мероприятие");
-                case PENDING -> throw new ConflictException("Заявка уже отправлена и ждёт решения организатора");
-                // повторно подать нельзя (иначе отказ ничего не значит); ошибку исправляет организатор через decide
-                case REJECTED -> throw new ConflictException("Организатор отклонил вашу заявку. Если это ошибка, свяжитесь с организатором");
-                case CANCELLED -> {
-                } // запись возобновляется ниже
-            }
-        }
-        if (e.getCapacity() != null
-                && registrations.countByEventIdAndStatus(eventId, Registration.Status.CONFIRMED) >= e.getCapacity()) {
-            throw new ConflictException("Свободных мест нет");
-        }
-        boolean free = e.getJoinMode() == Event.JoinMode.FREE;
-        var status = free ? Registration.Status.CONFIRMED : Registration.Status.PENDING;
-        var decidedAt = free ? now : null;
-        var registration = reg == null
-                ? mapper.toRegistration(eventId, userId, status, message, decidedAt)
-                : mapper.rejoin(reg, status, message, decidedAt);
-        try {
-            return mapper.toResponse(registrations.saveAndFlush(registration));
-        } catch (DataIntegrityViolationException _) { // двойной клик: unique(event_id, user_id)
-            throw new ConflictException("Вы уже записаны на это мероприятие");
-        }
-    }
-
-    /**
-     * Пользователь отменяет свою запись или заявку и освобождает место; потом может снова записаться через join.
-     * Отклонённую заявку отменить нельзя: иначе отмена + повторная запись обходили бы отказ организатора.
-     */
-    @Transactional
-    public RegistrationResponse cancel(UUID eventId, UUID userId) {
-        var e = visible(eventId, userId);
-        var reg = registrations.findByEventIdAndUserId(eventId, userId)
-                .orElseThrow(() -> new NoSuchElementException("Вы не записаны на это мероприятие"));
-        switch (reg.getStatus()) {
-            case CANCELLED -> {
-                return mapper.toResponse(reg); // повторное нажатие
-            }
-            case REJECTED -> throw new ConflictException("Заявка отклонена организатором, отменять нечего");
-            case CONFIRMED, PENDING -> {
-            }
-        }
-        var now = dbTime.now();
-        if (!e.getStartAt().isAfter(now)) {
-            throw new ConflictException("Мероприятие уже началось, отменить запись нельзя");
-        }
-        return mapper.toResponse(registrations.saveAndFlush(mapper.cancel(reg, now)));
-    }
-
-    /**
-     * Все заявки мероприятия (или с одним статусом) — только для организатора: найти и пересмотреть решение.
-     */
-    @Transactional(readOnly = true)
-    public List<EventRegistrationResponse> registrations(UUID eventId, UUID userId, Registration.Status status) {
-        organizerEvent(events.findById(eventId), userId);
-        var list = status == null
-                ? registrations.findByEventIdOrderByCreatedAt(eventId)
-                : registrations.findByEventIdAndStatusOrderByCreatedAt(eventId, status);
-        var usersById = users.findAllById(list.stream().map(Registration::getUserId).toList()).stream()
-                .collect(Collectors.toMap(AppUser::getId, Function.identity()));
-        return list.stream().map(r -> mapper.toEventRegistration(r, usersById.get(r.getUserId()))).toList();
-    }
-
-    /**
-     * Организатор принимает или отклоняет заявку и может в любой момент пересмотреть решение:
-     * случайно отклонённого — подтвердить, подтверждённого — отклонить. Отменённую самим пользователем запись не трогаем.
-     * Подтверждение занимает место, поэтому лимит проверяется под той же блокировкой строки мероприятия, что и в join.
-     */
-    @Transactional
-    public RegistrationResponse decide(UUID eventId, UUID registrationId, UUID userId, Registration.Status status) {
-        if (status != Registration.Status.CONFIRMED && status != Registration.Status.REJECTED) {
-            throw new BadRequestException("Решение по заявке: только CONFIRMED или REJECTED");
-        }
-        var e = organizerEvent(events.findByIdForUpdate(eventId), userId);
-        var reg = registrations.findById(registrationId)
-                .filter(r -> r.getEventId().equals(eventId))
-                .orElseThrow(() -> new NoSuchElementException("Заявка не найдена"));
-        if (reg.getStatus() == status) {
-            return mapper.toResponse(reg);
-        }
-        if (reg.getStatus() == Registration.Status.CANCELLED) {
-            throw new ConflictException("Участник сам отменил запись");
-        }
-        if (status == Registration.Status.CONFIRMED && e.getCapacity() != null
-                && registrations.countByEventIdAndStatus(eventId, Registration.Status.CONFIRMED) >= e.getCapacity()) {
-            throw new ConflictException("Свободных мест нет");
-        }
-        return mapper.toResponse(registrations.saveAndFlush(mapper.decide(reg, status, dbTime.now())));
-    }
-
-    /**
-     * Удалённое мероприятие — 404; чужое — 403.
-     */
-    private Event organizerEvent(Optional<Event> event, UUID userId) {
-        var e = event.filter(ev -> ev.getStatus() != Event.Status.DELETED)
-                .orElseThrow(() -> new NoSuchElementException(NOT_FOUND));
-        if (!e.getAuthorId().equals(userId)) {
-            throw new ForbiddenException("Управлять заявками может только организатор");
-        }
-        return e;
-    }
-
-    /**
-     * Неопубликованное мероприятие видит только автор, остальным оно «не существует».
-     */
-    private Event visible(UUID eventId, UUID userId) {
-        return events.findById(eventId)
-                .filter(e -> e.getStatus() == Event.Status.PUBLISHED
-                        || (e.getStatus() == Event.Status.UNPUBLISHED && e.getAuthorId().equals(userId)))
-                .orElseThrow(() -> new NoSuchElementException(NOT_FOUND));
     }
 }

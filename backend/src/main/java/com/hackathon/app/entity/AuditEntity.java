@@ -16,6 +16,7 @@ public abstract class AuditEntity {
 
 	@CreationTimestamp
 	private Instant createdAt;
+
 	@UpdateTimestamp
 	private Instant updatedAt;
 }

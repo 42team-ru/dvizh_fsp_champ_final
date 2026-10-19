@@ -24,14 +24,10 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  CreateEventRequest,
-  DecideRegistrationRequest,
-  EventRegistrationResponse,
+  EventRequest,
   EventResponse,
-  EventsRegistrationsParams,
-  JoinEventRequest,
-  ParticipantResponse,
-  RegistrationResponse
+  EventSummaryResponse,
+  EventsListParams
 } from '../appAPI.schemas';
 
 import { authMutator } from '../../../mutators/authMutator';
@@ -57,369 +53,7 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   return result;
 };
 
-export type eventsCreateResponse201 = {
-  data: EventResponse
-  status: 201
-}
-
-export type eventsCreateResponseSuccess = (eventsCreateResponse201) & {
-  headers: Headers;
-};
-;
-
-export type eventsCreateResponse = (eventsCreateResponseSuccess)
-
-export const getEventsCreateUrl = () => {
-
-
-
-
-  return `/api/events`
-}
-
-export const eventsCreate = async (createEventRequest: CreateEventRequest, options?: Parameters<typeof authMutator>[1]): Promise<eventsCreateResponse> => {
-
-    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
-    if (!h) return {};
-    if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Symbol.iterator in h) {
-      return Object.fromEntries(
-        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
-      );
-    }
-    const headers: Record<string, string | readonly string[]> = {};
-    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
-      if (value !== undefined) headers[name] = value;
-    }
-    return headers;
-  };
-return authMutator<eventsCreateResponse>(getEventsCreateUrl(),
-  {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(createEventRequest)
-  }
-);}
-
-
-
-
-
-export const getEventsCreateMutationKey = () => ['eventsCreate'] as const;
-
-export const getEventsCreateMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsCreate>>, TError,EventsCreateMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
-): UseMutationOptions<Awaited<ReturnType<typeof eventsCreate>>, TError,EventsCreateMutationVariables, TContext> => {
-
-const mutationKey = getEventsCreateMutationKey();
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof eventsCreate>>, EventsCreateMutationVariables> = (props) => {
-          const {data} = props ?? {};
-
-          return  eventsCreate(data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type EventsCreateMutationResult = NonNullable<Awaited<ReturnType<typeof eventsCreate>>>
-    export type EventsCreateMutationBody = CreateEventRequest
-    export type EventsCreateMutationError = ErrorType<unknown>
-    export type EventsCreateMutationVariables = {data: CreateEventRequest}
-
-    export const useEventsCreate = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsCreate>>, TError,EventsCreateMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof eventsCreate>>,
-        TError,
-        EventsCreateMutationVariables,
-        TContext
-      > => {
-      return useMutation(getEventsCreateMutationOptions(options), queryClient);
-    }
-    export type eventsJoinResponse201 = {
-  data: RegistrationResponse
-  status: 201
-}
-
-export type eventsJoinResponseSuccess = (eventsJoinResponse201) & {
-  headers: Headers;
-};
-;
-
-export type eventsJoinResponse = (eventsJoinResponseSuccess)
-
-export const getEventsJoinUrl = (id: string,) => {
-
-
-
-
-  return `/api/events/${id}/join`
-}
-
-export const eventsJoin = async (id: string,
-    joinEventRequest?: JoinEventRequest, options?: Parameters<typeof authMutator>[1]): Promise<eventsJoinResponse> => {
-
-    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
-    if (!h) return {};
-    if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Symbol.iterator in h) {
-      return Object.fromEntries(
-        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
-      );
-    }
-    const headers: Record<string, string | readonly string[]> = {};
-    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
-      if (value !== undefined) headers[name] = value;
-    }
-    return headers;
-  };
-return authMutator<eventsJoinResponse>(getEventsJoinUrl(id),
-  {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(joinEventRequest)
-  }
-);}
-
-
-
-
-
-export const getEventsJoinMutationKey = () => ['eventsJoin'] as const;
-
-export const getEventsJoinMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsJoin>>, TError,EventsJoinMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
-): UseMutationOptions<Awaited<ReturnType<typeof eventsJoin>>, TError,EventsJoinMutationVariables, TContext> => {
-
-const mutationKey = getEventsJoinMutationKey();
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof eventsJoin>>, EventsJoinMutationVariables> = (props) => {
-          const {id,data} = props ?? {};
-
-          return  eventsJoin(id,data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type EventsJoinMutationResult = NonNullable<Awaited<ReturnType<typeof eventsJoin>>>
-    export type EventsJoinMutationBody = JoinEventRequest | undefined
-    export type EventsJoinMutationError = ErrorType<unknown>
-    export type EventsJoinMutationVariables = {id: string;data?: JoinEventRequest}
-
-    export const useEventsJoin = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsJoin>>, TError,EventsJoinMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof eventsJoin>>,
-        TError,
-        EventsJoinMutationVariables,
-        TContext
-      > => {
-      return useMutation(getEventsJoinMutationOptions(options), queryClient);
-    }
-    export type eventsCancelResponse200 = {
-  data: RegistrationResponse
-  status: 200
-}
-
-export type eventsCancelResponseSuccess = (eventsCancelResponse200) & {
-  headers: Headers;
-};
-;
-
-export type eventsCancelResponse = (eventsCancelResponseSuccess)
-
-export const getEventsCancelUrl = (id: string,) => {
-
-
-
-
-  return `/api/events/${id}/cancel`
-}
-
-export const eventsCancel = async (id: string, options?: Parameters<typeof authMutator>[1]): Promise<eventsCancelResponse> => {
-
-  return authMutator<eventsCancelResponse>(getEventsCancelUrl(id),
-  {
-    ...options,
-    method: 'POST'
-
-
-  }
-);}
-
-
-
-
-
-export const getEventsCancelMutationKey = () => ['eventsCancel'] as const;
-
-export const getEventsCancelMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsCancel>>, TError,EventsCancelMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
-): UseMutationOptions<Awaited<ReturnType<typeof eventsCancel>>, TError,EventsCancelMutationVariables, TContext> => {
-
-const mutationKey = getEventsCancelMutationKey();
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof eventsCancel>>, EventsCancelMutationVariables> = (props) => {
-          const {id} = props ?? {};
-
-          return  eventsCancel(id,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type EventsCancelMutationResult = NonNullable<Awaited<ReturnType<typeof eventsCancel>>>
-
-    export type EventsCancelMutationError = ErrorType<unknown>
-    export type EventsCancelMutationVariables = {id: string}
-
-    export const useEventsCancel = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsCancel>>, TError,EventsCancelMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof eventsCancel>>,
-        TError,
-        EventsCancelMutationVariables,
-        TContext
-      > => {
-      return useMutation(getEventsCancelMutationOptions(options), queryClient);
-    }
-    export type eventsDecideResponse200 = {
-  data: RegistrationResponse
-  status: 200
-}
-
-export type eventsDecideResponseSuccess = (eventsDecideResponse200) & {
-  headers: Headers;
-};
-;
-
-export type eventsDecideResponse = (eventsDecideResponseSuccess)
-
-export const getEventsDecideUrl = (id: string,
-    registrationId: string,) => {
-
-
-
-
-  return `/api/events/${id}/registrations/${registrationId}`
-}
-
-export const eventsDecide = async (id: string,
-    registrationId: string,
-    decideRegistrationRequest: DecideRegistrationRequest, options?: Parameters<typeof authMutator>[1]): Promise<eventsDecideResponse> => {
-
-    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
-    if (!h) return {};
-    if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Symbol.iterator in h) {
-      return Object.fromEntries(
-        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
-      );
-    }
-    const headers: Record<string, string | readonly string[]> = {};
-    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
-      if (value !== undefined) headers[name] = value;
-    }
-    return headers;
-  };
-return authMutator<eventsDecideResponse>(getEventsDecideUrl(id,registrationId),
-  {
-    ...options,
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(decideRegistrationRequest)
-  }
-);}
-
-
-
-
-
-export const getEventsDecideMutationKey = () => ['eventsDecide'] as const;
-
-export const getEventsDecideMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsDecide>>, TError,EventsDecideMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
-): UseMutationOptions<Awaited<ReturnType<typeof eventsDecide>>, TError,EventsDecideMutationVariables, TContext> => {
-
-const mutationKey = getEventsDecideMutationKey();
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof eventsDecide>>, EventsDecideMutationVariables> = (props) => {
-          const {id,registrationId,data} = props ?? {};
-
-          return  eventsDecide(id,registrationId,data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type EventsDecideMutationResult = NonNullable<Awaited<ReturnType<typeof eventsDecide>>>
-    export type EventsDecideMutationBody = DecideRegistrationRequest
-    export type EventsDecideMutationError = ErrorType<unknown>
-    export type EventsDecideMutationVariables = {id: string;registrationId: string;data: DecideRegistrationRequest}
-
-    export const useEventsDecide = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsDecide>>, TError,EventsDecideMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof eventsDecide>>,
-        TError,
-        EventsDecideMutationVariables,
-        TContext
-      > => {
-      return useMutation(getEventsDecideMutationOptions(options), queryClient);
-    }
-    export type eventsGetResponse200 = {
+export type eventsGetResponse200 = {
   data: EventResponse
   status: 200
 }
@@ -525,20 +159,113 @@ export function useEventsGet<TData = Awaited<ReturnType<typeof eventsGet>>, TErr
 
 
 
-export type eventsRegistrationsResponse200 = {
-  data: EventRegistrationResponse[]
+export type eventsUpdateResponse200 = {
+  data: EventResponse
   status: 200
 }
 
-export type eventsRegistrationsResponseSuccess = (eventsRegistrationsResponse200) & {
+export type eventsUpdateResponseSuccess = (eventsUpdateResponse200) & {
   headers: Headers;
 };
 ;
 
-export type eventsRegistrationsResponse = (eventsRegistrationsResponseSuccess)
+export type eventsUpdateResponse = (eventsUpdateResponseSuccess)
 
-export const getEventsRegistrationsUrl = (id: string,
-    params?: EventsRegistrationsParams,) => {
+export const getEventsUpdateUrl = (id: string,) => {
+
+
+
+
+  return `/api/events/${id}`
+}
+
+export const eventsUpdate = async (id: string,
+    eventRequest: EventRequest, options?: Parameters<typeof authMutator>[1]): Promise<eventsUpdateResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return authMutator<eventsUpdateResponse>(getEventsUpdateUrl(id),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(eventRequest)
+  }
+);}
+
+
+
+
+
+export const getEventsUpdateMutationKey = () => ['eventsUpdate'] as const;
+
+export const getEventsUpdateMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsUpdate>>, TError,EventsUpdateMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof eventsUpdate>>, TError,EventsUpdateMutationVariables, TContext> => {
+
+const mutationKey = getEventsUpdateMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof eventsUpdate>>, EventsUpdateMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  eventsUpdate(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type EventsUpdateMutationResult = NonNullable<Awaited<ReturnType<typeof eventsUpdate>>>
+    export type EventsUpdateMutationBody = EventRequest
+    export type EventsUpdateMutationError = ErrorType<unknown>
+    export type EventsUpdateMutationVariables = {id: string;data: EventRequest}
+
+    export const useEventsUpdate = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsUpdate>>, TError,EventsUpdateMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof eventsUpdate>>,
+        TError,
+        EventsUpdateMutationVariables,
+        TContext
+      > => {
+      return useMutation(getEventsUpdateMutationOptions(options), queryClient);
+    }
+    export type eventsListResponse200 = {
+  data: EventSummaryResponse[]
+  status: 200
+}
+
+export type eventsListResponseSuccess = (eventsListResponse200) & {
+  headers: Headers;
+};
+;
+
+export type eventsListResponse = (eventsListResponseSuccess)
+
+export const getEventsListUrl = (params?: EventsListParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -550,13 +277,12 @@ export const getEventsRegistrationsUrl = (id: string,
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/events/${id}/registrations?${stringifiedParams}` : `/api/events/${id}/registrations`
+  return stringifiedParams.length > 0 ? `/api/events?${stringifiedParams}` : `/api/events`
 }
 
-export const eventsRegistrations = async (id: string,
-    params?: EventsRegistrationsParams, options?: Parameters<typeof authMutator>[1]): Promise<eventsRegistrationsResponse> => {
+export const eventsList = async (params?: EventsListParams, options?: Parameters<typeof authMutator>[1]): Promise<eventsListResponse> => {
 
-  return authMutator<eventsRegistrationsResponse>(getEventsRegistrationsUrl(id,params),
+  return authMutator<eventsListResponse>(getEventsListUrl(params),
   {
     ...options,
     method: 'GET'
@@ -569,72 +295,66 @@ export const eventsRegistrations = async (id: string,
 
 
 
-export const getEventsRegistrationsQueryKey = (id: string,
-    params?: EventsRegistrationsParams,) => {
+export const getEventsListQueryKey = (params?: EventsListParams,) => {
     return [
-    `/api/events/${id}/registrations`, ...(params ? [params] : [])
+    `/api/events`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getEventsRegistrationsQueryOptions = <TData = Awaited<ReturnType<typeof eventsRegistrations>>, TError = ErrorType<unknown>>(id: string,
-    params?: EventsRegistrationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRegistrations>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+export const getEventsListQueryOptions = <TData = Awaited<ReturnType<typeof eventsList>>, TError = ErrorType<unknown>>(params?: EventsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsList>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getEventsRegistrationsQueryKey(id,params);
+  const queryKey =  queryOptions?.queryKey ?? getEventsListQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof eventsRegistrations>>> = ({ signal }) => eventsRegistrations(id,params, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof eventsList>>> = ({ signal }) => eventsList(params, { signal, ...requestOptions });
 
 
 
 
 
-   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof eventsRegistrations>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof eventsList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type EventsRegistrationsQueryResult = NonNullable<Awaited<ReturnType<typeof eventsRegistrations>>>
-export type EventsRegistrationsQueryError = ErrorType<unknown>
+export type EventsListQueryResult = NonNullable<Awaited<ReturnType<typeof eventsList>>>
+export type EventsListQueryError = ErrorType<unknown>
 
 
-export function useEventsRegistrations<TData = Awaited<ReturnType<typeof eventsRegistrations>>, TError = ErrorType<unknown>>(
- id: string,
-    params: undefined |  EventsRegistrationsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRegistrations>>, TError, TData>> & Pick<
+export function useEventsList<TData = Awaited<ReturnType<typeof eventsList>>, TError = ErrorType<unknown>>(
+ params: undefined |  EventsListParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsList>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof eventsRegistrations>>,
+          Awaited<ReturnType<typeof eventsList>>,
           TError,
-          Awaited<ReturnType<typeof eventsRegistrations>>
+          Awaited<ReturnType<typeof eventsList>>
         > , 'initialData'
       >, request?: SecondParameter<typeof authMutator>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useEventsRegistrations<TData = Awaited<ReturnType<typeof eventsRegistrations>>, TError = ErrorType<unknown>>(
- id: string,
-    params?: EventsRegistrationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRegistrations>>, TError, TData>> & Pick<
+export function useEventsList<TData = Awaited<ReturnType<typeof eventsList>>, TError = ErrorType<unknown>>(
+ params?: EventsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsList>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof eventsRegistrations>>,
+          Awaited<ReturnType<typeof eventsList>>,
           TError,
-          Awaited<ReturnType<typeof eventsRegistrations>>
+          Awaited<ReturnType<typeof eventsList>>
         > , 'initialData'
       >, request?: SecondParameter<typeof authMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useEventsRegistrations<TData = Awaited<ReturnType<typeof eventsRegistrations>>, TError = ErrorType<unknown>>(
- id: string,
-    params?: EventsRegistrationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRegistrations>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+export function useEventsList<TData = Awaited<ReturnType<typeof eventsList>>, TError = ErrorType<unknown>>(
+ params?: EventsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsList>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
-export function useEventsRegistrations<TData = Awaited<ReturnType<typeof eventsRegistrations>>, TError = ErrorType<unknown>>(
- id: string,
-    params?: EventsRegistrationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsRegistrations>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+export function useEventsList<TData = Awaited<ReturnType<typeof eventsList>>, TError = ErrorType<unknown>>(
+ params?: EventsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsList>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getEventsRegistrationsQueryOptions(id,params,options)
+  const queryOptions = getEventsListQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -646,29 +366,122 @@ export function useEventsRegistrations<TData = Awaited<ReturnType<typeof eventsR
 
 
 
-export type eventsParticipantsResponse200 = {
-  data: ParticipantResponse[]
-  status: 200
+export type eventsCreateResponse201 = {
+  data: EventResponse
+  status: 201
 }
 
-export type eventsParticipantsResponseSuccess = (eventsParticipantsResponse200) & {
+export type eventsCreateResponseSuccess = (eventsCreateResponse201) & {
   headers: Headers;
 };
 ;
 
-export type eventsParticipantsResponse = (eventsParticipantsResponseSuccess)
+export type eventsCreateResponse = (eventsCreateResponseSuccess)
 
-export const getEventsParticipantsUrl = (id: string,) => {
-
-
+export const getEventsCreateUrl = () => {
 
 
-  return `/api/events/${id}/participants`
+
+
+  return `/api/events`
 }
 
-export const eventsParticipants = async (id: string, options?: Parameters<typeof authMutator>[1]): Promise<eventsParticipantsResponse> => {
+export const eventsCreate = async (eventRequest: EventRequest, options?: Parameters<typeof authMutator>[1]): Promise<eventsCreateResponse> => {
 
-  return authMutator<eventsParticipantsResponse>(getEventsParticipantsUrl(id),
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return authMutator<eventsCreateResponse>(getEventsCreateUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(eventRequest)
+  }
+);}
+
+
+
+
+
+export const getEventsCreateMutationKey = () => ['eventsCreate'] as const;
+
+export const getEventsCreateMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsCreate>>, TError,EventsCreateMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof eventsCreate>>, TError,EventsCreateMutationVariables, TContext> => {
+
+const mutationKey = getEventsCreateMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof eventsCreate>>, EventsCreateMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  eventsCreate(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type EventsCreateMutationResult = NonNullable<Awaited<ReturnType<typeof eventsCreate>>>
+    export type EventsCreateMutationBody = EventRequest
+    export type EventsCreateMutationError = ErrorType<unknown>
+    export type EventsCreateMutationVariables = {data: EventRequest}
+
+    export const useEventsCreate = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eventsCreate>>, TError,EventsCreateMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof eventsCreate>>,
+        TError,
+        EventsCreateMutationVariables,
+        TContext
+      > => {
+      return useMutation(getEventsCreateMutationOptions(options), queryClient);
+    }
+    export type eventsMineResponse200 = {
+  data: EventSummaryResponse[]
+  status: 200
+}
+
+export type eventsMineResponseSuccess = (eventsMineResponse200) & {
+  headers: Headers;
+};
+;
+
+export type eventsMineResponse = (eventsMineResponseSuccess)
+
+export const getEventsMineUrl = () => {
+
+
+
+
+  return `/api/events/mine`
+}
+
+export const eventsMine = async ( options?: Parameters<typeof authMutator>[1]): Promise<eventsMineResponse> => {
+
+  return authMutator<eventsMineResponse>(getEventsMineUrl(),
   {
     ...options,
     method: 'GET'
@@ -681,66 +494,66 @@ export const eventsParticipants = async (id: string, options?: Parameters<typeof
 
 
 
-export const getEventsParticipantsQueryKey = (id: string,) => {
+export const getEventsMineQueryKey = () => {
     return [
-    `/api/events/${id}/participants`
+    `/api/events/mine`
     ] as const;
     }
 
 
-export const getEventsParticipantsQueryOptions = <TData = Awaited<ReturnType<typeof eventsParticipants>>, TError = ErrorType<unknown>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsParticipants>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+export const getEventsMineQueryOptions = <TData = Awaited<ReturnType<typeof eventsMine>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsMine>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getEventsParticipantsQueryKey(id);
+  const queryKey =  queryOptions?.queryKey ?? getEventsMineQueryKey();
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof eventsParticipants>>> = ({ signal }) => eventsParticipants(id, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof eventsMine>>> = ({ signal }) => eventsMine({ signal, ...requestOptions });
 
 
 
 
 
-   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof eventsParticipants>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof eventsMine>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type EventsParticipantsQueryResult = NonNullable<Awaited<ReturnType<typeof eventsParticipants>>>
-export type EventsParticipantsQueryError = ErrorType<unknown>
+export type EventsMineQueryResult = NonNullable<Awaited<ReturnType<typeof eventsMine>>>
+export type EventsMineQueryError = ErrorType<unknown>
 
 
-export function useEventsParticipants<TData = Awaited<ReturnType<typeof eventsParticipants>>, TError = ErrorType<unknown>>(
- id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsParticipants>>, TError, TData>> & Pick<
+export function useEventsMine<TData = Awaited<ReturnType<typeof eventsMine>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsMine>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof eventsParticipants>>,
+          Awaited<ReturnType<typeof eventsMine>>,
           TError,
-          Awaited<ReturnType<typeof eventsParticipants>>
+          Awaited<ReturnType<typeof eventsMine>>
         > , 'initialData'
       >, request?: SecondParameter<typeof authMutator>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useEventsParticipants<TData = Awaited<ReturnType<typeof eventsParticipants>>, TError = ErrorType<unknown>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsParticipants>>, TError, TData>> & Pick<
+export function useEventsMine<TData = Awaited<ReturnType<typeof eventsMine>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsMine>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof eventsParticipants>>,
+          Awaited<ReturnType<typeof eventsMine>>,
           TError,
-          Awaited<ReturnType<typeof eventsParticipants>>
+          Awaited<ReturnType<typeof eventsMine>>
         > , 'initialData'
       >, request?: SecondParameter<typeof authMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useEventsParticipants<TData = Awaited<ReturnType<typeof eventsParticipants>>, TError = ErrorType<unknown>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsParticipants>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+export function useEventsMine<TData = Awaited<ReturnType<typeof eventsMine>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsMine>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
-export function useEventsParticipants<TData = Awaited<ReturnType<typeof eventsParticipants>>, TError = ErrorType<unknown>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsParticipants>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+export function useEventsMine<TData = Awaited<ReturnType<typeof eventsMine>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof eventsMine>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getEventsParticipantsQueryOptions(id,options)
+  const queryOptions = getEventsMineQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
