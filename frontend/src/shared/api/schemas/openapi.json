@@ -1584,6 +1584,69 @@
         }
       }
     },
+    "/api/users/me/pet/looks": {
+      "get": {
+        "tags": [
+          "pets"
+        ],
+        "summary": "Мои сохранённые образы",
+        "operationId": "pets_looks",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PetSavedLookResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "pets"
+        ],
+        "summary": "Сохранить образ из своих вещей; максимум четыре",
+        "operationId": "pets_saveLook",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PetSaveLookRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Образ сохранён",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PetSavedLookResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Лимит образов или вещь не принадлежит владельцу",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/users/me/pet/cheer": {
       "post": {
         "tags": [
@@ -1979,6 +2042,108 @@
           },
           "409": {
             "description": "Не хватает монет, вещь уже есть или это эксклюзив",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pets/shop/buy-set": {
+      "post": {
+        "tags": [
+          "pets"
+        ],
+        "summary": "Купить примеренные вещи со скидкой 20% при двух и более",
+        "operationId": "pets_buySet",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PetBuySetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Вещи куплены; текущий образ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PetResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Эксклюзив или недостаточно монет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pets/shop/bundles/{code}/buy": {
+      "post": {
+        "tags": [
+          "pets"
+        ],
+        "summary": "Купить недостающие вещи комплекта и надеть образ",
+        "operationId": "pets_buyBundle",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Комплект надет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PetResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Только личный аккаунт",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Комплект не найден",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Не хватает монет или нужен эксклюзив",
             "content": {
               "application/json": {
                 "schema": {
@@ -4295,6 +4460,39 @@
         }
       }
     },
+    "/api/users/{id}/achievements": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Достижения человека: все шесть с прогрессом и датой получения",
+        "description": "Видны любому вошедшему. У организации и админа достижений нет — 403.",
+        "operationId": "users_userAchievements",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Пользователь не найден",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/users/me/wallet": {
       "get": {
         "tags": [
@@ -5034,6 +5232,30 @@
                   "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/ShopItemResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pets/shop/bundles": {
+      "get": {
+        "tags": [
+          "pets"
+        ],
+        "summary": "Комплекты с персональной ценой и скидкой",
+        "operationId": "pets_bundles",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ShopBundleResponse"
                   }
                 }
               }
@@ -6287,6 +6509,31 @@
         }
       }
     },
+    "/api/users/me/pet/looks/{id}": {
+      "delete": {
+        "tags": [
+          "pets"
+        ],
+        "summary": "Удалить свой сохранённый образ",
+        "operationId": "pets_deleteLook",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
     "/api/organizations/me/documents/{fileId}": {
       "delete": {
         "tags": [
@@ -6579,6 +6826,611 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/sports/{id}": {
+      "put": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Переименовать вид спорта",
+        "operationId": "admin_renameSport",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenameSportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "404": {
+            "description": "Вида спорта нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Такое название уже занято",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Удалить неиспользуемый вид",
+        "description": "Только если на вид нет ссылок (мероприятия, интересы, анкеты, слитые виды); иначе его скрывают или объединяют.",
+        "operationId": "admin_deleteSport",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Удалён"
+          },
+          "404": {
+            "description": "Вида спорта нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Вид используется",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/sports/{id}/image": {
+      "put": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Загрузить или заменить PNG вида спорта",
+        "description": "Квадратный PNG от 256×256 до 2 МБ. Прежняя загруженная картинка удаляется.",
+        "operationId": "admin_replaceSportImage",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "focusX",
+            "in": "query",
+            "description": "Точка фокуса по горизонтали, % (0–100)",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "name": "focusY",
+            "in": "query",
+            "description": "Точка фокуса по вертикали, % (0–100)",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PNG-картинка"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "Не PNG, не квадрат или слишком большой",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Вида спорта нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Убрать загруженный PNG",
+        "description": "Вид возвращается к встроенной иллюстрации или заглушке.",
+        "operationId": "admin_removeSportImage",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Вида спорта нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/sports": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Виды спорта во всех статусах",
+        "description": "По алфавиту. status можно повторить (ACTIVE, PENDING, HIDDEN, MERGED); withoutImage — только без своей картинки.",
+        "operationId": "admin_listSports",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "ACTIVE",
+                  "PENDING",
+                  "HIDDEN",
+                  "MERGED"
+                ]
+              }
+            }
+          },
+          {
+            "name": "withoutImage",
+            "in": "query",
+            "description": "Только виды без своей картинки",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "searchText",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseAdminSportResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Добавить вид спорта (PNG необязателен)",
+        "description": "Квадратный PNG от 256×256 до 2 МБ. published=false — черновик: вид скрыт, пока его не вернут в справочник.",
+        "operationId": "admin_createSport",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "description": "Название вида",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "focusX",
+            "in": "query",
+            "description": "Точка фокуса по горизонтали, % (0–100)",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "name": "focusY",
+            "in": "query",
+            "description": "Точка фокуса по вертикали, % (0–100)",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "name": "published",
+            "in": "query",
+            "description": "Сразу показывать в справочнике",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PNG-картинка"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSportResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Пустое название или неподходящая картинка",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Такой вид уже есть",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/sports/{id}/restore": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Вернуть отключённый вид в справочник",
+        "operationId": "admin_restoreSport",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Вида спорта нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Вид не отключён",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/sports/{id}/merge": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Объединить дубль с другим видом",
+        "description": "Мероприятия, интересы людей и анкеты организаций переходят в целевой вид; этот получает статус MERGED.",
+        "operationId": "admin_mergeSport",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MergeSportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Целевой вид не найден или совпадает с исходным",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Вида спорта нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Состояние вида не позволяет действие",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/sports/{id}/hide": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Отключить или отклонить вид с причиной",
+        "description": "Пропадает из справочника, новые мероприятия с ним не создаются; уже созданные остаются.",
+        "operationId": "admin_hideSport",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HideSportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "404": {
+            "description": "Вида спорта нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Вид уже отключён",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/sports/{id}/approve": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Одобрить свой вид пользователя",
+        "operationId": "admin_approveSport",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Вида спорта нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Вид не ждёт проверки",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/sports/counts": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Счётчики вкладок видов спорта",
+        "operationId": "admin_sportCounts",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSportCountsResponse"
                 }
               }
             }
@@ -8786,6 +9638,57 @@
           "label"
         ]
       },
+      "PetSaveLookRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 30,
+            "minLength": 0
+          },
+          "activity": {
+            "type": "string"
+          },
+          "outfit": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "activity",
+          "name",
+          "outfit"
+        ]
+      },
+      "PetSavedLookResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "activity": {
+            "type": "string"
+          },
+          "outfit": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "activity",
+          "id",
+          "name",
+          "outfit"
+        ]
+      },
       "RejectRegistrationRequest": {
         "type": "object",
         "description": "Отказ по заявке; тело можно не передавать",
@@ -8924,16 +9827,49 @@
           "hint": {
             "type": "string",
             "description": "У эксклюзива — за что дают, например «Дают за 10 встреч»; иначе null"
+          },
+          "isNew": {
+            "type": "boolean",
+            "description": "Вещь последней волны каталога"
+          },
+          "legendary": {
+            "type": "boolean",
+            "description": "Эксклюзив за достижение"
           }
         },
         "required": [
           "code",
           "id",
+          "isNew",
           "kind",
           "label",
+          "legendary",
           "owned",
           "price",
           "slot"
+        ]
+      },
+      "PetBuySetRequest": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "description": "Вещи в формате слот:код",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "maxItems": 100,
+            "minItems": 0
+          },
+          "wear": {
+            "type": "boolean",
+            "description": "Добавить купленные вещи к текущему образу"
+          }
+        },
+        "required": [
+          "items",
+          "wear"
         ]
       },
       "NotificationPollResponse": {
@@ -10609,6 +11545,98 @@
           }
         }
       },
+      "BundleCategoryResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Код категории."
+          },
+          "label": {
+            "type": "string",
+            "description": "Название категории."
+          }
+        },
+        "required": [
+          "code",
+          "label"
+        ]
+      },
+      "ShopBundleResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Код комплекта."
+          },
+          "label": {
+            "type": "string",
+            "description": "Название комплекта."
+          },
+          "category": {
+            "$ref": "#/components/schemas/BundleCategoryResponse",
+            "description": "Спортивная категория."
+          },
+          "outfit": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Полный образ: слот → вещь."
+          },
+          "activity": {
+            "type": "string",
+            "description": "Инвентарь или none."
+          },
+          "items": {
+            "type": "array",
+            "description": "Вещи комплекта без пустого инвентаря.",
+            "items": {
+              "$ref": "#/components/schemas/ShopItemResponse"
+            }
+          },
+          "fullPrice": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Цена недостающих вещей до скидки."
+          },
+          "price": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Цена недостающих вещей со скидкой 20% при двух и более."
+          },
+          "missingCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Количество недостающих вещей."
+          },
+          "owned": {
+            "type": "boolean",
+            "description": "Все вещи уже принадлежат пользователю."
+          },
+          "locked": {
+            "type": "boolean",
+            "description": "Есть недоступный эксклюзив."
+          },
+          "lockedReason": {
+            "type": "string",
+            "description": "Как получить недостающий эксклюзив."
+          }
+        },
+        "required": [
+          "activity",
+          "category",
+          "code",
+          "fullPrice",
+          "items",
+          "label",
+          "locked",
+          "missingCount",
+          "outfit",
+          "owned",
+          "price"
+        ]
+      },
       "PetCatalogResponse": {
         "type": "object",
         "description": "Каталог бобра: слоты по порядку конструктора, в каждом — вещи",
@@ -11635,6 +12663,212 @@
           "participants",
           "returning",
           "score"
+        ]
+      },
+      "RenameSportRequest": {
+        "type": "object",
+        "description": "Новое название вида спорта",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Название",
+            "example": "Пляжный волейбол",
+            "maxLength": 100,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "AdminSportResponse": {
+        "type": "object",
+        "description": "Вид спорта в админке: статус модерации, картинка и сколько мероприятий на него опираются",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "description": "Название",
+            "example": "Петанк"
+          },
+          "slug": {
+            "type": "string",
+            "description": "Код для URL",
+            "example": "petank"
+          },
+          "custom": {
+            "type": "boolean",
+            "description": "Добавлен пользователем, а не админом или из исходного набора"
+          },
+          "status": {
+            "type": "string",
+            "description": "Состояние в справочнике",
+            "enum": [
+              "ACTIVE",
+              "PENDING",
+              "HIDDEN",
+              "MERGED"
+            ]
+          },
+          "hasImage": {
+            "type": "boolean",
+            "description": "Есть ли своя картинка; false — в интерфейсе показывается заглушка"
+          },
+          "imageUploaded": {
+            "type": "boolean",
+            "description": "Картинка загружена админом (её можно убрать); false — встроенная или нет вовсе"
+          },
+          "imageUrl": {
+            "type": "string",
+            "description": "Ссылка на картинку; null, если своей картинки нет"
+          },
+          "imageFocus": {
+            "$ref": "#/components/schemas/FocusPoint",
+            "description": "Точка фокуса картинки"
+          },
+          "eventsCount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Мероприятий с этим видом (во всех статусах)"
+          },
+          "proposedBy": {
+            "$ref": "#/components/schemas/UserShortResponse",
+            "description": "Кто предложил свой вид; null — из справочника или добавлен админом"
+          },
+          "moderationReason": {
+            "type": "string",
+            "description": "Причина отключения или слияния"
+          },
+          "mergedIntoName": {
+            "type": "string",
+            "description": "Название вида, с которым объединён; только у MERGED"
+          },
+          "moderatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Когда админ принял решение"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "createdAt",
+          "custom",
+          "eventsCount",
+          "hasImage",
+          "id",
+          "imageFocus",
+          "imageUploaded",
+          "name",
+          "slug",
+          "status"
+        ]
+      },
+      "MergeSportRequest": {
+        "type": "object",
+        "description": "Объединение вида спорта с другим: мероприятия и интересы переходят в целевой вид",
+        "properties": {
+          "targetId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "В какой вид переносим"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Причина; без неё подставляется «Дубликат вида …»",
+            "example": "Дубликат вида «Сёрфинг»",
+            "maxLength": 1000,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "targetId"
+        ]
+      },
+      "HideSportRequest": {
+        "type": "object",
+        "description": "Отключение или отклонение вида спорта",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "Причина для админов и автора предложения",
+            "example": "Не вид спорта",
+            "maxLength": 1000,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "PageResponseAdminSportResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminSportResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "AdminSportCountsResponse": {
+        "type": "object",
+        "description": "Счётчики вкладок админки «Виды спорта»",
+        "properties": {
+          "all": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Всего видов"
+          },
+          "catalog": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Активные: справочник и одобренные"
+          },
+          "pending": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Ждут проверки админа"
+          },
+          "hidden": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Скрытые и объединённые"
+          },
+          "withoutImage": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Без своей картинки"
+          }
+        },
+        "required": [
+          "all",
+          "catalog",
+          "hidden",
+          "pending",
+          "withoutImage"
         ]
       }
     },

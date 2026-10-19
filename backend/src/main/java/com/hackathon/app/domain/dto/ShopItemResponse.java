@@ -14,5 +14,7 @@ public record ShopItemResponse(
 		@Schema(description = "Цена в монетах; 0 у базовых и эксклюзивов", example = "60", requiredMode = REQUIRED) int price,
 		@Schema(description = "Базовая, магазин или эксклюзив", requiredMode = REQUIRED) PetItemKind kind,
 		@Schema(description = "Вещь уже у пользователя и её можно надеть", requiredMode = REQUIRED) boolean owned,
-		@Schema(description = "У эксклюзива — за что дают, например «Дают за 10 встреч»; иначе null") String hint) {
+		@Schema(description = "У эксклюзива — за что дают, например «Дают за 10 встреч»; иначе null") String hint,
+        @Schema(description = "Вещь последней волны каталога", requiredMode = REQUIRED) boolean isNew,
+        @Schema(description = "Эксклюзив за достижение", requiredMode = REQUIRED) boolean legendary) {
 }

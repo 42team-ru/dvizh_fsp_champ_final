@@ -20,8 +20,15 @@ import java.util.UUID;
 
 import com.hackathon.app.domain.dto.AdminEventResponse;
 import com.hackathon.app.domain.dto.PetResponse;
+import com.hackathon.app.domain.dto.PetBuySetRequest;
+import com.hackathon.app.domain.dto.PetSaveLookRequest;
+import com.hackathon.app.domain.dto.PetSavedLookResponse;
+import com.hackathon.app.domain.dto.ShopBundleResponse;
+import com.hackathon.app.domain.dto.ShopItemResponse;
+import com.hackathon.app.domain.dto.WalletResponse;
 import com.hackathon.app.domain.dto.PetRenameRequest;
 import com.hackathon.app.domain.dto.PetRequest;
+import com.hackathon.app.domain.dto.PetEquipRequest;
 import com.hackathon.app.domain.dto.PetCatalogResponse;
 import com.hackathon.app.domain.dto.AdminOrganizationResponse;
 import com.hackathon.app.domain.dto.AvailabilityCheckResponse;
@@ -132,9 +139,61 @@ public class Actor {
         return send("PUT /api/users/me/pet", put("/api/users/me/pet"), request, type(PetResponse.class));
     }
 
+    /** Надеть или снять одну вещь без замены остальных слотов. */
+    public PetResponse equipPet(String slot, String itemCode) {
+        return send("PUT /api/users/me/pet/slots/{slot}", put("/api/users/me/pet/slots/{slot}", slot),
+                new PetEquipRequest(itemCode), type(PetResponse.class));
+    }
+
     /** Переименовать питомца без изменения гардероба. */
     public PetResponse renamePet(String name) {
         return send("PUT /api/users/me/pet/name", put("/api/users/me/pet/name"), new PetRenameRequest(name), type(PetResponse.class));
+    }
+
+    /** Готовые комплекты и персональные цены. */
+    public List<ShopBundleResponse> petBundles() {
+        return send("GET /api/pets/shop/bundles", get("/api/pets/shop/bundles"), null, listOf(ShopBundleResponse.class));
+    }
+
+    /** Купить комплект и сразу надеть. */
+    public PetResponse buyPetBundle(String code) {
+        return send("POST /api/pets/shop/bundles/{code}/buy", post("/api/pets/shop/bundles/{code}/buy", code), null, type(PetResponse.class));
+    }
+
+    /** Купить примеренные вещи одной операцией. */
+    public PetResponse buyPetSet(List<String> items, boolean wear) {
+        return send("POST /api/pets/shop/buy-set", post("/api/pets/shop/buy-set"),
+                new PetBuySetRequest(items, wear), type(PetResponse.class));
+    }
+
+    /** Список личных образов. */
+    public List<PetSavedLookResponse> petLooks() {
+        return send("GET /api/users/me/pet/looks", get("/api/users/me/pet/looks"), null, listOf(PetSavedLookResponse.class));
+    }
+
+    /** Сохранить личный образ. */
+    public PetSavedLookResponse savePetLook(PetSaveLookRequest request) {
+        return send("POST /api/users/me/pet/looks", post("/api/users/me/pet/looks"), request, type(PetSavedLookResponse.class));
+    }
+
+    /** Удалить только свой образ. */
+    public void deletePetLook(UUID id) {
+        send("DELETE /api/users/me/pet/looks/{id}", delete("/api/users/me/pet/looks/{id}", id), null, type(Void.class));
+    }
+
+    /** Вещи магазина с признаком владения. */
+    public List<ShopItemResponse> petShop() {
+        return send("GET /api/pets/shop", get("/api/pets/shop"), null, listOf(ShopItemResponse.class));
+    }
+
+    /** Купить отдельную вещь до покупки комплекта. */
+    public ShopItemResponse buyPetItem(String item) {
+        return send("POST /api/pets/shop/{item}/buy", post("/api/pets/shop/{item}/buy", item), null, type(ShopItemResponse.class));
+    }
+
+    /** Баланс и история покупок. */
+    public WalletResponse wallet() {
+        return send("GET /api/users/me/wallet", get("/api/users/me/wallet"), null, type(WalletResponse.class));
     }
 
     /** Встроенный каталог. */
@@ -818,5 +877,67 @@ public class Actor {
 	@Override
 	public String toString() {
 		return username;
+	}
+
+	// ---------- справочник видов спорта в админке ----------
+
+	public PageResponse<com.hackathon.app.domain.dto.AdminSportResponse> adminSports(String searchText) {
+		return send("GET /api/admin/sports", get("/api/admin/sports").param("searchText", searchText), null,
+				api.generic(PageResponse.class, com.hackathon.app.domain.dto.AdminSportResponse.class));
+	}
+
+	public com.hackathon.app.domain.dto.AdminSportResponse createSport(String name, byte[] png,
+			double focusX, double focusY, boolean published) {
+		var request = multipart("/api/admin/sports").param("name", name)
+				.param("focusX", Double.toString(focusX)).param("focusY", Double.toString(focusY))
+				.param("published", Boolean.toString(published));
+		if (png != null) {
+			request.file(new MockMultipartFile("file", "sport.png", "image/png", png));
+		}
+		return api.send("POST /api/admin/sports", request, cookie, null,
+				type(com.hackathon.app.domain.dto.AdminSportResponse.class), HttpStatus.CREATED);
+	}
+
+	public com.hackathon.app.domain.dto.AdminSportResponse replaceSportImage(UUID id, byte[] png,
+			double focusX, double focusY) {
+		var request = multipart(org.springframework.http.HttpMethod.PUT, "/api/admin/sports/{id}/image", id)
+				.file(new MockMultipartFile("file", "sport.png", "image/png", png))
+				.param("focusX", Double.toString(focusX)).param("focusY", Double.toString(focusY));
+		return send("PUT /api/admin/sports/image", request, null, type(com.hackathon.app.domain.dto.AdminSportResponse.class));
+	}
+
+	public com.hackathon.app.domain.dto.AdminSportResponse removeSportImage(UUID id) {
+		return send("DELETE /api/admin/sports/image", delete("/api/admin/sports/{id}/image", id), null,
+				type(com.hackathon.app.domain.dto.AdminSportResponse.class));
+	}
+
+	public com.hackathon.app.domain.dto.AdminSportResponse renameSport(UUID id, String name) {
+		return send("PUT /api/admin/sports", put("/api/admin/sports/{id}", id),
+				new com.hackathon.app.domain.dto.RenameSportRequest(name), type(com.hackathon.app.domain.dto.AdminSportResponse.class));
+	}
+
+	public com.hackathon.app.domain.dto.AdminSportResponse approveSport(UUID id) {
+		return send("POST /api/admin/sports/approve", post("/api/admin/sports/{id}/approve", id), null,
+				type(com.hackathon.app.domain.dto.AdminSportResponse.class));
+	}
+
+	public com.hackathon.app.domain.dto.AdminSportResponse hideSport(UUID id, String reason) {
+		return send("POST /api/admin/sports/hide", post("/api/admin/sports/{id}/hide", id),
+				new com.hackathon.app.domain.dto.HideSportRequest(reason), type(com.hackathon.app.domain.dto.AdminSportResponse.class));
+	}
+
+	public com.hackathon.app.domain.dto.AdminSportResponse restoreSport(UUID id) {
+		return send("POST /api/admin/sports/restore", post("/api/admin/sports/{id}/restore", id), null,
+				type(com.hackathon.app.domain.dto.AdminSportResponse.class));
+	}
+
+	public com.hackathon.app.domain.dto.AdminSportResponse mergeSport(UUID id, UUID targetId) {
+		return send("POST /api/admin/sports/merge", post("/api/admin/sports/{id}/merge", id),
+				new com.hackathon.app.domain.dto.MergeSportRequest(targetId, "Дубликат"),
+				type(com.hackathon.app.domain.dto.AdminSportResponse.class));
+	}
+
+	public void deleteSport(UUID id) {
+		api.send("DELETE /api/admin/sports", delete("/api/admin/sports/{id}", id), cookie, null, null, HttpStatus.NO_CONTENT);
 	}
 }

@@ -9,6 +9,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.hackathon.app.domain.dto.PetCatalogResponse;
+import com.hackathon.app.domain.dto.BundleCategoryResponse;
 import com.hackathon.app.domain.entity.PetItem;
 import com.hackathon.app.domain.entity.PetSlot;
 import com.hackathon.app.domain.enums.PetItemKind;
@@ -38,6 +39,13 @@ public class PetCatalogService {
 	static final String ACTIVITY = "activity";
 	static final String NO_ACTIVITY = "none";
 
+    /** Последняя волна каталога: новые виды экипировки и все фоны. */
+    static boolean isNew(String slot, String code) {
+        return slot.equals("background") || java.util.Set.of("cyclehelmet", "roundglasses", "scarf", "bowtie",
+                "shorts", "leggings", "sweatpants", "basketball", "volleyball", "polo", "hoodie", "tracksuit",
+                "puffer", "racket", "paddle", "yogamat", "boxinggloves", "wristbands", "sneakers").contains(code);
+    }
+
 	private record BuiltInSlot(String code, String label, PetSlotKind kind, List<BuiltInItem> items) {
 	}
 
@@ -55,7 +63,10 @@ public class PetCatalogService {
 					item("hockey", "Скользящая шайба"), item("esports", "Игровой ноутбук"),
 					item("programming", "Ноутбук с кодом"))),
 			new BuiltInSlot("shirt", "Одежда", PetSlotKind.OUTFIT, List.of(
-					item("football", "Футбольная форма"), item("running", "Беговая майка"),
+					item("basketball", "Баскетбольная майка"), item("volleyball", "Волейбольная форма"),
+                    item("polo", "Теннисное поло"), item("hoodie", "Лавандовое худи"),
+                    item("tracksuit", "Спортивная куртка"), item("puffer", "Зимний пуховик"),
+                    item("football", "Футбольная форма"), item("running", "Беговая майка"),
 					item("training", "Тренировочная футболка"), item("judo", "Кимоно"),
 					item("hockey", "Хоккейный свитер и краги"), item("programming", "Футболка ФСП России"),
 					item("hc-cska", "Хоккейная форма — ЦСКА (Москва)"),
@@ -73,15 +84,123 @@ public class PetCatalogService {
 					item("rostov", "Футболка «Ростов»"), item("dynamo", "Футболка «Динамо»"),
 					item("akron", "Футболка «Акрон»"), item("beavers", "Футболка «Хищные бобры»"))),
 			new BuiltInSlot("hat", "Головной убор", PetSlotKind.OUTFIT, List.of(
-					item("cap", "Кепка"), item("headband", "Повязка"), item("beanie", "Вязаная шапка"),
+					item("cyclehelmet", "Велошлем"), item("cap", "Кепка"), item("headband", "Повязка"), item("beanie", "Вязаная шапка"),
 					item("swimcap", "Шапочка для плавания"), item("helmet", "Хоккейный шлем"),
 					item("headphones", "Игровые наушники с микрофоном"), item("crown", "Корона организатора"))),
 			new BuiltInSlot("eyewear", "Очки", PetSlotKind.OUTFIT, List.of(
-					item("sunglasses", "Солнцезащитные"), item("goggles", "Для плавания"))),
+					item("roundglasses", "Круглые очки"), item("sunglasses", "Солнцезащитные"), item("goggles", "Для плавания"))),
 			new BuiltInSlot("neck", "На шее", PetSlotKind.OUTFIT, List.of(
-					item("medal", "Медаль"), item("whistle", "Свисток"))),
+					item("scarf", "Тёплый шарф"), item("bowtie", "Галстук-бабочка"), item("medal", "Медаль"), item("whistle", "Свисток"))),
 			new BuiltInSlot("bottom", "Низ и экипировка", PetSlotKind.OUTFIT, List.of(
-					item("swimshorts", "Плавки с жёлтой отделкой"), item("hockeypants", "Хоккейные шорты и коньки"))));
+					item("swimshorts", "Плавки с жёлтой отделкой"), item("hockeypants", "Хоккейные шорты и коньки"),
+                    item("shorts", "Спортивные шорты"), item("leggings", "Легинсы"), item("sweatpants", "Спортивные брюки"))),
+            new BuiltInSlot("prop", "Предмет", PetSlotKind.OUTFIT, List.of(
+                    item("volleyball", "Волейбольный мяч"), item("racket", "Теннисная ракетка"),
+                    item("paddle", "Ракетка для настольного тенниса"), item("yogamat", "Коврик для йоги"))),
+            new BuiltInSlot("paws", "На лапах", PetSlotKind.OUTFIT, List.of(
+                    item("boxinggloves", "Боксёрские перчатки"), item("wristbands", "Напульсники"))),
+            new BuiltInSlot("feet", "Обувь", PetSlotKind.OUTFIT, List.of(item("sneakers", "Кроссовки"))),
+            // Фон — необязательный элемент outfit: владение и полная замена работают без особых правил.
+            new BuiltInSlot("background", "Фон", PetSlotKind.OUTFIT, List.of(
+                    item("meadow", "Солнечная поляна"), item("stadium", "Стадион"), item("rink", "Ледовая арена"),
+                    item("river", "Набережная"), item("snowpark", "Снежный парк"), item("gym", "Спортзал"),
+                    item("sunset", "Закат для йоги"), item("nightcity", "Ночной город"))));
+
+	/** Готовый образ: отсутствующие слоты снимаются при надевании. */
+	record Bundle(
+			/** Стабильный код комплекта. */
+			String code,
+			/** Название для магазина и журнала. */
+			String label,
+            /** Вид спорта: стабильный код и русское название. */
+            BundleCategoryResponse category,
+			/** Полный набор одежды по слотам. */
+			Map<String, String> outfit,
+			/** Инвентарь или none. */
+			String activity) {}
+
+	/** Комплекты повторяют готовые образы отладочной страницы питомца. */
+	static final List<Bundle> BUNDLES = bundles();
+
+	private static List<Bundle> bundles() {
+		var result = new java.util.ArrayList<>(List.of(
+				new Bundle("football", "Футбол", category("football", "Футбол"), Map.of("shirt", "football", "hat", "cap"), "juggle"),
+				new Bundle("basketball", "Баскетбол", category("basketball", "Баскетбол"), Map.of("shirt", "basketball", "hat", "headband"), "dribble"),
+				new Bundle("running", "Бег", category("running", "Бег"), Map.of("shirt", "running", "hat", "headband", "eyewear", "sunglasses", "neck", "medal"), "none"),
+				new Bundle("fitness", "Фитнес", category("fitness", "Йога и фитнес"), Map.of("shirt", "training", "neck", "whistle", "background", "meadow"), "lift"),
+				new Bundle("chess", "Шахматы", category("chess", "Шахматы"), Map.of(), "chess"),
+				new Bundle("swimming", "Плавание", category("water", "Водные"), Map.of("hat", "swimcap", "eyewear", "goggles", "bottom", "swimshorts"), "none"),
+				new Bundle("judo", "Дзюдо", category("martial", "Единоборства"), Map.of("shirt", "judo"), "none"),
+				new Bundle("ski", "Лыжи", category("winter", "Зимние"), Map.of("hat", "beanie", "eyewear", "sunglasses", "shirt", "training"), "ski"),
+				new Bundle("hockey", "Хоккей", category("hockey", "Хоккей"), Map.of("shirt", "hockey", "hat", "helmet", "bottom", "hockeypants"), "hockey"),
+				new Bundle("esports", "Киберспорт", category("esports", "Киберспорт"), Map.of("shirt", "training", "hat", "headphones"), "esports"),
+				new Bundle("programming", "Спортивное программирование", category("esports", "Киберспорт"), Map.of("shirt", "programming"), "programming"),
+				new Bundle("phygital", "Фиджитал", category("esports", "Киберспорт"), Map.of("shirt", "running", "hat", "headphones", "neck", "medal"), "esports")));
+		BUILT_IN.stream().filter(slot -> slot.code().equals("shirt")).flatMap(slot -> slot.items().stream())
+				.forEach(item -> {
+					if (item.code().startsWith("hc-")) {
+						result.add(new Bundle(item.code(), item.label().replace("Хоккейная форма — ", "ХК "), category("hockey", "Хоккей"),
+								Map.of("shirt", item.code(), "hat", "helmet", "bottom", "hockeypants"), "hockey"));
+					} else if (item.label().startsWith("Футболка «")) {
+						result.add(new Bundle(item.code(), item.label().replace("Футболка «", "").replace("»", ""), category("football", "Футбол"),
+								Map.of("shirt", item.code()), "juggle"));
+					}
+				});
+        result.add(new Bundle("streetball", "Стритбол", category("basketball", "Баскетбол"),
+                Map.of("shirt", "basketball", "bottom", "shorts", "paws", "wristbands", "feet", "sneakers", "background", "stadium"), "dribble"));
+        result.add(new Bundle("river-run", "Пробежка у реки", category("running", "Бег"),
+                Map.of("shirt", "running", "bottom", "shorts", "feet", "sneakers", "background", "river"), "none"));
+        result.add(new Bundle("volleyball", "Волейбол", category("volleyball", "Волейбол"),
+                Map.of("shirt", "volleyball", "bottom", "shorts", "prop", "volleyball", "paws", "wristbands", "background", "gym"), "none"));
+        result.add(new Bundle("beach-volley", "Пляжный волейбол", category("volleyball", "Волейбол"),
+                Map.of("hat", "cap", "bottom", "swimshorts", "prop", "volleyball", "eyewear", "sunglasses", "background", "river"), "none"));
+        result.add(new Bundle("tennis", "Большой теннис", category("rackets", "Ракетки"),
+                Map.of("shirt", "polo", "bottom", "shorts", "prop", "racket", "paws", "wristbands", "feet", "sneakers", "background", "stadium"), "none"));
+        result.add(new Bundle("table-tennis", "Настольный теннис", category("rackets", "Ракетки"),
+                Map.of("shirt", "polo", "prop", "paddle", "bottom", "sweatpants", "background", "gym"), "none"));
+        result.add(new Bundle("yoga", "Йога на закате", category("fitness", "Йога и фитнес"),
+                Map.of("shirt", "training", "bottom", "leggings", "prop", "yogamat", "background", "sunset"), "none"));
+        result.add(new Bundle("stretching", "Утренняя зарядка", category("fitness", "Йога и фитнес"),
+                Map.of("shirt", "hoodie", "bottom", "leggings", "prop", "yogamat", "background", "meadow"), "none"));
+        result.add(new Bundle("cycling", "Велопрогулка", category("cycling", "Велоспорт"),
+                Map.of("hat", "cyclehelmet", "shirt", "tracksuit", "bottom", "shorts", "feet", "sneakers", "background", "meadow"), "none"));
+        result.add(new Bundle("city-cycling", "Вечерний велозаезд", category("cycling", "Велоспорт"),
+                Map.of("hat", "cyclehelmet", "shirt", "running", "bottom", "leggings", "eyewear", "sunglasses", "background", "nightcity"), "none"));
+        result.add(new Bundle("winter-walk", "Зимняя прогулка", category("winter", "Зимние"),
+                Map.of("hat", "beanie", "shirt", "puffer", "neck", "scarf", "bottom", "sweatpants", "background", "snowpark"), "ski"));
+        result.add(new Bundle("river-swim", "Заплыв у набережной", category("water", "Водные"),
+                Map.of("hat", "swimcap", "eyewear", "goggles", "bottom", "swimshorts", "background", "river"), "none"));
+        result.add(new Bundle("boxing", "Бокс в зале", category("martial", "Единоборства"),
+                Map.of("shirt", "training", "paws", "boxinggloves", "bottom", "shorts", "background", "gym"), "none"));
+        result.add(new Bundle("chess-club", "Шахматный клуб", category("chess", "Шахматы"),
+                Map.of("shirt", "polo", "eyewear", "roundglasses", "neck", "bowtie", "background", "sunset"), "chess"));
+        result.add(new Bundle("cozy", "После тренировки", category("casual", "Повседневное"),
+                Map.of("shirt", "hoodie", "bottom", "sweatpants", "neck", "scarf", "background", "snowpark"), "none"));
+        result.add(new Bundle("city-walk", "Городской спортсмен", category("casual", "Повседневное"),
+                Map.of("shirt", "tracksuit", "bottom", "sweatpants", "feet", "sneakers", "eyewear", "roundglasses", "background", "nightcity"), "none"));
+		return List.copyOf(result);
+	}
+
+	private static BundleCategoryResponse category(String code, String label) {
+        return new BundleCategoryResponse(code, label);
+    }
+
+	/** Вещи комплекта; пустой инвентарь не считается вещью комплекта. */
+	List<PetItem> bundleItems(Catalog catalog, Bundle bundle) {
+		var selected = new java.util.LinkedHashMap<>(bundle.outfit());
+		selected.put(ACTIVITY, bundle.activity());
+		var resolved = selected.entrySet().stream().map(entry -> {
+			var slot = catalog.slot(entry.getKey()).orElseThrow(() ->
+					new IllegalStateException("Неизвестный слот комплекта: " + entry.getKey()));
+			if ((slot.getKind() == PetSlotKind.ACTIVITY) != entry.getKey().equals(ACTIVITY)) {
+				throw new IllegalStateException("Неверный вид слота комплекта: " + entry.getKey());
+			}
+			return catalog.item(slot, entry.getValue()).orElseThrow(() ->
+					new IllegalStateException("Неизвестная вещь комплекта: " + entry));
+		}).toList();
+		return resolved.stream().filter(item -> !item.getCode().equals(NO_ACTIVITY))
+				.toList();
+	}
 
 	/** Цена, вид и подсказка вещи: ключ «слот:код». Вещи, которых тут нет, — магазин за 100 монет. */
 	private record Economy(int price, PetItemKind kind, String hint) {
@@ -94,7 +213,7 @@ public class PetCatalogService {
 	private static Map<String, Economy> economy() {
 		var m = new java.util.HashMap<String, Economy>();
 		// Базовые: есть у всех сразу.
-		for (var key : List.of("activity:none", "shirt:training", "hat:headband")) {
+		for (var key : List.of("activity:none", "shirt:training", "hat:headband", "background:meadow")) {
 			m.put(key, new Economy(0, PetItemKind.BASE, null));
 		}
 		// Эксклюзивы: только за достижения.
@@ -106,6 +225,15 @@ public class PetCatalogService {
 		price(m, 70, "hat:beanie", "eyewear:sunglasses");
 		price(m, 50, "neck:whistle");
 		price(m, 80, "bottom:swimshorts");
+        price(m, 60, "neck:bowtie", "paws:wristbands");
+        price(m, 70, "eyewear:roundglasses");
+        price(m, 80, "neck:scarf");
+        price(m, 100, "bottom:shorts", "background:stadium", "background:rink", "background:river", "background:snowpark");
+        price(m, 100, "background:gym", "background:sunset", "background:nightcity");
+        price(m, 120, "bottom:leggings", "bottom:sweatpants", "feet:sneakers", "shirt:basketball", "shirt:volleyball", "shirt:polo", "prop:volleyball");
+        price(m, 130, "hat:cyclehelmet", "shirt:hoodie", "prop:paddle");
+        price(m, 150, "shirt:tracksuit", "prop:racket", "prop:yogamat", "paws:boxinggloves");
+        price(m, 180, "shirt:puffer");
 		// 100–150: спортивная экипировка и инвентарь.
 		price(m, 100, "shirt:running", "activity:juggle", "activity:dribble", "activity:hockey");
 		price(m, 120, "shirt:football", "shirt:programming", "hat:helmet", "activity:lift", "activity:chess");
@@ -180,6 +308,8 @@ public class PetCatalogService {
 				items.save(existing);
 			}
 		}
+		var catalog = load();
+		BUNDLES.forEach(bundle -> bundleItems(catalog, bundle));
 		if (created > 0) {
 			log.info("Pet catalog: created {} built-in items", created);
 		}

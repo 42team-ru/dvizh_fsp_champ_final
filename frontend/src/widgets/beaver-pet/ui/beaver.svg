@@ -55,6 +55,7 @@
   </defs>
 
 
+  <g id="slot-background"></g>
   <g id="beaver" transform="translate(39 6) scale(0.73)"><g id="slot-scene"></g><g id="beaver-inner">
     <!-- Soft ground shadow. -->
     <ellipse id="shadow" cx="190" cy="524" rx="150" ry="11" fill="#2A1A12" opacity="0.18"/>

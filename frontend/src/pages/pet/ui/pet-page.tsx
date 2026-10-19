@@ -42,6 +42,10 @@ const LOOKS: Look[] = [
 type Option = { value: string; label: string };
 // Независимые категории гардероба.
 const WARDROBE = {
+  background: { label: "Фон", options: [] },
+  prop: { label: "Предмет", options: [] },
+  paws: { label: "На лапах", options: [] },
+  feet: { label: "Обувь", options: [] },
   shirt: { label: "Одежда", options: [
     { value: "football", label: "Футбольная форма" }, { value: "running", label: "Беговая майка" },
     { value: "training", label: "Тренировочная футболка" }, { value: "judo", label: "Кимоно" },
@@ -91,7 +95,9 @@ export default function PetPage() {
   const pet = useRef<BeaverPetHandle>(null);
   const query = usePetsGetMine();
   const catalog = usePetsCatalog({ query: { staleTime: 5 * 60_000 } });
-  // Вещи от админа (с рисунком) добавляются в конец своих списков.
+  // Встроенные и добавленные вещи берём из единого каталога, включая новые слоты.
+  const optionsFor = (slot: keyof BeaverOutfit): Option[] => catalog.data?.data.slots.find((s) => s.id === slot)?.items
+    .map((item) => ({ value: item.id, label: item.label })) ?? WARDROBE[slot].options;
   const custom = (slot: string): Option[] => catalog.data?.data.slots.find((s) => s.id === slot)?.items
     .filter((item) => item.art).map((item) => ({ value: item.id, label: item.label })) ?? [];
   const queryClient = useQueryClient();
@@ -172,7 +178,7 @@ export default function PetPage() {
           <fieldset disabled={disabled} className="disabled:opacity-60">
             <legend className="mb-3 text-lg font-semibold">Отдельные элементы</legend>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2">
-              {FIELDS.map((field) => <Choice key={field} label={WARDROBE[field].label} value={outfit[field] ?? "none"} options={[{ value: "none", label: "Без элемента" }, ...WARDROBE[field].options, ...custom(field)]} onChange={(value) => update(field, value)} />)}
+              {FIELDS.map((field) => <Choice key={field} label={WARDROBE[field].label} value={outfit[field] ?? "none"} options={[{ value: "none", label: "Без элемента" }, ...optionsFor(field)]} onChange={(value) => update(field, value)} />)}
               <Choice label="Инвентарь" value={activity} options={[...ACTIVITIES, ...custom("activity")]} onChange={(value) => update("activity", value)} />
             </div>
           </fieldset>

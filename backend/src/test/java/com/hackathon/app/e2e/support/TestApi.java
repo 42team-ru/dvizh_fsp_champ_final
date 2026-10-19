@@ -239,7 +239,8 @@ public class TestApi {
 	private HttpStatus expectedStatus(MvcResult result) {
 		var request = result.getRequest();
 		var path = request.getRequestURI();
-		if (path.matches("/api/recommendations/events/[^/]+/dismiss")) {
+		if (path.matches("/api/recommendations/events/[^/]+/dismiss")
+                || request.getMethod().equals("DELETE") && path.matches("/api/users/me/pet/looks/[^/]+")) {
 			return HttpStatus.NO_CONTENT;
 		}
 		if (request.getMethod().equals("POST")) {
@@ -265,5 +266,28 @@ public class TestApi {
 
 	private String write(Object body) {
 		return json.writeValueAsString(body);
+	}
+
+	/** Запрос с явным успешным статусом для новых эндпоинтов, отсутствующих в общей таблице контрактов. */
+	<T> T send(String label, AbstractMockHttpServletRequestBuilder<?> request, Cookie cookie, Object body,
+			JavaType type, HttpStatus expected) {
+		if (cookie != null) {
+			request.cookie(cookie);
+		}
+		if (body != null) {
+			request.contentType(APPLICATION_JSON).content(write(body));
+		}
+		var response = call(request).andReturn().getResponse();
+		try {
+			var content = response.getContentAsString();
+			var status = HttpStatus.valueOf(response.getStatus());
+			if (!status.is2xxSuccessful()) {
+				throw new ApiCallFailed(label, status, detailOf(content), content);
+			}
+			assertThat(status).as("HTTP %s", label).isEqualTo(expected);
+			return type == null || content.isBlank() ? null : json.readValue(content, type);
+		} catch (java.io.UnsupportedEncodingException e) {
+			throw new IllegalStateException(label + ": не удалось прочитать ответ", e);
+		}
 	}
 }

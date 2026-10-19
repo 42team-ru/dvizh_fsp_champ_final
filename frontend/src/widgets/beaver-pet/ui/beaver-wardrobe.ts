@@ -2,6 +2,7 @@ import programmingEmblem from "./emblems/programming.svg?raw";
 import type { PetArtResponse, PetArtResponseBodyPart } from "@/shared/api/generated/core/appAPI.schemas";
 import { CLUBS, type ClubId } from "./beaver-clubs";
 import { HOCKEY_CLUBS, type HockeyClubId } from "./beaver-hockey-clubs";
+import { BACKGROUNDS, type BackgroundId } from "./beaver-backgrounds";
 
 /*
  * Гардероб бобра. Каждая вещь — кусок SVG в координатах рисунка, который вставляется
@@ -10,11 +11,14 @@ import { HOCKEY_CLUBS, type HockeyClubId } from "./beaver-hockey-clubs";
  * Стиль общий с бобром: контур OUT толщиной 5–5.5, плоская заливка, мягкий блик.
  */
 
-export type HatId = "cap" | "headband" | "beanie" | "swimcap" | "helmet" | "headphones";
-export type EyewearId = "sunglasses" | "goggles";
-export type ShirtId = "football" | "running" | "training" | "judo" | "hockey" | "programming" | ClubId | HockeyClubId;
-export type BottomId = "swimshorts" | "hockeypants";
-export type NeckId = "medal" | "whistle";
+export type HatId = "cap" | "headband" | "beanie" | "swimcap" | "helmet" | "headphones" | "cyclehelmet" | "crown";
+export type EyewearId = "sunglasses" | "goggles" | "roundglasses";
+export type ShirtId = "football" | "running" | "training" | "judo" | "hockey" | "programming" | "basketball" | "volleyball" | "polo" | "hoodie" | "tracksuit" | "puffer" | ClubId | HockeyClubId;
+export type BottomId = "swimshorts" | "hockeypants" | "shorts" | "leggings" | "sweatpants";
+export type NeckId = "medal" | "whistle" | "scarf" | "bowtie";
+export type PropId = "volleyball" | "racket" | "paddle" | "yogamat";
+export type PawsId = "boxinggloves" | "wristbands";
+export type FeetId = "sneakers";
 /** Активность — предмет в лапах или рядом и движение с ним. */
 export type BeaverActivity = "none" | "juggle" | "dribble" | "lift" | "chess" | "ski" | "hockey" | "esports" | "programming";
 
@@ -24,16 +28,22 @@ export type BeaverOutfit = {
   shirt?: ShirtId;
   neck?: NeckId;
   bottom?: BottomId;
+  prop?: PropId;
+  paws?: PawsId;
+  feet?: FeetId;
+  background?: BackgroundId;
 };
 
 /** Содержимое слотов: id слота → SVG-разметка. */
 export type SlotContent = Partial<Record<Slot, string>>;
 export type Slot =
+  | "slot-background"
   | "slot-shirt" | "slot-neck" | "slot-prop-back" | "slot-prop-front"
   | "slot-sleeve-left" | "slot-sleeve-right" | "slot-hold-left" | "slot-hold-right"
   | "slot-hold-front-right" | "slot-eyes" | "slot-hat" | "slot-bottom" | "slot-scene" | "slot-feet" | "slot-arm-cover-left" | "slot-arm-cover-right";
 
 export const SLOTS: Slot[] = [
+  "slot-background",
   "slot-shirt", "slot-neck", "slot-prop-back", "slot-prop-front",
   "slot-sleeve-left", "slot-sleeve-right", "slot-hold-left", "slot-hold-right",
   "slot-hold-front-right", "slot-eyes", "slot-hat", "slot-bottom", "slot-scene", "slot-feet", "slot-arm-cover-left", "slot-arm-cover-right",
@@ -155,6 +165,38 @@ const hockeyPants = (): SlotContent => ({
 const hockeyShirts = Object.fromEntries(Object.entries(HOCKEY_CLUBS).map(([id, club]) => [id, () => hockeyJersey(club)])) as Record<HockeyClubId, () => SlotContent>;
 
 const SHIRTS: Record<ShirtId, () => SlotContent> = {
+  basketball: () => {
+    const s = shirt({ color: "#E7A33E", collar: "#F4EBDD", front: `
+      <path d="M85 300 V451 M289 300 V451" stroke="#1E2B3C" stroke-width="13"/>
+      ${number("23", 420, 66)}
+      ${glare("M126 338 V362", 5)}` });
+    delete s["slot-sleeve-left"];
+    delete s["slot-sleeve-right"];
+    return s;
+  },
+  volleyball: () => shirt({ color: "#1F7FD0", collar: "#F4C431", trim: "#F4C431", front: `
+    <path d="M40 320 L330 376 V398 L40 342 Z" fill="#F4EBDD"/>
+    ${number("7", 433, 55)}${glare("M119 348 L145 354", 5)}` }),
+  polo: () => shirt({ color: "#F4EBDD", collar: "#3FA45B", trim: "#3FA45B", front: `
+    <path d="M149 300 L177 327 L163 346 L137 312 M225 300 L197 327 L211 346 L237 312" fill="#3FA45B" ${line(5)}/>
+    <path d="M187 327 V371" fill="none" ${line(5)}/>
+    <circle cx="196" cy="346" r="3" fill="${OUT}"/><circle cx="196" cy="362" r="3" fill="${OUT}"/>
+    <circle cx="243" cy="372" r="12" fill="#E7A33E" ${line(5)}/>` }),
+  hoodie: () => shirt({ color: "#9384C6", collar: "#F4EBDD", trim: "#F4EBDD", long: true, front: `
+    <path d="M151 309 L153 364 M223 309 L221 364" fill="none" stroke="#F4EBDD" stroke-width="5" stroke-linecap="round"/>
+    <path d="M143 387 H231 L246 429 Q188 444 128 429 Z" fill="#7C6AAD" ${line(5)}/>
+    <path d="M145 400 L136 416 M229 400 L238 416" fill="none" ${line(5)}/>
+    ${glare("M119 338 V365", 5)}` }),
+  tracksuit: () => shirt({ color: "#3FA45B", collar: "#F4EBDD", trim: "#F4EBDD", long: true, front: `
+    <path d="M65 329 L166 369 M310 329 L209 369" fill="none" stroke="#F4EBDD" stroke-width="15"/>
+    <path d="M188 320 V454 M112 391 L126 419 M262 391 L248 419" fill="none" ${line(5)}/>
+    <rect x="181" y="340" width="14" height="20" rx="4" fill="#C9D2DA" ${line(5)}/>
+    ${glare("M118 370 L140 380", 5)}` }),
+  puffer: () => shirt({ color: "#D8402F", collar: "#F4EBDD", long: true, front: `
+    <path d="M65 346 Q188 367 310 346 M65 383 Q188 404 310 383 M65 422 Q188 443 310 422" fill="none" ${line(5)}/>
+    <path d="M188 321 V455" fill="none" stroke="#F4EBDD" stroke-width="9"/>
+    <rect x="181" y="338" width="14" height="21" rx="4" fill="#E7A33E" ${line(5)}/>
+    ${glare("M116 329 L140 334", 6)}${glare("M98 373 L124 379", 6)}` }),
   ...clubShirts,
   ...hockeyShirts,
   hockey: () => hockeyJersey(),
@@ -228,6 +270,17 @@ function beanieRibs() {
 }
 
 const HATS: Record<HatId, () => string> = {
+  crown: () => `
+    <path d="M93 73 L79 6 L132 37 L187 -7 L242 37 L295 6 L281 73 Z" fill="#E7A33E" ${line(5.5)}/>
+    <path d="M93 63 Q188 47 281 63 V86 Q188 72 93 86 Z" fill="#F4C431" ${line(5)}/>
+    <circle cx="187" cy="34" r="10" fill="#D8402F" ${line(5)}/>
+    ${glare("M105 20 L118 44", 5)}`,
+  cyclehelmet: () => `
+    <path d="M63 100 C58 -19 312 -19 313 100 L284 111 Q188 78 92 111 Z" fill="#3FA45B" ${line(5.5)}/>
+    <path d="M106 66 Q112 33 137 24 M175 19 V66 M214 21 L225 67 M254 31 Q274 45 277 71" fill="none" stroke="${OUT}" stroke-width="9" stroke-linecap="round"/>
+    <path d="M67 100 Q188 68 309 100 L294 119 Q188 96 82 119 Z" fill="#F4EBDD" ${line(5)}/>
+    <path d="M80 117 L70 213 L104 254 M296 117 L307 213 L274 254" fill="none" ${line(5.5)}/>
+    ${glare("M87 52 Q98 31 116 24", 6)}`,
   headphones: () => `
     <g id="gaming-headphones">
       <path d="M35 147 V111 C35 -15 339 -15 339 111 V147" fill="none" stroke="${OUT}" stroke-width="25"/>
@@ -283,6 +336,11 @@ const HATS: Record<HatId, () => string> = {
 // ---------- Очки ----------
 
 const EYEWEAR: Record<EyewearId, () => string> = {
+  roundglasses: () => `
+    <path d="M77 151 L47 142 M296 151 L327 142 M143 153 Q187 133 230 153" fill="none" ${line(5.5)}/>
+    <circle cx="110" cy="159" r="34" fill="#8FD3F4" fill-opacity="0.18" ${line(5.5)}/>
+    <circle cx="263" cy="159" r="34" fill="#8FD3F4" fill-opacity="0.18" ${line(5.5)}/>
+    ${glare("M86 148 Q90 138 100 135", 5, 0.7)}${glare("M239 148 Q243 138 253 135", 5, 0.7)}`,
   sunglasses: () => `
     <path d="M78 150 L46 141 M296 150 L330 141" fill="none" ${line(6)}/>
     <path d="M142 150 Q187 134 232 150" fill="none" ${line(7)}/>
@@ -307,6 +365,16 @@ const EYEWEAR: Record<EyewearId, () => string> = {
 // ---------- На шею ----------
 
 const NECK: Record<NeckId, () => string> = {
+  scarf: () => `
+    <path d="M200 315 L245 325 L241 403 L211 398 Z" fill="#E7A33E" ${line(5)}/>
+    <path d="M216 367 L241 371 M214 385 L240 389" stroke="#F4EBDD" stroke-width="9"/>
+    <path d="M218 400 V409 M230 401 V411 M241 403 V412" fill="none" ${line(5)}/>
+    <path d="M131 291 Q188 319 245 291 L252 316 Q188 346 124 316 Z" fill="#E7A33E" ${line(5.5)}/>
+    ${glare("M142 307 Q171 320 192 320", 5)}`,
+  bowtie: () => `
+    <path d="M177 315 L146 300 Q137 295 138 309 V336 Q138 348 150 342 L179 327 M197 315 L228 300 Q237 295 236 309 V336 Q236 348 224 342 L195 327" fill="#D8402F" ${line(5)}/>
+    <rect x="175" y="309" width="24" height="26" rx="8" fill="#E7A33E" ${line(5)}/>
+    ${glare("M146 308 L158 313", 4)}`,
   medal: () => `
     ${band("M152 296 L180 330", "#3D7BD8", 10)}
     ${band("M222 296 L194 330", "#E0463B", 10)}
@@ -494,6 +562,83 @@ const ACTIVITY: Record<BeaverActivity, () => SlotContent> = {
   ski: () => ({ "slot-scene": skis() }),
 };
 
+// ---------- Дополнительная экипировка: статичные предметы следуют своему слоту ----------
+
+const BOTTOMS: Record<"shorts" | "leggings" | "sweatpants", () => SlotContent> = {
+  shorts: () => ({ "slot-bottom": `
+    <g clip-path="url(#body-clip)">
+      <path d="M60 438 Q188 458 314 438 V495 H204 L188 469 L172 495 H60 Z" fill="#1E2B3C" ${line(5)}/>
+      <path d="M87 452 L99 480 M287 452 L275 480" stroke="#F4EBDD" stroke-width="8"/>
+      <path d="M180 455 L173 468 M194 455 L201 468" fill="none" stroke="#F4EBDD" stroke-width="4" stroke-linecap="round"/>
+    </g><use href="#body-line"/>` }),
+  leggings: () => ({ "slot-bottom": `
+    <g clip-path="url(#body-clip)"><path d="M60 438 Q188 458 314 438 V493 H60 Z" fill="#9384C6" ${line(5)}/></g>
+    <path d="M95 478 L166 483 L161 498 H91 Z M208 483 L279 478 L283 498 H213 Z" fill="#9384C6" ${line(5)}/>
+    <path d="M102 459 L112 486 M272 459 L262 486" fill="none" stroke="#F4EBDD" stroke-width="7"/>
+    ${glare("M129 458 L147 461", 4)}` }),
+  sweatpants: () => ({ "slot-bottom": `
+    <g clip-path="url(#body-clip)"><path d="M60 438 Q188 458 314 438 V493 H60 Z" fill="#3B4652" ${line(5)}/></g>
+    <path d="M95 478 L168 483 L164 502 H88 Z M206 483 L279 478 L286 502 H210 Z" fill="#3B4652" ${line(5)}/>
+    <path d="M97 494 H159 M215 494 H277" stroke="#F4EBDD" stroke-width="5"/>
+    <path d="M181 454 L174 470 M193 454 L201 470" stroke="#F4EBDD" stroke-width="4" stroke-linecap="round"/>
+    ${glare("M105 459 L102 475", 4)}` }),
+};
+
+const PROPS: Record<PropId, () => SlotContent> = {
+  volleyball: () => ({ "slot-hold-left": `<g transform="translate(25 393)">
+    <circle r="38" fill="#F4EBDD" ${line(5.5)}/>
+    <path d="M-30 -23 Q-1 -23 12 1 Q25 15 29 24 Q9 34 -2 38 Q3 11 -20 -4 Q-32 -10 -38 -5 Z" fill="#F4C431" ${line(5)}/>
+    <path d="M-30 -23 Q-14 -40 8 -37 Q29 -18 12 1 M8 -37 Q38 -23 38 0 Q32 17 29 24" fill="#1F7FD0" ${line(5)}/>
+    ${glare("M-23 -22 Q-17 -29 -9 -30", 5, 0.65)}</g>` }),
+  racket: () => ({ "slot-hold-right": `
+    <path d="M315 428 L367 349" fill="none" stroke="${OUT}" stroke-width="15" stroke-linecap="round"/>
+    <path d="M315 428 L367 349" fill="none" stroke="#E7A33E" stroke-width="9" stroke-linecap="round"/>
+    <g transform="rotate(28 394 302)">
+      <ellipse cx="394" cy="302" rx="40" ry="53" fill="#C7E8F6" ${line(5.5)}/>
+      <path d="M376 262 V342 M388 251 V353 M400 251 V353 M412 262 V342 M362 278 H426 M356 290 H432 M356 302 H432 M356 314 H432 M361 326 H427 M369 338 H419" fill="none" stroke="#F4EBDD" stroke-width="3"/>
+      <ellipse cx="394" cy="302" rx="40" ry="53" fill="none" ${line(5.5)}/>
+      ${glare("M365 279 Q371 263 383 258", 5)}
+    </g>` }),
+  paddle: () => ({ "slot-hold-right": `
+    <path d="M316 430 L350 379" fill="none" stroke="${OUT}" stroke-width="20" stroke-linecap="round"/>
+    <path d="M316 430 L350 379" fill="none" stroke="#E7A33E" stroke-width="10" stroke-linecap="round"/>
+    <ellipse cx="367" cy="351" rx="34" ry="42" transform="rotate(30 367 351)" fill="#D8402F" ${line(5.5)}/>
+    ${glare("M348 336 Q354 322 365 321", 5)}
+    <circle cx="414" cy="423" r="13" fill="#F4EBDD" ${line(5)}/>` }),
+  yogamat: () => ({ "slot-scene": `
+    <path d="M42 491 H377 L429 535 Q432 542 418 542 H25 Q11 542 18 534 Z" fill="#9384C6" ${line(5.5)}/>
+    <path d="M48 502 H370 M38 516 H386" stroke="#F4EBDD" stroke-width="5" opacity="0.55"/>
+    <g transform="rotate(-9 440 480)">
+      <path d="M420 426 Q439 413 460 426 V502 H420 Z" fill="#9384C6" ${line(5)}/>
+      <ellipse cx="440" cy="426" rx="20" ry="10" fill="#F4EBDD" ${line(5)}/>
+      <path d="M432 426 Q439 418 448 426 Q448 432 440 430" fill="none" ${line(5)}/>
+      <path d="M420 467 H460 V481 H420 Z" fill="#E7A33E" ${line(5)}/>
+      ${glare("M429 441 V455", 5)}
+    </g>` }),
+};
+
+const PAWS: Record<PawsId, () => SlotContent> = {
+  boxinggloves: () => {
+    const glove = `<path d="M34 389 Q16 386 11 404 L12 427 Q17 448 43 448 L70 443 Q85 440 86 425 L84 409 Q80 394 67 395 Q59 378 44 381 Z" fill="#D8402F" ${line(5.5)}/>
+      <path d="M67 395 Q58 404 65 420 M17 428 L76 431 L73 446 L24 451 Z" fill="#F4EBDD" ${line(5)}/>
+      ${glare("M25 401 Q28 393 37 393", 5)}`;
+    return { "slot-arm-cover-left": glove, "slot-arm-cover-right": `<g transform="translate(374 0) scale(-1 1)">${glove}</g>` };
+  },
+  wristbands: () => {
+    const cuff = (side: "left" | "right", shape: string) => `<g clip-path="url(#arm-clip-${side})">
+      <path d="${shape}" fill="#F4EBDD" ${line(5)}/>
+      <path d="${side === "left" ? "M40 385 L95 405" : "M334 385 L279 405"}" stroke="#D8402F" stroke-width="6"/>
+    </g>`;
+    return { "slot-arm-cover-left": cuff("left", "M32 369 L102 396 L92 419 L22 392 Z"), "slot-arm-cover-right": cuff("right", "M342 369 L272 396 L282 419 L352 392 Z") };
+  },
+};
+
+const sneakers = (): SlotContent => ({ "slot-feet": `
+  <path d="M92 485 H151 L164 511 Q165 524 148 529 H75 Q56 525 61 511 Q67 498 91 498 Z M223 485 H282 L283 498 Q307 498 313 511 Q318 525 299 529 H226 Q209 524 210 511 Z" fill="#F4EBDD" ${line(5.5)}/>
+  <path d="M69 506 L93 505 L114 520 H66 M305 506 L281 505 L260 520 H308" fill="#3FA45B"/>
+  <path d="M64 520 H159 M215 520 H310 M101 499 L135 499 M98 508 H141 M239 499 H273 M233 508 H276" fill="none" ${line(5)}/>
+  ${glare("M76 511 H86", 4)}` });
+
 // ---------- Вещи от админа ----------
 
 /**
@@ -528,13 +673,22 @@ export function buildSlots(outfit: BeaverOutfit, activity: BeaverActivity, arts:
     if (found) add(artSlotContent(found));
     return Boolean(found);
   };
+  if (outfit.background && !art("background", outfit.background)) add({ "slot-background": BACKGROUNDS[outfit.background]?.() ?? "" });
   if (outfit.shirt && !art("shirt", outfit.shirt)) add(SHIRTS[outfit.shirt]?.() ?? {});
   if (outfit.bottom === "hockeypants") add(hockeyPants());
   else if (outfit.bottom === "swimshorts") add({ "slot-bottom": swimshorts() });
-  else art("bottom", outfit.bottom);
+  else if (outfit.bottom && !art("bottom", outfit.bottom)) add(BOTTOMS[outfit.bottom]?.() ?? {});
   if (outfit.neck && !art("neck", outfit.neck)) add({ "slot-neck": NECK[outfit.neck]?.() ?? "" });
   if (outfit.eyewear && !art("eyewear", outfit.eyewear)) add({ "slot-eyes": EYEWEAR[outfit.eyewear]?.() ?? "" });
   if (outfit.hat && !art("hat", outfit.hat)) add({ "slot-hat": HATS[outfit.hat]?.() ?? "" });
   if (!art("activity", activity)) add(ACTIVITY[activity]?.() ?? {});
+  if (outfit.prop && !art("prop", outfit.prop)) add(PROPS[outfit.prop]?.() ?? {});
+  if (outfit.paws && !art("paws", outfit.paws)) add(PAWS[outfit.paws]?.() ?? {});
+  // Отдельно выбранная обувь заменяет встроенные коньки хоккейных шорт в том же слоте.
+  if (outfit.feet && !art("feet", outfit.feet) && outfit.feet === "sneakers") Object.assign(out, sneakers());
+  // Admin-added slots use their supplied body-part placement as well.
+  for (const [slot, code] of Object.entries(outfit)) {
+    if (!["background", "shirt", "bottom", "neck", "eyewear", "hat", "prop", "paws", "feet"].includes(slot)) art(slot, code);
+  }
   return out;
 }

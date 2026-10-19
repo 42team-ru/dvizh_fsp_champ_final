@@ -1,9 +1,9 @@
+import { Link } from "react-router";
 import { useState } from "react";
 import { Pencil } from "lucide-react";
 import { useUser } from "@/entity/user/model/use-user";
 import { UserAvatar } from "@/shared/components/ui/user-avatar";
 import { EditProfileDialog } from "@/features/edit-profile/ui/edit-profile-dialog";
-import { WardrobeDialog } from "@/features/pet-wardrobe/ui/wardrobe-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { useRegistrationsMine } from "@/shared/api/generated/core/registrations/registrations";
 import {
@@ -199,16 +199,17 @@ function PetPage() {
           </ProfilePetName>
         </div>
         {!owner && (
-          <WardrobeDialog>
-            <Button
-              variant="soft"
-              aria-label="Изменить имя и образ питомца"
-              className="mt-1 h-10 shrink-0 px-4 text-[13px]"
-            >
+          <Button
+            variant="soft"
+            asChild
+            aria-label="Изменить образ питомца"
+            className="mt-1 h-10 shrink-0 px-4 text-[13px]"
+          >
+            <Link to="/profile/wardrobe">
               <Pencil className="size-3.5" />
-              Изменить
-            </Button>
-          </WardrobeDialog>
+              Изменить образ
+            </Link>
+          </Button>
         )}
       </div>
 

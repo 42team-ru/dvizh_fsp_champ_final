@@ -4,11 +4,20 @@ import java.util.List;
 import java.util.UUID;
 
 import com.hackathon.app.domain.dto.PetCatalogResponse;
+import com.hackathon.app.domain.dto.PetBuySetRequest;
+import com.hackathon.app.domain.dto.PetSaveLookRequest;
+import com.hackathon.app.domain.dto.PetSavedLookResponse;
+import com.hackathon.app.service.PetSavedLookService;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.http.HttpStatus;
 import com.hackathon.app.domain.dto.PetEquipRequest;
 import com.hackathon.app.domain.dto.PetRequest;
 import com.hackathon.app.domain.dto.PetRenameRequest;
 import com.hackathon.app.domain.dto.PetResponse;
 import com.hackathon.app.domain.dto.ShopItemResponse;
+import com.hackathon.app.domain.dto.ShopBundleResponse;
+import com.hackathon.app.service.PetBundleService;
 import com.hackathon.app.service.PetCatalogService;
 import com.hackathon.app.service.ShopService;
 import com.hackathon.app.service.PetService;
@@ -43,6 +52,9 @@ class PetController {
 	private final PetService pets;
 	private final PetCatalogService catalog;
 	private final ShopService shop;
+	/** Покупка и надевание готовых комплектов. */
+	private final PetBundleService bundles;
+	private final PetSavedLookService looks;
 
 	@GetMapping("/pets/catalog")
 	@Operation(operationId = "pets_catalog", summary = "Каталог: слоты и вещи",
@@ -63,6 +75,68 @@ class PetController {
 		log.info("Endpoint response: GET /api/pets/shop, items={}", response.size());
 		return response;
 	}
+
+	@GetMapping("/pets/shop/bundles")
+	@Operation(operationId = "pets_bundles", summary = "Комплекты с персональной ценой и скидкой")
+	List<ShopBundleResponse> bundles(@AuthenticationPrincipal Jwt jwt) {
+		log.info("Endpoint called: GET /api/pets/shop/bundles, userId={}", jwt.getSubject());
+		var response = bundles.bundles(userId(jwt));
+		log.info("Endpoint response: GET /api/pets/shop/bundles, response={}", response);
+		return response;
+	}
+
+	@PostMapping("/pets/shop/bundles/{code}/buy")
+	@Operation(operationId = "pets_buyBundle", summary = "Купить недостающие вещи комплекта и надеть образ")
+	@ApiResponse(responseCode = "200", description = "Комплект надет")
+	@ApiResponse(responseCode = "403", description = "Только личный аккаунт", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+	@ApiResponse(responseCode = "404", description = "Комплект не найден", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+	@ApiResponse(responseCode = "409", description = "Не хватает монет или нужен эксклюзив", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+	PetResponse buyBundle(@AuthenticationPrincipal Jwt jwt, @PathVariable String code) {
+		log.info("Endpoint called: POST /api/pets/shop/bundles/{}/buy, userId={}", code, jwt.getSubject());
+		var response = bundles.buy(userId(jwt), code);
+		log.info("Endpoint response: POST /api/pets/shop/bundles/{}/buy, response={}", code, response);
+		return response;
+	}
+
+    @PostMapping("/pets/shop/buy-set")
+    @Operation(operationId = "pets_buySet", summary = "Купить примеренные вещи со скидкой 20% при двух и более")
+    @ApiResponse(responseCode = "200", description = "Вещи куплены; текущий образ", content = @Content(schema = @Schema(implementation = PetResponse.class)))
+    @ApiResponse(responseCode = "409", description = "Эксклюзив или недостаточно монет", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    PetResponse buySet(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody PetBuySetRequest request) {
+        log.info("Endpoint called: POST /api/pets/shop/buy-set, userId={}, request={}", jwt.getSubject(), request);
+        var response = bundles.buySet(userId(jwt), request);
+        log.info("Endpoint response: POST /api/pets/shop/buy-set, response={}", response);
+        return response;
+    }
+
+    @GetMapping("/users/me/pet/looks")
+    @Operation(operationId = "pets_looks", summary = "Мои сохранённые образы")
+    List<PetSavedLookResponse> looks(@AuthenticationPrincipal Jwt jwt) {
+        log.info("Endpoint called: GET /api/users/me/pet/looks, userId={}", jwt.getSubject());
+        var response = looks.list(userId(jwt));
+        log.info("Endpoint response: GET /api/users/me/pet/looks, response={}", response);
+        return response;
+    }
+
+    @PostMapping("/users/me/pet/looks")
+    @Operation(operationId = "pets_saveLook", summary = "Сохранить образ из своих вещей; максимум четыре")
+    @ApiResponse(responseCode = "200", description = "Образ сохранён", content = @Content(schema = @Schema(implementation = PetSavedLookResponse.class)))
+    @ApiResponse(responseCode = "409", description = "Лимит образов или вещь не принадлежит владельцу", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    PetSavedLookResponse saveLook(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody PetSaveLookRequest request) {
+        log.info("Endpoint called: POST /api/users/me/pet/looks, userId={}, request={}", jwt.getSubject(), request);
+        var response = looks.save(userId(jwt), request);
+        log.info("Endpoint response: POST /api/users/me/pet/looks, response={}", response);
+        return response;
+    }
+
+    @DeleteMapping("/users/me/pet/looks/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(operationId = "pets_deleteLook", summary = "Удалить свой сохранённый образ")
+    void deleteLook(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+        log.info("Endpoint called: DELETE /api/users/me/pet/looks/{}, userId={}", id, jwt.getSubject());
+        looks.delete(userId(jwt), id);
+        log.info("Endpoint response: DELETE /api/users/me/pet/looks/{}, response=204", id);
+    }
 
 	@PostMapping("/pets/shop/{item}/buy")
 	@Operation(operationId = "pets_buy", summary = "Купить вещь",

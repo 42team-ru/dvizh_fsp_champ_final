@@ -1,5 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import beaverSvg from "./beaver.svg?raw";
+import { BACKGROUND_VIEWBOX, BEAVER_VIEWBOX } from "./beaver-backgrounds";
 import { usePetsCatalog, usePetsGetMine } from "@/shared/api/generated/core/pets/pets";
 import { buildSlots, SLOTS, type BeaverActivity, type BeaverArts, type BeaverOutfit } from "./beaver-wardrobe";
 import { scopeSvgIds, svgResourceIds } from "./scope-svg-ids";
@@ -49,6 +50,7 @@ export function MyBeaverBadge({ className, pose: fixed }: { className?: string; 
       for (const item of s.items) if (item.art) arts[`${s.id}:${item.id}`] = item.art;
     }
     const content = buildSlots(JSON.parse(outfitKey) as BeaverOutfit, activity, arts);
+    root.querySelector("svg")?.setAttribute("viewBox", content["slot-background"] ? BACKGROUND_VIEWBOX : BEAVER_VIEWBOX);
     const refs = new Set([...baseReferenceIds, ...svgResourceIds(Object.values(content).join(""))]);
     for (const id of SLOTS) {
       const slot = root.querySelector(`#${id}`);

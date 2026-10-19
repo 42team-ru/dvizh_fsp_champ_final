@@ -90,6 +90,17 @@ class UserController {
 		return response;
 	}
 
+	@GetMapping("/{id}/achievements")
+	@Operation(operationId = "users_userAchievements", summary = "Достижения человека: все шесть с прогрессом и датой получения",
+			description = "Видны любому вошедшему. У организации и админа достижений нет — 403.")
+	@ApiResponse(responseCode = "404", description = "Пользователь не найден", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+	List<AchievementResponse> userAchievements(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+		log.info("Endpoint called: GET /api/users/{}/achievements, userId={}", id, jwt.getSubject());
+		var response = achievements.list(id);
+		log.info("Endpoint response: GET /api/users/{}/achievements, items={}", id, response.size());
+		return response;
+	}
+
 	@GetMapping("/{id}")
 	@Operation(operationId = "users_get", summary = "Публичный профиль организатора",
 			description = "Имя, аватар, город, о себе и ближайшие опубликованные мероприятия. Без email.")

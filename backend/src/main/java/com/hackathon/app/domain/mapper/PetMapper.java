@@ -1,12 +1,15 @@
 package com.hackathon.app.domain.mapper;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import com.hackathon.app.domain.dto.PetArtResponse;
 import com.hackathon.app.domain.dto.PetItemResponse;
 import com.hackathon.app.domain.dto.PetSlotResponse;
+import com.hackathon.app.domain.dto.PetSavedLookResponse;
 import com.hackathon.app.domain.entity.AppUser;
+import com.hackathon.app.domain.entity.PetSavedLook;
 import com.hackathon.app.domain.entity.PetItem;
 import com.hackathon.app.domain.entity.PetSlot;
 import com.hackathon.app.domain.entity.UserPetEquipment;
@@ -19,6 +22,12 @@ import org.mapstruct.MappingTarget;
 
 @Mapper(config = MappingConfig.class)
 public interface PetMapper {
+
+    /** Новый личный образ из уже проверенных вещей. */
+    PetSavedLook toSavedLook(UUID userId, String name, String activity, Map<String, String> outfit);
+
+    /** Личный образ без сущности и аудита в HTTP-ответе. */
+    PetSavedLookResponse toSavedLookResponse(PetSavedLook look);
 
 	/** Запомнить, когда бобра развеселили. */
 	void cheer(@MappingTarget AppUser user, java.time.Instant petCheeredAt);

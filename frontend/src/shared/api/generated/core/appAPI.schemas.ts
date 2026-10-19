@@ -1411,6 +1411,27 @@ export interface PetItemResponse {
   art?: PetArtResponse;
 }
 
+export type PetSaveLookRequestOutfit = {[key: string]: string};
+
+export interface PetSaveLookRequest {
+  /**
+     * @minLength 0
+     * @maxLength 30
+     */
+  name: string;
+  activity: string;
+  outfit: PetSaveLookRequestOutfit;
+}
+
+export type PetSavedLookResponseOutfit = {[key: string]: string};
+
+export interface PetSavedLookResponse {
+  id: string;
+  name: string;
+  activity: string;
+  outfit: PetSavedLookResponseOutfit;
+}
+
 /**
  * Отказ по заявке; тело можно не передавать
  */
@@ -1512,6 +1533,22 @@ export interface ShopItemResponse {
   owned: boolean;
   /** У эксклюзива — за что дают, например «Дают за 10 встреч»; иначе null */
   hint?: string;
+  /** Вещь последней волны каталога */
+  isNew: boolean;
+  /** Эксклюзив за достижение */
+  legendary: boolean;
+}
+
+export interface PetBuySetRequest {
+  /**
+     * Вещи в формате слот:код
+     * @minItems 0
+     * @maxItems 100
+     * @items.minLength 1
+     */
+  items: string[];
+  /** Добавить купленные вещи к текущему образу */
+  wear: boolean;
 }
 
 export interface NotificationPollResponse {
@@ -2426,6 +2463,45 @@ export interface PingResponse {
   time?: string;
 }
 
+export interface BundleCategoryResponse {
+  /** Код категории. */
+  code: string;
+  /** Название категории. */
+  label: string;
+}
+
+/**
+ * Полный образ: слот → вещь.
+ */
+export type ShopBundleResponseOutfit = {[key: string]: string};
+
+export interface ShopBundleResponse {
+  /** Код комплекта. */
+  code: string;
+  /** Название комплекта. */
+  label: string;
+  /** Спортивная категория. */
+  category: BundleCategoryResponse;
+  /** Полный образ: слот → вещь. */
+  outfit: ShopBundleResponseOutfit;
+  /** Инвентарь или none. */
+  activity: string;
+  /** Вещи комплекта без пустого инвентаря. */
+  items: ShopItemResponse[];
+  /** Цена недостающих вещей до скидки. */
+  fullPrice: number;
+  /** Цена недостающих вещей со скидкой 20% при двух и более. */
+  price: number;
+  /** Количество недостающих вещей. */
+  missingCount: number;
+  /** Все вещи уже принадлежат пользователю. */
+  owned: boolean;
+  /** Есть недоступный эксклюзив. */
+  locked: boolean;
+  /** Как получить недостающий эксклюзив. */
+  lockedReason?: string;
+}
+
 /**
  * ACTIVITY — поле activity, OUTFIT — ключ в outfit
  */
@@ -2962,6 +3038,115 @@ export interface AdminAwardsResponse {
   award?: OrganizationAwardResponse;
   /** Лучшие кандидаты по убыванию счёта, до 5 */
   candidates: AwardCandidateResponse[];
+}
+
+/**
+ * Новое название вида спорта
+ */
+export interface RenameSportRequest {
+  /**
+     * Название
+     * @minLength 0
+     * @maxLength 100
+     */
+  name: string;
+}
+
+/**
+ * Состояние в справочнике
+ */
+export type AdminSportResponseStatus = typeof AdminSportResponseStatus[keyof typeof AdminSportResponseStatus];
+
+
+export const AdminSportResponseStatus = {
+  ACTIVE: 'ACTIVE',
+  PENDING: 'PENDING',
+  HIDDEN: 'HIDDEN',
+  MERGED: 'MERGED',
+} as const;
+
+/**
+ * Вид спорта в админке: статус модерации, картинка и сколько мероприятий на него опираются
+ */
+export interface AdminSportResponse {
+  id: string;
+  /** Название */
+  name: string;
+  /** Код для URL */
+  slug: string;
+  /** Добавлен пользователем, а не админом или из исходного набора */
+  custom: boolean;
+  /** Состояние в справочнике */
+  status: AdminSportResponseStatus;
+  /** Есть ли своя картинка; false — в интерфейсе показывается заглушка */
+  hasImage: boolean;
+  /** Картинка загружена админом (её можно убрать); false — встроенная или нет вовсе */
+  imageUploaded: boolean;
+  /** Ссылка на картинку; null, если своей картинки нет */
+  imageUrl?: string;
+  /** Точка фокуса картинки */
+  imageFocus: FocusPoint;
+  /** Мероприятий с этим видом (во всех статусах) */
+  eventsCount: number;
+  /** Кто предложил свой вид; null — из справочника или добавлен админом */
+  proposedBy?: UserShortResponse;
+  /** Причина отключения или слияния */
+  moderationReason?: string;
+  /** Название вида, с которым объединён; только у MERGED */
+  mergedIntoName?: string;
+  /** Когда админ принял решение */
+  moderatedAt?: string;
+  createdAt: string;
+}
+
+/**
+ * Объединение вида спорта с другим: мероприятия и интересы переходят в целевой вид
+ */
+export interface MergeSportRequest {
+  /** В какой вид переносим */
+  targetId: string;
+  /**
+     * Причина; без неё подставляется «Дубликат вида …»
+     * @minLength 0
+     * @maxLength 1000
+     */
+  reason?: string;
+}
+
+/**
+ * Отключение или отклонение вида спорта
+ */
+export interface HideSportRequest {
+  /**
+     * Причина для админов и автора предложения
+     * @minLength 0
+     * @maxLength 1000
+     */
+  reason: string;
+}
+
+export interface PageResponseAdminSportResponse {
+  items?: AdminSportResponse[];
+  page?: number;
+  size?: number;
+  totalElements?: number;
+  totalPages?: number;
+}
+
+/**
+ * Счётчики вкладок админки «Виды спорта»
+ */
+export interface AdminSportCountsResponse {
+  /** Всего видов */
+  all: number;
+  /** Активные: справочник и одобренные */
+  catalog: number;
+  /** Ждут проверки админа */
+  pending: number;
+  /** Скрытые и объединённые */
+  hidden: number;
+  /** Без своей картинки */
+  withoutImage: number;
 }
 
 export type UsersUploadAvatarBody = {
@@ -3627,5 +3812,66 @@ export type AdminListAwardsParams = {
  * Месяц в виде 2026-09
  */
 month?: string;
+};
+
+export type AdminReplaceSportImageParams = {
+/**
+ * Точка фокуса по горизонтали, % (0–100)
+ */
+focusX?: number;
+/**
+ * Точка фокуса по вертикали, % (0–100)
+ */
+focusY?: number;
+};
+
+export type AdminReplaceSportImageBody = {
+  /** PNG-картинка */
+  file: Blob | File;
+};
+
+export type AdminListSportsParams = {
+status?: AdminListSportsStatusItem[];
+/**
+ * Только виды без своей картинки
+ */
+withoutImage?: boolean;
+searchText?: string;
+page?: number;
+size?: number;
+};
+
+export type AdminListSportsStatusItem = typeof AdminListSportsStatusItem[keyof typeof AdminListSportsStatusItem];
+
+
+export const AdminListSportsStatusItem = {
+  ACTIVE: 'ACTIVE',
+  PENDING: 'PENDING',
+  HIDDEN: 'HIDDEN',
+  MERGED: 'MERGED',
+} as const;
+
+export type AdminCreateSportParams = {
+/**
+ * Название вида
+ */
+name: string;
+/**
+ * Точка фокуса по горизонтали, % (0–100)
+ */
+focusX?: number;
+/**
+ * Точка фокуса по вертикали, % (0–100)
+ */
+focusY?: number;
+/**
+ * Сразу показывать в справочнике
+ */
+published?: boolean;
+};
+
+export type AdminCreateSportBody = {
+  /** PNG-картинка */
+  file?: Blob | File;
 };
 

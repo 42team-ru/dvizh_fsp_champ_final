@@ -1,4 +1,3 @@
-import { WardrobeDialog } from "@/features/pet-wardrobe/ui/wardrobe-dialog";
 import { BrandPlate } from "@/shared/components/ui/brand-plate";
 import { UserAvatar } from "@/shared/components/ui/user-avatar";
 import { useState } from "react";
@@ -257,11 +256,9 @@ function Wardrobe() {
               {w.slot}
             </span>
             {!owner && (
-              <WardrobeDialog>
-                <Button variant="soft" className="h-10 w-full px-5 text-xs">
-                  Сменить
-                </Button>
-              </WardrobeDialog>
+              <Button asChild variant="soft" className="min-h-11 w-full px-5 text-xs">
+                <Link to="/profile/wardrobe">Сменить</Link>
+              </Button>
             )}
           </div>
         ))}
@@ -322,7 +319,7 @@ export function ProfileMobile() {
       <Gallery />
       <Pet />
       <Attendance />
-      {!owner && <AchievementsStrip />}
+      <AchievementsStrip />
       <Wardrobe />
       {!owner && <Settings />}
       <MobileTabBar current={owner ? "feed" : "profile"} />

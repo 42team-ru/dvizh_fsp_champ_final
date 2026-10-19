@@ -28,28 +28,39 @@ import type {
   AdminAwardsResponse,
   AdminCreatePetItemBody,
   AdminCreatePetItemParams,
+  AdminCreateSportBody,
+  AdminCreateSportParams,
   AdminEventResponse,
   AdminListAwardsParams,
   AdminListEventsParams,
   AdminListOrganizationsParams,
+  AdminListSportsParams,
   AdminListUsersParams,
   AdminOrganizationResponse,
   AdminPreviewPetItemBody,
   AdminPreviewPetItemParams,
+  AdminReplaceSportImageBody,
+  AdminReplaceSportImageParams,
+  AdminSportCountsResponse,
+  AdminSportResponse,
   AdminStatsParams,
   AdminStatsResponse,
   CommentResponse,
   HideCommentRequest,
+  HideSportRequest,
+  MergeSportRequest,
   ModerateEventRequest,
   OrganizationAwardResponse,
   PageResponseAdminEventResponse,
   PageResponseAdminOrganizationResponse,
+  PageResponseAdminSportResponse,
   PageResponseAdminUserResponse,
   PetArtPreviewResponse,
   PetFitRequest,
   PetItemResponse,
   ProblemDetail,
-  RejectOrganizationRequest
+  RejectOrganizationRequest,
+  RenameSportRequest
 } from '../appAPI.schemas';
 
 import { authMutator } from '../../../mutators/authMutator';
@@ -2208,3 +2219,1144 @@ export const useAdminDeleteEvent = <TError = ErrorType<ProblemDetail>,
       > => {
       return useMutation(getAdminDeleteEventMutationOptions(options), queryClient);
     }
+    export type adminRenameSportResponse404 = {
+  data: ProblemDetail
+  status: 404
+}
+
+export type adminRenameSportResponse409 = {
+  data: ProblemDetail
+  status: 409
+}
+
+;
+export type adminRenameSportResponseError = (adminRenameSportResponse404 | adminRenameSportResponse409) & {
+  headers: Headers;
+};
+
+export type adminRenameSportResponse = (adminRenameSportResponseError)
+
+export const getAdminRenameSportUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/sports/${id}`
+}
+
+/**
+ * @summary Переименовать вид спорта
+ */
+export const adminRenameSport = async (id: string,
+    renameSportRequest: RenameSportRequest, options?: Parameters<typeof authMutator>[1]): Promise<adminRenameSportResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return authMutator<adminRenameSportResponse>(getAdminRenameSportUrl(id),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(renameSportRequest)
+  }
+);}
+
+
+
+
+
+export const getAdminRenameSportMutationKey = () => ['adminRenameSport'] as const;
+
+export const getAdminRenameSportMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminRenameSport>>, TError,AdminRenameSportMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminRenameSport>>, TError,AdminRenameSportMutationVariables, TContext> => {
+
+const mutationKey = getAdminRenameSportMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminRenameSport>>, AdminRenameSportMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  adminRenameSport(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminRenameSportMutationResult = NonNullable<Awaited<ReturnType<typeof adminRenameSport>>>
+    export type AdminRenameSportMutationBody = RenameSportRequest
+    export type AdminRenameSportMutationError = ErrorType<ProblemDetail>
+    export type AdminRenameSportMutationVariables = {id: string;data: RenameSportRequest}
+
+    /**
+ * @summary Переименовать вид спорта
+ */
+export const useAdminRenameSport = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminRenameSport>>, TError,AdminRenameSportMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adminRenameSport>>,
+        TError,
+        AdminRenameSportMutationVariables,
+        TContext
+      > => {
+      return useMutation(getAdminRenameSportMutationOptions(options), queryClient);
+    }
+    export type adminDeleteSportResponse204 = {
+  data: void
+  status: 204
+}
+
+export type adminDeleteSportResponse404 = {
+  data: ProblemDetail
+  status: 404
+}
+
+export type adminDeleteSportResponse409 = {
+  data: ProblemDetail
+  status: 409
+}
+
+export type adminDeleteSportResponseSuccess = (adminDeleteSportResponse204) & {
+  headers: Headers;
+};
+export type adminDeleteSportResponseError = (adminDeleteSportResponse404 | adminDeleteSportResponse409) & {
+  headers: Headers;
+};
+
+export type adminDeleteSportResponse = (adminDeleteSportResponseSuccess | adminDeleteSportResponseError)
+
+export const getAdminDeleteSportUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/sports/${id}`
+}
+
+/**
+ * Только если на вид нет ссылок (мероприятия, интересы, анкеты, слитые виды); иначе его скрывают или объединяют.
+ * @summary Удалить неиспользуемый вид
+ */
+export const adminDeleteSport = async (id: string, options?: Parameters<typeof authMutator>[1]): Promise<adminDeleteSportResponse> => {
+
+  return authMutator<adminDeleteSportResponse>(getAdminDeleteSportUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getAdminDeleteSportMutationKey = () => ['adminDeleteSport'] as const;
+
+export const getAdminDeleteSportMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminDeleteSport>>, TError,AdminDeleteSportMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminDeleteSport>>, TError,AdminDeleteSportMutationVariables, TContext> => {
+
+const mutationKey = getAdminDeleteSportMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminDeleteSport>>, AdminDeleteSportMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  adminDeleteSport(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminDeleteSportMutationResult = NonNullable<Awaited<ReturnType<typeof adminDeleteSport>>>
+
+    export type AdminDeleteSportMutationError = ErrorType<ProblemDetail>
+    export type AdminDeleteSportMutationVariables = {id: string}
+
+    /**
+ * @summary Удалить неиспользуемый вид
+ */
+export const useAdminDeleteSport = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminDeleteSport>>, TError,AdminDeleteSportMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adminDeleteSport>>,
+        TError,
+        AdminDeleteSportMutationVariables,
+        TContext
+      > => {
+      return useMutation(getAdminDeleteSportMutationOptions(options), queryClient);
+    }
+    export type adminReplaceSportImageResponse400 = {
+  data: ProblemDetail
+  status: 400
+}
+
+export type adminReplaceSportImageResponse404 = {
+  data: ProblemDetail
+  status: 404
+}
+
+;
+export type adminReplaceSportImageResponseError = (adminReplaceSportImageResponse400 | adminReplaceSportImageResponse404) & {
+  headers: Headers;
+};
+
+export type adminReplaceSportImageResponse = (adminReplaceSportImageResponseError)
+
+export const getAdminReplaceSportImageUrl = (id: string,
+    params?: AdminReplaceSportImageParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/sports/${id}/image?${stringifiedParams}` : `/api/admin/sports/${id}/image`
+}
+
+/**
+ * Квадратный PNG от 256×256 до 2 МБ. Прежняя загруженная картинка удаляется.
+ * @summary Загрузить или заменить PNG вида спорта
+ */
+export const adminReplaceSportImage = async (id: string,
+    adminReplaceSportImageBody?: AdminReplaceSportImageBody,
+    params?: AdminReplaceSportImageParams, options?: Parameters<typeof authMutator>[1]): Promise<adminReplaceSportImageResponse> => {
+    const formData = new FormData();
+if(adminReplaceSportImageBody?.file !== undefined) {
+ formData.append(`file`, adminReplaceSportImageBody.file);
+ }
+
+  return authMutator<adminReplaceSportImageResponse>(getAdminReplaceSportImageUrl(id,params),
+  {
+    ...options,
+    method: 'PUT'
+    ,
+    body: formData
+  }
+);}
+
+
+
+
+
+export const getAdminReplaceSportImageMutationKey = () => ['adminReplaceSportImage'] as const;
+
+export const getAdminReplaceSportImageMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminReplaceSportImage>>, TError,AdminReplaceSportImageMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminReplaceSportImage>>, TError,AdminReplaceSportImageMutationVariables, TContext> => {
+
+const mutationKey = getAdminReplaceSportImageMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminReplaceSportImage>>, AdminReplaceSportImageMutationVariables> = (props) => {
+          const {id,data,params} = props ?? {};
+
+          return  adminReplaceSportImage(id,data,params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminReplaceSportImageMutationResult = NonNullable<Awaited<ReturnType<typeof adminReplaceSportImage>>>
+    export type AdminReplaceSportImageMutationBody = AdminReplaceSportImageBody | undefined
+    export type AdminReplaceSportImageMutationError = ErrorType<ProblemDetail>
+    export type AdminReplaceSportImageMutationVariables = {id: string;data?: AdminReplaceSportImageBody;params?: AdminReplaceSportImageParams}
+
+    /**
+ * @summary Загрузить или заменить PNG вида спорта
+ */
+export const useAdminReplaceSportImage = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminReplaceSportImage>>, TError,AdminReplaceSportImageMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adminReplaceSportImage>>,
+        TError,
+        AdminReplaceSportImageMutationVariables,
+        TContext
+      > => {
+      return useMutation(getAdminReplaceSportImageMutationOptions(options), queryClient);
+    }
+    export type adminRemoveSportImageResponse404 = {
+  data: ProblemDetail
+  status: 404
+}
+
+;
+export type adminRemoveSportImageResponseError = (adminRemoveSportImageResponse404) & {
+  headers: Headers;
+};
+
+export type adminRemoveSportImageResponse = (adminRemoveSportImageResponseError)
+
+export const getAdminRemoveSportImageUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/sports/${id}/image`
+}
+
+/**
+ * Вид возвращается к встроенной иллюстрации или заглушке.
+ * @summary Убрать загруженный PNG
+ */
+export const adminRemoveSportImage = async (id: string, options?: Parameters<typeof authMutator>[1]): Promise<adminRemoveSportImageResponse> => {
+
+  return authMutator<adminRemoveSportImageResponse>(getAdminRemoveSportImageUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getAdminRemoveSportImageMutationKey = () => ['adminRemoveSportImage'] as const;
+
+export const getAdminRemoveSportImageMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminRemoveSportImage>>, TError,AdminRemoveSportImageMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminRemoveSportImage>>, TError,AdminRemoveSportImageMutationVariables, TContext> => {
+
+const mutationKey = getAdminRemoveSportImageMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminRemoveSportImage>>, AdminRemoveSportImageMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  adminRemoveSportImage(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminRemoveSportImageMutationResult = NonNullable<Awaited<ReturnType<typeof adminRemoveSportImage>>>
+
+    export type AdminRemoveSportImageMutationError = ErrorType<ProblemDetail>
+    export type AdminRemoveSportImageMutationVariables = {id: string}
+
+    /**
+ * @summary Убрать загруженный PNG
+ */
+export const useAdminRemoveSportImage = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminRemoveSportImage>>, TError,AdminRemoveSportImageMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adminRemoveSportImage>>,
+        TError,
+        AdminRemoveSportImageMutationVariables,
+        TContext
+      > => {
+      return useMutation(getAdminRemoveSportImageMutationOptions(options), queryClient);
+    }
+    export type adminListSportsResponse200 = {
+  data: PageResponseAdminSportResponse
+  status: 200
+}
+
+export type adminListSportsResponseSuccess = (adminListSportsResponse200) & {
+  headers: Headers;
+};
+;
+
+export type adminListSportsResponse = (adminListSportsResponseSuccess)
+
+export const getAdminListSportsUrl = (params?: AdminListSportsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    const explodeParameters = ["status"];
+
+    if (Array.isArray(value) && explodeParameters.includes(key)) {
+      value.forEach((v) => {
+        normalizedParams.append(key, v === null ? 'null' : String(v));
+      });
+      return;
+    }
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/sports?${stringifiedParams}` : `/api/admin/sports`
+}
+
+/**
+ * По алфавиту. status можно повторить (ACTIVE, PENDING, HIDDEN, MERGED); withoutImage — только без своей картинки.
+ * @summary Виды спорта во всех статусах
+ */
+export const adminListSports = async (params?: AdminListSportsParams, options?: Parameters<typeof authMutator>[1]): Promise<adminListSportsResponse> => {
+
+  return authMutator<adminListSportsResponse>(getAdminListSportsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getAdminListSportsQueryKey = (params?: AdminListSportsParams,) => {
+    return [
+    `/api/admin/sports`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getAdminListSportsQueryOptions = <TData = Awaited<ReturnType<typeof adminListSports>>, TError = ErrorType<unknown>>(params?: AdminListSportsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListSports>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getAdminListSportsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof adminListSports>>> = ({ signal }) => adminListSports(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof adminListSports>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type AdminListSportsQueryResult = NonNullable<Awaited<ReturnType<typeof adminListSports>>>
+export type AdminListSportsQueryError = ErrorType<unknown>
+
+
+export function useAdminListSports<TData = Awaited<ReturnType<typeof adminListSports>>, TError = ErrorType<unknown>>(
+ params: undefined |  AdminListSportsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListSports>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminListSports>>,
+          TError,
+          Awaited<ReturnType<typeof adminListSports>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useAdminListSports<TData = Awaited<ReturnType<typeof adminListSports>>, TError = ErrorType<unknown>>(
+ params?: AdminListSportsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListSports>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminListSports>>,
+          TError,
+          Awaited<ReturnType<typeof adminListSports>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useAdminListSports<TData = Awaited<ReturnType<typeof adminListSports>>, TError = ErrorType<unknown>>(
+ params?: AdminListSportsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListSports>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Виды спорта во всех статусах
+ */
+
+export function useAdminListSports<TData = Awaited<ReturnType<typeof adminListSports>>, TError = ErrorType<unknown>>(
+ params?: AdminListSportsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListSports>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getAdminListSportsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type adminCreateSportResponse201 = {
+  data: AdminSportResponse
+  status: 201
+}
+
+export type adminCreateSportResponse400 = {
+  data: ProblemDetail
+  status: 400
+}
+
+export type adminCreateSportResponse409 = {
+  data: ProblemDetail
+  status: 409
+}
+
+export type adminCreateSportResponseSuccess = (adminCreateSportResponse201) & {
+  headers: Headers;
+};
+export type adminCreateSportResponseError = (adminCreateSportResponse400 | adminCreateSportResponse409) & {
+  headers: Headers;
+};
+
+export type adminCreateSportResponse = (adminCreateSportResponseSuccess | adminCreateSportResponseError)
+
+export const getAdminCreateSportUrl = (params: AdminCreateSportParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/sports?${stringifiedParams}` : `/api/admin/sports`
+}
+
+/**
+ * Квадратный PNG от 256×256 до 2 МБ. published=false — черновик: вид скрыт, пока его не вернут в справочник.
+ * @summary Добавить вид спорта (PNG необязателен)
+ */
+export const adminCreateSport = async (params: AdminCreateSportParams,
+    adminCreateSportBody?: AdminCreateSportBody, options?: Parameters<typeof authMutator>[1]): Promise<adminCreateSportResponse> => {
+    const formData = new FormData();
+if(adminCreateSportBody?.file !== undefined) {
+ formData.append(`file`, adminCreateSportBody.file);
+ }
+
+  return authMutator<adminCreateSportResponse>(getAdminCreateSportUrl(params),
+  {
+    ...options,
+    method: 'POST'
+    ,
+    body: formData
+  }
+);}
+
+
+
+
+
+export const getAdminCreateSportMutationKey = () => ['adminCreateSport'] as const;
+
+export const getAdminCreateSportMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminCreateSport>>, TError,AdminCreateSportMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminCreateSport>>, TError,AdminCreateSportMutationVariables, TContext> => {
+
+const mutationKey = getAdminCreateSportMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminCreateSport>>, AdminCreateSportMutationVariables> = (props) => {
+          const {params,data} = props ?? {};
+
+          return  adminCreateSport(params,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminCreateSportMutationResult = NonNullable<Awaited<ReturnType<typeof adminCreateSport>>>
+    export type AdminCreateSportMutationBody = AdminCreateSportBody | undefined
+    export type AdminCreateSportMutationError = ErrorType<ProblemDetail>
+    export type AdminCreateSportMutationVariables = {params: AdminCreateSportParams;data?: AdminCreateSportBody}
+
+    /**
+ * @summary Добавить вид спорта (PNG необязателен)
+ */
+export const useAdminCreateSport = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminCreateSport>>, TError,AdminCreateSportMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adminCreateSport>>,
+        TError,
+        AdminCreateSportMutationVariables,
+        TContext
+      > => {
+      return useMutation(getAdminCreateSportMutationOptions(options), queryClient);
+    }
+    export type adminRestoreSportResponse404 = {
+  data: ProblemDetail
+  status: 404
+}
+
+export type adminRestoreSportResponse409 = {
+  data: ProblemDetail
+  status: 409
+}
+
+;
+export type adminRestoreSportResponseError = (adminRestoreSportResponse404 | adminRestoreSportResponse409) & {
+  headers: Headers;
+};
+
+export type adminRestoreSportResponse = (adminRestoreSportResponseError)
+
+export const getAdminRestoreSportUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/sports/${id}/restore`
+}
+
+/**
+ * @summary Вернуть отключённый вид в справочник
+ */
+export const adminRestoreSport = async (id: string, options?: Parameters<typeof authMutator>[1]): Promise<adminRestoreSportResponse> => {
+
+  return authMutator<adminRestoreSportResponse>(getAdminRestoreSportUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getAdminRestoreSportMutationKey = () => ['adminRestoreSport'] as const;
+
+export const getAdminRestoreSportMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminRestoreSport>>, TError,AdminRestoreSportMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminRestoreSport>>, TError,AdminRestoreSportMutationVariables, TContext> => {
+
+const mutationKey = getAdminRestoreSportMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminRestoreSport>>, AdminRestoreSportMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  adminRestoreSport(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminRestoreSportMutationResult = NonNullable<Awaited<ReturnType<typeof adminRestoreSport>>>
+
+    export type AdminRestoreSportMutationError = ErrorType<ProblemDetail>
+    export type AdminRestoreSportMutationVariables = {id: string}
+
+    /**
+ * @summary Вернуть отключённый вид в справочник
+ */
+export const useAdminRestoreSport = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminRestoreSport>>, TError,AdminRestoreSportMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adminRestoreSport>>,
+        TError,
+        AdminRestoreSportMutationVariables,
+        TContext
+      > => {
+      return useMutation(getAdminRestoreSportMutationOptions(options), queryClient);
+    }
+    export type adminMergeSportResponse400 = {
+  data: ProblemDetail
+  status: 400
+}
+
+export type adminMergeSportResponse404 = {
+  data: ProblemDetail
+  status: 404
+}
+
+export type adminMergeSportResponse409 = {
+  data: ProblemDetail
+  status: 409
+}
+
+;
+export type adminMergeSportResponseError = (adminMergeSportResponse400 | adminMergeSportResponse404 | adminMergeSportResponse409) & {
+  headers: Headers;
+};
+
+export type adminMergeSportResponse = (adminMergeSportResponseError)
+
+export const getAdminMergeSportUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/sports/${id}/merge`
+}
+
+/**
+ * Мероприятия, интересы людей и анкеты организаций переходят в целевой вид; этот получает статус MERGED.
+ * @summary Объединить дубль с другим видом
+ */
+export const adminMergeSport = async (id: string,
+    mergeSportRequest: MergeSportRequest, options?: Parameters<typeof authMutator>[1]): Promise<adminMergeSportResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return authMutator<adminMergeSportResponse>(getAdminMergeSportUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(mergeSportRequest)
+  }
+);}
+
+
+
+
+
+export const getAdminMergeSportMutationKey = () => ['adminMergeSport'] as const;
+
+export const getAdminMergeSportMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminMergeSport>>, TError,AdminMergeSportMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminMergeSport>>, TError,AdminMergeSportMutationVariables, TContext> => {
+
+const mutationKey = getAdminMergeSportMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminMergeSport>>, AdminMergeSportMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  adminMergeSport(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminMergeSportMutationResult = NonNullable<Awaited<ReturnType<typeof adminMergeSport>>>
+    export type AdminMergeSportMutationBody = MergeSportRequest
+    export type AdminMergeSportMutationError = ErrorType<ProblemDetail>
+    export type AdminMergeSportMutationVariables = {id: string;data: MergeSportRequest}
+
+    /**
+ * @summary Объединить дубль с другим видом
+ */
+export const useAdminMergeSport = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminMergeSport>>, TError,AdminMergeSportMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adminMergeSport>>,
+        TError,
+        AdminMergeSportMutationVariables,
+        TContext
+      > => {
+      return useMutation(getAdminMergeSportMutationOptions(options), queryClient);
+    }
+    export type adminHideSportResponse404 = {
+  data: ProblemDetail
+  status: 404
+}
+
+export type adminHideSportResponse409 = {
+  data: ProblemDetail
+  status: 409
+}
+
+;
+export type adminHideSportResponseError = (adminHideSportResponse404 | adminHideSportResponse409) & {
+  headers: Headers;
+};
+
+export type adminHideSportResponse = (adminHideSportResponseError)
+
+export const getAdminHideSportUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/sports/${id}/hide`
+}
+
+/**
+ * Пропадает из справочника, новые мероприятия с ним не создаются; уже созданные остаются.
+ * @summary Отключить или отклонить вид с причиной
+ */
+export const adminHideSport = async (id: string,
+    hideSportRequest: HideSportRequest, options?: Parameters<typeof authMutator>[1]): Promise<adminHideSportResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return authMutator<adminHideSportResponse>(getAdminHideSportUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(hideSportRequest)
+  }
+);}
+
+
+
+
+
+export const getAdminHideSportMutationKey = () => ['adminHideSport'] as const;
+
+export const getAdminHideSportMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminHideSport>>, TError,AdminHideSportMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminHideSport>>, TError,AdminHideSportMutationVariables, TContext> => {
+
+const mutationKey = getAdminHideSportMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminHideSport>>, AdminHideSportMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  adminHideSport(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminHideSportMutationResult = NonNullable<Awaited<ReturnType<typeof adminHideSport>>>
+    export type AdminHideSportMutationBody = HideSportRequest
+    export type AdminHideSportMutationError = ErrorType<ProblemDetail>
+    export type AdminHideSportMutationVariables = {id: string;data: HideSportRequest}
+
+    /**
+ * @summary Отключить или отклонить вид с причиной
+ */
+export const useAdminHideSport = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminHideSport>>, TError,AdminHideSportMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adminHideSport>>,
+        TError,
+        AdminHideSportMutationVariables,
+        TContext
+      > => {
+      return useMutation(getAdminHideSportMutationOptions(options), queryClient);
+    }
+    export type adminApproveSportResponse404 = {
+  data: ProblemDetail
+  status: 404
+}
+
+export type adminApproveSportResponse409 = {
+  data: ProblemDetail
+  status: 409
+}
+
+;
+export type adminApproveSportResponseError = (adminApproveSportResponse404 | adminApproveSportResponse409) & {
+  headers: Headers;
+};
+
+export type adminApproveSportResponse = (adminApproveSportResponseError)
+
+export const getAdminApproveSportUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/sports/${id}/approve`
+}
+
+/**
+ * @summary Одобрить свой вид пользователя
+ */
+export const adminApproveSport = async (id: string, options?: Parameters<typeof authMutator>[1]): Promise<adminApproveSportResponse> => {
+
+  return authMutator<adminApproveSportResponse>(getAdminApproveSportUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getAdminApproveSportMutationKey = () => ['adminApproveSport'] as const;
+
+export const getAdminApproveSportMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminApproveSport>>, TError,AdminApproveSportMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminApproveSport>>, TError,AdminApproveSportMutationVariables, TContext> => {
+
+const mutationKey = getAdminApproveSportMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminApproveSport>>, AdminApproveSportMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  adminApproveSport(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminApproveSportMutationResult = NonNullable<Awaited<ReturnType<typeof adminApproveSport>>>
+
+    export type AdminApproveSportMutationError = ErrorType<ProblemDetail>
+    export type AdminApproveSportMutationVariables = {id: string}
+
+    /**
+ * @summary Одобрить свой вид пользователя
+ */
+export const useAdminApproveSport = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminApproveSport>>, TError,AdminApproveSportMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adminApproveSport>>,
+        TError,
+        AdminApproveSportMutationVariables,
+        TContext
+      > => {
+      return useMutation(getAdminApproveSportMutationOptions(options), queryClient);
+    }
+    export type adminSportCountsResponse200 = {
+  data: AdminSportCountsResponse
+  status: 200
+}
+
+export type adminSportCountsResponseSuccess = (adminSportCountsResponse200) & {
+  headers: Headers;
+};
+;
+
+export type adminSportCountsResponse = (adminSportCountsResponseSuccess)
+
+export const getAdminSportCountsUrl = () => {
+
+
+
+
+  return `/api/admin/sports/counts`
+}
+
+/**
+ * @summary Счётчики вкладок видов спорта
+ */
+export const adminSportCounts = async ( options?: Parameters<typeof authMutator>[1]): Promise<adminSportCountsResponse> => {
+
+  return authMutator<adminSportCountsResponse>(getAdminSportCountsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getAdminSportCountsQueryKey = () => {
+    return [
+    `/api/admin/sports/counts`
+    ] as const;
+    }
+
+
+export const getAdminSportCountsQueryOptions = <TData = Awaited<ReturnType<typeof adminSportCounts>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminSportCounts>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getAdminSportCountsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof adminSportCounts>>> = ({ signal }) => adminSportCounts({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof adminSportCounts>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type AdminSportCountsQueryResult = NonNullable<Awaited<ReturnType<typeof adminSportCounts>>>
+export type AdminSportCountsQueryError = ErrorType<unknown>
+
+
+export function useAdminSportCounts<TData = Awaited<ReturnType<typeof adminSportCounts>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminSportCounts>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminSportCounts>>,
+          TError,
+          Awaited<ReturnType<typeof adminSportCounts>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useAdminSportCounts<TData = Awaited<ReturnType<typeof adminSportCounts>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminSportCounts>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminSportCounts>>,
+          TError,
+          Awaited<ReturnType<typeof adminSportCounts>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useAdminSportCounts<TData = Awaited<ReturnType<typeof adminSportCounts>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminSportCounts>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Счётчики вкладок видов спорта
+ */
+
+export function useAdminSportCounts<TData = Awaited<ReturnType<typeof adminSportCounts>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminSportCounts>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getAdminSportCountsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+

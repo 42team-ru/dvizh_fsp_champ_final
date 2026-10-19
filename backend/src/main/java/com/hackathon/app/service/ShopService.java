@@ -50,7 +50,8 @@ public class ShopService {
 						.map(item -> new ShopItemResponse(slot.getCode() + ":" + item.getCode(), slot.getCode(),
 								item.getCode(), item.getLabel(), item.getPrice(), item.getKind(),
 								owned.contains(item.getId()),
-								item.getKind() == PetItemKind.EXCLUSIVE ? "Дают " + item.getUnlockHint() : null)))
+								item.getKind() == PetItemKind.EXCLUSIVE ? "Дают " + item.getUnlockHint() : null,
+                                PetCatalogService.isNew(slot.getCode(), item.getCode()), item.getKind() == PetItemKind.EXCLUSIVE)))
 				.toList();
 	}
 
@@ -72,7 +73,7 @@ public class ShopService {
 				"Покупка: " + item.getLabel(), null, null, time.now());
 		userItems.save(mapper.toUserItem(userId, item.getId()));
 		return new ShopItemResponse(slot.getCode() + ":" + item.getCode(), slot.getCode(), item.getCode(),
-				item.getLabel(), item.getPrice(), item.getKind(), true, null);
+				item.getLabel(), item.getPrice(), item.getKind(), true, null, PetCatalogService.isNew(slot.getCode(), item.getCode()), false);
 	}
 
 	/** Выдать вещь (награда за достижение, демо); повторная выдача ничего не меняет. id — «слот:код». */

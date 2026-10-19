@@ -1,6 +1,6 @@
-# Бобр: контракт backend, этап 1
+# Бобр: контракт backend и гардероба
 
-Настроение вычисляет `PetMoodService`; пользователь сохраняет имя, одежду и инвентарь. Все встроенные коды гардероба сохранены. Растровых вещей и администрирования каталога больше нет: SVG рисует frontend. Подключение нового контракта к интерфейсу — этап 2; текущая страница остаётся конструктором с предпросмотром в URL.
+Настроение вычисляет `PetMoodService`; пользователь сохраняет имя, одежду, инвентарь и необязательный фон. Встроенные вещи рисует frontend в SVG; их прежние коды сохранены. Гардероб профиля позволяет примерять, покупать вещи и комплекты, выбирать фон и сохранять образ. Дополнительные SVG-вещи администратор загружает через существующий импорт.
 
 ## API
 
@@ -52,12 +52,36 @@ PUT целиком принимает обязательные `activity` и `ou
 
 | Метод и путь | operationId | Ответ / действие |
 |---|---|---|
-| GET /api/pets/shop | pets_shop | Все вещи: `id` (слот:код), `slot`, `code`, `label`, `price`, `kind` (BASE/SHOP/EXCLUSIVE), `owned`, `hint` («Дают за 10 встреч» у эксклюзивов) |
+| GET /api/pets/shop | pets_shop | Все вещи: `id` (слот:код), `slot`, `code`, `label`, `price`, `kind` (BASE/SHOP/EXCLUSIVE), `owned`, `hint` («Дают за 10 встреч» у эксклюзивов), `isNew` (последняя волна каталога), `legendary` (`kind=EXCLUSIVE`) |
 | POST /api/pets/shop/{item}/buy | pets_buy | `item` = `слот:код`, например `hat:cap`. 409: «Не хватает монет: нужно 150, у тебя 90», «Эта вещь уже у тебя», «Эту вещь нельзя купить — её дают за …»; 404 — нет вещи |
+| GET /api/pets/shop/bundles | pets_bundles | Комплекты: `code`, `label`, `category: {code, label}`, полный `outfit`, `activity`, `items`, `fullPrice`, `price`, `missingCount`, `owned`, `locked`, `lockedReason` |
+| POST /api/pets/shop/bundles/{code}/buy | pets_buyBundle | Атомарно докупить недостающее и заменить образ целиком; ответ PetResponse. Только надеть уже своё — бесплатно |
 | GET /api/users/me/wallet | users_wallet | `coins`, `level` (1 + засчитанные встречи / 5, проведённая считается за две), `countedMeetings`, `energy` (0–5, встречи за 7 дней), `energyMax`, `entries` (20 последних операций) |
 | GET /api/users/me/achievements | users_achievements | 6 достижений: `progress`, `goal`, `unit`, `reward`, `earnedAt` |
 
-`PUT /api/users/me/pet` и `PUT …/slots/{slot}` теперь отвечают 409 с подсказкой, если вещь не куплена и не получена («Вещь «Кепка» ещё не твоя: купи её в магазине за 60 монет»). Базовые вещи: `activity:none`, `shirt:training`, `hat:headband`. В каталоге новая вещь `hat:crown` (корона организатора, эксклюзив). Статусы бобра дополнены `COINS_EARNED` и `ACHIEVEMENT_EARNED`.
+`PUT /api/users/me/pet` и `PUT …/slots/{slot}` отвечают 409 с подсказкой, если вещь не куплена и не получена («Вещь «Кепка» ещё не твоя: купи её в магазине за 60 монет»). Базовые вещи: `activity:none`, `shirt:training`, `hat:headband`, `background:meadow`. `hat:crown` — корона организатора, эксклюзив с собственным SVG. Статусы бобра дополнены `COINS_EARNED` и `ACHIEVEMENT_EARNED`.
+
+## Комплекты, спортивные категории и фоны
+
+48 комплектов распределены по 14 категориям; в каждой минимум два образа. `category.code` — стабильный ключ фильтра, `category.label` — русское название. В `football` входят общий футбол и все 11 ФК, в `hockey` — общий хоккей и все 9 ХК. Остальные коды: `basketball`, `running`, `volleyball`, `rackets`, `fitness`, `cycling`, `winter`, `water`, `martial`, `esports`, `chess`, `casual`.
+
+Скидка 20% применяется к сумме **недостающих** вещей, если их хотя бы две; округление вниз. BASE уже принадлежит всем, EXCLUSIVE блокирует покупку до достижения. Владение, скидка, блокировка, списание и надевание фона работают так же, как для одежды. Повторное надевание своего комплекта ничего не списывает.
+
+`background` («Фон») имеет kind `OUTFIT`: это необязательный сохраняемый элемент образа, а не активность. Новый enum и миграция не нужны: существующие `pet_slots`, `pet_items`, `user_pet_equipment` и `user_items` уже хранят произвольные слоты. Встроенный сид идемпотентно добавляет слоты и вещи и на PostgreSQL с `ddl-auto: validate`, и на H2.
+
+```json
+{"activity":"none","outfit":{"shirt":"running","bottom":"shorts","feet":"sneakers","background":"river"}}
+```
+
+`PUT /api/users/me/pet/slots/background` принимает `{"item":"river"}` / `{"item":null}`. Чужой платный фон → 409. При полной замене отсутствие `outfit.background` или null снимает фон; комплект без фона тоже его снимает. BASE-поляна доступна сразу, но автоматически не надевается: прежние прозрачные размещения сохранены.
+
+Фронт рисует фон в корневом `slot-background`, вне прыгающего/дышащего рига. Выбранный фон переключает viewBox на квадрат, с округлым контуром позади бобра. Общий рендерер используется в паспорте, гардеробе, карточках комплектов и маленьких значках. `BeaverItemPreview` показывает отдельную декорацию в плитке магазина/гардероба. Собственные SVG id декораций изолированы для каждого экземпляра.
+
+Вкладка «Комплекты» содержит фильтры категорий со счётчиками и «Все» по умолчанию; фокус и наведение примеряют образ. «Фон» показывает фоновые плитки; повторный выбор снимает фон. Платную вещь можно купить отдельно, после чего выбрать и сохранить образ. Покупка комплекта сразу надевает его на сервере.
+
+Демо: Виктория автоматически покупает все SHOP из актуального каталога, включая новую одежду и фоны; Анна покупает `fitness` с `background:meadow` через `PetBundleService` за 144 монеты. Эксклюзивы по-прежнему выдаются достижениями.
+
+Аудит, полный список новых вещей и цен, состав категорий и PNG-проверка: [отчёт по гардеробу](beaver-wardrobe-report.md). Для повторной проверки SVG: `node scripts/render-beaver-review.mjs /tmp/wardrobe-check /tmp/beaver-wardrobe-review` (снимки `catalog.json` и `bundles.json` из реального тестового контекста).
 
 Организации: `GET /api/organizations/featured` (организация месяца, пустой ответ если нет), поле `awards` в `GET /api/organizations/{id}` (четыре вида наград, у вех `progress`/`goal`), админка `GET /api/admin/awards?month=2026-09` и `POST /api/admin/awards/{id}/confirm`.
 
@@ -99,11 +123,15 @@ PUT целиком принимает обязательные `activity` и `ou
 |---|---|
 | `mood` | `idle`, `happy`, `surprised`, `thinking`, `sad`, `wink`, `offended`, `sleep` |
 | `activity` | `none`, `juggle`, `dribble`, `lift`, `chess`, `ski`, `hockey`, `esports`, `programming` |
-| `outfit.hat` | `cap`, `headband`, `beanie`, `swimcap`, `helmet`, `headphones` |
-| `outfit.eyewear` | `sunglasses`, `goggles` |
-| `outfit.neck` | `medal`, `whistle` |
-| `outfit.bottom` | `swimshorts`, `hockeypants` |
-| `outfit.shirt`, обычная одежда | `football`, `running`, `training`, `judo`, `hockey`, `programming` |
+| `outfit.hat` | `cap`, `headband`, `beanie`, `swimcap`, `helmet`, `headphones`, `cyclehelmet`, `crown` |
+| `outfit.eyewear` | `sunglasses`, `goggles`, `roundglasses` |
+| `outfit.neck` | `medal`, `whistle`, `scarf`, `bowtie` |
+| `outfit.bottom` | `swimshorts`, `hockeypants`, `shorts`, `leggings`, `sweatpants` |
+| `outfit.prop` | `volleyball`, `racket`, `paddle`, `yogamat` |
+| `outfit.paws` | `boxinggloves`, `wristbands` |
+| `outfit.feet` | `sneakers` (заменяют коньки, если одновременно выбраны хоккейные шорты) |
+| `outfit.background` | `meadow` (BASE, 0), `stadium`, `rink`, `river`, `snowpark`, `gym`, `sunset`, `nightcity` (SHOP, по 100) |
+| `outfit.shirt`, обычная одежда | `football`, `running`, `training`, `judo`, `hockey`, `programming`, `basketball`, `volleyball`, `polo`, `hoodie`, `tracksuit`, `puffer` |
 | `outfit.shirt`, футбольные клубы | `zenit`, `cska`, `fakel`, `yenisey`, `krasnodar`, `lokomotiv`, `spartak`, `rostov`, `dynamo`, `akron`, `beavers` |
 | `outfit.shirt`, хоккейные клубы | `hc-cska`, `hc-metallurg`, `hc-lokomotiv`, `hc-severstal`, `hc-torpedo`, `hc-barys`, `hc-spartak`, `hc-neftekhimik`, `hc-sokol` |
 
@@ -126,3 +154,34 @@ PUT целиком принимает обязательные `activity` и `ou
 | `programming` | Ноутбук с кодом и результатом `Accepted` |
 
 Элементы независимы: футбольная футболка, наушники и ноутбук с кодом — допустимая комбинация. У шапок и наушников общий `hat`, поэтому одновременно надевается один вариант. Хоккейный свитер включает краги; `hockeypants` включает коньки. Сервер не должен требовать шлем для хоккейной футболки или наушники для ноутбука.
+
+
+## Примерка и личные образы
+
+| Метод | operationId | Контракт |
+|---|---|---|
+| POST /api/pets/shop/buy-set | pets_buySet | `{items: ["hat:cap", "eyewear:sunglasses"], wear: true}`. Дубликаты id убираются, две вещи в одном слоте → 400. Покупаются только недостающие вещи, скидка 20% при 2+, округление вниз. Одна блокировка владельца, одна операция в журнале, выдача вещей и надевание в одной транзакции. `wear=false` сохраняет текущий образ, `wear=true` объединяет выбранное с ним. Ответ PetResponse; кошелёк фронт перечитывает. Эксклюзив → 409, недостаток → 409 «Не хватает N монет», неизвестный id → 404. Повтор уже оплаченного набора бесплатен. |
+| GET /api/users/me/pet/looks | pets_looks | Массив `{id, name, activity, outfit}` в порядке создания, только образы текущего пользователя. |
+| POST /api/users/me/pet/looks | pets_saveLook | `{name, activity, outfit}`, имя 1–30 символов. Проверяется весь образ и владение через те же правила `PetService` / `requireOwned`. Не меняет надетое. Максимум 4 образа, защищено блокировкой владельца; пятый → 409 «Можно сохранить не больше 4 образов», некупленная вещь → 409. |
+| DELETE /api/users/me/pet/looks/{id} | pets_deleteLook | 204, удалить только свой образ, чужой или отсутствующий id → 404. |
+
+Образы хранятся в `pet_saved_looks` (UUID, userId, name, activity, аудит), одежда — element collection
+`pet_saved_look_outfit` (`look_id`, `slot_code`, `item_code`). Миграция V34. Надевание сохранённого
+образа — существующий `PUT /api/users/me/pet`. Комплект покупается прежним `pets_buyBundle`
+с полной заменой образа; произвольная примерка — `pets_buySet` с объединением.
+
+Пользовательские экраны: `/profile/wardrobe` и `/profile/shop`. Примерка не пишет в API до покупки;
+при выходе со страницы исчезает. Сохранение образа позволяет также добавить именованный вариант
+в «Мои образы» (до четырёх). Подсказки наград соответствуют `docs/economy.md`: +10 за участие,
++30–80 за проведённую встречу с 3+ участниками, +30 за «Первый шаг» и +50 за «Разносторонний».
+
+`widgets/beaver-pet/ui/item-thumb.tsx` используется в плитках, чипах, миниатюрах комплектов и модалках.
+В SVG попадают только части вещи из `buildSlots`, без животного; составные вещи объединяются.
+Встроенные вещи используют `item-bounds.json` — границы видимых пикселей, полученные офлайн через
+librsvg/Pillow. Рисунки администратора измеряются `getBBox` один раз и кэшируются с учётом SVG и посадки.
+Фоны отображаются квадратом, все поверхности используют токены Memphis.
+
+Проверка всего каталога (Node 24, Python/Pillow, системные librsvg и cairo):
+`node scripts/render-beaver-thumbs.mjs /path/to/catalog.json /tmp/beaver-thumbs`.
+Скрипт создаёт PNG каждой вещи, атласы и файл границ; PNG/атласы в репозиторий не добавляются.
+После изменения рисунков встроенных вещей обновить `item-bounds.json` из результата проверки.

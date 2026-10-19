@@ -9,6 +9,7 @@ import com.hackathon.app.domain.dto.PetRequest;
 import com.hackathon.app.domain.dto.ShopItemResponse;
 import com.hackathon.app.domain.enums.PetItemKind;
 import com.hackathon.app.service.PetService;
+import com.hackathon.app.service.PetBundleService;
 import com.hackathon.app.service.ShopService;
 import com.hackathon.app.service.WalletService;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,8 @@ class DemoPetSeeder {
 	private final PetService pets;
 	private final ShopService shop;
 	private final WalletService wallet;
+	/** Покупка и надевание комплектов тем же сервисом, что у пользователя. */
+	private final PetBundleService bundles;
 
 	/** Каталог магазина глазами человека: цены и «моё». */
 	List<ShopItemResponse> catalogFor(UUID userId) {
@@ -50,13 +53,11 @@ class DemoPetSeeder {
 
 	/** Образы и имена основных персонажей. */
 	void dressCore(DemoCast cast) {
-		var anna = new LinkedHashMap<String, String>();
-		anna.put("hat", "cap");
-		anna.put("shirt", "beavers"); // «Свой бобр»: надевается, только если достижение получено
-		dress(cast.id("anna"), "juggle", anna);
+		// Зарядка на поляне: 144 монеты до покупок, укладывается в заработанные Анной 180.
+		bundles.buy(cast.id("anna"), "fitness");
 
 		var petr = new LinkedHashMap<String, String>();
-		// Корону организатора Пётр получает за «Душа компании», но не надевает: на фронте её ещё не нарисовали.
+		// Корону организатора Пётр получает за «Душа компании», в шахматном образе остаётся кепка.
 		petr.put("hat", "cap");
 		petr.put("shirt", "training");
 		dress(cast.id("petr"), "chess", petr);
@@ -91,6 +92,7 @@ class DemoPetSeeder {
 		outfit.put("neck", "medal");
 		outfit.put("shirt", "beavers");
 		outfit.put("eyewear", "sunglasses");
+		outfit.put("background", "stadium");
 		dress(userId, "juggle", outfit);
 		pets.rename(userId, "Модник");
 	}

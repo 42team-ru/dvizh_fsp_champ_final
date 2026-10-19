@@ -96,6 +96,16 @@ public class PetService {
     @Transactional
     public PetResponse save(UUID userId, PetRequest request) {
         var catalog = catalogService.load();
+        var chosen = checkedLook(userId, catalog, request);
+        equipment.deleteByUserId(userId);
+        chosen.forEach((slot, item) -> equipment.save(mapper.toEquipment(userId, slot.getId(), item.getId())));
+        equipment.flush();
+        log.info("Pet saved: userId={}, items={}", userId, chosen.size());
+        return toResponse(userId, catalog, true);
+    }
+
+    /** Проверить весь образ, не изменяя надетое; используется также для личных образов. */
+    Map<PetSlot, PetItem> checkedLook(UUID userId, Catalog catalog, PetRequest request) {
         var chosen = new LinkedHashMap<PetSlot, PetItem>();
         chosen.put(slotOfKind(catalog, PetSlotKind.ACTIVITY),
                 resolve(catalog, PetCatalogService.ACTIVITY, request.activity()));
@@ -107,11 +117,7 @@ public class PetService {
             }
         });
         shop.requireOwned(userId, catalog, chosen.values());
-        equipment.deleteByUserId(userId);
-        chosen.forEach((slot, item) -> equipment.save(mapper.toEquipment(userId, slot.getId(), item.getId())));
-        equipment.flush();
-        log.info("Pet saved: userId={}, items={}", userId, chosen.size());
-        return toResponse(userId, catalog, true);
+        return chosen;
     }
 
     /**

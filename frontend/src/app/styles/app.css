@@ -278,3 +278,15 @@ body,
     height: calc(100dvh / var(--vp-zoom, 1));
   }
 }
+
+/* Catalog scenes fit the complete animal and backdrop into their measured frame.
+   This is outside Tailwind layers to override the animated rig's intrinsic SVG sizing. */
+.pet-look-preview .beaver-speech {
+  display: none;
+}
+.pet-look-preview .beaver-pet-container,
+.pet-look-preview .beaver-pet,
+.pet-look-preview .beaver-pet > svg {
+  width: 100%;
+  height: 100%;
+}
