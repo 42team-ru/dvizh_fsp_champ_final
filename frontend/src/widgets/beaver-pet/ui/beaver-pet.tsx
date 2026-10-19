@@ -1,13 +1,18 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useImperativeHandle, useRef, type Ref } from "react";
 import beaverSvg from "./beaver.svg?raw";
-import { createBeaverRig, type BeaverRig } from "./beaver-rig";
+import { createBeaverRig, type BeaverRig, type ReactOptions } from "./beaver-rig";
 import { buildSlots, SLOTS, type BeaverActivity, type BeaverOutfit } from "./beaver-wardrobe";
 import "./beaver-pet.css";
 
-export type BeaverMood = "idle" | "happy" | "sad" | "thinking";
+export type BeaverMood = "idle" | "happy" | "surprised" | "thinking" | "sad" | "wink" | "offended" | "sleep";
+
+/** Управление бобром снаружи: сыграть эмоцию, которая сама сбросится к базовому настроению. */
+export type BeaverPetHandle = { react(mood: BeaverMood, opts?: ReactOptions): void };
 
 type Props = {
+  /** Базовое настроение: держится, пока не сменят. Короткие эмоции — через ref.react(). */
   mood?: BeaverMood;
+  ref?: Ref<BeaverPetHandle>;
   /** Что надето: головной убор или наушники, очки, одежда, экипировка, вещь на шее. */
   outfit?: BeaverOutfit;
   /** Инвентарь рядом или в лапах: мяч, гантели, шахматы, лыжи, хоккей, ноутбук. */
@@ -19,10 +24,12 @@ type Props = {
 };
 
 /** Анимированный маскот-бобр. Настроение, наряд и активность задаются пропсами, движение считает beaver-rig. */
-export function BeaverPet({ mood = "idle", outfit = {}, activity = "none", followCursor = true, className, onClick }: Props) {
+export function BeaverPet({ mood = "idle", outfit = {}, activity = "none", followCursor = true, className, onClick, ref: handleRef }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const rig = useRef<BeaverRig | null>(null);
   const outfitKey = JSON.stringify(outfit);
+
+  useImperativeHandle(handleRef, () => ({ react: (m, opts) => rig.current?.react(m, opts) }), []);
 
   useEffect(() => {
     if (!ref.current) return;
@@ -51,16 +58,17 @@ export function BeaverPet({ mood = "idle", outfit = {}, activity = "none", follo
       className={`beaver-pet ${className ?? ""}`}
       role="button"
       tabIndex={0}
-      aria-label="Бобр: подпрыгнуть и помахать"
+      aria-label="Бобр: потрогать"
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
-          rig.current?.hop();
+          rig.current?.poke(ref.current?.querySelector("#head") ?? null);
           onClick?.();
         }
       }}
-      onClick={() => {
-        rig.current?.hop();
+      onClick={(event) => {
+        // Реакция зависит от того, куда ткнули: нос, голова, живот, хвост, лапы.
+        rig.current?.poke(event.target instanceof Element ? event.target : null);
         onClick?.();
       }}
       dangerouslySetInnerHTML={{ __html: beaverSvg }}

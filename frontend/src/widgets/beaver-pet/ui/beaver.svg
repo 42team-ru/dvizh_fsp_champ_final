@@ -11,7 +11,7 @@
       <stop stop-color="#C4874F"/>
       <stop offset="1" stop-color="#9D5C31"/>
     </linearGradient>
-    <radialGradient id="tail" cx="30%" cy="15%" r="105%">
+    <radialGradient id="tail-grad" cx="30%" cy="15%" r="105%">
       <stop stop-color="#76513F"/>
       <stop offset="1" stop-color="#3F281F"/>
     </radialGradient>
@@ -19,7 +19,7 @@
       <stop stop-color="#FFFDF9"/>
       <stop offset="1" stop-color="#F3E6D8"/>
     </radialGradient>
-    <linearGradient id="nose" x1="0" y1="0" x2="0.25" y2="1">
+    <linearGradient id="nose-grad" x1="0" y1="0" x2="0.25" y2="1">
       <stop stop-color="#4A3129"/>
       <stop offset="1" stop-color="#1E1513"/>
     </linearGradient>
@@ -34,6 +34,8 @@
     <clipPath id="tail-clip">
       <path d="M282 343 C299 320 316 303 336 292 C353 282 376 282 393 293 C417 310 425 332 417 358 C411 385 398 413 379 436 C353 464 319 477 279 480 L252 446 Z"/>
     </clipPath>
+    <clipPath id="mouth-open-clip"><path d="M147 234 Q187.5 242 228 234 C232 268 214 290 187.5 290 C161 290 143 268 147 234 Z"/></clipPath>
+    <clipPath id="mouth-o-clip"><path d="M187.5 224 C200 224 204 236 204 246 C204 258 197 266 187.5 266 C178 266 171 258 171 246 C171 236 175 224 187.5 224 Z"/></clipPath>
     <clipPath id="eye-clip-left"><ellipse cx="110" cy="159" rx="21.5" ry="24"/></clipPath>
     <clipPath id="eye-clip-right"><ellipse cx="263" cy="159" rx="21.5" ry="24"/></clipPath>
     <clipPath id="body-clip">
@@ -61,7 +63,7 @@
 
     <!-- Paddle tail with a soft scale texture, behind the body. -->
     <g id="tail">
-      <path d="M282 343 C299 320 316 303 336 292 C353 282 376 282 393 293 C417 310 425 332 417 358 C411 385 398 413 379 436 C353 464 319 477 279 480 L252 446 Z" fill="url(#tail)"/>
+      <path d="M282 343 C299 320 316 303 336 292 C353 282 376 282 393 293 C417 310 425 332 417 358 C411 385 398 413 379 436 C353 464 319 477 279 480 L252 446 Z" fill="url(#tail-grad)"/>
       <g clip-path="url(#tail-clip)" fill="none" stroke="#2A1A12" stroke-width="3" stroke-linecap="round" opacity="0.35">
         <path d="M270 380 L360 300 M280 420 L400 315 M285 465 L420 350 M320 475 L425 400"/>
         <path d="M300 320 L420 420 M290 360 L400 455 M285 400 L360 470"/>
@@ -137,45 +139,64 @@
       <path id="muzzle" d="M187 180 C166 169 144 176 125 186 C107 194 100 208 100 227 C100 250 118 262 142 266 C156 269 178 268 190 268 C214 269 234 268 250 258 C269 247 274 230 271 213 C267 188 245 177 222 176 C206 175 194 176 187 180 Z" fill="url(#cream)"/>
 
       <!-- Cheek blush. -->
-      <ellipse cx="78" cy="238" rx="17" ry="9" fill="#E8826B" opacity="0.35"/>
-      <ellipse cx="298" cy="238" rx="17" ry="9" fill="#E8826B" opacity="0.35"/>
+      <ellipse class="blush" cx="78" cy="238" rx="17" ry="9" fill="#E8826B" opacity="0.35"/>
+      <ellipse class="blush" cx="298" cy="238" rx="17" ry="9" fill="#E8826B" opacity="0.35"/>
 
+      <!-- Mouth layers: open laugh cavity under the teeth, the usual teeth + smile, and the surprised "O". -->
       <g id="mouth">
-        <path id="teeth" d="M164 233 H211 L211 257 Q211 268 200 268 H175 Q164 268 164 257 Z" fill="url(#tooth)"/>
-        <g fill="none" stroke="#241510" stroke-width="5.3" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M164 232 L164 257 Q164 267 174 267 L201 267 Q211 267 211 257 L211 232"/>
-          <path d="M187.5 224 L187.5 266"/>
-          <path d="M187.5 204 L187.5 219"/>
-          <path id="smile" d="M139 215 C143 236 166 240 187.5 219 C209 240 232 236 236 215"/>
+        <g id="mouth-open" opacity="0">
+          <path d="M147 234 Q187.5 242 228 234 C232 268 214 290 187.5 290 C161 290 143 268 147 234 Z" fill="#5A231C"/>
+          <ellipse cx="187.5" cy="291" rx="34" ry="19" fill="#E8736C" clip-path="url(#mouth-open-clip)"/>
+          <path d="M147 234 Q187.5 242 228 234 C232 268 214 290 187.5 290 C161 290 143 268 147 234 Z" fill="none" stroke="#241510" stroke-width="5" stroke-linejoin="round"/>
+        </g>
+        <g id="mouth-teeth">
+          <path id="teeth" d="M164 233 H211 L211 257 Q211 268 200 268 H175 Q164 268 164 257 Z" fill="url(#tooth)"/>
+          <g fill="none" stroke="#241510" stroke-width="5.3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M164 232 L164 257 Q164 267 174 267 L201 267 Q211 267 211 257 L211 232"/>
+            <path d="M187.5 224 L187.5 266"/>
+            <path id="smile" d="M139 215 C143 236 166 240 187.5 219 C209 240 232 236 236 215"/>
+          </g>
+        </g>
+        <path d="M187.5 204 L187.5 219" fill="none" stroke="#241510" stroke-width="5.3" stroke-linecap="round"/>
+        <g id="mouth-o" opacity="0">
+          <path d="M187.5 224 C200 224 204 236 204 246 C204 258 197 266 187.5 266 C178 266 171 258 171 246 C171 236 175 224 187.5 224 Z" fill="#5A231C"/>
+          <ellipse cx="187.5" cy="264" rx="13" ry="9" fill="#E8736C" clip-path="url(#mouth-o-clip)"/>
+          <path d="M187.5 224 C200 224 204 236 204 246 C204 258 197 266 187.5 266 C178 266 171 258 171 246 C171 236 175 224 187.5 224 Z" fill="none" stroke="#241510" stroke-width="5" stroke-linejoin="round"/>
         </g>
       </g>
 
       <g id="eyes">
         <g class="eye" id="eye-left">
-          <ellipse cx="110" cy="159" rx="20.5" ry="23" fill="#140C09"/>
-          <g class="pupil-glint">
-            <ellipse cx="104" cy="150" rx="7" ry="8" fill="#FFFFFF"/>
-            <circle cx="117" cy="170" r="3" fill="#FFFFFF" opacity="0.8"/>
-          </g>
-          <g clip-path="url(#eye-clip-left)">
-            <g class="lid" transform="translate(0 -64)">
-              <path d="M84 110 H136 V172 Q110 188 84 172 Z" fill="#B5723F"/>
-              <path d="M84 172 Q110 188 136 172" fill="none" stroke="#241510" stroke-width="5" stroke-linecap="round"/>
+          <g class="eye-open">
+            <ellipse cx="110" cy="159" rx="20.5" ry="23" fill="#140C09"/>
+            <g class="pupil-glint">
+              <ellipse cx="104" cy="150" rx="7" ry="8" fill="#FFFFFF"/>
+              <circle cx="117" cy="170" r="3" fill="#FFFFFF" opacity="0.8"/>
+            </g>
+            <g clip-path="url(#eye-clip-left)">
+              <g class="lid" transform="translate(0 -64)">
+                <path d="M84 110 H136 V172 Q110 188 84 172 Z" fill="#B5723F"/>
+                <path d="M84 172 Q110 188 136 172" fill="none" stroke="#241510" stroke-width="5" stroke-linecap="round"/>
+              </g>
             </g>
           </g>
+          <path class="eye-arc" d="M88 168 Q110 140 132 168" fill="none" stroke="#241510" stroke-width="8" stroke-linecap="round" opacity="0"/>
         </g>
         <g class="eye" id="eye-right">
-          <ellipse cx="263" cy="159" rx="20.5" ry="23" fill="#140C09"/>
-          <g class="pupil-glint">
-            <ellipse cx="257" cy="150" rx="7" ry="8" fill="#FFFFFF"/>
-            <circle cx="270" cy="170" r="3" fill="#FFFFFF" opacity="0.8"/>
-          </g>
-          <g clip-path="url(#eye-clip-right)">
-            <g class="lid" transform="translate(0 -64)">
-              <path d="M237 110 H289 V172 Q263 188 237 172 Z" fill="#B5723F"/>
-              <path d="M237 172 Q263 188 289 172" fill="none" stroke="#241510" stroke-width="5" stroke-linecap="round"/>
+          <g class="eye-open">
+            <ellipse cx="263" cy="159" rx="20.5" ry="23" fill="#140C09"/>
+            <g class="pupil-glint">
+              <ellipse cx="257" cy="150" rx="7" ry="8" fill="#FFFFFF"/>
+              <circle cx="270" cy="170" r="3" fill="#FFFFFF" opacity="0.8"/>
+            </g>
+            <g clip-path="url(#eye-clip-right)">
+              <g class="lid" transform="translate(0 -64)">
+                <path d="M237 110 H289 V172 Q263 188 237 172 Z" fill="#B5723F"/>
+                <path d="M237 172 Q263 188 289 172" fill="none" stroke="#241510" stroke-width="5" stroke-linecap="round"/>
+              </g>
             </g>
           </g>
+          <path class="eye-arc" d="M241 168 Q263 140 285 168" fill="none" stroke="#241510" stroke-width="8" stroke-linecap="round" opacity="0"/>
         </g>
       </g>
       <g id="brows" fill="none" stroke="#241510" stroke-width="8" stroke-linecap="round">
@@ -184,7 +205,7 @@
       </g>
 
       <g id="nose">
-        <path d="M151 170 C151 161 169 156 187.5 156 C206 156 224 161 224 170 C221 185 204 199 187.5 204 C171 199 154 185 151 170 Z" fill="url(#nose)" stroke="#241510" stroke-width="5" stroke-linejoin="round"/>
+        <path d="M151 170 C151 161 169 156 187.5 156 C206 156 224 161 224 170 C221 185 204 199 187.5 204 C171 199 154 185 151 170 Z" fill="url(#nose-grad)" stroke="#241510" stroke-width="5" stroke-linejoin="round"/>
         <ellipse cx="176" cy="166" rx="10" ry="4.5" fill="#FFFFFF" opacity="0.28"/>
       </g>
 
@@ -193,6 +214,31 @@
         <path d="M112 215 Q88 215 65 223"/>
         <path d="M263 201 Q286 193 309 196"/>
         <path d="M263 215 Q287 215 310 223"/>
+      </g>
+      <!-- Emotion effects around the head. -->
+      <g id="fx-surprise" opacity="0" fill="none" stroke-linecap="round">
+        <path d="M30 122 L4 110 M34 104 L14 84 M46 94 L40 70 M344 122 L370 110 M340 104 L360 84 M328 94 L334 70" stroke="#241510" stroke-width="11"/>
+        <path d="M30 122 L4 110 M34 104 L14 84 M46 94 L40 70 M344 122 L370 110 M340 104 L360 84 M328 94 L334 70" stroke="#FFD23F" stroke-width="5.5"/>
+      </g>
+      <g id="fx-sparkle" opacity="0">
+        <path d="M356 64 Q361 86 382 92 Q361 98 356 120 Q351 98 330 92 Q351 86 356 64 Z" fill="#FFD23F" stroke="#241510" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M352 80 Q354 88 360 90" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+      </g>
+      <!-- Обида: знак злости и пар из ушей. Сон: всплывающие Z. Части двигает beaver-rig. -->
+      <g id="fx-anger" opacity="0">
+        <path d="M-15 -4 Q-4 -4 -4 -15 M4 -15 Q4 -4 15 -4 M15 4 Q4 4 4 15 M-4 15 Q-4 4 -15 4" fill="none" stroke="#241510" stroke-width="11" stroke-linecap="round"/>
+        <path d="M-15 -4 Q-4 -4 -4 -15 M4 -15 Q4 -4 15 -4 M15 4 Q4 4 4 15 M-4 15 Q-4 4 -15 4" fill="none" stroke="#E0463B" stroke-width="5.5" stroke-linecap="round"/>
+      </g>
+      <g id="fx-steam" opacity="0">
+        <g class="puff"><circle r="12" fill="#241510"/><circle cx="10" cy="-5" r="10" fill="#241510"/><circle cx="-10" cy="-4" r="10" fill="#241510"/>
+          <circle r="8.5" fill="#FFFFFF"/><circle cx="10" cy="-5" r="6.5" fill="#FFFFFF"/><circle cx="-10" cy="-4" r="6.5" fill="#FFFFFF"/></g>
+        <g class="puff"><circle r="12" fill="#241510"/><circle cx="10" cy="-5" r="10" fill="#241510"/><circle cx="-10" cy="-4" r="10" fill="#241510"/>
+          <circle r="8.5" fill="#FFFFFF"/><circle cx="10" cy="-5" r="6.5" fill="#FFFFFF"/><circle cx="-10" cy="-4" r="6.5" fill="#FFFFFF"/></g>
+      </g>
+      <g id="fx-zzz" opacity="0">
+        <g class="z"><path d="M-9 -10 H9 L-9 10 H9" fill="none" stroke="#241510" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><path d="M-9 -10 H9 L-9 10 H9" fill="none" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></g>
+        <g class="z"><path d="M-9 -10 H9 L-9 10 H9" fill="none" stroke="#241510" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><path d="M-9 -10 H9 L-9 10 H9" fill="none" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></g>
+        <g class="z"><path d="M-9 -10 H9 L-9 10 H9" fill="none" stroke="#241510" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><path d="M-9 -10 H9 L-9 10 H9" fill="none" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></g>
       </g>
       <g id="slot-eyes"></g>
       <g id="slot-hat"></g>

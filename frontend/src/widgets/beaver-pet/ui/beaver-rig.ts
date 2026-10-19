@@ -27,18 +27,59 @@ const PIVOT = {
   armRight: [272, 320],
   browLeft: [111, 113],
   browRight: [263, 113],
+  eyeLeft: [110, 159],
+  eyeRight: [263, 159],
+  muzzleTop: [187.5, 176],
+  mouthOpenTop: [187.5, 236],
+  mouthO: [187.5, 245],
+  headCenter: [187.5, 110],
+  sparkle: [356, 92],
+  anger: [346, 44],
+  steamLeft: [62, 30],
+  steamRight: [312, 30],
+  zzz: [296, 70],
   ground: [188, 524],
 } as const;
 
-/** lid: 0 — глаз открыт, 1 — закрыт. mouth: -1 грусть, 0 улыбка, 1 широкая улыбка. */
-type MoodPose = { headRot: number; headY: number; ear: number; browY: number; browTilt: number; lookX: number; lookY: number; tailAmp: number; tailSpeed: number; lid: number; mouth: number };
-
-const POSE: Record<BeaverMood, MoodPose> = {
-  idle: { headRot: 0, headY: 0, ear: 0, browY: 0, browTilt: 0, lookX: 0, lookY: 0, tailAmp: 4, tailSpeed: 2.2, lid: 0, mouth: 0 },
-  happy: { headRot: 0, headY: -2, ear: -8, browY: -5, browTilt: 0, lookX: 0, lookY: 0, tailAmp: 9, tailSpeed: 9, lid: 0, mouth: 1 },
-  sad: { headRot: 4, headY: 9, ear: 24, browY: 4, browTilt: -14, lookX: 0, lookY: 5, tailAmp: 1.5, tailSpeed: 1, lid: 0.38, mouth: -1 },
-  thinking: { headRot: 0, headY: 0, ear: 0, browY: -2, browTilt: 0, lookX: -4, lookY: -7, tailAmp: 3, tailSpeed: 1.6, lid: 0.18, mouth: -0.3 },
+/**
+ * Поза настроения — цели для пружин.
+ * browL/browR: [сдвиг по y, наклон]; отрицательный наклон поднимает внутренний край (тревога), положительный опускает (хмурость).
+ * lid: 0 — глаз открыт, 1 — закрыт веком. arcL/arcR: 1 — глаз закрыт дугой «^» (смех, подмигивание).
+ * mouth: -1 грусть, 0 улыбка, 1 широкая улыбка. jaw: открытый смеющийся рот. oMouth: рот «О».
+ * surprise, sparkle: эффекты вокруг головы. chin: левая лапа у подбородка.
+ * cross: лапы скрещены на груди. blush: румянец (0 — обычный). anger, steam: знак злости и пар из ушей. sleep: сон и «Z Z Z».
+ */
+type MoodPose = {
+  headRot: number; headY: number; ear: number;
+  browL: [number, number]; browR: [number, number];
+  lookX: number; lookY: number; tailAmp: number; tailSpeed: number;
+  lid: number; mouth: number; arcL: number; arcR: number; eyeScale: number;
+  jaw: number; oMouth: number; surprise: number; sparkle: number; chin: number;
+  cross: number; blush: number; anger: number; steam: number; sleep: number;
 };
+
+const BASE: MoodPose = {
+  headRot: 0, headY: 0, ear: 0, browL: [0, 0], browR: [0, 0], lookX: 0, lookY: 0, tailAmp: 4, tailSpeed: 2.2,
+  lid: 0, mouth: 0, arcL: 0, arcR: 0, eyeScale: 1, jaw: 0, oMouth: 0, surprise: 0, sparkle: 0, chin: 0,
+  cross: 0, blush: 0, anger: 0, steam: 0, sleep: 0,
+};
+
+/** Внутренняя поза «блаженство» — пока бобра гладят по голове; наружу как настроение не выдаётся. */
+type PoseId = BeaverMood | "bliss";
+
+const POSE: Record<PoseId, MoodPose> = {
+  idle: BASE,
+  happy: { ...BASE, headY: -2, ear: -8, browL: [-7, -4], browR: [-7, -4], tailAmp: 9, tailSpeed: 9, mouth: 0.55, arcL: 1, arcR: 1, jaw: 1 },
+  sad: { ...BASE, headRot: 3, headY: 5, ear: 18, browL: [-3, -16], browR: [-3, -16], lookY: 3, tailAmp: 1.5, tailSpeed: 1, lid: 0.05, mouth: -0.75 },
+  thinking: { ...BASE, headRot: 4, browL: [-9, -10], browR: [2, 6], lookX: 6, lookY: -6, tailAmp: 3, tailSpeed: 1.6, lid: 0.1, mouth: 0.15, chin: 1 },
+  surprised: { ...BASE, headY: -4, ear: -14, browL: [-14, -3], browR: [-14, -3], tailAmp: 7, tailSpeed: 6, eyeScale: 1.13, oMouth: 1, surprise: 1 },
+  wink: { ...BASE, headRot: -4, ear: -4, browL: [-5, 0], browR: [5, 8], tailAmp: 5, tailSpeed: 4, mouth: 0.7, arcR: 1, sparkle: 1 },
+  offended: { ...BASE, headRot: -9, headY: -3, ear: 10, browL: [2, 15], browR: [2, 15], lookX: -6, tailAmp: 1.5, tailSpeed: 1, lid: 1, mouth: -0.6, cross: 1, blush: 1, anger: 1, steam: 1 },
+  sleep: { ...BASE, headRot: 6, headY: 9, ear: 16, browL: [3, -4], browR: [3, -4], tailAmp: 1, tailSpeed: 0.7, lid: 1, mouth: 0.05, blush: 0.4, sleep: 1 },
+  bliss: { ...BASE, headRot: 4, headY: 2, ear: 12, browL: [-3, -6], browR: [-3, -6], tailAmp: 8, tailSpeed: 7, mouth: 0.65, arcL: 1, arcR: 1 },
+};
+
+const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
 
 /** Формы улыбки с одинаковой структурой команд, чтобы их можно было плавно смешивать. */
 const MOUTH_SAD = [145, 232, 150, 222, 168, 214, 187.5, 219, 207, 214, 225, 222, 230, 232];
@@ -56,7 +97,20 @@ const rot = (deg: number, [x, y]: readonly number[]) => `rotate(${deg.toFixed(2)
 const scaleAt = (sx: number, sy: number, [x, y]: readonly number[]) =>
   `translate(${x} ${y}) scale(${sx.toFixed(4)} ${sy.toFixed(4)}) translate(${-x} ${-y})`;
 
-export type BeaverRig = { setMood(m: BeaverMood): void; setActivity(a: BeaverActivity): void; hop(): void; destroy(): void };
+/** Временная реакция: играет `ms` миллисекунд и сама возвращается к базовому настроению. */
+export type ReactOptions = { ms?: number; hop?: boolean; wiggle?: boolean; wave?: boolean };
+
+export type BeaverRig = {
+  /** Базовое настроение — держится, пока его не сменят. */
+  setMood(m: BeaverMood): void;
+  /** Сыграть эмоцию и вернуться к базовому настроению. */
+  react(m: BeaverMood, opts?: ReactOptions): void;
+  /** Реакция на тычок: что сделать, решает часть тела, по которой попали. */
+  poke(target: Element | null): void;
+  setActivity(a: BeaverActivity): void;
+  hop(): void;
+  destroy(): void;
+};
 
 export function createBeaverRig(root: HTMLElement, followCursor: boolean): BeaverRig {
   const q = (sel: string) => root.querySelector<SVGGElement>(sel);
@@ -65,6 +119,14 @@ export function createBeaverRig(root: HTMLElement, followCursor: boolean): Beave
     earL: q("#ear-left"), earR: q("#ear-right"), armL: q("#arm-left"), armR: q("#arm-right"),
     eyeL: q("#eye-left"), eyeR: q("#eye-right"), browL: q("#brow-left"), browR: q("#brow-right"),
     lids: Array.from(root.querySelectorAll<SVGGElement>(".lid")),
+    eyeOpenL: q("#eye-left .eye-open"), eyeOpenR: q("#eye-right .eye-open"),
+    eyeArcL: q("#eye-left .eye-arc"), eyeArcR: q("#eye-right .eye-arc"),
+    muzzle: q("#muzzle"), mouthOpen: q("#mouth-open"), mouthTeeth: q("#mouth-teeth"), mouthO: q("#mouth-o"),
+    fxSurprise: q("#fx-surprise"), fxSparkle: q("#fx-sparkle"),
+    fxAnger: q("#fx-anger"), fxSteam: q("#fx-steam"), fxZzz: q("#fx-zzz"),
+    puffs: Array.from(root.querySelectorAll<SVGGElement>("#fx-steam .puff")),
+    zs: Array.from(root.querySelectorAll<SVGGElement>("#fx-zzz .z")),
+    blush: Array.from(root.querySelectorAll<SVGEllipseElement>(".blush")),
     smile: root.querySelector<SVGPathElement>("#smile"),
     glints: Array.from(root.querySelectorAll<SVGGElement>(".pupil-glint")),
     // Предметы активности вставляются позже, поэтому ищем их в setActivity.
@@ -78,16 +140,37 @@ export function createBeaverRig(root: HTMLElement, followCursor: boolean): Beave
     headRot: spring(60, 0.7), headY: spring(60, 0.8),
     earL: spring(260, 0.25), earR: spring(260, 0.25),
     tail: spring(90, 0.35), armL: spring(120, 0.5), armR: spring(140, 0.45),
-    browY: spring(150, 0.7), browTilt: spring(150, 0.7),
+    browLY: spring(150, 0.7), browLT: spring(150, 0.7), browRY: spring(150, 0.7), browRT: spring(150, 0.7),
+    arcL: spring(260, 0.8), arcR: spring(260, 0.8), eyeScale: spring(220, 0.4, 1),
+    jaw: spring(160, 0.55), oMouth: spring(200, 0.5), surprise: spring(200, 0.45), sparkle: spring(120, 0.6),
     lookX: spring(220, 0.75), lookY: spring(220, 0.75),
     squash: spring(320, 0.22),
     lid: spring(140, 0.8), mouth: spring(90, 0.6),
+    wiggle: spring(300, 0.3),
+    blush: spring(90, 0.8), anger: spring(260, 0.3), steam: spring(80, 0.8), sleep: spring(60, 0.9),
   };
 
-  let mood: BeaverMood = "idle";
+  // Лапа у подбородка должна быть поверх головы, поэтому её узел временно переносится выше.
+  const armLHome = el.armL ? { parent: el.armL.parentNode, next: el.armL.nextSibling } : null;
+  let armLFront = false;
+
+  let baseMood: BeaverMood = "idle";
+  let reaction: { mood: PoseId; until: number; wiggle: boolean } | null = null;
+  /** Настроение, которое показывается прямо сейчас: реакция поверх базового. */
+  let mood: PoseId = "idle";
+  let lastInteraction = performance.now();
+  let nextFidget = rand(9, 15);
+  const pokes: number[] = [];
+  let strokeDist = 0;
+  let strokeAt = 0;
+  let lastStroke: { x: number; y: number } | null = null;
+  /** Каким глазом подмигивать: выбирается при каждом подмигивании. */
+  let winkSide: "left" | "right" = "right";
+  let winkChosen = false;
   let activity: BeaverActivity = "none";
   let actT = 0;
   let ballRot = 0;
+  let breathPhase = 0;
   let t = 0;
   let last = performance.now();
   let raf = 0;
@@ -109,14 +192,93 @@ export function createBeaverRig(root: HTMLElement, followCursor: boolean): Beave
     const a = Math.atan2(dy, dx);
     pointer = { x: Math.cos(a) * k * 9, y: Math.sin(a) * k * 9 };
     pointerAt = t;
+
+    // Поглаживание: быстрые движения туда-сюда над головой копят «расстояние ласки».
+    const overHead = e.target instanceof Element && e.target.closest("#head") && root.contains(e.target);
+    const now = performance.now();
+    if (overHead && reaction?.mood !== "sleep") {
+      if (lastStroke && now - strokeAt < 150) strokeDist += Math.hypot(e.clientX - lastStroke.x, e.clientY - lastStroke.y);
+      else strokeDist *= 0.5;
+      lastStroke = { x: e.clientX, y: e.clientY };
+      strokeAt = now;
+      if (strokeDist > 500) {
+        startReaction("bliss", { ms: 900 });
+        strokeDist = 400;
+      }
+    } else {
+      lastStroke = null;
+      strokeDist = 0;
+    }
   };
   if (followCursor) window.addEventListener("pointermove", onMove);
+
+  /** Одноразовые эффекты при смене показываемого настроения. */
+  function enterMood(prev: PoseId, next: PoseId) {
+    if (next === "surprised" && prev !== "surprised") {
+      // Вздрагивает: голова и уши подскакивают.
+      s.headY.v -= 90;
+      s.earL.v += 160;
+      s.earR.v -= 160;
+      s.eyeScale.v += 2;
+    }
+    if (next === "offended" && prev !== "offended") {
+      // «Хмф!»: топает, резко отворачивается, знак злости выпрыгивает.
+      startHop();
+      s.headRot.v -= 70;
+      s.anger.v += 9;
+    }
+    if (prev === "sleep" && next !== "sleep") {
+      // Проснулся: глаза распахиваются.
+      s.eyeScale.v += 3;
+      s.headY.v -= 60;
+    }
+    if (next === "wink" && prev !== "wink" && !winkChosen) winkSide = Math.random() < 0.5 ? "left" : "right";
+    winkChosen = false;
+    if (blinkT < 0) nextBlink = t + 0.05;
+  }
+
+  function startReaction(m: PoseId, { ms = 2200, hop = false, wiggle = false, wave = false }: ReactOptions = {}) {
+    const now = performance.now();
+    reaction = { mood: m, until: now + ms, wiggle };
+    lastInteraction = now;
+    if (hop) startHop();
+    if (wave) waveUntil = now + Math.min(ms, 1500);
+    if (reduced) settle();
+  }
+
+  function startHop() {
+    if (hopT >= 0) return;
+    s.squash.v += 1.6;
+    hopT = 0;
+  }
 
   function frame(now: number, loop = true) {
     const dt = Math.min((now - last) / 1000, 1 / 30);
     last = now;
     t += dt;
-    const p = POSE[mood];
+    // Реакция поверх базового настроения; закончилась — плавно возвращаемся к базовому.
+    if (reaction && now > reaction.until) reaction = null;
+    const shown: PoseId = reaction?.mood ?? baseMood;
+    if (shown !== mood) enterMood(mood, shown);
+    mood = shown;
+
+    // Скучает: если долго никто не трогает, сам что-нибудь делает.
+    // Совсем заскучал — засыпает, пока не разбудят.
+    if (!reaction && baseMood === "idle" && (now - lastInteraction) / 1000 > 40) {
+      startReaction("sleep", { ms: Infinity });
+    }
+    if (!reaction && baseMood === "idle" && activity === "none" && (now - lastInteraction) / 1000 > nextFidget) {
+      const roll = Math.random();
+      if (roll < 0.35) startReaction("wink", { ms: 1300 });
+      else if (roll < 0.6) startReaction("happy", { ms: 1100, hop: true });
+      else if (roll < 0.8) startReaction("surprised", { ms: 1000 });
+      else waveUntil = now + 1200;
+      lastInteraction = now;
+      nextFidget = rand(10, 18);
+    }
+    const p = mood === "wink" && winkSide === "left"
+      ? { ...POSE.wink, headRot: -POSE.wink.headRot, arcL: 1, arcR: 0, browL: POSE.wink.browR, browR: POSE.wink.browL }
+      : POSE[mood];
 
     // Взгляд: за курсором, а без него — редкие случайные «осмотры».
     let lookX: number, lookY: number;
@@ -130,20 +292,28 @@ export function createBeaverRig(root: HTMLElement, followCursor: boolean): Beave
     lookY += p.lookY;
 
     // Дыхание задаёт общий ритм: голова едет вместе с грудью, а не отдельно.
-    const breath = Math.sin(t * 1.85);
+    // Во сне дыхание медленное и глубокое; фаза копится, чтобы смена темпа не давала рывка.
+    breathPhase += dt * (1.85 - 1.0 * clamp01(s.sleep.x));
+    const breath = Math.sin(breathPhase) * (1 + 0.8 * clamp01(s.sleep.x));
     const idleSway = 1.3 * Math.sin(t * 0.9) + 0.6 * Math.sin(t * 0.37 + 1);
-    const ponder = mood === "thinking" ? 5 * Math.sin(t * 1.3) : 0;
+    const ponder = mood === "thinking" ? 2.5 * Math.sin(t * 1.3) : 0;
+    const chuckle = p.jaw * Math.sin(t * 13);
     const waving = now < waveUntil;
     const armSwing = 1.5 * Math.sin(t * 1.85 + 0.6);
 
     // Цели по умолчанию; активность ниже может их переопределить.
     let headRotT = p.headRot + idleSway + ponder;
-    let headYT = p.headY - breath * 2.2;
-    let armLT = -armSwing + (mood === "sad" ? 5 : 0) + (mood === "thinking" ? 8 : 0);
+    let headYT = p.headY - breath * 2.2 + 2 * chuckle;
+    let armLT = p.chin ? -132 + 2 * Math.sin(t * 1.1) : -armSwing + (mood === "sad" ? 5 : 0);
     let armRT = waving ? -72 + 14 * Math.sin(t * 12) : armSwing - (mood === "sad" ? 5 : 0);
+    if (p.cross) {
+      // Скрестил лапы на груди и демонстративно сопит.
+      armLT = -108 + 2 * Math.sin(t * 1.6);
+      armRT = 104 - 2 * Math.sin(t * 1.6);
+    }
     let mouthT = p.mouth;
     let lidT = p.lid;
-    let browYT = p.browY;
+    let browYT = 0;
     let ball: { x: number; y: number; sq: number; h: number; ground: number } | null = null;
 
     actT += dt;
@@ -178,7 +348,7 @@ export function createBeaverRig(root: HTMLElement, followCursor: boolean): Beave
 
     step(s.lookX, lookX, dt);
     step(s.lookY, lookY, dt);
-    step(s.headRot, headRotT + s.lookX.x * 0.35, dt);
+    step(s.headRot, headRotT + s.lookX.x * 0.35 - s.wiggle.x * 0.8, dt);
     step(s.headY, headYT, dt);
 
     // Уши: висят на голове с инерцией и иногда сами дёргаются.
@@ -198,6 +368,8 @@ export function createBeaverRig(root: HTMLElement, followCursor: boolean): Beave
     }
     const stretch = hopT >= 0 ? 0.05 * Math.sin(Math.PI * hopT) : 0;
     step(s.squash, 0, dt);
+    // Щекотка: тело и голова мелко трясутся от смеха.
+    step(s.wiggle, reaction?.wiggle ? 4 * Math.sin(t * 22) : 0, dt);
 
     // Хвост и лапы отстают от тела — вторичное движение.
     step(s.tail, p.tailAmp * Math.sin(t * p.tailSpeed) - s.squash.v * 6, dt);
@@ -205,8 +377,21 @@ export function createBeaverRig(root: HTMLElement, followCursor: boolean): Beave
     step(s.armL, armLT, dt);
     step(s.mouth, mouthT, dt);
     step(s.lid, lidT, dt);
-    step(s.browY, browYT, dt);
-    step(s.browTilt, p.browTilt, dt);
+    step(s.browLY, p.browL[0] + browYT, dt);
+    step(s.browLT, p.browL[1], dt);
+    step(s.browRY, p.browR[0] + browYT, dt);
+    step(s.browRT, p.browR[1], dt);
+    step(s.arcL, p.arcL, dt);
+    step(s.arcR, p.arcR, dt);
+    step(s.eyeScale, p.eyeScale, dt);
+    step(s.jaw, p.jaw * (0.85 + 0.15 * chuckle), dt);
+    step(s.oMouth, p.oMouth, dt);
+    step(s.surprise, p.surprise, dt);
+    step(s.sparkle, p.sparkle, dt);
+    step(s.blush, p.blush, dt);
+    step(s.anger, p.anger, dt);
+    step(s.steam, p.steam, dt);
+    step(s.sleep, p.sleep, dt);
 
     // Моргание по случайному расписанию, иногда двойное.
     let blink = 0;
@@ -222,7 +407,7 @@ export function createBeaverRig(root: HTMLElement, followCursor: boolean): Beave
 
     const sq = 1 + s.squash.x;
     el.inner?.setAttribute("transform", `translate(0 ${hopY.toFixed(2)}) ${scaleAt(1 / Math.sqrt(sq) - stretch * 0.5, sq + stretch, PIVOT.ground)}`);
-    el.torso?.setAttribute("transform", scaleAt(1 + breath * 0.007, 1 + breath * 0.02, PIVOT.torso));
+    el.torso?.setAttribute("transform", `${rot(s.wiggle.x, PIVOT.torso)} ${scaleAt(1 + breath * 0.007, 1 + breath * 0.02, PIVOT.torso)}`);
     el.head?.setAttribute("transform", `translate(0 ${s.headY.x.toFixed(2)}) ${rot(s.headRot.x, PIVOT.head)}`);
     el.earL?.setAttribute("transform", rot(s.earL.x, PIVOT.earLeft));
     el.earR?.setAttribute("transform", rot(s.earR.x, PIVOT.earRight));
@@ -235,9 +420,73 @@ export function createBeaverRig(root: HTMLElement, followCursor: boolean): Beave
     const lid = Math.max(s.lid.x, blink);
     for (const g of el.lids) g.setAttribute("transform", `translate(0 ${(-64 * (1 - lid)).toFixed(2)})`);
     el.smile?.setAttribute("d", mouthPath(Math.max(-1, Math.min(1, s.mouth.x))));
+
+    // Глаз-дуга: открытый глаз сплющивается и гаснет, на его месте проявляется «^».
+    const es = s.eyeScale.x;
+    const eyeState = (open: SVGGElement | null, arc: SVGGElement | null, c: number, center: readonly number[]) => {
+      const k = clamp01(c);
+      open?.setAttribute("transform", scaleAt(es, es * (1 - 0.85 * k), center));
+      open?.setAttribute("opacity", clamp01((0.6 - k) / 0.2).toFixed(2));
+      arc?.setAttribute("opacity", clamp01((k - 0.4) / 0.2).toFixed(2));
+    };
+    eyeState(el.eyeOpenL, el.eyeArcL, s.arcL.x, PIVOT.eyeLeft);
+    eyeState(el.eyeOpenR, el.eyeArcR, s.arcR.x, PIVOT.eyeRight);
+
+    // Рот: открытый смеющийся растёт вниз от верхнего края, «О» раскрывается из центра, зубы при «О» прячутся.
+    const jaw = clamp01(s.jaw.x), o = clamp01(s.oMouth.x);
+    el.muzzle?.setAttribute("transform", scaleAt(1 + 0.04 * jaw, 1 + 0.17 * jaw + 0.03 * o, PIVOT.muzzleTop));
+    el.mouthOpen?.setAttribute("opacity", clamp01(jaw * 4).toFixed(2));
+    el.mouthOpen?.setAttribute("transform", scaleAt(1, Math.max(0.01, jaw), PIVOT.mouthOpenTop));
+    el.mouthTeeth?.setAttribute("opacity", (1 - o).toFixed(2));
+    el.mouthO?.setAttribute("opacity", clamp01(o * 3).toFixed(2));
+    el.mouthO?.setAttribute("transform", scaleAt(Math.max(0.01, o), Math.max(0.01, o), PIVOT.mouthO));
+
+    // Эффекты: штрихи удивления пульсируют наружу, искорка мерцает.
+    const sur = clamp01(s.surprise.x), spk = clamp01(s.sparkle.x);
+    el.fxSurprise?.setAttribute("opacity", sur.toFixed(2));
+    el.fxSurprise?.setAttribute("transform", scaleAt(0.85 + 0.15 * sur + 0.04 * Math.sin(t * 9), 0.85 + 0.15 * sur + 0.04 * Math.sin(t * 9), PIVOT.headCenter));
+    el.fxSparkle?.setAttribute("opacity", spk.toFixed(2));
+    const mirror = winkSide === "left" ? "translate(375 0) scale(-1 1) " : "";
+    el.fxSparkle?.setAttribute("transform", `${mirror}${rot(12 * Math.sin(t * 2), PIVOT.sparkle)} ${scaleAt(spk * (0.85 + 0.18 * Math.sin(t * 5)), spk * (0.85 + 0.18 * Math.sin(t * 5)), PIVOT.sparkle)}`);
+
+    // Румянец: обида — щёки краснеют, сон — лёгкий.
+    for (const b of el.blush) b.setAttribute("opacity", (0.35 + 0.45 * clamp01(s.blush.x)).toFixed(2));
+
+    // Обида: знак злости выпрыгивает с перелётом и пульсирует, из ушей идёт пар.
+    const ang = Math.max(0, s.anger.x);
+    el.fxAnger?.setAttribute("opacity", clamp01(ang).toFixed(2));
+    const pulse = ang * (1 + 0.12 * Math.sin(t * 10));
+    el.fxAnger?.setAttribute("transform", `translate(${PIVOT.anger[0]} ${PIVOT.anger[1]}) scale(${pulse.toFixed(3)})`);
+    const steam = clamp01(s.steam.x);
+    el.fxSteam?.setAttribute("opacity", steam.toFixed(2));
+    el.puffs.forEach((g, i) => {
+      const k = (t * 0.9 + i * 0.5) % 1;
+      const [x0, y0] = i === 0 ? PIVOT.steamLeft : PIVOT.steamRight;
+      const dir = i === 0 ? -1 : 1;
+      g.setAttribute("transform", `translate(${(x0 + dir * 18 * k).toFixed(1)} ${(y0 - 50 * k).toFixed(1)}) scale(${(0.5 + 0.7 * k).toFixed(2)})`);
+      g.setAttribute("opacity", Math.sin(Math.PI * k).toFixed(2));
+    });
+
+    // Сон: три «Z» по очереди всплывают, растут и тают.
+    const zz = clamp01(s.sleep.x);
+    el.fxZzz?.setAttribute("opacity", zz.toFixed(2));
+    el.zs.forEach((g, i) => {
+      const k = (t * 0.35 + i / 3) % 1;
+      const [x0, y0] = PIVOT.zzz;
+      g.setAttribute("transform", `translate(${(x0 + 55 * k + 8 * Math.sin(k * 6 + i)).toFixed(1)} ${(y0 - 110 * k).toFixed(1)}) rotate(${(-12 + 10 * k).toFixed(1)}) scale(${(0.55 + 0.75 * k).toFixed(2)})`);
+      g.setAttribute("opacity", Math.min(1, Math.sin(Math.PI * k) * 1.6).toFixed(2));
+    });
+
+    // Поднятая к подбородку лапа рисуется поверх головы, опущенная — возвращается на место.
+    const wantFront = s.armL.x < -45;
+    if (el.armL && armLHome && wantFront !== armLFront) {
+      if (wantFront) el.head?.after(el.armL);
+      else armLHome.parent?.insertBefore(el.armL, armLHome.next);
+      armLFront = wantFront;
+    }
     for (const g of el.glints) g.setAttribute("transform", `translate(${(s.lookX.x * 0.7).toFixed(2)} ${(s.lookY.x * 0.7).toFixed(2)})`);
-    el.browL?.setAttribute("transform", `translate(0 ${s.browY.x.toFixed(2)}) ${rot(s.browTilt.x, PIVOT.browLeft)}`);
-    el.browR?.setAttribute("transform", `translate(0 ${s.browY.x.toFixed(2)}) ${rot(-s.browTilt.x, PIVOT.browRight)}`);
+    el.browL?.setAttribute("transform", `translate(0 ${s.browLY.x.toFixed(2)}) ${rot(s.browLT.x, PIVOT.browLeft)}`);
+    el.browR?.setAttribute("transform", `translate(0 ${s.browRY.x.toFixed(2)}) ${rot(-s.browRT.x, PIVOT.browRight)}`);
     if (ball && el.ball) {
       el.ball.setAttribute("transform", `translate(${ball.x.toFixed(2)} ${ball.y.toFixed(2)}) scale(${(1 / Math.sqrt(ball.sq)).toFixed(3)} ${ball.sq.toFixed(3)}) rotate(${ballRot.toFixed(1)})`);
       const k = Math.max(0.35, 1 - ball.h / 260);
@@ -260,15 +509,63 @@ export function createBeaverRig(root: HTMLElement, followCursor: boolean): Beave
   }
 
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (reduced) frame(performance.now(), false);
+  /** Без анимации доводим пружины до цели за один вызов, чтобы поза всё равно применилась. */
+  const settle = () => {
+    for (let i = 0; i < 90; i++) frame(last + 1000 / 60, false);
+  };
+  if (reduced) settle();
   else raf = requestAnimationFrame((n) => frame(n));
 
   return {
     setMood(m) {
-      if (m === "happy" && mood !== "happy") this.hop();
-      mood = m;
-      if (blinkT < 0) nextBlink = t + 0.05;
-      if (reduced) frame(performance.now(), false);
+      if (m === "happy" && baseMood !== "happy") startHop();
+      baseMood = m;
+      if (reduced) settle();
+    },
+    react(m, opts = {}) {
+      const ms = m === "sleep" ? 7000 : m === "offended" ? 3200 : undefined;
+      startReaction(m, { hop: m === "happy", ...(ms ? { ms } : {}), ...opts });
+    },
+    poke(target) {
+      const now = performance.now();
+      lastInteraction = now;
+      // Спящего тычок будит: вздрагивает и удивляется.
+      if (reaction?.mood === "sleep" || baseMood === "sleep") {
+        startReaction("surprised", { ms: 1400, hop: true });
+        return;
+      }
+      // Пока обижен, тычки только продлевают обиду.
+      if (reaction?.mood === "offended" && now < reaction.until) {
+        reaction.until = now + 3200;
+        return;
+      }
+      // Затыкали: больше 6 тычков за 3 секунды — бобр расстраивается.
+      pokes.push(now);
+      while (pokes.length && now - pokes[0] > 3000) pokes.shift();
+      if (pokes.length >= 6) {
+        pokes.length = 0;
+        startReaction("offended", { ms: 3200 });
+        return;
+      }
+      const part = (sel: string) => !!target?.closest(sel);
+      if (part("#nose")) startReaction("surprised", { ms: 1400 });
+      else if (part("#eye-left") || part("#brow-left") || part("#eye-right") || part("#brow-right") || part("#eyes")) {
+        // Подмигивает тем глазом, в который ткнули.
+        winkSide = part("#eye-left") || part("#brow-left") ? "left" : "right";
+        winkChosen = true;
+        startReaction("wink", { ms: 1200 });
+      }
+      else if (part("#ear-left") || part("#ear-right")) {
+        (part("#ear-left") ? s.earL : s.earR).v += part("#ear-left") ? -420 : 420;
+        startReaction("happy", { ms: 900 });
+      } else if (part("#head")) startReaction("happy", { ms: 1500 });
+      else if (part("#tail")) {
+        s.tail.v -= 500;
+        startReaction("surprised", { ms: 1300 });
+      } else if (part("#arm-left") || part("#arm-right")) startReaction("happy", { ms: 1500, wave: true });
+      else if (part("#feet")) startReaction("happy", { ms: 1000, hop: true });
+      else if (part("#torso")) startReaction("happy", { ms: 1800, wiggle: true });
+      else startReaction("happy", { ms: 1200, hop: true, wave: true });
     },
     setActivity(a) {
       activity = a;
@@ -277,12 +574,10 @@ export function createBeaverRig(root: HTMLElement, followCursor: boolean): Beave
       el.ballShadow = root.querySelector<SVGEllipseElement>("#ball-shadow");
       el.puck = root.querySelector<SVGGElement>("#prop-puck");
       el.puckShadow = root.querySelector<SVGEllipseElement>("#puck-shadow");
-      if (reduced) frame(performance.now(), false);
+      if (reduced) settle();
     },
     hop() {
-      if (hopT >= 0) return;
-      s.squash.v += 1.6;
-      hopT = 0;
+      startHop();
       waveUntil = performance.now() + 1200;
     },
     destroy() {

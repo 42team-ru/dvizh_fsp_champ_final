@@ -44,7 +44,7 @@ SVG, цвета и анимации уже лежат на фронтенде. �
 
 | Поле | Значения |
 |---|---|
-| `mood` | `idle`, `happy`, `sad`, `thinking` |
+| `mood` | `idle`, `happy`, `surprised`, `thinking`, `sad`, `wink`, `offended`, `sleep` |
 | `activity` | `none`, `juggle`, `dribble`, `lift`, `chess`, `ski`, `hockey`, `esports`, `programming` |
 | `outfit.hat` | `cap`, `headband`, `beanie`, `swimcap`, `helmet`, `headphones` |
 | `outfit.eyewear` | `sunglasses`, `goggles` |
@@ -93,7 +93,7 @@ SVG, цвета и анимации уже лежат на фронтенде. �
 
 ```json
 {
-  "moods": [{"id":"idle","label":"Спокойный"}],
+  "moods": [{"id":"idle","label":"Улыбается"}],
   "activities": [{"id":"programming","label":"Ноутбук с кодом"}],
   "outfit": {
     "hat": [{"id":"headphones","label":"Игровые наушники с микрофоном"}],

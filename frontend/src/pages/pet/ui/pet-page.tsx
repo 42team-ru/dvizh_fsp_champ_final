@@ -1,14 +1,19 @@
+import { useRef } from "react";
 import { useSearchParams } from "react-router";
-import { BeaverPet, type BeaverMood } from "@/widgets/beaver-pet/ui/beaver-pet";
+import { BeaverPet, type BeaverMood, type BeaverPetHandle } from "@/widgets/beaver-pet/ui/beaver-pet";
 import { CLUBS, type ClubId } from "@/widgets/beaver-pet/ui/beaver-clubs";
 import { HOCKEY_CLUBS, type HockeyClubId } from "@/widgets/beaver-pet/ui/beaver-hockey-clubs";
 import type { BeaverActivity, BeaverOutfit } from "@/widgets/beaver-pet/ui/beaver-wardrobe";
 
 const MOODS: { value: BeaverMood; label: string }[] = [
-  { value: "idle", label: "Спокойный" },
-  { value: "happy", label: "Радость" },
-  { value: "sad", label: "Грусть" },
+  { value: "idle", label: "Улыбается" },
+  { value: "happy", label: "Смеётся" },
+  { value: "surprised", label: "Удивлён" },
   { value: "thinking", label: "Думает" },
+  { value: "sad", label: "Переживает" },
+  { value: "wink", label: "Подмигивает" },
+  { value: "offended", label: "Обиделся" },
+  { value: "sleep", label: "Спит" },
 ];
 
 type Look = { label: string; outfit: BeaverOutfit; activity: BeaverActivity };
@@ -80,6 +85,8 @@ function Choice({ label, value, options, onChange }: { label: string; value: str
 
 export default function PetPage() {
   const [params, setParams] = useSearchParams();
+  const pet = useRef<BeaverPetHandle>(null);
+  // Из URL берётся только базовое настроение (для ссылок и скриншотов); кнопки ниже играют эмоцию и сбрасывают её.
   const mood = MOODS.find((m) => m.value === params.get("mood"))?.value ?? "idle";
   const look = LOOKS.find((l) => l.label === (params.get("look") ?? "Футбол")) ?? LOOKS[0];
   const outfit = { ...look.outfit };
@@ -114,13 +121,15 @@ export default function PetPage() {
       <div className="grid items-start gap-8 md:grid-cols-2">
         <div className="md:sticky md:top-6">
           <div className="rounded-[3rem] bg-[#F6EEE4] px-2 pb-5 pt-8 sm:px-4">
-            <BeaverPet mood={mood} outfit={outfit} activity={activity} className="cursor-pointer" />
+            <BeaverPet ref={pet} mood={mood} outfit={outfit} activity={activity} className="cursor-pointer" />
           </div>
-          <p className="mt-4 text-center text-sm text-muted-foreground">Наведи мышку — он смотрит. Нажми на бобра — подпрыгнет и помашет.</p>
+          <p className="mt-4 text-center text-sm text-muted-foreground">
+            Ткни в нос, голову, живот, хвост или лапу — каждый раз своя реакция. Поводи мышкой туда-сюда по голове — бобр зажмурится от удовольствия. Только не затыкай его.
+          </p>
           <fieldset className="mt-5">
-            <legend className="mb-3 text-sm font-medium">Настроение</legend>
+            <legend className="mb-3 text-sm font-medium">Эмоции: проиграть и вернуться</legend>
             <div className="flex flex-wrap gap-2">
-              {MOODS.map((m) => <button key={m.value} type="button" aria-pressed={mood === m.value} onClick={() => update("mood", m.value)} className={button(mood === m.value)}>{m.label}</button>)}
+              {MOODS.map((m) => <button key={m.value} type="button" onClick={() => pet.current?.react(m.value)} className={button(false)}>{m.label}</button>)}
             </div>
           </fieldset>
         </div>
