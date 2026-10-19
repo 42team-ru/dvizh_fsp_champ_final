@@ -23,6 +23,8 @@ Push в `main` запускает `.github/workflows/deploy.yml`:
 | `VPS_USER` | secret | пользователь SSH (должен уметь `docker`) |
 | `VPS_SSH_KEY` | secret | приватный ключ целиком, без пароля (passphrase) |
 | `VPS_DIR` | variable, необязательно | папка на сервере, по умолчанию `/opt/app` |
+| `VITE_2GIS_KEY` | secret | ключ карты 2ГИС: фронт собирается в CI, Vite вшивает ключ в сборку. Без него карта не загрузится, остальное работает |
+| `VITE_2GIS_STYLE_ID` | secret, необязательно | свой стиль карты из редактора 2ГИС |
 
 Подготовка самого сервера и все остальные операции описаны в [dev-faq.md](dev-faq.md).
 
@@ -30,7 +32,7 @@ Push в `main` запускает `.github/workflows/deploy.yml`:
 | Что | Для чего |
 |---|---|
 | `docker-compose.yml` | кладёт CI при каждом деплое |
-| `.env` | настройки (пароль БД, домен, секрет JWT, версия образа); CI дописывает `IMAGE`, `TAG`, `JWT_SECRET` |
+| `.env` | настройки (пароль БД, домен, секрет JWT, версия образа, Telegram-бот уведомлений); CI дописывает `IMAGE`, `TAG`, `JWT_SECRET` |
 | `data/caddy/` | сертификаты Let's Encrypt (обычная папка, переживает деплои и `docker compose down -v`) |
 | docker volume `pgdata` | данные Postgres |
 | `data/minio/` | файлы S3 (MinIO): аватарки, фото, документы; обычная папка, переживает `down -v` |

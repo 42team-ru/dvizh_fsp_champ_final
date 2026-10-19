@@ -16,5 +16,7 @@ app:
     type: memory   # файлы в памяти: тестам не нужен MinIO
   economy:
     scheduler-enabled: false   # фоновые начисления тестам не нужны
+  notifications:
+    scheduling-enabled: false   # доставку и напоминания тесты запускают вручную
   demo:
     enabled: false   # демо-сид (сотни строк) тестам не нужен и не покрывается тестами

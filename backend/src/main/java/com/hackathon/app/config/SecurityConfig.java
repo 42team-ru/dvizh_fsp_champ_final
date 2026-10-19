@@ -41,9 +41,12 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 public class SecurityConfig {
 
+	/** Webhook Telegram защищён своим секретом в заголовке, пользовательский токен ему не нужен. */
+	private static final String TELEGRAM_WEBHOOK = "/api/notifications/telegram/webhook";
+
 	/** Эти пути не читают токен вовсе: протухший cookie не должен ломать вход и обновление сессии. */
 	private static final List<String> PUBLIC_AUTH = List.of("/api/auth/register", "/api/auth/login", "/api/auth/refresh",
-			"/api/auth/logout", "/api/auth/users/check/", "/api/demo/");
+			"/api/auth/logout", "/api/auth/users/check/", "/api/demo/", TELEGRAM_WEBHOOK);
 
 	@Bean
 	SecurityFilterChain filterChain(HttpSecurity http, BearerTokenResolver tokenResolver) {
@@ -53,7 +56,7 @@ public class SecurityConfig {
 			.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.authorizeHttpRequests(auth -> auth
 				.requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/refresh", "/api/auth/logout",
-						"/api/auth/users/check/**", "/api/demo/**", "/api/ping").permitAll()
+						"/api/auth/users/check/**", "/api/demo/**", "/api/ping", TELEGRAM_WEBHOOK).permitAll()
 				.requestMatchers("/actuator/health/**", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
 				.requestMatchers(HttpMethod.GET, "/api/sport-images/**", "/api/achievement-images/**").permitAll()
 				.requestMatchers("/api/admin/**").hasRole("ADMIN")

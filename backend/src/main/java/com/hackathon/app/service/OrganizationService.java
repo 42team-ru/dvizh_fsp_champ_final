@@ -44,6 +44,7 @@ public class OrganizationService {
 	private final FileService files;
 	private final OrganizationAwardService awards;
 	private final StoredFileRepository storedFiles;
+	private final NotificationSubjects notificationSubjects;
 
 	@Transactional(readOnly = true)
 	public OrganizationResponse mine(UUID userId) {
@@ -60,6 +61,8 @@ public class OrganizationService {
 		requireOrgAccount(userId);
 		var contacts = OrganizationContacts.normalize(r.contacts());
 		var org = organizations.findByAccountId(userId).orElse(null);
+		// Админам пишем, когда анкета уходит на проверку: первая подача и правка после отказа.
+		boolean submitted = org == null || org.getStatus() == OrganizationStatus.REJECTED;
 		var now = dbTime.now();
 		if (org == null) {
 			org = mapper.toEntity(r, userId, OrganizationStatus.PENDING, now);
@@ -77,6 +80,9 @@ public class OrganizationService {
 		}
 		catch (DataIntegrityViolationException _) { // две первые анкеты одновременно: unique(account_id)
 			throw new ConflictException("Анкета уже сохраняется, обновите страницу");
+		}
+		if (submitted) {
+			notificationSubjects.submitted(org);
 		}
 		log.info("Анкета организации сохранена: organizationId={}, accountId={}, status={}", org.getId(), userId,
 				org.getStatus());

@@ -3,7 +3,11 @@ import { UserAvatar } from "@/shared/components/ui/user-avatar";
 import { EditProfileDialog } from "@/features/edit-profile/ui/edit-profile-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { useRegistrationsMine } from "@/shared/api/generated/core/registrations/registrations";
-import { useUsersHistory, useUsersHistorySummary, useUsersMySports } from "@/shared/api/generated/core/users/users";
+import {
+  useUsersHistory,
+  useUsersHistorySummary,
+  useUsersMySports,
+} from "@/shared/api/generated/core/users/users";
 import type {
   AttendedOccurrenceResponse,
   MyRegistrationResponse,
@@ -24,17 +28,34 @@ import {
 } from "./passport-utils";
 
 const IMG = "/profile";
-const CHIP_TONES = ["bg-sky-soft", "bg-lime-soft", "bg-peach", "bg-lavender-soft"];
+const CHIP_TONES = [
+  "bg-sky-soft",
+  "bg-lime-soft",
+  "bg-peach",
+  "bg-lavender-soft",
+];
 
 /** Вся подпись поля паспорта: мелкий заголовок и значение. */
-function Field({ label, value, large }: { label: string; value: string; large?: boolean }) {
+function Field({
+  label,
+  value,
+  large,
+}: {
+  label: string;
+  value: string;
+  large?: boolean;
+}) {
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-[2px]">
-      <p className="text-[9px] font-extrabold tracking-[1.2px] whitespace-nowrap text-muted-foreground">{label}</p>
+      <p className="text-[9px] font-extrabold tracking-[1.2px] whitespace-nowrap text-muted-foreground">
+        {label}
+      </p>
       <p
         className={cn(
           "truncate text-foreground",
-          large ? "font-display text-[17px] font-bold" : "text-[15px] font-bold",
+          large
+            ? "font-display text-[17px] font-bold"
+            : "text-[15px] font-bold",
         )}
       >
         {value}
@@ -43,7 +64,13 @@ function Field({ label, value, large }: { label: string; value: string; large?: 
   );
 }
 
-function SportChip({ sport, index }: { sport: UserSportResponse; index: number }) {
+function SportChip({
+  sport,
+  index,
+}: {
+  sport: UserSportResponse;
+  index: number;
+}) {
   const pips = sport.level ? LEVEL_PIPS[sport.level] : 0;
   return (
     <span
@@ -52,7 +79,9 @@ function SportChip({ sport, index }: { sport: UserSportResponse; index: number }
         CHIP_TONES[index % CHIP_TONES.length],
       )}
     >
-      <span className="text-[13px] font-extrabold whitespace-nowrap text-foreground">{sport.sport.name}</span>
+      <span className="text-[13px] font-extrabold whitespace-nowrap text-foreground">
+        {sport.sport.name}
+      </span>
       {sport.level ? (
         <span className="text-xs font-bold whitespace-nowrap text-muted-foreground">
           · {SPORT_LEVEL_LABEL[sport.level]}
@@ -63,7 +92,10 @@ function SportChip({ sport, index }: { sport: UserSportResponse; index: number }
           {[6, 9, 12, 15].map((h, i) => (
             <span
               key={h}
-              className={cn("w-[5px] rounded-[1.5px]", i < pips ? "bg-primary" : "bg-track")}
+              className={cn(
+                "w-[5px] rounded-[1.5px]",
+                i < pips ? "bg-primary" : "bg-track",
+              )}
               style={{ height: h }}
             />
           ))}
@@ -80,7 +112,9 @@ function DataPage() {
   const list = sports.data?.status === 200 ? sports.data.data : [];
   const number = passportNumber(user?.id);
   const issued = dateShort(user?.createdAt);
-  const mood = user?.pet ? (MOOD_LABEL[user.pet.mood] ?? user.pet.mood) : undefined;
+  const mood = user?.pet
+    ? (MOOD_LABEL[user.pet.mood] ?? user.pet.mood)
+    : undefined;
   const [mrz1, mrz2] = mrzLines(user ?? {});
 
   return (
@@ -107,22 +141,35 @@ function DataPage() {
       </header>
 
       <div className="relative flex items-start gap-[22px]">
-        <UserAvatar user={user} className="h-[190px] w-[150px] shrink-0 rounded-xl border-2 border-ink object-cover" />
+        <UserAvatar
+          user={user}
+          className="h-[190px] w-[150px] shrink-0 rounded-xl border-2 border-ink object-cover"
+        />
         <div className="flex min-w-0 flex-1 flex-col gap-3">
           <div className="flex gap-4">
-            <Field label="ФАМИЛИЯ / SURNAME" value={user?.lastName ?? "—"} large />
+            <Field
+              label="ФАМИЛИЯ / SURNAME"
+              value={user?.lastName ?? "—"}
+              large
+            />
             <Field label="ИМЯ / NAME" value={user?.firstName ?? "—"} large />
           </div>
           <div className="flex gap-4">
-            <Field label="ЛОГИН" value={user?.username ? `@${user.username}` : "—"} />
+            <Field
+              label="ЛОГИН"
+              value={user?.username ? `@${user.username}` : "—"}
+            />
             <Field label="ГОРОД" value={user?.city ?? "—"} />
           </div>
           <div className="flex gap-4">
             <Field label="ДАТА ВЫДАЧИ" value={dateFull(user?.createdAt)} />
-            <Field label="ОРГАН ВЫДАЧИ" value="Спорт рядом" />
+            <Field label="ОРГАН ВЫДАЧИ" value="Движ" />
           </div>
           <div className="flex gap-4">
-            <Field label="СТАТУС" value={user?.systemRole ? ROLE_LABEL[user.systemRole] : "—"} />
+            <Field
+              label="СТАТУС"
+              value={user?.systemRole ? ROLE_LABEL[user.systemRole] : "—"}
+            />
             <Field label="№ ПАСПОРТА" value={number} />
           </div>
         </div>
@@ -131,12 +178,20 @@ function DataPage() {
       {/* штамп «действителен» поверх фото */}
       <div className="pointer-events-none absolute top-[157px] left-[102px] flex size-[99px] items-center justify-center">
         <div className="relative size-[83px] -rotate-12 text-accent">
-          <img src={`${IMG}/stamp-valid.svg`} alt="" className="absolute inset-0 size-full" />
+          <img
+            src={`${IMG}/stamp-valid.svg`}
+            alt=""
+            className="absolute inset-0 size-full"
+          />
           <p className="absolute inset-x-0 top-6 text-center text-[6.4px] font-extrabold tracking-[0.8px]">
             ДЕЙСТВИТЕЛЕН
           </p>
-          <p className="absolute inset-x-0 top-[35px] text-center font-display text-[11.2px] font-extrabold">ГОДЕН</p>
-          <p className="absolute inset-x-0 top-[51px] text-center text-[7.2px] font-extrabold">с {issued}</p>
+          <p className="absolute inset-x-0 top-[35px] text-center font-display text-[11.2px] font-extrabold">
+            ГОДЕН
+          </p>
+          <p className="absolute inset-x-0 top-[51px] text-center text-[7.2px] font-extrabold">
+            с {issued}
+          </p>
         </div>
       </div>
 
@@ -153,7 +208,9 @@ function DataPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           {list.length > 0 ? (
-            list.map((s, i) => <SportChip key={s.sport.id} sport={s} index={i} />)
+            list.map((s, i) => (
+              <SportChip key={s.sport.id} sport={s} index={i} />
+            ))
           ) : (
             <span className="text-[13px] font-semibold text-muted-foreground">
               Виды спорта пока не выбраны.
@@ -172,18 +229,41 @@ function DataPage() {
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-[10px] rounded-[14px] border-[1.5px] border-ink bg-sky-soft py-[6px] pr-3 pl-[6px]">
-          <img src={`${IMG}/wave.png`} alt="" className="size-12 object-contain" />
+          <img
+            src={`${IMG}/wave.png`}
+            alt=""
+            className="size-12 object-contain"
+          />
           <div className="flex flex-col gap-px whitespace-nowrap">
-            <span className="text-[8px] font-extrabold tracking-[1.2px] text-muted-foreground">СОПРОВОЖДАЮЩИЙ</span>
-            <span className="text-[13px] font-extrabold text-foreground">Бобр Бублик</span>
-            {mood ? <span className="text-[11px] font-bold text-muted-foreground">настроение: {mood}</span> : null}
+            <span className="text-[8px] font-extrabold tracking-[1.2px] text-muted-foreground">
+              СОПРОВОЖДАЮЩИЙ
+            </span>
+            <span className="text-[13px] font-extrabold text-foreground">
+              Бобр Бублик
+            </span>
+            {mood ? (
+              <span className="text-[11px] font-bold text-muted-foreground">
+                настроение: {mood}
+              </span>
+            ) : null}
           </div>
         </div>
       </div>
 
-      <div className="relative mt-auto flex flex-col gap-[2px] overflow-hidden rounded-lg bg-lilac/30 px-3 py-[10px] font-mono text-[13px] font-medium tracking-[1.2px] whitespace-nowrap text-foreground">
-        <p aria-label="Машиночитаемая зона, строка 1">{mrz1}</p>
-        <p aria-label="Машиночитаемая зона, строка 2">{mrz2}</p>
+      <div className="relative mt-auto flex flex-col gap-[2px] overflow-hidden rounded-lg bg-lilac/30 px-3 py-[10px] font-mono text-[13px] font-medium whitespace-nowrap text-foreground">
+        {[mrz1, mrz2].map((line, i) => (
+          <p
+            key={i}
+            aria-label={`Машиночитаемая зона, строка ${i + 1}`}
+            className="flex w-full justify-between"
+          >
+            {Array.from(line).map((ch, j) => (
+              <span key={j} aria-hidden="true">
+                {ch}
+              </span>
+            ))}
+          </p>
+        ))}
       </div>
     </section>
   );
@@ -196,17 +276,79 @@ type StampType = "round" | "rect" | "oval" | "star" | "rectGreen";
 /** Размеры оттиска, положение текста внутри и цвет — как в макете. */
 const STAMP: Record<
   StampType,
-  { w: number; h: number; img: string; color: string; kind: number; sport: number; date: number; place?: number; sportSize: number }
+  {
+    w: number;
+    h: number;
+    img: string;
+    color: string;
+    kind: number;
+    sport: number;
+    date: number;
+    place?: number;
+    sportSize: number;
+  }
 > = {
-  round: { w: 132, h: 132, img: "stamp-round", color: "text-primary", kind: 26, sport: 42, date: 70, place: 90, sportSize: 19 },
-  rect: { w: 172, h: 104, img: "stamp-rect", color: "text-accent", kind: 16, sport: 30, date: 62, sportSize: 19 },
-  oval: { w: 168, h: 104, img: "stamp-oval", color: "text-green", kind: 20, sport: 34, date: 62, sportSize: 18 },
-  star: { w: 136, h: 136, img: "stamp-star", color: "text-ink", kind: 34, sport: 48, date: 72, place: 90, sportSize: 15 },
-  rectGreen: { w: 172, h: 104, img: "stamp-rect-green", color: "text-green", kind: 16, sport: 30, date: 62, sportSize: 19 },
+  round: {
+    w: 132,
+    h: 132,
+    img: "stamp-round",
+    color: "text-primary",
+    kind: 26,
+    sport: 42,
+    date: 70,
+    place: 90,
+    sportSize: 19,
+  },
+  rect: {
+    w: 172,
+    h: 104,
+    img: "stamp-rect",
+    color: "text-accent",
+    kind: 16,
+    sport: 30,
+    date: 62,
+    sportSize: 19,
+  },
+  oval: {
+    w: 168,
+    h: 104,
+    img: "stamp-oval",
+    color: "text-green",
+    kind: 20,
+    sport: 34,
+    date: 62,
+    sportSize: 18,
+  },
+  star: {
+    w: 136,
+    h: 136,
+    img: "stamp-star",
+    color: "text-ink",
+    kind: 34,
+    sport: 48,
+    date: 72,
+    place: 90,
+    sportSize: 15,
+  },
+  rectGreen: {
+    w: 172,
+    h: 104,
+    img: "stamp-rect-green",
+    color: "text-green",
+    kind: 16,
+    sport: 30,
+    date: 62,
+    sportSize: 19,
+  },
 };
 
 /** Шесть мест под печати: центр в px страницы, поворот и вид оттиска. */
-const STAMP_SLOTS: { type: StampType; cx: number; cy: number; rotate: number }[] = [
+const STAMP_SLOTS: {
+  type: StampType;
+  cx: number;
+  cy: number;
+  rotate: number;
+}[] = [
   { type: "round", cx: 64.7, cy: 82.5, rotate: 6 },
   { type: "rect", cx: 267.4, cy: 71.9, rotate: -4 },
   { type: "oval", cx: 451.2, cy: 62.3, rotate: 3 },
@@ -228,7 +370,13 @@ function sportSize(length: number, base: number) {
   return base - 9;
 }
 
-function Stamp({ slot, item }: { slot: (typeof STAMP_SLOTS)[number]; item: AttendedOccurrenceResponse }) {
+function Stamp({
+  slot,
+  item,
+}: {
+  slot: (typeof STAMP_SLOTS)[number];
+  item: AttendedOccurrenceResponse;
+}) {
   const s = STAMP[slot.type];
   const sport = item.event.sport.name.toUpperCase();
   const kind = item.event.kind ? KIND_LABEL[item.event.kind] : "ЗАНЯТИЕ";
@@ -246,8 +394,15 @@ function Stamp({ slot, item }: { slot: (typeof STAMP_SLOTS)[number]; item: Atten
         transform: `rotate(${slot.rotate}deg)`,
       }}
     >
-      <img src={`${IMG}/${s.img}.svg`} alt="" className="absolute inset-0 size-full max-w-none" />
-      <p className="absolute inset-x-0 text-center text-[8px] font-extrabold tracking-[1.5px]" style={{ top: s.kind }}>
+      <img
+        src={`${IMG}/${s.img}.svg`}
+        alt=""
+        className="absolute inset-0 size-full max-w-none"
+      />
+      <p
+        className="absolute inset-x-0 text-center text-[8px] font-extrabold tracking-[1.5px]"
+        style={{ top: s.kind }}
+      >
         {kind}
       </p>
       <p
@@ -267,7 +422,10 @@ function Stamp({ slot, item }: { slot: (typeof STAMP_SLOTS)[number]; item: Atten
         {inline ? [date, place].filter(Boolean).join(" · ") : date}
       </p>
       {!inline && place ? (
-        <p className="absolute inset-x-3 truncate text-center text-[9px] font-bold" style={{ top: s.place }}>
+        <p
+          className="absolute inset-x-3 truncate text-center text-[9px] font-bold"
+          style={{ top: s.place }}
+        >
           {place}
         </p>
       ) : null}
@@ -275,7 +433,13 @@ function Stamp({ slot, item }: { slot: (typeof STAMP_SLOTS)[number]; item: Atten
   );
 }
 
-function Visa({ slot, reg }: { slot: (typeof VISA_SLOTS)[number]; reg: MyRegistrationResponse }) {
+function Visa({
+  slot,
+  reg,
+}: {
+  slot: (typeof VISA_SLOTS)[number];
+  reg: MyRegistrationResponse;
+}) {
   const pending = reg.status === "PENDING";
   return (
     <div
@@ -283,13 +447,21 @@ function Visa({ slot, reg }: { slot: (typeof VISA_SLOTS)[number]; reg: MyRegistr
         "absolute flex w-[184px] flex-col gap-1 rounded-[10px] border-[2.5px] border-dashed px-3 py-[10px]",
         pending ? "border-accent text-accent" : "border-primary text-primary",
       )}
-      style={{ left: slot.cx - 92, top: slot.cy - 42, transform: `rotate(${slot.rotate}deg)` }}
+      style={{
+        left: slot.cx - 92,
+        top: slot.cy - 42,
+        transform: `rotate(${slot.rotate}deg)`,
+      }}
     >
       <div className="flex items-center justify-between text-[9px] font-extrabold whitespace-nowrap">
         <span className="tracking-[2px]">ВИЗА</span>
-        <span className="tracking-[1.2px]">{pending ? "ОЖИДАЕТ" : "ОДОБРЕНО"}</span>
+        <span className="tracking-[1.2px]">
+          {pending ? "ОЖИДАЕТ" : "ОДОБРЕНО"}
+        </span>
       </div>
-      <p className="line-clamp-2 font-display text-xs leading-4 font-bold">{reg.event.title}</p>
+      <p className="line-clamp-2 font-display text-xs leading-4 font-bold">
+        {reg.event.title}
+      </p>
       <p className="text-[11px] font-extrabold whitespace-nowrap">
         {whenLabel(reg.myNextOccurrence?.startAt ?? reg.event.startAt)}
       </p>
@@ -303,12 +475,22 @@ function StampsPage() {
   const summary = useUsersHistorySummary({});
   const mine = useRegistrationsMine();
 
-  const attended = history.data?.status === 200 ? (history.data.data.items ?? []) : [];
-  const total = summary.data?.status === 200 ? summary.data.data.total : attended.length;
-  const upcoming = (mine.data?.status === 200 ? (mine.data.data.items ?? []) : [])
+  const attended =
+    history.data?.status === 200 ? (history.data.data.items ?? []) : [];
+  const total =
+    summary.data?.status === 200 ? summary.data.data.total : attended.length;
+  const upcoming = (
+    mine.data?.status === 200 ? (mine.data.data.items ?? []) : []
+  )
     .filter((r) => r.status === "PENDING" || r.status === "CONFIRMED")
-    .filter((r) => r.event.status === "PUBLISHED" && !r.event.cancelledByOrganizer)
-    .filter((r) => new Date(r.myNextOccurrence?.startAt ?? r.event.startAt).getTime() > Date.now())
+    .filter(
+      (r) => r.event.status === "PUBLISHED" && !r.event.cancelledByOrganizer,
+    )
+    .filter(
+      (r) =>
+        new Date(r.myNextOccurrence?.startAt ?? r.event.startAt).getTime() >
+        Date.now(),
+    )
     .sort(
       (a, b) =>
         new Date(a.myNextOccurrence?.startAt ?? a.event.startAt).getTime() -
@@ -317,7 +499,10 @@ function StampsPage() {
     .slice(0, VISA_SLOTS.length);
 
   // пустая печать «следующая»: на первом свободном месте, а когда все заняты — на отдельном, как в макете
-  const emptyAt = attended.length < STAMP_SLOTS.length ? STAMP_SLOTS[attended.length] : { cx: 470, cy: 358 };
+  const emptyAt =
+    attended.length < STAMP_SLOTS.length
+      ? STAMP_SLOTS[attended.length]
+      : { cx: 470, cy: 358 };
 
   return (
     <section
@@ -379,7 +564,10 @@ export function PassportSpread() {
     <div className="absolute top-0 left-0 h-[600px] w-[1216px] rounded-[28px] border-2 border-ink bg-primary shadow-hard">
       <DataPage />
       <StampsPage />
-      <div aria-hidden="true" className="absolute top-[12px] left-[605px] h-[572px] w-[2px] bg-ink" />
+      <div
+        aria-hidden="true"
+        className="absolute top-[12px] left-[605px] h-[572px] w-[2px] bg-ink"
+      />
     </div>
   );
 }

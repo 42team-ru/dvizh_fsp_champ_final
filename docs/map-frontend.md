@@ -111,7 +111,7 @@ export interface MapProvider {
 yarn add @2gis/mapgl @2gis/mapgl-clusterer
 ```
 
-Ключ API: `VITE_2GIS_KEY` в `frontend/.env` (и в `.env.example` без значения). Ключ публичный, ограничивается доменом в кабинете 2ГИС. Добавь туда `localhost` и домен стенда. Для прода ключ нужен **при сборке** (Vite вшивает `VITE_*`), поэтому прокинь его в CI как переменную окружения шага сборки фронта.
+Ключ API: `VITE_2GIS_KEY` в **корневом** `.env` (шаблон — корневой `.env.example`). Оттуда его берут dev-сервер (`vite.config.ts` подмешивает `VITE_*` из корня, `frontend/.env` при этом главнее) и `docker compose` (аргумент сборки `frontend/Dockerfile`). Для деплоя через GitHub Actions — секрет репозитория `VITE_2GIS_KEY`: Vite вшивает `VITE_*` **при сборке**, а фронт собирается в CI. Ключ публичный, ограничивается доменом в кабинете 2ГИС: добавь туда `localhost` и домен стенда.
 
 Скелет (по официальному примеру 2ГИС для React):
 
