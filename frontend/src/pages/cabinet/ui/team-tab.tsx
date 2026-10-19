@@ -1,10 +1,14 @@
-import { useRef, useState, type FormEvent } from "react";
-import { ImagePlus, Plus, X } from "lucide-react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { Crosshair, ImagePlus, Plus, X } from "lucide-react";
+import type { FileResponse, FocusPoint } from "@/shared/api/generated/core/appAPI.schemas";
+import { objectPosition } from "@/entity/event/lib/cover";
+import { FocusPickerDialog } from "@/features/photo-focus/ui/focus-picker-dialog";
 import {
   useEventsAddOrganizer,
   useEventsAddPhoto,
   useEventsRemoveOrganizer,
   useEventsRemovePhoto,
+  useEventsSetPhotoFocus,
 } from "@/shared/api/generated/core/events/events";
 import { Button } from "@/shared/components/ui/button";
 import { toast } from "@/shared/lib/toast";
@@ -92,12 +96,24 @@ export function PhotosTab({ event, refresh }: { event: ManagedEvent; refresh: ()
   const input = useRef<HTMLInputElement>(null);
   const add = useEventsAddPhoto();
   const remove = useEventsRemovePhoto();
+  const setFocus = useEventsSetPhotoFocus();
   const photos = event.photos;
   const empty = Math.max(0, MAX_PHOTOS - photos.length - 1);
+  /** Что сейчас в диалоге фокуса: новый файл перед загрузкой или уже загруженное фото. */
+  const [picking, setPicking] = useState<{ file: File; src: string } | { photo: FileResponse } | null>(null);
+  useEffect(() => () => { if (picking && "src" in picking) URL.revokeObjectURL(picking.src); }, [picking]);
 
-  const upload = (file?: File) => {
-    if (!file) return;
-    add.mutate({ id: event.id, data: { file } }, { onSuccess: () => (toast.success("Фото добавлено"), void refresh()) });
+  // новый файл сначала попадает в диалог: точку фокуса выбирают при загрузке
+  const choose = (file?: File) => file && setPicking({ file, src: URL.createObjectURL(file) });
+  const save = (focus: FocusPoint) => {
+    if (!picking) return;
+    const done = (message: string) => { toast.success(message); setPicking(null); void refresh(); };
+    if ("file" in picking) {
+      add.mutate({ id: event.id, data: { file: picking.file }, params: { focusX: focus.x, focusY: focus.y } },
+        { onSuccess: () => done("Фото добавлено") });
+    } else {
+      setFocus.mutate({ id: event.id, fileId: picking.photo.id, data: focus }, { onSuccess: () => done("Кадр обновлён") });
+    }
   };
 
   return (
@@ -108,11 +124,19 @@ export function PhotosTab({ event, refresh }: { event: ManagedEvent; refresh: ()
       </div>
       <p className="text-[13px] leading-[18px] font-medium text-muted-foreground">
         Первое фото — обложка в ленте. Новые добавляются в конец; JPG, PNG, WebP до 5 МБ.
+        При загрузке отметьте главное на фото — по этой точке обрежутся превью; поменять можно кнопкой «Фокус».
       </p>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {photos.map((p, i) => (
           <div key={p.id} className="relative aspect-[6/5] overflow-hidden rounded-[14px] border-2 border-ink bg-sky">
-            <img src={p.url} alt={p.name} className="size-full object-cover" />
+            <img src={p.url} alt={p.name} style={{ objectPosition: objectPosition(p.focus) }} className="size-full object-cover" />
+            <button
+              type="button"
+              onClick={() => setPicking({ photo: p })}
+              className="absolute bottom-1.5 left-1.5 inline-flex h-[30px] items-center gap-1 rounded-pill border-[1.5px] border-ink bg-card px-2.5 text-[11px] font-extrabold hover:bg-secondary"
+            >
+              <Crosshair className="size-3.5" strokeWidth={2.6} /> Фокус
+            </button>
             {i === 0 && (
               <span className="absolute top-1.5 left-1.5 rounded-pill border-[1.5px] border-ink bg-secondary px-2 py-0.5 text-[10px] font-extrabold tracking-[1px] text-foreground">
                 ОБЛОЖКА
@@ -152,11 +176,22 @@ export function PhotosTab({ event, refresh }: { event: ManagedEvent; refresh: ()
         accept="image/jpeg,image/png,image/webp"
         className="hidden"
         onChange={(e) => {
-          upload(e.target.files?.[0]);
+          choose(e.target.files?.[0]);
           e.target.value = "";
         }}
       />
-      {(add.error?.detail || remove.error?.detail) && <Warning className="py-2">{add.error?.detail ?? remove.error?.detail}</Warning>}
+      {(add.error?.detail || remove.error?.detail || setFocus.error?.detail) && (
+        <Warning className="py-2">{add.error?.detail ?? remove.error?.detail ?? setFocus.error?.detail}</Warning>
+      )}
+      <FocusPickerDialog
+        open={picking != null}
+        src={picking ? ("src" in picking ? picking.src : picking.photo.url) : undefined}
+        initial={picking && "photo" in picking ? picking.photo.focus : null}
+        title={picking && "file" in picking ? "Новое фото: что главное?" : "Что главное на фото?"}
+        busy={add.isPending || setFocus.isPending}
+        onSave={save}
+        onOpenChange={(open) => !open && setPicking(null)}
+      />
       <p className="text-xs leading-4 font-medium text-muted-foreground">
         Порядок не меняется: чтобы сменить обложку, удалите первое фото — обложкой станет следующее.
       </p>

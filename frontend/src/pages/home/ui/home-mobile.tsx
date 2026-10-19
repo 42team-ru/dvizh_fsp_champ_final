@@ -1,3 +1,4 @@
+import { coverOf } from "@/entity/event/lib/cover";
 import { usePetName } from "@/entity/user/model/use-pet-name";
 import { Compass } from "lucide-react";
 import { EmptyState } from "@/shared/components/ui/empty-state";
@@ -246,8 +247,8 @@ function EventScroller() {
             <Link to={`/events/${e.id}`} aria-label={e.title} className="absolute inset-0 z-10" />
             <DismissButton onDismiss={() => dismiss(e.id)} className="absolute top-3 right-3" />
             <div className={cn("relative h-[120px] shrink-0 overflow-hidden", TONES[index % TONES.length])}>
-              {e.coverUrl ?? e.sport.imageUrl ? (
-                <img src={e.coverUrl ?? e.sport.imageUrl} alt="" className="absolute inset-0 size-full object-cover" />
+              {coverOf(e).src ? (
+                <img src={coverOf(e).src} style={{ objectPosition: coverOf(e).position }} alt="" className="absolute inset-0 size-full object-cover" />
               ) : (
                 <img
                   src={`/${dir}/photo-decor.svg`}

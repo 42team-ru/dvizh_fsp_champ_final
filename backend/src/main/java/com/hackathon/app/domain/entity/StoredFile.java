@@ -52,4 +52,10 @@ public class StoredFile extends AuditEntity {
 	/** Подпись к фото альбома. */
 	@Column(length = 300)
 	private String caption;
+	/** Точка фокуса по горизонтали, % ширины; null — центр. Превью обрезаются вокруг неё. */
+	@Column(name = "focus_x")
+	private Double focusX;
+	/** Точка фокуса по вертикали, % высоты; null — центр. */
+	@Column(name = "focus_y")
+	private Double focusY;
 }

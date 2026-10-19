@@ -1,6 +1,6 @@
 import { useRef, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router";
-import { useEventsCreate, useEventsCreatePermission } from "@/shared/api/generated/core/events/events";
+import { useEventsAddPhoto, useEventsCreate, useEventsCreatePermission } from "@/shared/api/generated/core/events/events";
 import { Link } from "react-router";
 import type { EventRequest, EventRequestJoinMode, EventRequestKind, EventRequestLevel } from "@/shared/api/generated/core/appAPI.schemas";
 import { EventRequestLevel as LEVELS } from "@/shared/api/generated/core/appAPI.schemas";
@@ -11,6 +11,8 @@ import { AddressInput } from "@/widgets/events-map/ui/address-input";
 import { addressAt } from "@/widgets/events-map/lib/geocoder";
 import { DEFAULT_CENTER } from "@/widgets/events-map/lib/map-provider";
 import { SportPicker, type PickedSport } from "@/features/sport-picker/ui/sport-picker";
+import { PhotoDrafts, type PhotoDraft } from "@/features/photo-focus/ui/photo-drafts";
+import { toast } from "@/shared/lib/toast";
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
 import { Input } from "@/shared/components/ui/input";
@@ -43,6 +45,9 @@ const intOrUndefined = (value: string) => (value.trim() ? Number(value) : undefi
 export default function EventCreatePage() {
   const navigate = useNavigate();
   const create = useEventsCreate();
+  const addPhoto = useEventsAddPhoto();
+  const [photos, setPhotos] = useState<PhotoDraft[]>([]);
+  const [uploading, setUploading] = useState(false);
   const permissionQuery = useEventsCreatePermission();
   const permission = permissionQuery.data?.status === 200 ? permissionQuery.data.data : undefined;
   const blocked = permission?.canCreate === false;
@@ -110,8 +115,21 @@ export default function EventCreatePage() {
         : { startAt: new Date(`${f.date}T${f.start}`).toISOString(), endAt: new Date(`${f.date}T${f.end}`).toISOString() }),
     };
     create.mutate({ data }, {
-      onSuccess: (response) => {
-        if (response.status === 201) navigate(`/events/${response.data.id}`);
+      onSuccess: async (response) => {
+        if (response.status !== 201) return;
+        const id = response.data.id;
+        // фото — после создания, по порядку: первое станет обложкой; сбой не отменяет уже опубликованное мероприятие
+        setUploading(true);
+        let failed = 0;
+        for (const photo of photos) {
+          await addPhoto.mutateAsync({ id, data: { file: photo.file }, params: { focusX: photo.focus.x, focusY: photo.focus.y } })
+            .catch(() => { failed += 1; });
+        }
+        setUploading(false);
+        if (failed > 0) {
+          toast.error("Не все фото загрузились", { description: "Мероприятие опубликовано — добавьте фото в «Управлять» → «Фото»." });
+        }
+        navigate(`/events/${id}`);
       },
     });
   };
@@ -165,6 +183,14 @@ export default function EventCreatePage() {
             <label className={field}>Описание
               <textarea className={area} rows={4} maxLength={5000} value={f.description} onChange={(e) => set({ description: e.target.value })} />
             </label>
+          </Section>
+
+          <Section title="Фото">
+            <p className="-mt-2 text-sm font-semibold text-muted-foreground">
+              Необязательно. До 6 фото, первое — обложка в ленте; отметьте на каждом главное — по этой точке обрежутся превью.
+              Без фото обложкой будет картинка вида спорта.
+            </p>
+            <PhotoDrafts value={photos} onChange={setPhotos} />
           </Section>
 
           <Section title="Когда">
@@ -250,7 +276,9 @@ export default function EventCreatePage() {
 
           {error && <p role="alert" className="text-base font-bold text-destructive">{error}</p>}
           <div className="flex flex-wrap gap-3">
-            <Button type="submit" size="lg" disabled={create.isPending || blocked}>{create.isPending ? "Публикуем…" : "Опубликовать"}</Button>
+            <Button type="submit" size="lg" disabled={create.isPending || uploading || blocked}>
+              {uploading ? "Загружаем фото…" : create.isPending ? "Публикуем…" : "Опубликовать"}
+            </Button>
             <Button type="button" size="lg" variant="soft" onClick={() => navigate(-1)}>Отмена</Button>
           </div>
         </form>

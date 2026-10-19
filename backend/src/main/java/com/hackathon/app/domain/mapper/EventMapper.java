@@ -127,8 +127,10 @@ public interface EventMapper {
 	@Mapping(target = "occurrenceId", source = "nextOccurrence.id")
 	@Mapping(target = "organizer", source = "organizer")
 	@Mapping(target = "organization", source = "organization")
+	@Mapping(target = "coverUrl", source = "cover.url")
+	@Mapping(target = "coverFocus", source = "cover.focus")
 	EventSummaryResponse toSummary(Event event, Sport sport, long participantsCount,
-			RegistrationStatus myRegistrationStatus, String coverUrl, EventOccurrence nextOccurrence,
+			RegistrationStatus myRegistrationStatus, FileResponse cover, EventOccurrence nextOccurrence,
 			Long occurrenceAttendeesCount, String scheduleDescription, QuorumStatus quorumStatus,
 			boolean cancelledByOrganizer, AppUser organizer, Organization organization);
 

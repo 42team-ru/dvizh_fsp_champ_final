@@ -1,3 +1,4 @@
+import { coverOf } from "@/entity/event/lib/cover";
 import { MessageCircleQuestion } from "lucide-react";
 import { EmptyState } from "@/shared/components/ui/empty-state";
 import { useState } from "react";
@@ -153,7 +154,8 @@ export function EventMobile({ m }: { m: EventModel }) {
       <MemphisBackground variant="mobile" seed="event" />
       <div className="relative h-[230px] w-full shrink-0 overflow-hidden bg-sky">
         <img
-          src={e.photos[0]?.url ?? e.sport.imageUrl}
+          src={coverOf(e).src}
+          style={{ objectPosition: coverOf(e).position }}
           alt=""
           className="absolute top-0 left-0 size-full max-w-none object-cover"
         />

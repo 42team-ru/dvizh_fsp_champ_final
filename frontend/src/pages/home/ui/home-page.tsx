@@ -1,3 +1,4 @@
+import { coverOf } from "@/entity/event/lib/cover";
 import { usePetName } from "@/entity/user/model/use-pet-name";
 import { Compass } from "lucide-react";
 import { EmptyState } from "@/shared/components/ui/empty-state";
@@ -83,7 +84,7 @@ function Hero() {
   const name = user?.firstName ?? "";
   const e = next?.event;
   const canCreate = user?.systemRole !== "ADMIN";
-  const cover = e ? e.coverUrl ?? e.sport.imageUrl : undefined;
+  const cover = e ? coverOf(e) : undefined;
   return (
     // Поток вместо абсолютных координат: при крупном шрифте браузера блок растёт, а не обрезает кнопки.
     <section className="relative box-border flex min-h-[330px] items-center justify-between gap-8 overflow-hidden rounded-[28px] border-2 border-ink bg-primary px-[44px] py-[32px]">
@@ -135,7 +136,7 @@ function Hero() {
           <div className="relative h-[118px] w-[352px] shrink-0 overflow-hidden border-b-2 border-ink">
             <div className="absolute inset-x-0 top-0 h-[116px] bg-orange">
               {cover ? (
-                <img src={cover} alt="" className="size-full max-w-none object-cover" />
+                <img src={cover.src} style={{ objectPosition: cover.position }} alt="" className="size-full max-w-none object-cover" />
               ) : (
                 <img src="/home/memphis1.svg" alt="" className="absolute top-[-74px] left-0 h-[264px] w-[352px] max-w-none" />
               )}
@@ -221,8 +222,8 @@ function Tip() {
 /** Карточка рекомендации: та же вёрстка, что в макете, данные — из recommendations_events. */
 function EventCard({ item, index, onDismiss }: { item: RecommendedEventResponse; index: number; onDismiss(id: string): void }) {
   const { event } = item;
-  const photo = event.coverUrl ?? event.sport.imageUrl;
-  const cover = photo ? { photo } : COVERS[index % COVERS.length];
+  const photo = coverOf(event);
+  const cover = photo.src ? { photo: photo.src, position: photo.position } : COVERS[index % COVERS.length];
   const card = toCardData(event, { bg: "bg-sky" });
   const where = event.format === "ONLINE" ? "Онлайн" : formatDistance(item.distanceKm) ?? card.distance;
   return (
@@ -232,7 +233,7 @@ function EventCard({ item, index, onDismiss }: { item: RecommendedEventResponse;
       <div className="relative h-[180px] w-full shrink-0 overflow-hidden border-b-2 border-ink">
         <div className={`absolute inset-x-0 top-0 h-[178px] ${"bg" in cover ? cover.bg : ""}`}>
           {"photo" in cover ? (
-            <img src={cover.photo} alt="" className="size-full max-w-none object-cover" />
+            <img src={cover.photo} style={{ objectPosition: "position" in cover ? cover.position : undefined }} alt="" className="size-full max-w-none object-cover" />
           ) : (
             <img
               src={cover.art}

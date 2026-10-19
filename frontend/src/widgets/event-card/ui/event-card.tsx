@@ -11,6 +11,8 @@ export type EventCover = {
   bg?: string;
   /** Фото на всю обложку. */
   photo?: string;
+  /** Как сдвигать фото при обрезке (CSS object-position); по умолчанию центр. */
+  position?: string;
   /** Memphis-узор поверх фона. */
   art?: { src: string; className: string };
 };
@@ -34,7 +36,8 @@ export function EventCover({ cover }: { cover: EventCover }) {
     <>
       <div className={cn("absolute inset-0", cover.bg)}>
         {cover.photo ? (
-          <img src={cover.photo} alt="" className="size-full max-w-none object-cover transition-transform duration-500 group-hover/card:scale-105" />
+          <img src={cover.photo} alt="" style={{ objectPosition: cover.position }}
+            className="size-full max-w-none object-cover transition-transform duration-500 group-hover/card:scale-105" />
         ) : null}
         {cover.art ? (
           <img src={cover.art.src} alt="" className={cn("absolute max-w-none", cover.art.className)} />

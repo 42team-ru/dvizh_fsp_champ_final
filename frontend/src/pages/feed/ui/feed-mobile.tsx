@@ -1,3 +1,4 @@
+import { coverOf } from "@/entity/event/lib/cover";
 import { usePetName } from "@/entity/user/model/use-pet-name";
 import { SearchX } from "lucide-react";
 import { useNavAccess } from "@/entity/user/model/use-nav-access";
@@ -68,7 +69,8 @@ function BigCard({ e, index, reason, onDismiss }: {
         {onDismiss && <DismissButton onDismiss={() => onDismiss(e.id)} className="absolute top-12 right-3" />}
         <div className={cn("relative shrink-0 overflow-hidden", style.photo)} style={{ height: style.height }}>
           <img
-            src={e.coverUrl ?? e.sport.imageUrl ?? `/${dir}/${style.decor}`}
+            src={coverOf(e).src ?? `/${dir}/${style.decor}`}
+            style={{ objectPosition: coverOf(e).position }}
             alt=""
             className="absolute top-0 left-0 size-full max-w-none object-cover"
           />

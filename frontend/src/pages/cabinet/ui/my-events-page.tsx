@@ -1,3 +1,4 @@
+import { coverOf } from "@/entity/event/lib/cover";
 import { CalendarPlus, PartyPopper } from "lucide-react";
 import { EmptyState } from "@/shared/components/ui/empty-state";
 import { useState } from "react";
@@ -39,7 +40,8 @@ function EventRow({ event: e }: { event: EventSummaryResponse }) {
   return (
     <article className="flex flex-col gap-3 rounded-[24px] border-2 border-ink bg-card p-4 sm:flex-row sm:items-center sm:gap-4 sm:p-5">
       <img
-        src={e.coverUrl ?? e.sport.imageUrl}
+        src={coverOf(e).src}
+        style={{ objectPosition: coverOf(e).position }}
         alt=""
         className="size-[72px] shrink-0 rounded-[16px] border-2 border-ink bg-sky object-cover sm:size-[88px]"
       />
