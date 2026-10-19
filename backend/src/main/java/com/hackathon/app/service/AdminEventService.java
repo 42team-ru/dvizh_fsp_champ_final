@@ -54,6 +54,7 @@ public class AdminEventService {
     private final OrganizationRepository organizations;
     private final CommentRepository comments;
     private final SportRepository sports;
+    private final NotificationChanges notificationChanges;
     private final AppUserRepository users;
     private final DbTimeRepository dbTime;
     private final EventAccessPolicy policy;
@@ -88,6 +89,7 @@ public class AdminEventService {
     @Transactional
     public AdminEventResponse unpublish(UUID eventId, UUID adminId, String reason) {
         var event = findForUpdate(eventId);
+        notificationChanges.watch(eventId, adminId);
         var blockedReason = policy.unpublishBlockedReason(event);
         if (blockedReason != null) {
             throw new ConflictException(blockedReason);
@@ -100,7 +102,9 @@ public class AdminEventService {
      */
     @Transactional
     public AdminEventResponse delete(UUID eventId, UUID adminId, String reason) {
-        return moderate(findForUpdate(eventId), EventStatus.DELETED, reason, adminId);
+        var event = findForUpdate(eventId);
+        notificationChanges.watch(eventId, adminId);
+        return moderate(event, EventStatus.DELETED, reason, adminId);
     }
 
     /**
