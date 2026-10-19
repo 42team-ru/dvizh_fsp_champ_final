@@ -17,6 +17,7 @@ import type {
   UserSportResponse,
 } from "@/shared/api/generated/core/appAPI.schemas";
 import { cn } from "cn";
+import { CancelledStamp } from "@/shared/components/ui/cancelled-stamp";
 import { useWardrobe } from "../model/use-wardrobe";
 import { usePublicProfile } from "../model/public-profile";
 import { ProfileBeaverPet, ProfilePetName } from "./profile-pet";
@@ -217,7 +218,7 @@ function PetPage() {
         />
         <div
           ref={setSpeechContainer}
-          className="beaver-speech-corner absolute top-3 right-3 z-10 w-[170px]"
+          className="beaver-speech-corner absolute top-[68px] left-[150px] z-10 flex h-[104px] w-[248px] items-end"
         />
         <div className="absolute bottom-[14px] left-[14px] flex items-center gap-2 rounded-pill border-[1.5px] border-ink bg-card py-[6px] pr-3 pl-[10px]">
           <span className="text-[9px] font-extrabold tracking-[1.5px] text-muted-foreground">
@@ -387,14 +388,19 @@ function Stamp({
 }
 
 /** Виза в паспорте: запись на будущее событие или, в чужом профиле, событие, которое человек ведёт. */
-type VisaItem = { id: string; title: string; startAt: string; status: string; pending?: boolean };
+type VisaItem = { id: string; title: string; startAt: string; status: string; pending?: boolean; cancelled?: boolean };
+
+/** Отменено организатором, снято или удалено админом — виза гасится штампом «Отменено». */
+const isCancelled = (reg: MyRegistrationResponse) =>
+  reg.event.cancelledByOrganizer || reg.event.status !== "PUBLISHED";
 
 const regVisa = (reg: MyRegistrationResponse): VisaItem => ({
   id: reg.id,
   title: reg.event.title,
   startAt: reg.myNextOccurrence?.startAt ?? reg.event.startAt,
   pending: reg.status === "PENDING",
-  status: reg.status === "PENDING" ? "ОЖИДАЕТ" : "ОДОБРЕНО",
+  cancelled: isCancelled(reg),
+  status: isCancelled(reg) ? "ОТМЕНЕНО" : reg.status === "PENDING" ? "ОЖИДАЕТ" : "ОДОБРЕНО",
 });
 
 function Visa({
@@ -409,7 +415,7 @@ function Visa({
     <div
       className={cn(
         "absolute flex w-[184px] flex-col gap-1 rounded-[10px] border-[2.5px] border-dashed px-3 py-[10px]",
-        pending ? "border-accent text-accent" : "border-primary text-primary",
+        visa.cancelled ? "border-orange-ink text-orange-ink" : pending ? "border-accent text-accent" : "border-primary text-primary",
       )}
       style={{
         left: slot.cx - 92,
@@ -427,6 +433,7 @@ function Visa({
       <p className="text-[13px] font-extrabold whitespace-nowrap">
         {whenLabel(visa.startAt)}
       </p>
+      {visa.cancelled && <CancelledStamp className="right-[-6px] bottom-[-10px] h-[30px] w-[96px] -rotate-[8deg]" />}
     </div>
   );
 }
@@ -462,9 +469,7 @@ function MyStamps() {
     mine.data?.status === 200 ? (mine.data.data.items ?? []) : []
   )
     .filter((r) => r.status === "PENDING" || r.status === "CONFIRMED")
-    .filter(
-      (r) => r.event.status === "PUBLISHED" && !r.event.cancelledByOrganizer,
-    )
+    .filter((r) => r.event.status !== "DELETED")
     .filter(
       (r) =>
         new Date(r.myNextOccurrence?.startAt ?? r.event.startAt).getTime() >

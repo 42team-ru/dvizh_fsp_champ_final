@@ -10,7 +10,6 @@ import { Card } from "@/shared/components/ui/card";
 import { Disc } from "@/shared/components/ui/disc";
 import { Icon } from "@/shared/components/ui/icon";
 import { Progress } from "@/shared/components/ui/progress";
-import { RoughBorder } from "@/shared/components/ui/rough-border";
 import { cn } from "cn";
 import { Sparkles } from "lucide-react";
 import { formatWhen } from "@/entity/event/lib/event-format";
@@ -26,37 +25,6 @@ const dir = "m-home";
 const TONES = ["bg-sky", "bg-photo-mint", "bg-photo-lilac"];
 const DISC_TONES = ["bg-sky", "bg-mint", "bg-peach"];
 
-const POSTS = [
-  {
-    i: "ДК",
-    tone: "bg-sky",
-    name: "Дима Ковалёв",
-    meta: "Бег · сегодня в 7:42",
-    title: "Утренняя пробежка вдоль Енисея",
-    stats: [
-      { v: "10,2 км", l: "Дистанция", tone: "bg-lavender-soft" },
-      { v: "52:14", l: "Время", tone: "bg-lime-soft" },
-      { v: "5:07", l: "Темп /км", tone: "bg-peach" },
-    ],
-    likes: 25,
-    comments: 6,
-  },
-  {
-    i: "СМ",
-    tone: "bg-mint",
-    name: "Саша Мельникова",
-    meta: "Силовая · вчера в 19:10",
-    record: true,
-    title: "Ноги и спина",
-    stats: [
-      { v: "80 кг", l: "Присед", tone: "bg-lavender-soft" },
-      { v: "45:00", l: "Время", tone: "bg-lime-soft" },
-      { v: "12", l: "Подходов", tone: "bg-peach" },
-    ],
-    likes: 11,
-    comments: 3,
-  },
-];
 
 const tag = "h-auto border-[1.5px] px-[10px] py-1 text-[10px] leading-[normal] font-extrabold tracking-[1px]";
 
@@ -215,8 +183,8 @@ function EventScroller() {
             <Link to={`/events/${e.id}`} aria-label={e.title} className="absolute inset-0 z-10" />
             <DismissButton onDismiss={() => dismiss(e.id)} className="absolute top-3 right-3" />
             <div className={cn("relative h-[120px] shrink-0 overflow-hidden", TONES[index % TONES.length])}>
-              {e.coverUrl ? (
-                <img src={e.coverUrl} alt="" className="absolute inset-0 size-full object-cover" />
+              {e.coverUrl ?? e.sport.imageUrl ? (
+                <img src={e.coverUrl ?? e.sport.imageUrl} alt="" className="absolute inset-0 size-full object-cover" />
               ) : (
                 <img
                   src={`/${dir}/photo-decor.svg`}
@@ -280,68 +248,6 @@ function EventScroller() {
   );
 }
 
-function Posts() {
-  return (
-    <>
-      {POSTS.map((p) => (
-        <div key={p.name} className="px-4">
-          <Card className="gap-3 rounded-[22px] p-4">
-            <div className="flex items-center gap-[10px]">
-              <Disc
-                initials={p.i}
-                tone={p.tone}
-                className="size-11"
-                textClassName="text-xs leading-[normal]"
-              />
-              <div className="flex min-w-0 flex-1 flex-col gap-px leading-[normal] whitespace-nowrap">
-                <span className="text-[15px] font-extrabold text-foreground">{p.name}</span>
-                <span className="text-[13px] font-medium text-muted-foreground">{p.meta}</span>
-              </div>
-              <Icon name={`${dir}/icon-more`} className="size-[22px]" />
-            </div>
-            {p.record ? (
-              <Badge variant="secondary" className={cn(tag, "w-fit")}>
-                НОВЫЙ РЕКОРД
-              </Badge>
-            ) : null}
-            <p className="font-display text-base leading-[21px] font-bold text-foreground">
-              {p.title}
-            </p>
-            <div className="flex gap-2 leading-[normal] font-bold whitespace-nowrap">
-              {p.stats.map((s) => (
-                <div
-                  key={s.l}
-                  className={cn(
-                    "relative box-border flex min-w-0 flex-1 flex-col gap-[2px] rounded-[14px] border-[1.5px] border-transparent px-3 py-[10px]",
-                    s.tone
-                  )}
-                >
-                  <span className="font-display text-[15px] text-foreground">{s.v}</span>
-                  <span className="text-[11px] text-muted-foreground">{s.l}</span>
-                  <RoughBorder radius={14} strokeWidth={1.5} roughness={0.8} />
-                </div>
-              ))}
-            </div>
-            <div className="flex items-center gap-4">
-              {[
-                { icon: "icon-heart", n: p.likes },
-                { icon: "icon-chat", n: p.comments },
-              ].map((r) => (
-                <span key={r.icon} className="flex h-11 items-center gap-[6px]">
-                  <Icon name={`${dir}/${r.icon}`} className="size-5" />
-                  <span className="text-sm leading-[normal] font-extrabold text-foreground">
-                    {r.n}
-                  </span>
-                </span>
-              ))}
-            </div>
-          </Card>
-        </div>
-      ))}
-    </>
-  );
-}
-
 export function HomeMobile() {
   return (
     <div className="relative isolate flex min-h-dvh flex-col gap-4 overflow-hidden bg-background pb-[110px] lg:hidden">
@@ -355,8 +261,6 @@ export function HomeMobile() {
       <Tip />
       <SectionHead title="Подобрали для тебя" link="Все" to={FOR_YOU_FEED_URL} />
       <EventScroller />
-      <SectionHead title="Друзья в движении" />
-      <Posts />
       <MobileTabBar current="home" />
     </div>
   );

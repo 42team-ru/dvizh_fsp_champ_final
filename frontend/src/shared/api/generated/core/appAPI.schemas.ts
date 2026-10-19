@@ -3296,6 +3296,10 @@ joinMode?: EventsMapJoinMode;
  * «Для меня»: только виды спорта из моего профиля и подходящие моему уровню, как в ленте
  */
 forMe?: boolean;
+/**
+ * Только мероприятия этой организации (карта на странице организации)
+ */
+organizationId?: string;
 };
 
 export type EventsMapLevel = typeof EventsMapLevel[keyof typeof EventsMapLevel];

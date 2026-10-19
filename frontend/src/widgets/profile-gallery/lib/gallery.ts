@@ -1,4 +1,4 @@
-import { baseURL } from "@/shared/api/mutators/authMutator";
+import { toBackendUrl } from "@/shared/api/mutators/authMutator";
 
 export const IMG = "/profile/gallery";
 export const ABOUT_LIMIT = 6;
@@ -6,7 +6,7 @@ export const CAPTION_MAX = 300;
 export const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 /** Ссылка /api/files/{id} от бэка → адрес для img. */
-export const imageUrl = (url: string) => new URL(url, baseURL).toString();
+export const imageUrl = (url: string) => toBackendUrl(url).toString();
 
 /** Плашки видов спорта: цвет закреплён за видом, чтобы «Бег» везде был одного цвета. */
 const SPORT_TONES = ["bg-sky-soft", "bg-mint-soft", "bg-lime-soft", "bg-peach", "bg-lavender-soft", "bg-rose"];

@@ -1,7 +1,7 @@
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
 import { keepPreviousData } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useEventsMap } from "@/shared/api/generated/core/events/events";
 import type { EventMapFeature, EventMapProperties, EventsMapParams } from "@/shared/api/generated/core/appAPI.schemas";
 import { Button } from "@/shared/components/ui/button";
@@ -10,72 +10,96 @@ import { formatWhen } from "@/entity/event/lib/event-format";
 import { cn } from "cn";
 import { toMapParams } from "../lib/bbox";
 import { createEventsMap, hasMapKey, inBbox, type Bbox, type MapPoint, type MapProvider } from "../lib/map-provider";
+import {
+  DAY, LOOKBACK, MINUTE, SOON, dayShort, endOf, histogram, hhmm, isGoing, startOf, startOfDay, startsSoon,
+  type Selection, type Span,
+} from "../lib/timeline";
+import { TimeDock } from "./time-dock";
 
-/** Фильтры ленты, которые понимает карта (format не нужен: на карте только очные). */
-export type MapFilters = Pick<EventsMapParams, "searchText" | "sportId" | "level" | "joinMode" | "from" | "to">;
+/** Фильтры ленты, которые понимает карта (format не нужен: на карте только очные; время задаёт док). */
+export type MapFilters = Pick<EventsMapParams, "searchText" | "sportId" | "level" | "joinMode" | "organizationId">;
 
-const WEEKDAYS = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
-const DAYS_AHEAD = 14;
-
-const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
-const addDays = (d: Date, n: number) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
-const dayLabel = (d: Date, i: number) => (i === 0 ? "Сегодня" : i === 1 ? "Завтра" : `${WEEKDAYS[d.getDay()]} ${d.getDate()}`);
-const time = (iso: string) => new Date(iso).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
 const toPoint = (f: EventMapFeature): MapPoint => ({
   id: f.id, coordinates: [f.geometry.coordinates[0], f.geometry.coordinates[1]], data: f.properties,
 });
-
-/** Ряд чипов дней со стрелками: прокрутка на ~3 чипа, стрелка гаснет у края. */
-function DayScroller({ children }: { children: React.ReactNode }) {
-  const row = useRef<HTMLDivElement>(null);
-  const [edges, setEdges] = useState({ start: true, end: true });
-  const update = () => {
-    const el = row.current;
-    if (el) setEdges({ start: el.scrollLeft <= 1, end: el.scrollLeft + el.clientWidth >= el.scrollWidth - 1 });
-  };
-  useEffect(update, []);
-  const scroll = (dir: 1 | -1) => row.current?.scrollBy({ left: dir * 220, behavior: "smooth" });
-  const arrow = "size-[38px] shrink-0 rounded-pill border-2 border-ink bg-card disabled:opacity-30";
-  return (
-    <div className="flex shrink-0 items-center gap-1.5">
-      <button type="button" aria-label="Предыдущие дни" disabled={edges.start} onClick={() => scroll(-1)}
-        className={cn(arrow, "flex items-center justify-center")}><ChevronLeft className="size-5" /></button>
-      <div ref={row} onScroll={update} role="tablist" aria-label="День"
-        className="no-scrollbar flex min-w-0 flex-1 gap-2 overflow-x-auto py-0.5">
-        {children}
-      </div>
-      <button type="button" aria-label="Следующие дни" disabled={edges.end} onClick={() => scroll(1)}
-        className={cn(arrow, "flex items-center justify-center")}><ChevronRight className="size-5" /></button>
-    </div>
-  );
-}
+/** Сколько строк в боковой ленте до «показать все». */
+const LIST_LIMIT = 6;
 
 // Контейнер не перерисовывается React-ом, иначе карта пересоздастся.
 const MapContainer = memo(({ onReady }: { onReady(el: HTMLDivElement): void }) => (
   <div ref={(el) => { if (el) onReady(el); }} className="size-full" />
 ), () => true);
 
+/** Текущее время, раз в минуту: метка «Сейчас» следует за часами. */
+function useNow() {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), MINUTE);
+    return () => window.clearInterval(timer);
+  }, []);
+  return now;
+}
+
+/** Строка боковой ленты: время, название, место; у идущего — полоска «сколько прошло». */
+function Row({ p, now, at, selected, onPick }: { p: EventMapProperties; now: number; at: number | null; selected: boolean; onPick(): void }) {
+  const going = at != null && isGoing(p, at);
+  const progress = going ? Math.min(100, ((at - startOf(p)) / (endOf(p) - startOf(p))) * 100) : 0;
+  const otherDay = startOfDay(startOf(p)) !== startOfDay(now);
+  return (
+    <li>
+      <button type="button" onClick={onPick}
+        className={cn(
+          "flex w-full items-start gap-2.5 border-b-[1.5px] border-track px-1 py-2 text-left",
+          selected ? "rounded-[12px] bg-secondary" : "hover:bg-muted",
+        )}>
+        <span className="flex w-[54px] shrink-0 flex-col">
+          <span className="text-base leading-5 font-extrabold tabular-nums">{hhmm(startOf(p))}</span>
+          {going ? (
+            <span className="text-[10px] font-bold text-muted-foreground">до {hhmm(endOf(p))}</span>
+          ) : otherDay ? (
+            <span className="text-[10px] font-bold text-muted-foreground">{dayShort(startOf(p))}</span>
+          ) : null}
+        </span>
+        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span className="text-sm leading-[18px] font-extrabold">{p.title}</span>
+          <span className="truncate text-[11px] font-medium text-muted-foreground">
+            {p.sport.name}{p.address ? ` · ${p.address}` : ""}
+          </span>
+          {going && (
+            <span className="mt-0.5 block h-1.5 overflow-hidden rounded-pill bg-lavender-soft">
+              <span className="block h-full rounded-pill bg-primary" style={{ width: `${Math.max(2, progress)}%` }} />
+            </span>
+          )}
+        </span>
+      </button>
+    </li>
+  );
+}
+
 /**
- * Карта событий: метки по видимой области (events_map), кластеры, карточка по клику
- * и лента времени — дни и события области по порядку. Выбор дня сужает и карту, и ленту.
+ * Карта событий: метки по видимой области (events_map), кластеры, карточка по клику, док времени под картой
+ * и лента справа. Док выбирает момент («что идёт в 15:30») или диапазон; подходящие события — цветные метки,
+ * остальные из окна дока — серые точки.
  */
 export function EventsMap({ filters = {}, className, mapClassName }: {
   filters?: MapFilters;
   className?: string;
-  /** Размер самой карты; лента времени — сбоку на компьютере и снизу на телефоне. */
+  /** Высота самой карты; док времени — под ней, лента — сбоку на компьютере и снизу на телефоне. */
   mapClassName?: string;
 }) {
   const provider = useRef<MapProvider | null>(null);
   const container = useRef<HTMLDivElement | null>(null);
   /** Область запроса: меняется, только когда экран выходит за уже загруженное. */
   const [bbox, setBbox] = useState<Bbox | null>(null);
-  /** Что на экране: по нему фильтруется лента времени. */
+  /** Что на экране: по нему фильтруется лента. */
   const [visible, setVisible] = useState<Bbox | null>(null);
   const [selected, setSelected] = useState<EventMapProperties | null>(null);
-  const [day, setDay] = useState<number | null>(null);
   const [failed, setFailed] = useState(false);
-  const today = useMemo(() => startOfDay(new Date()), []);
-  const days = useMemo(() => Array.from({ length: DAYS_AHEAD }, (_, i) => addDays(today, i)), [today]);
+  const [expanded, setExpanded] = useState(false);
+  const now = useNow();
+  const [span, setSpan] = useState<Span>(3);
+  const [chosen, setChosen] = useState<Selection>({ mode: "moment", at: now, live: true });
+  const selection: Selection = chosen.mode === "moment" && chosen.live ? { ...chosen, at: now } : chosen;
 
   useEffect(() => {
     if (!hasMapKey() || !container.current) return;
@@ -106,28 +130,61 @@ export function EventsMap({ filters = {}, className, mapClassName }: {
     };
   }, []);
 
-  // Выбранный день перекрывает период из фильтров ленты; «Сегодня» начинается с текущего момента (так считает бэк).
-  const period = day == null ? {} : { from: days[day].toISOString(), to: addDays(days[day], 1).toISOString() };
-  const query = useEventsMap({ ...bbox!, ...filters, ...period }, {
-    query: { enabled: bbox != null, placeholderData: keepPreviousData, staleTime: 30_000 },
-  });
-  const data = query.data?.status === 200 ? query.data.data : undefined;
-  const points = useMemo(() => (data?.features ?? []).map(toPoint)
-    .sort((a, b) => a.data.startAt.localeCompare(b.data.startAt)), [data]);
-  const onScreen = useMemo(() => (visible ? points.filter((p) => inBbox(visible, p.coordinates)) : points), [points, visible]);
+  // Окно дока: с начала сегодняшнего дня (бэк сам не отдаёт прошлое) на 1/3/7 дней — серые метки и гистограмма.
+  const windowStart = startOfDay(now);
+  const windowEnd = windowStart + span * DAY;
+  // Минута не меняет запросы: границы округлены до 15 минут.
+  const q15 = (t: number) => Math.floor(t / (15 * MINUTE)) * 15 * MINUTE;
+  const options = { query: { enabled: bbox != null, placeholderData: keepPreviousData, staleTime: 30_000 } };
+  const overview = useEventsMap({ ...bbox!, ...filters, from: new Date(windowStart).toISOString(), to: new Date(windowEnd).toISOString() }, options);
+  // Активные: в момент — начавшиеся до LOOKBACK назад и начинающиеся в ближайший час; в диапазоне — начало внутри него.
+  const activeFrom = selection.mode === "moment" ? selection.at - LOOKBACK : selection.from;
+  const activeTo = selection.mode === "moment" ? selection.at + SOON : selection.to;
+  const active = useEventsMap({ ...bbox!, ...filters, from: new Date(q15(activeFrom)).toISOString(), to: new Date(q15(activeTo) + 15 * MINUTE).toISOString() }, options);
+
+  const overviewData = overview.data?.status === 200 ? overview.data.data : undefined;
+  const activeData = active.data?.status === 200 ? active.data.data : undefined;
+
+  const at = selection.mode === "moment" ? selection.at : null;
+  const list = (activeData?.features ?? []).map((f) => f.properties).sort((a, b) => a.startAt.localeCompare(b.startAt));
+  const goingNow = selection.mode === "moment" ? list.filter((p) => isGoing(p, selection.at)) : [];
+  const soon = selection.mode === "moment" ? list.filter((p) => startsSoon(p, selection.at)) : [];
+  const inRange = selection.mode === "range" ? list.filter((p) => startOf(p) >= selection.from && startOf(p) < selection.to) : [];
+  const highlighted = new Set([...goingNow, ...inRange].map((p) => p.id));
+  /** Строка-ключ: метки пересобираются, только когда меняется набор подсвеченных. */
+  const highlightKey = [...highlighted].sort().join();
+
+  // Все метки: из окна дока плюс активные (момент может быть вне окна), подходящие — цветные.
+  const points = useMemo(() => {
+    const byId = new Map<string, MapPoint>();
+    for (const f of overviewData?.features ?? []) byId.set(f.id, { ...toPoint(f), muted: true });
+    const lit = new Set(highlightKey ? highlightKey.split(",") : []);
+    for (const f of activeData?.features ?? []) {
+      const on = lit.has(f.id);
+      const note = on && at != null ? `до ${hhmm(endOf(f.properties))}` : undefined;
+      byId.set(f.id, { ...toPoint(f), muted: !on, note });
+    }
+    return [...byId.values()];
+  }, [overviewData, activeData, highlightKey, at]);
 
   useEffect(() => {
     provider.current?.setPoints(points);
   }, [points]);
 
-  const pick = (point: MapPoint) => {
-    setSelected(point.data);
-    provider.current?.focus(point);
+  const bars = useMemo(() => histogram((overviewData?.features ?? []).map((f) => f.properties), windowStart, span * 24),
+    [overviewData, windowStart, span]);
+  const onScreen = (list: EventMapProperties[]) =>
+    visible ? list.filter((p) => points.some((pt) => pt.id === p.id && inBbox(visible, pt.coordinates))) : list;
+
+  const pick = (p: EventMapProperties) => {
+    setSelected(p);
+    const point = points.find((pt) => pt.id === p.id);
+    if (point) provider.current?.focus(point);
   };
 
   if (!hasMapKey() || failed) {
     return (
-      <div className={cn("flex items-center justify-center rounded-[28px] border-2 border-ink bg-card p-6 text-center", mapClassName, className)}>
+      <div className={cn("flex items-center justify-center rounded-[24px] border-2 border-ink bg-card p-6 text-center", mapClassName, className)}>
         <p className="max-w-md text-base font-semibold text-muted-foreground">
           {failed ? "Не удалось загрузить карту 2ГИС. Проверьте интернет и ключ VITE_2GIS_KEY." : "Для карты нужен ключ 2ГИС: VITE_2GIS_KEY в frontend/.env."}
         </p>
@@ -135,93 +192,125 @@ export function EventsMap({ filters = {}, className, mapClassName }: {
     );
   }
 
-  // Лента времени: события области по дням, внутри дня — по времени.
-  const groups: { label: string; items: MapPoint[] }[] = [];
-  for (const point of onScreen) {
-    const date = new Date(point.data.startAt);
-    const index = Math.round((startOfDay(date).getTime() - today.getTime()) / 86_400_000);
-    const label = index >= 0 && index < DAYS_AHEAD ? dayLabel(date, index) : formatWhen(point.data.startAt).replace(/ \d\d:\d\d$/, "");
-    const last = groups[groups.length - 1];
-    if (last?.label === label) last.items.push(point);
-    else groups.push({ label, items: [point] });
-  }
+  const groups = selection.mode === "moment"
+    ? [
+        { title: selection.live ? "Идут сейчас" : `Идут в ${hhmm(selection.at)}`, items: onScreen(goingNow) },
+        { title: "Начнутся в ближайший час", items: onScreen(soon) },
+      ]
+    : [{ title: `С ${hhmm(selection.from)} ${dayShort(selection.from)} по ${hhmm(selection.to)} ${dayShort(selection.to)}`, items: onScreen(inRange) }];
+  const shownCount = groups.reduce((s, g) => s + g.items.length, 0);
+  let budget = expanded ? Infinity : LIST_LIMIT;
+  const limited = groups.map((g) => {
+    const items = g.items.slice(0, Math.max(0, budget));
+    budget -= items.length;
+    return { ...g, items };
+  });
+  const hidden = shownCount - limited.reduce((s, g) => s + g.items.length, 0);
 
+  const activeCount = highlighted.size;
+  const totalCount = new Set(points.map((p) => p.id)).size;
   const status = selected?.myRegistrationStatus ? REGISTRATION_STATUS[selected.myRegistrationStatus] : undefined;
+  const loading = overview.isFetching || active.isFetching;
+
   return (
-    <div className={cn("flex flex-col gap-4 lg:flex-row", className)}>
-      <div className={cn("relative min-w-0 flex-1 overflow-hidden rounded-[28px] border-2 border-ink", mapClassName)}>
-        <MapContainer onReady={(el) => { container.current = el; }} />
-        {data?.truncated && (
-          <p className="absolute top-3 left-1/2 -translate-x-1/2 rounded-pill border-2 border-ink bg-secondary px-4 py-1.5 text-sm font-bold">
-            Показаны ближайшие {data.limit} событий — приблизьте карту
-          </p>
-        )}
-        {query.error && (
-          <p role="alert" className="absolute top-3 left-3 rounded-xl border-2 border-ink bg-card px-3 py-2 text-sm font-bold text-destructive">
-            {query.error.detail ?? "Не удалось загрузить события"}
-          </p>
-        )}
-        {selected && (
-          <div className="absolute right-3 bottom-3 left-3 z-10 max-w-sm rounded-[22px] border-2 border-ink bg-card p-4 shadow-hard-sm">
-            <button type="button" aria-label="Закрыть" onClick={() => { setSelected(null); provider.current?.focus(null); }}
-              className="absolute top-2 right-3 text-lg font-bold">×</button>
-            <p className="text-xs font-extrabold tracking-[1px] text-muted-foreground uppercase">
-              {selected.sport.name} · {formatWhen(selected.startAt)}
-            </p>
-            <h3 className="mt-1 pr-6 font-display text-lg leading-6 font-bold">{selected.title}</h3>
-            {selected.address && <p className="mt-1 text-sm font-medium text-muted-foreground">{selected.address}</p>}
-            <p className="mt-2 text-sm font-bold">
-              Записались {selected.participantsCount}{selected.capacity != null ? ` из ${selected.capacity}` : ""}
-            </p>
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              {status && <span className={`rounded-pill border-2 border-ink px-3 py-1 text-xs font-extrabold ${status.tone}`}>{status.label}</span>}
-              <Button asChild size="sm" className="ml-auto"><Link to={`/events/${selected.id}`}>Подробнее</Link></Button>
-            </div>
+    <div className={cn("flex flex-col gap-4 lg:flex-row lg:items-stretch", className)}>
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-[24px] border-2 border-ink bg-card">
+        <div className={cn("relative min-h-[320px]", mapClassName)}>
+          <MapContainer onReady={(el) => { container.current = el; }} />
+          <div className="pointer-events-none absolute top-3.5 right-3.5 z-[400] flex items-center gap-2 rounded-pill border-[1.5px] border-ink bg-card px-3 py-1.5 text-[11px] whitespace-nowrap">
+            <span className="size-2.5 rounded-full border-[1.5px] border-ink bg-primary" />
+            <span className="font-extrabold">
+              {activeCount} {selection.mode === "moment" ? (selection.live ? "идут сейчас" : `идут в ${hhmm(selection.at)}`) : "в диапазоне"}
+            </span>
+            <span className="size-2.5 rounded-full border-[1.5px] border-muted-foreground/60 bg-card" />
+            <span className="font-bold text-muted-foreground">{Math.max(0, totalCount - activeCount)} вне</span>
           </div>
-        )}
+          {(overviewData?.truncated || activeData?.truncated) && (
+            <p className="absolute top-3 left-1/2 z-[400] -translate-x-1/2 rounded-pill border-2 border-ink bg-secondary px-4 py-1.5 text-sm font-bold">
+              Показаны не все события — приблизьте карту
+            </p>
+          )}
+          {(overview.error || active.error) && (
+            <p role="alert" className="absolute bottom-3 left-3 z-[400] rounded-xl border-2 border-ink bg-card px-3 py-2 text-sm font-bold text-destructive">
+              {overview.error?.detail ?? active.error?.detail ?? "Не удалось загрузить события"}
+            </p>
+          )}
+          {selected && (
+            <div className="absolute right-3 bottom-3 left-3 z-[400] max-w-sm rounded-[22px] border-2 border-ink bg-card p-4 shadow-hard-sm">
+              <button type="button" aria-label="Закрыть" onClick={() => { setSelected(null); provider.current?.focus(null); }}
+                className="absolute top-2 right-3 text-lg font-bold">×</button>
+              <p className="text-xs font-extrabold tracking-[1px] text-muted-foreground uppercase">
+                {selected.sport.name} · {formatWhen(selected.startAt)}{selected.endAt ? `–${hhmm(endOf(selected))}` : ""}
+              </p>
+              <h3 className="mt-1 pr-6 font-display text-lg leading-6 font-bold">{selected.title}</h3>
+              {selected.address && <p className="mt-1 text-sm font-medium text-muted-foreground">{selected.address}</p>}
+              <p className="mt-2 text-sm font-bold">
+                Записались {selected.participantsCount}{selected.capacity != null ? ` из ${selected.capacity}` : ""}
+              </p>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                {status && <span className={`rounded-pill border-2 border-ink px-3 py-1 text-xs font-extrabold ${status.tone}`}>{status.label}</span>}
+                <Button asChild size="sm" className="ml-auto"><Link to={`/events/${selected.id}`}>Подробнее</Link></Button>
+              </div>
+            </div>
+          )}
+        </div>
+        <TimeDock
+          now={now}
+          span={span}
+          onSpan={(s) => {
+            setSpan(s);
+            // Момент или диапазон за пределами нового окна — вернуть к «Сейчас».
+            const end = startOfDay(now) + s * DAY;
+            const out = selection.mode === "moment" ? selection.at >= end : selection.from >= end;
+            if (out) setChosen({ mode: "moment", at: now, live: true });
+          }}
+          selection={selection}
+          onSelect={(next, nextSpan) => {
+            setChosen(next);
+            setExpanded(false);
+            if (nextSpan) setSpan(nextSpan);
+          }}
+          bars={bars}
+          activeCount={activeCount}
+          totalCount={totalCount}
+        />
       </div>
 
-      <aside aria-label="Лента времени" className="flex max-h-[680px] min-h-0 flex-col gap-3 rounded-[28px] border-2 border-ink bg-card p-4 lg:w-[340px]">
-        <h2 className="font-display text-lg font-bold">Лента времени</h2>
-        <DayScroller>
-          <Button type="button" size="chip" role="tab" aria-selected={day == null} variant={day == null ? "ink" : "soft"}
-            className="shrink-0" onClick={() => setDay(null)}>Все</Button>
-          {days.map((d, i) => (
-            <Button key={d.toISOString()} type="button" size="chip" role="tab" aria-selected={day === i}
-              variant={day === i ? "ink" : "soft"} className="shrink-0" onClick={() => setDay(i)}>
-              {dayLabel(d, i)}
-            </Button>
-          ))}
-        </DayScroller>
+      <aside aria-label="Лента времени" aria-busy={loading}
+        className="flex max-h-[720px] min-h-0 flex-col gap-2 rounded-[24px] border-2 border-ink bg-card px-4 pt-4 pb-3 lg:w-[290px] lg:shrink-0">
+        <div className="flex items-center justify-between">
+          <h2 className="font-display text-base font-extrabold">Лента времени</h2>
+          <span className="rounded-pill border-[1.5px] border-ink bg-secondary px-2.5 py-0.5 text-xs font-extrabold">{shownCount}</span>
+        </div>
+        <p className="text-[11px] leading-[15px] font-medium text-muted-foreground">
+          {selection.mode === "moment"
+            ? selection.live ? "Что идёт прямо сейчас · метка следует за часами" : `Что идёт ${dayShort(selection.at)} в ${hhmm(selection.at)}`
+            : "Что начнётся в выбранном диапазоне"}
+        </p>
         <div className="min-h-0 flex-1 overflow-y-auto pr-1">
-          {bbox && onScreen.length === 0 && !query.isFetching && (
-            <p className="text-sm font-semibold text-muted-foreground">В этой области событий нет — сдвиньте карту или выберите другой день.</p>
+          {bbox && shownCount === 0 && !loading && (
+            <p className="pt-3 text-sm font-semibold text-muted-foreground">
+              В этой области в это время ничего нет — сдвиньте метку или карту.
+            </p>
           )}
-          {groups.map((group) => (
-            <section key={group.label} className="mb-3">
-              <h3 className="mb-1.5 text-xs font-extrabold tracking-[1px] text-muted-foreground uppercase">{group.label}</h3>
-              <ol className="flex flex-col gap-1.5">
-                {group.items.map((point) => (
-                  <li key={point.id}>
-                    <button type="button" onClick={() => pick(point)}
-                      className={cn(
-                        "flex w-full items-start gap-3 rounded-2xl border-2 px-3 py-2 text-left",
-                        selected?.id === point.id ? "border-ink bg-secondary" : "border-transparent hover:border-ink",
-                      )}>
-                      <span className="w-14 shrink-0 font-display text-base font-bold tabular-nums">{time(point.data.startAt)}</span>
-                      <span className="min-w-0">
-                        <span className="block truncate text-sm font-extrabold">{point.data.title}</span>
-                        <span className="block truncate text-xs font-semibold text-muted-foreground">
-                          {point.data.sport.name}{point.data.address ? ` · ${point.data.address}` : ""}
-                        </span>
-                      </span>
-                    </button>
-                  </li>
+          {limited.map((g) => g.items.length > 0 && (
+            <section key={g.title}>
+              <h3 className="pt-3 pb-1 text-[10px] font-extrabold tracking-[1.5px] text-muted-foreground uppercase">{g.title}</h3>
+              <ol>
+                {g.items.map((p) => (
+                  <Row key={p.id} p={p} now={now} at={at} selected={selected?.id === p.id} onPick={() => pick(p)} />
                 ))}
               </ol>
             </section>
           ))}
         </div>
+        {hidden > 0 && (
+          <button type="button" onClick={() => setExpanded(true)}
+            className="flex items-center justify-center gap-1.5 rounded-[12px] bg-lavender-soft px-3 py-2 text-xs font-extrabold text-primary">
+            ещё {hidden} · показать все
+            <ChevronDown className="size-3.5" strokeWidth={2.6} />
+          </button>
+        )}
       </aside>
     </div>
   );

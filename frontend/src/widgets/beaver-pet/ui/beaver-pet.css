@@ -39,9 +39,10 @@
 }
 .beaver-speech--visible { opacity: 1; visibility: visible; pointer-events: auto; }
 .beaver-speech__text { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; overflow-wrap: anywhere; }
-.beaver-speech--card { height: 100%; margin: 0; padding: 3px 14px; border-radius: 4px 18px 18px; display: flex; align-items: center; }
+.beaver-speech--card { height: 100%; margin: 0; padding: 10px 16px; font-size: 16px; line-height: 21px; border-radius: 4px 18px 18px; display: flex; align-items: center; }
+.beaver-speech--card .beaver-speech__text { -webkit-line-clamp: 4; }
 .beaver-speech--card::after { bottom: auto; top: -8px; left: 20px; transform: rotate(225deg); }
-/* Облачко справа сверху от бобра в профиле: хвостик вниз-влево, к голове. */
-.beaver-speech-corner .beaver-speech--card { padding: 8px 12px; font-size: 14px; line-height: 18px; border-radius: 18px 18px 18px 4px; }
+/* Облачко над головой бобра в профиле: хвостик вниз-влево, к голове. */
+.beaver-speech-corner .beaver-speech--card { height: auto; width: 100%; padding: 12px 16px; border-radius: 18px 18px 18px 4px; }
 .beaver-speech-corner .beaver-speech--card::after { top: auto; bottom: -8px; left: 18px; transform: rotate(45deg); }
 @media (prefers-reduced-motion: reduce) { .beaver-speech { transition: none; } }

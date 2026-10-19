@@ -6,6 +6,12 @@ const BACKEND_FALLBACK = "http://localhost:8080";
 const trimTrailingSlash = (value: string) => value.replace(/\/+$/, "");
 
 export const baseURL = import.meta.env.VITE_BACKEND_URL ?? BACKEND_FALLBACK;
+
+/**
+ * Абсолютный адрес ресурса бэка. В Docker-сборке VITE_BACKEND_URL пустой (API на том же адресе),
+ * а `new URL(url, "")` бросает «Invalid base URL» — тогда база — адрес текущей страницы.
+ */
+export const toBackendUrl = (url: string) => new URL(url, baseURL || window.location.origin);
 const REFRESH_ENDPOINT = "/api/auth/refresh";
 const MAX_REFRESH_RETRIES = 1;
 
@@ -85,7 +91,7 @@ const normalizeBackendUrl = (url: string): string => {
 
 const isPublicAuthEndpoint = (url: string): boolean => {
   try {
-    const normalizedPath = new URL(url, baseURL).pathname;
+    const normalizedPath = toBackendUrl(url).pathname;
     return PUBLIC_AUTH_PATHS.some((path) => normalizedPath.endsWith(path));
   } catch {
     return PUBLIC_AUTH_PATHS.some((path) => url.endsWith(path));

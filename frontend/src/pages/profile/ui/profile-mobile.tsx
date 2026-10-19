@@ -8,12 +8,10 @@ import { useWardrobe } from "../model/use-wardrobe";
 import { usePublicProfile } from "../model/public-profile";
 import { ProfileBeaverPet, ProfilePetName } from "./profile-pet";
 import { EditProfileDialog } from "@/features/edit-profile/ui/edit-profile-dialog";
-import { Link, useNavigate } from "react-router";
+import { Link } from "react-router";
 import { BriefcaseBusiness } from "lucide-react";
+import { useSignOut } from "@/features/auth/sign-out/model/use-sign-out";
 import { useCabinetAccess } from "@/entity/user/model/use-cabinet-access";
-import { useQueryClient } from "@tanstack/react-query";
-import { useAuthLogout } from "@/shared/api/generated/core/auth/auth";
-import { USER_QUERY_KEY } from "@/entity/user/model/use-user";
 import { ProfileGallery } from "@/widgets/profile-gallery/ui/profile-gallery";
 import { AchievementsStrip } from "./achievements";
 import { MobileTabBar } from "@/widgets/mobile-shell/ui/mobile-tab-bar";
@@ -175,7 +173,7 @@ function Pet() {
             <ProfilePetName />
           </div>
         </div>
-        <div ref={setSpeechContainer} className="relative h-[72.5px] w-full" />
+        <div ref={setSpeechContainer} className="relative min-h-[92px] w-full" />
       </div>
     </div>
   );
@@ -271,14 +269,7 @@ function Wardrobe() {
 }
 
 function Settings() {
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const logout = useAuthLogout();
-  const signOut = async () => {
-    await logout.mutateAsync().catch(() => undefined);
-    queryClient.removeQueries({ queryKey: USER_QUERY_KEY });
-    navigate("/auth/login");
-  };
+  const { signOut } = useSignOut();
   return (
     <div className="px-4">
       <Card className="overflow-hidden rounded-[22px]">

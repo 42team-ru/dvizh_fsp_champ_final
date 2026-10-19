@@ -59,12 +59,18 @@ export function useActivity() {
   });
   const pending = useRegistrationsMine({ status: "PENDING", when: "UPCOMING", size: 50 });
   const going = useRegistrationsMine({ status: "CONFIRMED", when: "UPCOMING", size: 2 });
+  /** Отменённые организатором или снятые: будущих занятий у них нет, поэтому в UPCOMING не попадают. */
+  const confirmed = useRegistrationsMine({ status: "CONFIRMED", size: 20 });
 
   const page = list.data?.status === 200 ? list.data.data : undefined;
   const items: NotificationResponse[] = page?.items ?? [];
   const pendingItems = pending.data?.status === 200 ? pending.data.data.items ?? [] : [];
   const pendingTotal = pending.data?.status === 200 ? pending.data.data.totalElements ?? pendingItems.length : 0;
-  const goingItems = going.data?.status === 200 ? going.data.data.items ?? [] : [];
+  const cancelledItems = (confirmed.data?.status === 200 ? confirmed.data.data.items ?? [] : []).filter(
+    (r) => (r.event.cancelledByOrganizer || r.event.status === "UNPUBLISHED") && new Date(r.event.startAt).getTime() > Date.now(),
+  );
+  /** Билеты: сначала действующие, свободные места — отменённые со штампом. */
+  const goingItems = [...(going.data?.status === 200 ? going.data.data.items ?? [] : []), ...cancelledItems].slice(0, 2);
   const goingTotal = going.data?.status === 200 ? going.data.data.totalElements ?? goingItems.length : 0;
 
   const unreadByType = new Map((counts.data?.status === 200 ? counts.data.data : []).map((c) => [c.type, c.unread]));

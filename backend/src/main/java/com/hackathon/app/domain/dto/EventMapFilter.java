@@ -40,5 +40,7 @@ public record EventMapFilter(
 		@Schema(description = "Режим записи")
 		JoinMode joinMode,
 		@Schema(description = "«Для меня»: только виды спорта из моего профиля и подходящие моему уровню, как в ленте")
-		Boolean forMe) {
+		Boolean forMe,
+		@Schema(description = "Только мероприятия этой организации (карта на странице организации)")
+		UUID organizationId) {
 }

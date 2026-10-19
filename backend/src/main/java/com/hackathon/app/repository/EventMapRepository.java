@@ -30,10 +30,10 @@ public class EventMapRepository {
 	 * в [from, to]; серия — одна точка. Ближайшие (по подходящему занятию) первыми.
 	 * minLon больше maxLon — область пересекает 180-й меридиан, ищем в двух прямоугольниках.
 	 * Null-фильтры не применяются. forUserId — лента «Для меня»: виды спорта из профиля этого пользователя
-	 * и уровень мероприятия «Любой» или как у него (уровень не указан — любой).
+	 * и уровень мероприятия «Любой» или как у него (уровень не указан — любой). organizationId — только события организации.
 	 */
 	public List<UUID> findIdsInArea(double minLon, double minLat, double maxLon, double maxLat, Instant from,
-			Instant to, String searchText, UUID sportId, EventLevel level, JoinMode joinMode, UUID forUserId, int limit) {
+			Instant to, String searchText, UUID sportId, EventLevel level, JoinMode joinMode, UUID forUserId, UUID organizationId, int limit) {
 		var sql = new StringBuilder("""
 				select e.id from events e
 				join event_occurrences o on o.event_id = e.id
@@ -66,6 +66,9 @@ public class EventMapRepository {
 		if (joinMode != null) {
 			sql.append(" and e.join_mode = :joinMode");
 		}
+		if (organizationId != null) {
+			sql.append(" and e.organization_id = :organizationId");
+		}
 		if (forUserId != null) {
 			sql.append("""
 					 and exists (select 1 from user_sports us where us.user_id = :forUserId and us.sport_id = e.sport_id
@@ -95,6 +98,9 @@ public class EventMapRepository {
 		}
 		if (joinMode != null) {
 			statement = statement.param("joinMode", joinMode.name());
+		}
+		if (organizationId != null) {
+			statement = statement.param("organizationId", organizationId);
 		}
 		if (forUserId != null) {
 			statement = statement.param("forUserId", forUserId);

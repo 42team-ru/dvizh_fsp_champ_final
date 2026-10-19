@@ -21,7 +21,7 @@ export function formatWhen(iso: string, now = new Date()) {
   return `${date.getDate()} ${MONTHS[date.getMonth()]} ${time}`;
 }
 
-/** Мероприятие из API → данные карточки ленты. Обложка: фото события, иначе оформление слота сетки. */
+/** Мероприятие из API → данные карточки ленты. Обложка: фото события, иначе картинка вида спорта, иначе оформление слота. */
 export function toCardData(event: EventSummaryResponse, fallbackCover: EventCover): EventCardData {
   const going = event.occurrenceAttendeesCount ?? event.participantsCount;
   const almostFull = event.capacity != null && going / event.capacity >= 0.8;
@@ -35,6 +35,6 @@ export function toCardData(event: EventSummaryResponse, fallbackCover: EventCove
     going,
     total: event.capacity ?? undefined,
     tone: almostFull ? "warning" : "default",
-    cover: event.coverUrl ? { photo: event.coverUrl } : fallbackCover,
+    cover: (event.coverUrl ?? event.sport.imageUrl) ? { photo: event.coverUrl ?? event.sport.imageUrl } : fallbackCover,
   };
 }

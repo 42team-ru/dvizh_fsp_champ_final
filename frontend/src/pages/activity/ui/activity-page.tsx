@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { CancelledStamp } from "@/shared/components/ui/cancelled-stamp";
 import { ActivityMobile } from "./activity-mobile";
 import { PendingDialog, PendingRow, viewOf } from "./activity-parts";
 import { ACTIVITY_TABS, useActivity, type ActivityModel } from "../model/use-activity";
@@ -166,10 +167,14 @@ function Tickets({ m }: { m: ActivityModel }) {
               </div>
               <div className="relative w-[104px] shrink-0 overflow-hidden border-l-2 border-dashed border-ink bg-secondary">
                 <img src="/event/qr.svg" alt="" className="absolute top-[8px] left-[26px] size-[52px] rounded-md border-2 border-ink bg-card p-[3px]" />
-                <div className="pointer-events-none absolute bottom-[6px] left-[10px] h-[28px] w-[84px] rotate-[7deg] text-primary">
-                  <img src="/event/stamp-admitted.svg" alt="" className="absolute inset-0 size-full max-w-none" />
-                  <p className="absolute inset-x-0 top-[7px] text-center font-display text-[11px] leading-[14px] font-extrabold">ДОПУЩЕН</p>
-                </div>
+                {reg.event.cancelledByOrganizer || reg.event.status !== "PUBLISHED" ? (
+                  <CancelledStamp className="bottom-[6px] left-[10px] h-[28px] w-[84px] rotate-[7deg]" />
+                ) : (
+                  <div className="pointer-events-none absolute bottom-[6px] left-[10px] h-[28px] w-[84px] rotate-[7deg] text-primary">
+                    <img src="/event/stamp-admitted.svg" alt="" className="absolute inset-0 size-full max-w-none" />
+                    <p className="absolute inset-x-0 top-[7px] text-center font-display text-[11px] leading-[14px] font-extrabold">ДОПУЩЕН</p>
+                  </div>
+                )}
               </div>
             </Link>
           );

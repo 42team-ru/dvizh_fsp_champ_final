@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:8082",
+      "url": "http://localhost:8080",
       "description": "Generated server url"
     }
   ],
@@ -5351,6 +5351,17 @@
             "schema": {
               "type": "boolean",
               "description": "«Для меня»: только виды спорта из моего профиля и подходящие моему уровню, как в ленте"
+            }
+          },
+          {
+            "name": "organizationId",
+            "in": "query",
+            "description": "Только мероприятия этой организации (карта на странице организации)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Только мероприятия этой организации (карта на странице организации)"
             }
           }
         ],

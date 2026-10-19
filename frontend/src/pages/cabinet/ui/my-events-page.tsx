@@ -5,6 +5,9 @@ import { useEventsMine } from "@/shared/api/generated/core/events/events";
 import type { EventSummaryResponse, EventsMineStatus } from "@/shared/api/generated/core/appAPI.schemas";
 import { EVENT_KIND_LABEL, EVENT_STATUS, JOIN_MODE_LABEL } from "@/shared/lib/statuses";
 import { Button } from "@/shared/components/ui/button";
+import { useOrganizationsMe } from "@/shared/api/generated/core/organizations/organizations";
+import { useCabinetAccess } from "@/entity/user/model/use-cabinet-access";
+import { EventsMap } from "@/widgets/events-map/ui/events-map";
 import { CabinetLayout } from "./cabinet-layout";
 import { Chip, PillTabs } from "./parts";
 import { dayTime } from "../model/format";
@@ -77,6 +80,9 @@ export default function MyEventsPage() {
   const page = query.data?.status === 200 ? query.data.data : undefined;
   const items = page?.items ?? [];
   const total = page?.totalElements ?? 0;
+  const { isOrg } = useCabinetAccess();
+  const org = useOrganizationsMe({ query: { enabled: isOrg, retry: false } });
+  const orgId = org.data?.status === 200 ? org.data.data.id : undefined;
   const counts = { PUBLISHED: useCount("PUBLISHED"), UNPUBLISHED: useCount("UNPUBLISHED"), DELETED: useCount("DELETED") };
 
   return (
@@ -125,6 +131,14 @@ export default function MyEventsPage() {
         <Button variant="outline" size="sm" className="self-center" onClick={() => setSize((s) => Math.min(100, s + PAGE))} disabled={query.isFetching}>
           Показать ещё {total - items.length}
         </Button>
+      )}
+
+      {orgId && status === "PUBLISHED" && (
+        <section className="flex flex-col gap-3">
+          <h2 className="font-display text-xl font-extrabold text-foreground">На карте</h2>
+          <p className="text-sm font-medium text-muted-foreground">Очные мероприятия организации на ближайшие 30 дней.</p>
+          <EventsMap filters={{ organizationId: orgId }} className="w-full" mapClassName="h-[380px]" />
+        </section>
       )}
 
       {status !== "PUBLISHED" && (

@@ -4,7 +4,6 @@ import { MobileTabBar } from "@/widgets/mobile-shell/ui/mobile-tab-bar";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
-import { Disc } from "@/shared/components/ui/disc";
 import { Icon } from "@/shared/components/ui/icon";
 import { Progress } from "@/shared/components/ui/progress";
 import { cn } from "cn";
@@ -20,7 +19,6 @@ import { EventsMap } from "@/widgets/events-map/ui/events-map";
 import { FeedExtraFilters } from "@/widgets/feed-filters/ui/feed-extra-filters";
 
 const dir = "m-feed";
-const PEOPLE_TONES = ["bg-sky", "bg-mint", "bg-peach"];
 
 /** Оформление крупных карточек по порядку: фон и узор, высота обложки. */
 const BIG_STYLES = [
@@ -34,10 +32,6 @@ const SMALL_TONES = ["bg-photo-lilac", "bg-peach", "bg-sky", "bg-photo-mint"];
 const goingOf = (e: EventSummaryResponse) => e.occurrenceAttendeesCount ?? e.participantsCount;
 const placeOf = (e: EventSummaryResponse) => (e.format === "ONLINE" ? "Онлайн" : e.address ?? "");
 
-const NEAR = [
-  { i: "МС", tone: "bg-mint", name: "Макс Сидоров", meta: "Бег, вело · 1,1 км" },
-  { i: "КЕ", tone: "bg-sky", name: "Катя Егорова", meta: "Йога, плавание · 2,3 км" },
-];
 
 const tag =
   "h-auto border-[1.5px] px-[10px] py-1 text-[10px] leading-[normal] font-extrabold tracking-[1px]";
@@ -54,7 +48,7 @@ function BigCard({ e, index, onDismiss }: { e: EventSummaryResponse; index: numb
         {onDismiss && <DismissButton onDismiss={() => onDismiss(e.id)} className="absolute top-12 right-3" />}
         <div className={cn("relative shrink-0 overflow-hidden", style.photo)} style={{ height: style.height }}>
           <img
-            src={e.coverUrl ?? `/${dir}/${style.decor}`}
+            src={e.coverUrl ?? e.sport.imageUrl ?? `/${dir}/${style.decor}`}
             alt=""
             className="absolute top-0 left-0 size-full max-w-none object-cover"
           />
@@ -148,36 +142,6 @@ function SmallRow({ items, onDismiss }: { items: EventSummaryResponse[]; onDismi
         </Card>
         );
       })}
-    </div>
-  );
-}
-
-function NearbyPeople() {
-  return (
-    <div className="px-4">
-      <Card className="gap-3 rounded-[22px] p-4">
-        <div className="flex items-center justify-between leading-[normal] whitespace-nowrap">
-          <span className="font-display text-base font-bold text-foreground">Люди рядом</span>
-          <span className="text-[13px] font-extrabold text-primary">ещё 12</span>
-        </div>
-        {NEAR.map((p) => (
-          <div key={p.i} className="flex h-12 items-center gap-[10px]">
-            <Disc
-              initials={p.i}
-              tone={p.tone}
-              className="size-11"
-              textClassName="text-xs leading-[normal]"
-            />
-            <div className="flex min-w-0 flex-1 flex-col gap-px leading-[normal] whitespace-nowrap">
-              <span className="text-sm font-extrabold text-foreground">{p.name}</span>
-              <span className="text-xs font-medium text-muted-foreground">{p.meta}</span>
-            </div>
-            <Button variant="soft" className="h-10 w-[112px] shrink-0 px-5 text-xs">
-              Подписаться
-            </Button>
-          </div>
-        ))}
-      </Card>
     </div>
   );
 }
@@ -302,7 +266,7 @@ export function FeedMobile() {
 
       {view === "map" ? (
         <div className="px-4">
-          <EventsMap filters={params} className="w-full" mapClassName="h-[55dvh]" />
+          <EventsMap filters={{ searchText: params.searchText, sportId: params.sportId, level: params.level, joinMode: params.joinMode }} className="w-full" mapClassName="h-[45dvh]" />
         </div>
       ) : (
         <>
@@ -315,7 +279,6 @@ export function FeedMobile() {
             <div key={group[0].id} className="flex flex-col gap-4">
               <BigCard e={group[0]} index={i} onDismiss={onDismiss} />
               {group.length > 1 && <SmallRow items={group.slice(1)} onDismiss={onDismiss} />}
-              {i === 0 && <NearbyPeople />}
             </div>
           ))}
           <Promo />

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { CancelledStamp } from "@/shared/components/ui/cancelled-stamp";
 import { Link } from "react-router";
 import { EventMobile } from "./event-mobile";
 import { fullName, initials, privateNote, useEvent } from "../model/use-event";
@@ -174,7 +175,10 @@ function TicketHero({ m }: { m: EventModel }) {
           № {e.id.slice(0, 4).toUpperCase()}
         </span>
         {/* штамп организатора: только пока моя запись подтверждена — после «Отменить» пропадает */}
-        {e.viewer.registrationStatus === "CONFIRMED" && (
+        {(e.status !== "PUBLISHED" || e.singleOccurrence?.status === "CANCELLED") && (
+          <CancelledStamp big className="top-[220px] left-[34px] h-[66px] w-[178px] rotate-[9deg]" />
+        )}
+        {e.viewer.registrationStatus === "CONFIRMED" && e.status === "PUBLISHED" && e.singleOccurrence?.status !== "CANCELLED" && (
           <div className="pointer-events-none absolute top-[220px] left-[34px] h-[66px] w-[178px] rotate-[9deg] text-primary">
             <img src="/event/stamp-admitted.svg" alt="" className="absolute inset-0 size-full max-w-none" />
             <p className="absolute inset-x-0 top-3 text-center font-display text-[20px] font-extrabold">ДОПУЩЕН</p>
@@ -239,37 +243,37 @@ function About({ m }: { m: EventModel }) {
   const take = (e.equipment ?? "").split(/[,\n;]/).map((t) => t.trim()).filter(Boolean).slice(0, 4);
   const note = privateNote(e);
   return (
-    <Card className="absolute top-0 left-0 h-[286.5px] w-[701px] overflow-hidden">
-      <h2 className="absolute top-7 left-7 font-display text-[22px] leading-[27px] font-bold text-foreground">
+    <Card className="relative min-h-[286.5px] shrink-0 gap-4 p-7">
+      <h2 className="font-display text-[22px] leading-[27px] font-bold text-foreground">
         О встрече
       </h2>
-      <p className="absolute top-[70px] left-7 line-clamp-2 w-[513px] text-base leading-[25.5px] font-medium text-foreground">
+      <p className="max-w-[513px] whitespace-pre-wrap break-words text-base leading-[25.5px] font-medium text-foreground">
         {e.description || "Организатор не добавил описание — спросите в обсуждении."}
       </p>
-      {e.requirements && (
-        <p className="absolute top-[131px] left-7 line-clamp-2 w-[320px] text-base leading-[25.5px] font-medium text-muted-foreground">
-          {e.requirements}
-        </p>
-      )}
+      <div className="grid grid-cols-[minmax(0,1fr)_200px] items-start gap-5 pr-[122px]">
+        {e.requirements && (
+          <p className="whitespace-pre-wrap break-words text-base leading-[25.5px] font-medium text-muted-foreground">
+            {e.requirements}
+          </p>
+        )}
+        <div className="relative col-start-2 rounded-[18px] border-2 border-ink bg-card px-4 py-2">
+          <p className="break-words text-sm leading-[20.5px] font-semibold text-foreground">{note}</p>
+          <span aria-hidden className="absolute top-[19px] -right-3 box-border size-5 border-r-2 border-b-2 border-ink bg-card" />
+        </div>
+      </div>
       {take.length > 0 && (
         <>
-          <Eyebrow className="absolute top-[203.5px] left-7">ЧТО ВЗЯТЬ</Eyebrow>
-          <div className="absolute top-[228.5px] left-7 flex gap-2">
+          <Eyebrow>ЧТО ВЗЯТЬ</Eyebrow>
+          <div className="relative z-10 flex flex-wrap gap-2">
             {take.map((t, i) => (
-              <Badge key={t} className={cn("text-[13px] leading-[18px] text-foreground", TAKE_TONES[i])}>
+              <Badge key={t} className={cn("max-w-full whitespace-normal break-words text-[13px] leading-[18px] text-foreground", TAKE_TONES[i])}>
                 {t}
               </Badge>
             ))}
           </div>
         </>
       )}
-      <Img src="wave.png" className="top-[164.5px] left-[557px] h-[118px] w-[114px] object-cover" />
-      <div className="absolute top-36 left-[349px] box-border h-[68.5px] w-[200px] rounded-[18px] border-2 border-ink bg-card">
-        <p className="absolute top-2 left-4 line-clamp-2 w-[168px] text-sm leading-[20.5px] font-semibold text-foreground" title={note}>
-          {note}
-        </p>
-        <span className="absolute top-[19px] left-[188px] box-border size-5 border-r-2 border-b-2 border-ink bg-card" />
-      </div>
+      <Img src="wave.png" className="pointer-events-none right-7 bottom-0 h-[118px] w-[114px] object-cover" />
     </Card>
   );
 }
@@ -277,7 +281,7 @@ function About({ m }: { m: EventModel }) {
 function Organizer({ m }: { m: EventModel }) {
   const e = m.event!;
   return (
-    <Card className="absolute top-0 left-[721px] h-[286.5px] w-[495px] overflow-hidden bg-sky-soft">
+    <Card className="relative min-h-[286.5px] shrink-0 overflow-hidden bg-sky-soft">
       <div className="absolute top-[22px] left-[22px] flex h-14 w-[447px] items-center gap-[14px]">
         <Link to={`/users/${e.author.id}`} aria-label={fullName(e.author)} className="shrink-0">
           <Disc
@@ -328,7 +332,7 @@ function RouteMap({ m }: { m: EventModel }) {
   const e = m.event!;
   const point: [number, number] | null = e.lon != null && e.lat != null ? [e.lon, e.lat] : null;
   return (
-    <Card className="absolute top-[306.5px] left-[721px] h-[290px] w-[495px] overflow-hidden bg-mint-soft">
+    <Card className="relative h-[290px] shrink-0 overflow-hidden bg-mint-soft">
       {point ? (
         <LocationPicker value={point} className="absolute inset-0 rounded-none border-0" />
       ) : (
@@ -363,25 +367,25 @@ function Chat({ m }: { m: EventModel }) {
     }
   };
   return (
-    <Card id="event-chat" className="absolute top-[306.5px] left-0 h-[559px] w-[701px] overflow-hidden">
-      <div className="absolute top-[26px] left-[26px] flex h-[27px] w-[645px] items-center justify-between">
+    <Card id="event-chat" className="h-[559px] shrink-0 gap-4 p-[26px]">
+      <div className="flex shrink-0 items-center justify-between">
         <div className="flex items-center gap-[10px]">
           <Icon name="event/icon-chat" className="size-[22px]" />
           <h2 className="font-display text-[22px] leading-[27px] font-bold text-foreground">Обсуждение</h2>
         </div>
         <span className="text-[13px] leading-[18px] font-bold text-muted-foreground">{m.comments.length} сообщений</span>
       </div>
-      <div className="absolute top-[69px] left-[26px] flex h-[330px] w-[645px] flex-col gap-3 overflow-y-auto pr-2">
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-2">
         {m.comments.length === 0 && (
           <p className="text-[15px] font-medium text-muted-foreground">Пока тихо. Спросите о месте, уровне или снаряжении — организатор ответит здесь.</p>
         )}
         {m.comments.map((c) => (
-          <div key={c.id} className="flex items-start gap-3">
+          <div key={c.id} className="flex shrink-0 items-start gap-3">
             <Link to={`/users/${c.author.id}`} aria-label={fullName(c.author)} className="shrink-0">
               <Disc user={c.author} initials={initials(c.author)} tone="bg-sky" className="size-9 shrink-0" textClassName="text-xs leading-[17px]" />
             </Link>
             <div className={cn(
-              "box-border max-w-[580px] rounded-tl-[4px] rounded-tr-[18px] rounded-br-[18px] rounded-bl-[18px] border-2 border-ink px-4 py-2.5",
+              "box-border min-w-0 max-w-[580px] break-words rounded-tl-[4px] rounded-tr-[18px] rounded-br-[18px] rounded-bl-[18px] border-2 border-ink px-4 py-2.5",
               c.isOrganizer ? "bg-lime-soft" : "bg-card",
             )}>
               <p className="text-[13px] leading-[18px]">
@@ -409,7 +413,7 @@ function Chat({ m }: { m: EventModel }) {
         ))}
       </div>
       {canComment ? (
-        <form className="absolute top-[414px] left-[26px] flex w-[645px] flex-col gap-2"
+        <form className="flex shrink-0 flex-col gap-2"
           onSubmit={(event) => { event.preventDefault(); void send(); }}>
           {replyTo && (
             <p className="text-sm font-semibold text-muted-foreground">
@@ -424,7 +428,7 @@ function Chat({ m }: { m: EventModel }) {
           {m.commentError && <p role="alert" className="text-sm font-bold text-destructive">{m.commentError}</p>}
         </form>
       ) : (
-        <div className="absolute top-[414px] left-[26px] box-border flex h-12 w-[645px] items-center gap-[10px] rounded-pill border-2 border-dashed border-ink bg-background px-5">
+        <div className="box-border flex min-h-12 shrink-0 items-center gap-[10px] rounded-pill border-2 border-dashed border-ink bg-background px-5">
           <Icon name="event/icon-lock" className="size-[18px]" />
           <span className="text-sm leading-[19px] font-semibold whitespace-nowrap text-muted-foreground">
             Обсуждение закрыто
@@ -440,7 +444,7 @@ function Going({ m }: { m: EventModel }) {
   const shown = e.participants.slice(0, e.participants.length > 8 ? 7 : 8);
   const rest = m.going - shown.length;
   return (
-    <Card className="absolute top-[616.5px] left-[721px] h-[249px] w-[495px] overflow-hidden">
+    <Card className="relative min-h-[249px] shrink-0 overflow-hidden">
       <div className="absolute top-6 left-6 flex h-[25px] w-[443px] items-center justify-between">
         <h2 className="font-display text-xl leading-[25px] font-bold text-foreground">Кто идёт</h2>
         <span className="text-[13px] leading-[18px] font-bold text-muted-foreground">
@@ -507,12 +511,16 @@ export default function EventPage() {
         {m.event && (
           <>
             <TicketHero m={m} />
-            <div className="relative h-[865.5px] w-[1216px] shrink-0">
-              <About m={m} />
-              <Organizer m={m} />
-              <RouteMap m={m} />
-              <Chat m={m} />
-              <Going m={m} />
+            <div className="grid w-[1216px] shrink-0 grid-cols-[701px_495px] items-start gap-5">
+              <div className="flex min-w-0 flex-col gap-5">
+                <About m={m} />
+                <Chat m={m} />
+              </div>
+              <div className="flex min-w-0 flex-col gap-5">
+                <Organizer m={m} />
+                <RouteMap m={m} />
+                <Going m={m} />
+              </div>
             </div>
           </>
         )}

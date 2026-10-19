@@ -8,7 +8,8 @@ import "./map-pins.css";
  */
 
 export type Bbox = { minLon: number; minLat: number; maxLon: number; maxLat: number };
-export type MapPoint = { id: string; coordinates: [number, number]; data: EventMapProperties };
+/** muted — вне выбранного времени: серая точка без подписи; note — вторая строка метки вместо времени начала. */
+export type MapPoint = { id: string; coordinates: [number, number]; data: EventMapProperties; muted?: boolean; note?: string };
 
 /** fetch — область для запроса (видимая с запасом), visible — что на экране сейчас. */
 export type Viewport = { fetch: Bbox; visible: Bbox };
@@ -118,7 +119,10 @@ const escape = (text: string) =>
 
 /** Метка события: вид спорта и время начала; «я записан» и выбранная — свои цвета. */
 function pinIcon(dg: DgApi, point: MapPoint, active: boolean) {
-  const time = new Date(point.data.startAt).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+  if (point.muted && !active) {
+    return dg.divIcon({ className: "map-pin-host", iconSize: null, html: `<span class="map-dot-muted" title="${escape(point.data.title)}"></span>` });
+  }
+  const time = point.note ?? new Date(point.data.startAt).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
   const mine = point.data.myRegistrationStatus === "CONFIRMED";
   return dg.divIcon({
     className: "map-pin-host",
@@ -128,8 +132,8 @@ function pinIcon(dg: DgApi, point: MapPoint, active: boolean) {
   });
 }
 
-const clusterIcon = (dg: DgApi, count: number) =>
-  dg.divIcon({ className: "map-pin-host", iconSize: null, html: `<span class="map-cluster">${count}</span>` });
+const clusterIcon = (dg: DgApi, count: number, muted: boolean) =>
+  dg.divIcon({ className: "map-pin-host", iconSize: null, html: `<span class="map-cluster${muted ? " map-cluster--muted" : ""}">${count}</span>` });
 
 /** Запас вокруг экрана: сдвиги и приближение внутри него не ходят на бэк. */
 const PAD = 0.5;
@@ -170,16 +174,23 @@ export async function createEventsMap(container: HTMLElement, center = DEFAULT_C
   const render = () => {
     layers.forEach((layer) => layer.remove());
     const view = pad(readBbox(map));
-    layers = clusterize(map, points.filter((p) => inBbox(view, p.coordinates))).map((group) => {
+    const shown = points.filter((p) => inBbox(view, p.coordinates));
+    // Активные и серые кластеризуются отдельно: серые не «съедают» активные метки.
+    const groups = [
+      ...clusterize(map, shown.filter((p) => p.muted && p.id !== activeId)),
+      ...clusterize(map, shown.filter((p) => !p.muted || p.id === activeId)),
+    ];
+    layers = groups.map((group) => {
       if (group.points.length === 1) {
         const point = group.points[0];
-        return dg.marker([point.coordinates[1], point.coordinates[0]], { icon: pinIcon(dg, point, point.id === activeId), riseOnHover: true })
+        return dg.marker([point.coordinates[1], point.coordinates[0]], { icon: pinIcon(dg, point, point.id === activeId), riseOnHover: true, zIndexOffset: point.muted ? -1000 : 0 })
           .addTo(map).on("click", () => clickHandler?.(point));
       }
       // Кластер — в среднем положении его точек; клик приближает к нему.
       const lat = group.points.reduce((s, p) => s + p.coordinates[1], 0) / group.points.length;
       const lon = group.points.reduce((s, p) => s + p.coordinates[0], 0) / group.points.length;
-      return dg.marker([lat, lon], { icon: clusterIcon(dg, group.points.length) })
+      const muted = group.points.every((p) => p.muted);
+      return dg.marker([lat, lon], { icon: clusterIcon(dg, group.points.length, muted), zIndexOffset: muted ? -1000 : 0 })
         .addTo(map).on("click", () => map.setView([lat, lon], map.getZoom() + 2));
     });
   };

@@ -7,9 +7,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
 import { Icon } from "@/shared/components/ui/icon";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
-import { RoughBorder } from "@/shared/components/ui/rough-border";
 import { Participants } from "@/shared/components/ui/participants";
-import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar";
 import { Sparkles } from "lucide-react";
 import { toCardData } from "@/entity/event/lib/event-format";
 import {
@@ -26,38 +24,6 @@ const COVERS = [
   { bg: "bg-sky", art: "/home/memphis4.svg" },
 ] as const;
 
-const FRIENDS = [
-  {
-    initials: "ДК",
-    name: "Дима Ковалёв",
-    meta: "Бег · сегодня в 7:42",
-    title: "Утренняя пробежка вдоль Енисея",
-    likes: 25,
-    comments: 6,
-    heartIcon: "icon-heart",
-    stats: [
-      { value: "10,2 км", label: "Дистанция", tone: "bg-lime-soft" },
-      { value: "52:14", label: "Время", tone: "bg-background" },
-      { value: "5:07", label: "Темп /км", tone: "bg-background" },
-    ],
-    media: { bg: "bg-mint-soft", art: "/home/memphis5.svg", artWidth: "w-[520px]", record: false },
-  },
-  {
-    initials: "СМ",
-    name: "Саша Мельникова",
-    meta: "Силовая · вчера в 19:10",
-    title: "Ноги и спина",
-    likes: 11,
-    comments: 3,
-    heartIcon: "icon-heart1",
-    stats: [
-      { value: "45:00", label: "Время", tone: "bg-background" },
-      { value: "12", label: "Подходов", tone: "bg-background" },
-      { value: "80 кг", label: "Присед", tone: "bg-sky-soft" },
-    ],
-    media: { bg: "bg-lime-soft", art: "/home/memphis6.svg", artWidth: "w-[560px]", record: true },
-  },
-];
 
 function Eyebrow({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
@@ -211,7 +177,8 @@ function Tip() {
 /** Карточка рекомендации: та же вёрстка, что в макете, данные — из recommendations_events. */
 function EventCard({ item, index, onDismiss }: { item: RecommendedEventResponse; index: number; onDismiss(id: string): void }) {
   const { event } = item;
-  const cover = event.coverUrl ? { photo: event.coverUrl } : COVERS[index % COVERS.length];
+  const photo = event.coverUrl ?? event.sport.imageUrl;
+  const cover = photo ? { photo } : COVERS[index % COVERS.length];
   const card = toCardData(event, { bg: "bg-sky" });
   const where = event.format === "ONLINE" ? "Онлайн" : formatDistance(item.distanceKm) ?? card.distance;
   return (
@@ -285,80 +252,6 @@ function Recommendations() {
   );
 }
 
-function Stat({ value, label, tone }: { value: string; label: string; tone: string }) {
-  return (
-    <div className={`relative box-border h-[74px] flex-1 rounded-[14px] border-2 border-transparent px-[14px] pt-[10px] ${tone}`}>
-      <RoughBorder radius={14} roughness={0.9} />
-      <p className="font-display text-[22px] leading-[27px] font-extrabold whitespace-nowrap text-foreground">
-        {value}
-      </p>
-      <p className="mt-[2px] text-xs leading-[17px] font-semibold text-muted-foreground">{label}</p>
-    </div>
-  );
-}
-
-function FriendCard({ post }: { post: (typeof FRIENDS)[number] }) {
-  const { media } = post;
-  return (
-    <Card className="h-[425px] overflow-hidden p-[22px]">
-      <div className="flex h-[377px] flex-col gap-4">
-        <div className="flex h-11 items-center gap-3">
-          <Avatar className="size-11 after:hidden">
-            <AvatarFallback className="border-2 border-ink bg-sky text-sm leading-[19px] font-extrabold tracking-[-0.5px] text-foreground">
-              {post.initials}
-            </AvatarFallback>
-          </Avatar>
-          <div className="min-w-0 flex-1">
-            <p className="text-[15px] leading-[21px] font-extrabold text-foreground">{post.name}</p>
-            <p className="text-[13px] leading-[18px] font-medium text-muted-foreground">{post.meta}</p>
-          </div>
-          <span className="text-xl leading-[27px] font-bold text-muted-foreground">···</span>
-        </div>
-
-        <h3 className="font-display text-xl leading-[25px] font-bold text-foreground">{post.title}</h3>
-
-        <div className={`relative box-border h-[150px] shrink-0 overflow-hidden rounded-2xl border-2 border-ink ${media.bg}`}>
-          <img
-            src={media.art}
-            alt=""
-            className={`absolute top-0 left-0 h-[150px] max-w-none ${media.artWidth}`}
-          />
-          {media.record ? (
-            <div className="absolute top-9 left-24 flex items-center gap-[14px]">
-              <span className="flex size-[72px] items-center justify-center rounded-[36px] border-2 border-ink bg-card">
-                <Icon name="icon-trophy" className="size-[34px]" />
-              </span>
-              <div>
-                <Eyebrow>НОВЫЙ РЕКОРД</Eyebrow>
-                <p className="mt-[2px] font-display text-[30px] leading-[37px] font-extrabold whitespace-nowrap text-foreground">
-                  Присед 80 кг
-                </p>
-              </div>
-            </div>
-          ) : null}
-        </div>
-
-        <div className="flex h-[74px] gap-[10px]">
-          {post.stats.map((s) => (
-            <Stat key={s.label} {...s} />
-          ))}
-        </div>
-
-        <div className="flex h-5 items-center gap-[18px] text-sm leading-[19px] font-bold text-foreground">
-          <span className="flex items-center gap-[6px]">
-            <Icon name={post.heartIcon} className="size-5" />
-            {post.likes}
-          </span>
-          <span className="flex items-center gap-[6px]">
-            <Icon name="icon-chat" className="size-5" />
-            {post.comments}
-          </span>
-        </div>
-      </div>
-    </Card>
-  );
-}
-
 export default function HomePage() {
   return (
     <>
@@ -375,12 +268,6 @@ export default function HomePage() {
         <SectionHeading title="Подобрали для тебя" hint="по интересам, месту и времени" linkLabel="Все рекомендации"
           to={FOR_YOU_FEED_URL} />
         <Recommendations />
-        <SectionHeading title="Друзья тренируются" linkLabel="Все" />
-        <div className="grid grid-cols-2 gap-5">
-          {FRIENDS.map((f) => (
-            <FriendCard key={f.title} post={f} />
-          ))}
-        </div>
       </main>
       </div>
     </div>

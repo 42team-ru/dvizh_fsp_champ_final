@@ -11,7 +11,6 @@ import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
 import { Icon } from "@/shared/components/ui/icon";
 import { Participants } from "@/shared/components/ui/participants";
-import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 import { Link } from "react-router";
 import { cn } from "cn";
@@ -40,10 +39,6 @@ const SLOT_COVERS: EventCardData["cover"][] = [
   { bg: "bg-mint", art: ART("memphis5") },
 ];
 
-const NEARBY = [
-  { initials: "МС", name: "Макс Сидоров", meta: "Бег, вело · 1,1 км" },
-  { initials: "КЕ", name: "Катя Егорова", meta: "Йога, плавание · 2,3 км" },
-];
 
 function FilterBar({ chip, onChip, more, extraCount, onMore, count, view, onView }: {
   chip: FeedChip;
@@ -95,44 +90,6 @@ function FilterBar({ chip, onChip, more, extraCount, onMore, count, view, onView
         {view === "map" ? "Лента" : "Карта"}
       </Button>
     </div>
-  );
-}
-
-function NearbyPeople() {
-  return (
-    <Card className="shrink-0 gap-3 overflow-hidden p-5">
-      <div className="flex h-[22px] items-center justify-between">
-        <h2 className="font-display text-[17px] leading-[21px] font-bold text-foreground">
-          Люди рядом
-        </h2>
-        <Icon name="feed/icon-users" className="size-[22px]" />
-      </div>
-      {NEARBY.map((p) => (
-        <div key={p.initials} className="flex h-10 items-center gap-3">
-          <Avatar className="size-10 after:hidden">
-            <AvatarFallback className="border-2 border-ink bg-sky text-[13px] leading-[18px] font-extrabold tracking-[-0.5px] text-foreground">
-              {p.initials}
-            </AvatarFallback>
-          </Avatar>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm leading-[19px] font-extrabold text-foreground">
-              {p.name}
-            </p>
-            <p className="truncate text-xs leading-[17px] font-medium text-muted-foreground">
-              {p.meta}
-            </p>
-          </div>
-          <Button
-            variant="secondary"
-            size="icon"
-            aria-label={`Добавить: ${p.name}`}
-            className="size-[34px] rounded-[17px] p-0 shadow-none"
-          >
-            <Icon name="feed/icon-plus1" className="size-4" />
-          </Button>
-        </div>
-      ))}
-    </Card>
   );
 }
 
@@ -217,8 +174,9 @@ function Slot({ events, i, reasonOf, onDismiss, ...props }: {
 }
 
 /** Карта понимает не все фильтры ленты: формат и «Для меня» ей не передаём (на карте только очные). */
-const toMapFilters = ({ searchText, sportId, level, joinMode, from, to }: EventsListParams): MapFilters =>
-  ({ searchText, sportId, level, joinMode, from, to });
+/** Время на карте задаёт её собственный док, поэтому from/to ленты сюда не идут. */
+const toMapFilters = ({ searchText, sportId, level, joinMode }: EventsListParams): MapFilters =>
+  ({ searchText, sportId, level, joinMode });
 
 export default function FeedPage() {
   const filters = useFeedFilters();
@@ -239,7 +197,7 @@ export default function FeedPage() {
           onMore={() => setMore((m) => !m)} count={events?.length} view={view} onView={setView} />
         {more && <FeedExtraFilters value={filters.extra} onChange={filters.setExtra} className="w-full" />}
         {view === "map" ? (
-          <EventsMap filters={toMapFilters(filters.params)} className="w-full" mapClassName="h-[680px]" />
+          <EventsMap filters={toMapFilters(filters.params)} className="w-full" mapClassName="h-[436px]" />
         ) : (
         <div className="flex min-w-[1216px] flex-col gap-5">
           {events?.length === 0 && (
@@ -258,7 +216,6 @@ export default function FeedPage() {
             </div>
             <div className="col-span-3 flex flex-col gap-5">
               <Slot reasonOf={reasonOf} onDismiss={onDismiss} events={events} i={3} coverClassName="aspect-[2/1]" className="grow" />
-              <NearbyPeople />
             </div>
           </div>
           <div className="grid grid-cols-12 gap-5">

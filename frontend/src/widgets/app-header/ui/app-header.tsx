@@ -3,8 +3,7 @@ import { BrandPlate } from "@/shared/components/ui/brand-plate";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Icon } from "@/shared/components/ui/icon";
-import { UserAvatar } from "@/shared/components/ui/user-avatar";
-import { useUser } from "@/entity/user/model/use-user";
+import { AccountMenu } from "@/features/auth/sign-out/ui/account-menu";
 import { useCabinetAccess } from "@/entity/user/model/use-cabinet-access";
 import { BriefcaseBusiness } from "lucide-react";
 import { SearchPalette } from "@/widgets/search-palette/ui/search-palette";
@@ -22,7 +21,6 @@ const iconFolder = (current: string, key: string) =>
 
 /** `wide` — контейнер 1440px, как у ленты; остальные страницы 1280px. Вкладка «Кабинет» — только организаторам. */
 export function AppHeader({ current = "home", wide }: { current?: "home" | "feed" | "profile" | "activity" | "cabinet"; wide?: boolean }) {
-  const { user } = useUser();
   const cabinet = useCabinetAccess();
   return (
     <header className="box-border h-[76px] border-b-2 border-ink bg-background">
@@ -79,9 +77,7 @@ export function AppHeader({ current = "home", wide }: { current?: "home" | "feed
             </Link>
           </Button>
 
-          <Link to="/profile" aria-label="Профиль" className="shrink-0">
-            <UserAvatar user={user} className="size-[42px] rounded-full border-2 border-ink object-cover" />
-          </Link>
+          <AccountMenu />
         </div>
       </div>
     </header>

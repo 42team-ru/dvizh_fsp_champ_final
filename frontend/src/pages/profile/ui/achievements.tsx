@@ -1,10 +1,10 @@
 import type { CSSProperties } from "react";
-import { baseURL } from "@/shared/api/mutators/authMutator";
+import { toBackendUrl } from "@/shared/api/mutators/authMutator";
 import { Icon } from "@/shared/components/ui/icon";
 import { cn } from "cn";
 import { useAchievements, type Achievement } from "../model/use-achievements";
 
-const imageUrl = (url: string) => new URL(url, baseURL).toString();
+const imageUrl = (url: string) => toBackendUrl(url).toString();
 
 /** Картинка достижения в цветной плитке; у неполученного — пунктир и замок. */
 function Badge({ a, size }: { a: Achievement; size: "sm" | "lg" }) {
