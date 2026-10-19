@@ -91,6 +91,8 @@ public class E2eSupport {
 		form.put("startAt", Instant.now().plus(2, ChronoUnit.DAYS).toString());
 		form.put("format", "OFFLINE");
 		form.put("address", "Красноярск, спортивная площадка");
+		form.put("lat", 56.0153);
+		form.put("lon", 92.8932);
 		form.put("joinMode", "FREE");
 		return form;
 	}

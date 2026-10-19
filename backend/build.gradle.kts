@@ -28,6 +28,13 @@ dependencies {
 	implementation("org.flywaydb:flyway-database-postgresql")
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1")
 	implementation("org.mapstruct:mapstruct:1.6.3")
+	// S3-хранилище файлов (MinIO локально и на VPS, подойдёт любой S3). Только синхронный клиент, HTTP — из JDK.
+	implementation(platform("software.amazon.awssdk:bom:2.56.0"))
+	implementation("software.amazon.awssdk:s3") {
+		exclude(group = "software.amazon.awssdk", module = "netty-nio-client")
+		exclude(group = "software.amazon.awssdk", module = "apache-client")
+	}
+	implementation("software.amazon.awssdk:url-connection-client")
 	compileOnly("org.projectlombok:lombok")
 	developmentOnly("org.springframework.boot:spring-boot-devtools")
 	runtimeOnly("org.postgresql:postgresql")

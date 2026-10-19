@@ -61,7 +61,7 @@ cd backend && ./gradlew postgresTest  # смоук миграций на нас�
 | `UserSport` | `userId`, `sportId`, `level?` (`BEGINNER \| AMATEUR \| ADVANCED \| PRO`) |
 | `Organization` | `id`, `accountId` (unique, аккаунт роли ORG), `name`, `description`, `city?`, `contacts` (`Map<ContactType, String>`, таблица `organization_contacts`; `ContactType = PHONE \| EMAIL \| TELEGRAM \| VK \| WHATSAPP \| MAX \| WEBSITE`, минимум один, формат проверяет сервис), `status` (`PENDING \| APPROVED \| REJECTED`), `rejectReason?`, `submittedAt`, `reviewedAt?`, `reviewedById?` |
 | `OrganizationSport` | `organizationId`, `sportId` |
-| `Event` | `id`, `title`, `description`, `sportId`, `authorId`, `organizationId?` (если создано от организации), `startAt`, `endAt?`, `format` (`OFFLINE \| ONLINE`), `address?`, `locationNote?`, `onlineUrl?`, `lat?`, `lon?`, `level` (`ANY \| BEGINNER \| AMATEUR \| ADVANCED \| PRO`), `kind?` (тренировка, игра, встреча, любительский турнир), `requirements?`, `equipment?`, `capacity?`, `joinMode` (`FREE \| REQUEST`), `privateDetails?`, `status` (`PUBLISHED \| UNPUBLISHED \| DELETED`), `moderationReason?`, `moderatedAt?`, `moderatedById?`, `createdAt`, `updatedAt` |
+| `Event` | `id`, `title`, `description`, `sportId`, `authorId`, `organizationId?` (если создано от организации), `startAt`, `endAt?`, `format` (`OFFLINE \| ONLINE`), `address?`, `locationNote?`, `onlineUrl?`, `lat?`, `lon?` (обязательны для OFFLINE, у ONLINE не хранятся; рядом в БД вычисляемая PostGIS-точка `location`), `level` (`ANY \| BEGINNER \| AMATEUR \| ADVANCED \| PRO`), `kind?` (тренировка, игра, встреча, любительский турнир), `requirements?`, `equipment?`, `capacity?`, `joinMode` (`FREE \| REQUEST`), `privateDetails?`, `status` (`PUBLISHED \| UNPUBLISHED \| DELETED`), `moderationReason?`, `moderatedAt?`, `moderatedById?`, `createdAt`, `updatedAt` |
 | `EventOrganizer` (`event_organizers`) | `id`, `eventId`, `userId`, `addedById`, unique (`eventId`, `userId`) — соорганизаторы: правят событие и решают заявки наравне с автором, состав меняет только автор |
 | `Registration` | `id`, `eventId`, `userId`, unique (`eventId`, `userId`), `status` (`CONFIRMED \| PENDING \| REJECTED \| CANCELLED`), `message?` (сопроводительное к заявке), `decisionReason?`, `decidedAt?`, `decidedById?`, `createdAt` |
 | `Comment` | `id`, `eventId`, `authorId`, `text`, `createdAt`, `hidden` (модерация сообщений — доп. фича, пока не делаем) |
@@ -172,7 +172,7 @@ cd backend && ./gradlew postgresTest  # смоук миграций на нас�
 ## Чего не делаем
 
 - Восстановление пароля, OAuth, почта и SMS для входа. Маршруты `forgot-password`, `oauth2/callback` и блок `alternative-block` из шаблона убрать из навигации.
-- Загрузку учредительных документов и интеграцию с реестрами.
+- Интеграцию с реестрами (документы организация загружает файлами в S3, проверяет их админ вручную).
 - Нативное мобильное приложение.
 - Мессенджер в реальном времени и обмен файлами.
 - Подтверждение посещения, результаты и судейство.
@@ -197,7 +197,8 @@ cd backend && ./gradlew postgresTest  # смоук миграций на нас�
 - Номер миграции занимаем перед пушем: подтянуть `main` и взять следующий свободный. Два одинаковых номера Flyway не запустит.
 - В проде `ddl-auto: validate`: миграции должны точно совпадать с сущностями. Менялись миграции или сущности — запустить `./gradlew postgresTest`.
 - **Тесты идут на H2:** схема строится из сущностей, Flyway выключен. Поэтому запросы, которые проходят через тесты, пишем переносимо: JPQL, derived-методы Spring Data, `lower(...) like`. Никаких `pg_trgm`, `tsvector`, `jsonb`-операторов и PostGIS в таких запросах.
-- PostGIS нет: образ `postgres:18-alpine`. Координаты храним `lat/lon` (`double`), карта фильтрует по bbox в JPQL, расстояние считаем в Java.
+- PostGIS есть: образ `postgis/postgis:18-3.6-alpine` (только amd64). Источник правды — `events.lat/lon` в сущности; колонку `location geometry(Point,4326)` с GiST-индексом база вычисляет сама (`GENERATED ... STORED`), в сущности её нет. Пространственные запросы — только нативным SQL в `EventMapRepository`; H2 их не выполнит, поэтому такие тесты идут с тегом `postgres` (`./gradlew postgresTest`).
+- Карта: `GET /api/events/map` (`events_map`) отдаёт GeoJSON `FeatureCollection` по видимой области `minLon/minLat/maxLon/maxLat`, координаты `[lon, lat]`; кластеризует фронт. Фильтры совпадают с лентой: меняешь `EventSpecifications.feed` — поменяй и `EventMapRepository`.
 - Индексы и `create extension pg_trgm` в миграциях можно: H2 их не видит. Нечёткий поиск вида спорта — только как улучшение с фолбэком на `like`.
 
 ## Фронтенд
@@ -315,7 +316,7 @@ Codex (OpenAI) подключён как плагин Claude Code: `.claude/sett
 2. Шаг «Что» при создании события: вид спорта с автодополнением, подсказка «Возможно, «Падел»?» и кнопка «Добавить «Сапсёрфинг» как новый вид».
 3. Итог заявки без тупика: принято — «Вы участник» и приватные детали; отклонено — «Заявка отклонена», причина и блок «Похожие встречи».
 4. «Поделиться» после создания события: ссылка для мессенджеров, QR-код, карточка-афиша для печати.
-5. Онлайн-формат (`format = ONLINE`, ссылка видна только участникам) и карта (Leaflet + OSM, `lat/lon`, фильтр по bbox).
+5. Онлайн-формат (`format = ONLINE`, ссылка видна только участникам) и карта (бэкенд готов: `events_map`, PostGIS; фронт — 2ГИС MapGL + Clusterer).
 6. Дальше по выбору: кворум «состоится, если наберём N», «Кто что берёт», подписки на почту и Telegram, подбор встреч, команды, пэт-помощник.
 
 ## Конец хакатона: очистка репозитория

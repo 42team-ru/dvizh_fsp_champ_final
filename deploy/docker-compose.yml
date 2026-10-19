@@ -2,7 +2,7 @@
 # IMAGE (ghcr.io/owner/repo) и TAG выставляет CI в /opt/app/.env при каждом деплое.
 services:
   db:
-    image: postgres:18-alpine
+    image: postgis/postgis:18-3.6-alpine
     restart: unless-stopped
     environment:
       POSTGRES_DB: app
@@ -12,6 +12,23 @@ services:
       - pgdata:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U app -d app"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # S3-хранилище файлов. Порты не публикуются: файлы отдаёт бэкенд через /api/files/{id}.
+  # Данные — обычная папка /opt/app/data/minio (как сертификаты Caddy): переживает `down -v` и `volume prune`.
+  minio:
+    image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
+    restart: unless-stopped
+    command: server /data
+    environment:
+      MINIO_ROOT_USER: app
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY}
+    volumes:
+      - ./data/minio:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -26,8 +43,13 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       # Демо-режим (тестовые аккаунты с публичным паролем): включить DEMO_MODE=true в /opt/app/.env, если сервер используется как демо
       DEMO_MODE: ${DEMO_MODE:-false}
+      S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY: app
+      S3_SECRET_KEY: ${S3_SECRET_KEY}
     depends_on:
       db:
+        condition: service_healthy
+      minio:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health/readiness | grep -q UP"]

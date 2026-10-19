@@ -1,5 +1,6 @@
 package com.hackathon.app.service;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.function.Function;
@@ -37,8 +38,9 @@ public class AdminOrganizationService {
 	private final AppUserRepository users;
 	private final DbTimeRepository dbTime;
 	private final OrganizationMapper mapper;
+	private final FileService files;
 
-	/** Новые заявки сверху. q ищет по названию без учёта регистра. */
+	/** Новые заявки сверху. q ищет по названию без учёта регистра. Документы — только в карточке (get). */
 	@Transactional(readOnly = true)
 	public PageResponse<AdminOrganizationResponse> list(OrganizationStatus status, String q, int page, int size) {
 		var query = Strings.blankToNull(q);
@@ -49,7 +51,7 @@ public class AdminOrganizationService {
 		var accounts = users.findAllById(result.getContent().stream().map(Organization::getAccountId).toList())
 				.stream()
 				.collect(Collectors.toMap(AppUser::getId, Function.identity()));
-		return PageResponse.of(result, o -> mapper.toAdmin(o, accounts.get(o.getAccountId())));
+		return PageResponse.of(result, o -> mapper.toAdmin(o, accounts.get(o.getAccountId()), List.of()));
 	}
 
 	@Transactional(readOnly = true)
@@ -91,6 +93,6 @@ public class AdminOrganizationService {
 	}
 
 	private AdminOrganizationResponse toAdmin(Organization org) {
-		return mapper.toAdmin(org, users.findById(org.getAccountId()).orElse(null));
+		return mapper.toAdmin(org, users.findById(org.getAccountId()).orElse(null), files.organizationDocuments(org.getId()));
 	}
 }

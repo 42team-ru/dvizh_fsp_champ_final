@@ -47,6 +47,7 @@ public record EventResponse(
 		@Schema(description = "Статус мероприятия", requiredMode = REQUIRED) EventStatus status,
 		@Schema(description = "Причина снятия с публикации или удаления") String moderationReason,
 		@Schema(description = "Когда снято или удалено") Instant moderatedAt,
+		@Schema(description = "Фото по порядку, первое — обложка; до 6", requiredMode = REQUIRED) List<FileResponse> photos,
 		@Schema(description = "Что могу делать я", requiredMode = REQUIRED) ViewerResponse viewer,
 		@Schema(requiredMode = REQUIRED) Instant createdAt,
 		@Schema(requiredMode = REQUIRED) Instant updatedAt) {

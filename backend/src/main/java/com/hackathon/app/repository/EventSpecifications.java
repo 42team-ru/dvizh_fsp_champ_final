@@ -14,7 +14,7 @@ import jakarta.persistence.criteria.Predicate;
 import lombok.experimental.UtilityClass;
 import org.springframework.data.jpa.domain.Specification;
 
-/** Фильтры ленты на Criteria API. */
+/** Фильтры ленты на Criteria API. Те же фильтры для карты — в {@link EventMapRepository}: меняешь одно — поменяй и другое. */
 @UtilityClass
 public class EventSpecifications {
 

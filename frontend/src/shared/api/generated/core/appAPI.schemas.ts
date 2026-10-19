@@ -5,6 +5,17 @@
  * Платформа совместных спортивных активностей. Ошибки — ProblemDetail (RFC 9457), текст для человека в поле detail.
  * OpenAPI spec version: v1
  */
+export type ProblemDetailProperties = {[key: string]: unknown};
+
+export interface ProblemDetail {
+  type?: string;
+  title?: string;
+  status?: number;
+  detail?: string;
+  instance?: string;
+  properties?: ProblemDetailProperties;
+}
+
 export type SaveOrganizationRequestContacts = {[key: string]: string};
 
 export interface SaveOrganizationRequest {
@@ -24,6 +35,21 @@ export interface SaveOrganizationRequest {
      */
   city?: string;
   contacts: SaveOrganizationRequestContacts;
+}
+
+/**
+ * Загруженный файл
+ */
+export interface FileResponse {
+  id: string;
+  /** Адрес для скачивания и показа: /api/files/{id} */
+  url: string;
+  /** Имя файла, как его загрузили */
+  name: string;
+  /** MIME-тип */
+  contentType: string;
+  /** Размер в байтах */
+  size: number;
 }
 
 export type OrganizationResponseContacts = {[key: string]: string};
@@ -49,6 +75,8 @@ export interface OrganizationResponse {
   reviewedAt?: string;
   createdAt?: string;
   updatedAt?: string;
+  logoUrl?: string;
+  documents?: FileResponse[];
 }
 
 /**
@@ -149,13 +177,13 @@ export interface EventRequest {
      */
   onlineUrl?: string;
   /**
-     * Широта
+     * Широта точки на карте; обязательна для очного, у онлайн не сохраняется
      * @minimum -90
      * @maximum 90
      */
   lat?: number;
   /**
-     * Долгота
+     * Долгота точки на карте; обязательна для очного, у онлайн не сохраняется
      * @minimum -180
      * @maximum 180
      */
@@ -190,17 +218,6 @@ export interface EventRequest {
      * @maxLength 2000
      */
   privateDetails?: string;
-}
-
-export type ProblemDetailProperties = {[key: string]: unknown};
-
-export interface ProblemDetail {
-  type?: string;
-  title?: string;
-  status?: number;
-  detail?: string;
-  instance?: string;
-  properties?: ProblemDetailProperties;
 }
 
 /**
@@ -421,6 +438,8 @@ export interface EventResponse {
   moderationReason?: string;
   /** Когда снято или удалено */
   moderatedAt?: string;
+  /** Фото по порядку, первое — обложка; до 6 */
+  photos: FileResponse[];
   /** Что могу делать я */
   viewer: ViewerResponse;
   createdAt: string;
@@ -630,6 +649,8 @@ export interface AdminOrganizationResponse {
   account?: OrganizationAccountResponse;
   createdAt?: string;
   updatedAt?: string;
+  logoUrl?: string;
+  documents?: FileResponse[];
 }
 
 /**
@@ -757,6 +778,8 @@ export interface EventSummaryResponse {
   organizationId?: string;
   /** Статус моей записи; null — не записан */
   myRegistrationStatus?: EventSummaryResponseMyRegistrationStatus;
+  /** Обложка (первое фото): /api/files/{id}; null — без фото */
+  coverUrl?: string;
 }
 
 /**
@@ -803,6 +826,131 @@ export interface PublicOrganizationResponse {
   description?: string;
   city?: string;
   contacts?: PublicOrganizationResponseContacts;
+  logoUrl?: string;
+  documents?: FileResponse[];
+}
+
+export type EventMapFeatureType = typeof EventMapFeatureType[keyof typeof EventMapFeatureType];
+
+
+export const EventMapFeatureType = {
+  Feature: 'Feature',
+} as const;
+
+export type PointGeometryType = typeof PointGeometryType[keyof typeof PointGeometryType];
+
+
+export const PointGeometryType = {
+  Point: 'Point',
+} as const;
+
+/**
+ * GeoJSON Point
+ */
+export interface PointGeometry {
+  type: PointGeometryType;
+  /**
+     * [долгота, широта] — именно в таком порядке
+     * @minItems 2
+     * @maxItems 2
+     */
+  coordinates: number[];
+}
+
+/**
+ * Для какого уровня
+ */
+export type EventMapPropertiesLevel = typeof EventMapPropertiesLevel[keyof typeof EventMapPropertiesLevel];
+
+
+export const EventMapPropertiesLevel = {
+  ANY: 'ANY',
+  BEGINNER: 'BEGINNER',
+  AMATEUR: 'AMATEUR',
+  ADVANCED: 'ADVANCED',
+  PRO: 'PRO',
+} as const;
+
+/**
+ * Режим записи
+ */
+export type EventMapPropertiesJoinMode = typeof EventMapPropertiesJoinMode[keyof typeof EventMapPropertiesJoinMode];
+
+
+export const EventMapPropertiesJoinMode = {
+  FREE: 'FREE',
+  REQUEST: 'REQUEST',
+} as const;
+
+/**
+ * Статус моей записи; null — не записан
+ */
+export type EventMapPropertiesMyRegistrationStatus = typeof EventMapPropertiesMyRegistrationStatus[keyof typeof EventMapPropertiesMyRegistrationStatus];
+
+
+export const EventMapPropertiesMyRegistrationStatus = {
+  CONFIRMED: 'CONFIRMED',
+  PENDING: 'PENDING',
+  REJECTED: 'REJECTED',
+  CANCELLED: 'CANCELLED',
+} as const;
+
+/**
+ * Свойства точки на карте: хватает на маркер и короткую карточку
+ */
+export interface EventMapProperties {
+  id: string;
+  /** Название */
+  title: string;
+  /** Вид спорта */
+  sport: SportResponse;
+  /** Начало */
+  startAt: string;
+  /** Окончание */
+  endAt?: string;
+  /** Адрес */
+  address?: string;
+  /** Для какого уровня */
+  level: EventMapPropertiesLevel;
+  /** Режим записи */
+  joinMode: EventMapPropertiesJoinMode;
+  /** Подтверждённых участников */
+  participantsCount: number;
+  /** Лимит мест; null — без лимита */
+  capacity?: number;
+  /** Статус моей записи; null — не записан */
+  myRegistrationStatus?: EventMapPropertiesMyRegistrationStatus;
+}
+
+/**
+ * GeoJSON Feature: мероприятие на карте
+ */
+export interface EventMapFeature {
+  type: EventMapFeatureType;
+  /** id мероприятия */
+  id: string;
+  geometry: PointGeometry;
+  properties: EventMapProperties;
+}
+
+export type EventMapResponseType = typeof EventMapResponseType[keyof typeof EventMapResponseType];
+
+
+export const EventMapResponseType = {
+  FeatureCollection: 'FeatureCollection',
+} as const;
+
+/**
+ * GeoJSON FeatureCollection с мероприятиями в видимой области
+ */
+export interface EventMapResponse {
+  type: EventMapResponseType;
+  /** Ближайшие по времени начала, не больше limit */
+  features: EventMapFeature[];
+  /** В области больше limit мероприятий: показаны не все, стоит приблизить карту */
+  truncated: boolean;
+  /** Сколько точек отдаётся максимум */
+  limit: number;
 }
 
 export type DemoAccountResponseSystemRole = typeof DemoAccountResponseSystemRole[keyof typeof DemoAccountResponseSystemRole];
@@ -939,6 +1087,21 @@ export interface PageResponseAdminEventResponse {
   totalPages?: number;
 }
 
+export type UsersUploadAvatarBody = {
+  /** Изображение */
+  file: Blob | File;
+};
+
+export type OrganizationsUploadLogoBody = {
+  /** Изображение */
+  file: Blob | File;
+};
+
+export type OrganizationsAddDocumentBody = {
+  /** Документ */
+  file: Blob | File;
+};
+
 export type EventsListParams = {
 /**
  * Поиск по названию и описанию без учёта регистра
@@ -1015,12 +1178,87 @@ export const RegistrationsListForEventStatus = {
   CANCELLED: 'CANCELLED',
 } as const;
 
+export type EventsAddPhotoBody = {
+  /** Изображение */
+  file: Blob | File;
+};
+
 export type SportsSearchParams = {
 /**
  * Часть названия
  */
 query?: string;
 };
+
+export type EventsMapParams = {
+/**
+ * Западная граница (долгота юго-западного угла)
+ * @minimum -180
+ * @maximum 180
+ */
+minLon: number;
+/**
+ * Южная граница (широта юго-западного угла)
+ * @minimum -90
+ * @maximum 90
+ */
+minLat: number;
+/**
+ * Восточная граница (долгота северо-восточного угла)
+ * @minimum -180
+ * @maximum 180
+ */
+maxLon: number;
+/**
+ * Северная граница (широта северо-восточного угла)
+ * @minimum -90
+ * @maximum 90
+ */
+maxLat: number;
+/**
+ * Начало не раньше; по умолчанию и не раньше чем сейчас
+ */
+from?: string;
+/**
+ * Начало не позже; по умолчанию from + 30 дней
+ */
+to?: string;
+/**
+ * Поиск по названию и описанию без учёта регистра
+ */
+searchText?: string;
+/**
+ * Вид спорта
+ */
+sportId?: string;
+/**
+ * Уровень; мероприятия «Любой уровень» подходят под любой
+ */
+level?: EventsMapLevel;
+/**
+ * Режим записи
+ */
+joinMode?: EventsMapJoinMode;
+};
+
+export type EventsMapLevel = typeof EventsMapLevel[keyof typeof EventsMapLevel];
+
+
+export const EventsMapLevel = {
+  ANY: 'ANY',
+  BEGINNER: 'BEGINNER',
+  AMATEUR: 'AMATEUR',
+  ADVANCED: 'ADVANCED',
+  PRO: 'PRO',
+} as const;
+
+export type EventsMapJoinMode = typeof EventsMapJoinMode[keyof typeof EventsMapJoinMode];
+
+
+export const EventsMapJoinMode = {
+  FREE: 'FREE',
+  REQUEST: 'REQUEST',
+} as const;
 
 export type AuthCheckUsernameParams = {
 username: string;

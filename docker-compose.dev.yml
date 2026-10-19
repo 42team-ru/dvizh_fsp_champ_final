@@ -1,8 +1,8 @@
-# Локальная разработка: только БД. Бэк и фронт запускаются из IDE / yarn dev или одной командой `make dev`.
-# Порт 5440 (а не 5432), чтобы не конфликтовать с Postgres, который уже стоит на машине.
+# Локальная разработка: БД и S3 (MinIO). Бэк и фронт запускаются из IDE / yarn dev, инфраструктура — `make dev`.
+# Порты 5440 и 9440/9441 (а не 5432 и 9000/9001), чтобы не конфликтовать с Postgres и MinIO, которые уже стоят на машине.
 services:
   db:
-    image: postgres:18-alpine
+    image: postgis/postgis:18-3.6-alpine
     environment:
       POSTGRES_DB: app
       POSTGRES_USER: app
@@ -17,5 +17,27 @@ services:
       timeout: 3s
       retries: 20
 
+  # S3-хранилище файлов (аватарки, фото событий, документы организаций). Бакет создаёт бэкенд при старте.
+  # Официальные образы MinIO больше не публикуются (Docker Hub удалён, quay.io закрыт), поэтому берём
+  # сборку того же MinIO от Pigsty (pgsty/minio) с закреплённым тегом. Сменить сервер — поменять только образ.
+  # Консоль: http://localhost:9441 (app / app-secret-dev)
+  minio:
+    image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
+    command: server /data --console-address :9001
+    environment:
+      MINIO_ROOT_USER: app
+      MINIO_ROOT_PASSWORD: app-secret-dev
+    ports:
+      - "127.0.0.1:9440:9000"
+      - "127.0.0.1:9441:9001"
+    volumes:
+      - minio-dev:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
 volumes:
   pgdata-dev:
+  minio-dev:

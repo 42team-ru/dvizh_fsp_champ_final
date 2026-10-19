@@ -26,6 +26,9 @@ import type {
 
 import type {
   OrganizationResponse,
+  OrganizationsAddDocumentBody,
+  OrganizationsUploadLogoBody,
+  ProblemDetail,
   PublicOrganizationResponse,
   SaveOrganizationRequest
 } from '../appAPI.schemas';
@@ -264,6 +267,281 @@ export const useOrganizationsSaveMine = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getOrganizationsSaveMineMutationOptions(options), queryClient);
     }
+    export type organizationsUploadLogoResponse400 = {
+  data: ProblemDetail
+  status: 400
+}
+
+export type organizationsUploadLogoResponse404 = {
+  data: ProblemDetail
+  status: 404
+}
+
+;
+export type organizationsUploadLogoResponseError = (organizationsUploadLogoResponse400 | organizationsUploadLogoResponse404) & {
+  headers: Headers;
+};
+
+export type organizationsUploadLogoResponse = (organizationsUploadLogoResponseError)
+
+export const getOrganizationsUploadLogoUrl = () => {
+
+
+
+
+  return `/api/organizations/me/logo`
+}
+
+/**
+ * Заменяет прежний логотип. Статус допуска не меняется.
+ * @summary Загрузить логотип (JPG, PNG, WebP до 5 МБ)
+ */
+export const organizationsUploadLogo = async (organizationsUploadLogoBody?: OrganizationsUploadLogoBody, options?: Parameters<typeof authMutator>[1]): Promise<organizationsUploadLogoResponse> => {
+    const formData = new FormData();
+if(organizationsUploadLogoBody?.file !== undefined) {
+ formData.append(`file`, organizationsUploadLogoBody.file);
+ }
+
+  return authMutator<organizationsUploadLogoResponse>(getOrganizationsUploadLogoUrl(),
+  {
+    ...options,
+    method: 'PUT'
+    ,
+    body: formData
+  }
+);}
+
+
+
+
+
+export const getOrganizationsUploadLogoMutationKey = () => ['organizationsUploadLogo'] as const;
+
+export const getOrganizationsUploadLogoMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsUploadLogo>>, TError,OrganizationsUploadLogoMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof organizationsUploadLogo>>, TError,OrganizationsUploadLogoMutationVariables, TContext> => {
+
+const mutationKey = getOrganizationsUploadLogoMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof organizationsUploadLogo>>, OrganizationsUploadLogoMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  organizationsUploadLogo(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OrganizationsUploadLogoMutationResult = NonNullable<Awaited<ReturnType<typeof organizationsUploadLogo>>>
+    export type OrganizationsUploadLogoMutationBody = OrganizationsUploadLogoBody | undefined
+    export type OrganizationsUploadLogoMutationError = ErrorType<ProblemDetail>
+    export type OrganizationsUploadLogoMutationVariables = {data?: OrganizationsUploadLogoBody}
+
+    /**
+ * @summary Загрузить логотип (JPG, PNG, WebP до 5 МБ)
+ */
+export const useOrganizationsUploadLogo = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsUploadLogo>>, TError,OrganizationsUploadLogoMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof organizationsUploadLogo>>,
+        TError,
+        OrganizationsUploadLogoMutationVariables,
+        TContext
+      > => {
+      return useMutation(getOrganizationsUploadLogoMutationOptions(options), queryClient);
+    }
+    export type organizationsDeleteLogoResponse200 = {
+  data: OrganizationResponse
+  status: 200
+}
+
+export type organizationsDeleteLogoResponseSuccess = (organizationsDeleteLogoResponse200) & {
+  headers: Headers;
+};
+;
+
+export type organizationsDeleteLogoResponse = (organizationsDeleteLogoResponseSuccess)
+
+export const getOrganizationsDeleteLogoUrl = () => {
+
+
+
+
+  return `/api/organizations/me/logo`
+}
+
+/**
+ * @summary Убрать логотип
+ */
+export const organizationsDeleteLogo = async ( options?: Parameters<typeof authMutator>[1]): Promise<organizationsDeleteLogoResponse> => {
+
+  return authMutator<organizationsDeleteLogoResponse>(getOrganizationsDeleteLogoUrl(),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getOrganizationsDeleteLogoMutationKey = () => ['organizationsDeleteLogo'] as const;
+
+export const getOrganizationsDeleteLogoMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsDeleteLogo>>, TError,void, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof organizationsDeleteLogo>>, TError,void, TContext> => {
+
+const mutationKey = getOrganizationsDeleteLogoMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof organizationsDeleteLogo>>, void> = () => {
+
+
+          return  organizationsDeleteLogo(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OrganizationsDeleteLogoMutationResult = NonNullable<Awaited<ReturnType<typeof organizationsDeleteLogo>>>
+
+    export type OrganizationsDeleteLogoMutationError = ErrorType<unknown>
+
+
+    /**
+ * @summary Убрать логотип
+ */
+export const useOrganizationsDeleteLogo = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsDeleteLogo>>, TError,void, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof organizationsDeleteLogo>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getOrganizationsDeleteLogoMutationOptions(options), queryClient);
+    }
+    export type organizationsAddDocumentResponse400 = {
+  data: ProblemDetail
+  status: 400
+}
+
+export type organizationsAddDocumentResponse409 = {
+  data: ProblemDetail
+  status: 409
+}
+
+;
+export type organizationsAddDocumentResponseError = (organizationsAddDocumentResponse400 | organizationsAddDocumentResponse409) & {
+  headers: Headers;
+};
+
+export type organizationsAddDocumentResponse = (organizationsAddDocumentResponseError)
+
+export const getOrganizationsAddDocumentUrl = () => {
+
+
+
+
+  return `/api/organizations/me/documents`
+}
+
+/**
+ * Устав, свидетельство и т.п. Видят организация, админ при проверке и все вошедшие после одобрения. Не больше 10.
+ * @summary Загрузить документ (PDF, JPG, PNG до 10 МБ)
+ */
+export const organizationsAddDocument = async (organizationsAddDocumentBody?: OrganizationsAddDocumentBody, options?: Parameters<typeof authMutator>[1]): Promise<organizationsAddDocumentResponse> => {
+    const formData = new FormData();
+if(organizationsAddDocumentBody?.file !== undefined) {
+ formData.append(`file`, organizationsAddDocumentBody.file);
+ }
+
+  return authMutator<organizationsAddDocumentResponse>(getOrganizationsAddDocumentUrl(),
+  {
+    ...options,
+    method: 'POST'
+    ,
+    body: formData
+  }
+);}
+
+
+
+
+
+export const getOrganizationsAddDocumentMutationKey = () => ['organizationsAddDocument'] as const;
+
+export const getOrganizationsAddDocumentMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsAddDocument>>, TError,OrganizationsAddDocumentMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof organizationsAddDocument>>, TError,OrganizationsAddDocumentMutationVariables, TContext> => {
+
+const mutationKey = getOrganizationsAddDocumentMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof organizationsAddDocument>>, OrganizationsAddDocumentMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  organizationsAddDocument(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OrganizationsAddDocumentMutationResult = NonNullable<Awaited<ReturnType<typeof organizationsAddDocument>>>
+    export type OrganizationsAddDocumentMutationBody = OrganizationsAddDocumentBody | undefined
+    export type OrganizationsAddDocumentMutationError = ErrorType<ProblemDetail>
+    export type OrganizationsAddDocumentMutationVariables = {data?: OrganizationsAddDocumentBody}
+
+    /**
+ * @summary Загрузить документ (PDF, JPG, PNG до 10 МБ)
+ */
+export const useOrganizationsAddDocument = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsAddDocument>>, TError,OrganizationsAddDocumentMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof organizationsAddDocument>>,
+        TError,
+        OrganizationsAddDocumentMutationVariables,
+        TContext
+      > => {
+      return useMutation(getOrganizationsAddDocumentMutationOptions(options), queryClient);
+    }
     export type organizationsGetResponse200 = {
   data: PublicOrganizationResponse
   status: 200
@@ -376,3 +654,88 @@ export function useOrganizationsGet<TData = Awaited<ReturnType<typeof organizati
 
 
 
+export type organizationsRemoveDocumentResponse200 = {
+  data: OrganizationResponse
+  status: 200
+}
+
+export type organizationsRemoveDocumentResponseSuccess = (organizationsRemoveDocumentResponse200) & {
+  headers: Headers;
+};
+;
+
+export type organizationsRemoveDocumentResponse = (organizationsRemoveDocumentResponseSuccess)
+
+export const getOrganizationsRemoveDocumentUrl = (fileId: string,) => {
+
+
+
+
+  return `/api/organizations/me/documents/${fileId}`
+}
+
+/**
+ * @summary Удалить документ
+ */
+export const organizationsRemoveDocument = async (fileId: string, options?: Parameters<typeof authMutator>[1]): Promise<organizationsRemoveDocumentResponse> => {
+
+  return authMutator<organizationsRemoveDocumentResponse>(getOrganizationsRemoveDocumentUrl(fileId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getOrganizationsRemoveDocumentMutationKey = () => ['organizationsRemoveDocument'] as const;
+
+export const getOrganizationsRemoveDocumentMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsRemoveDocument>>, TError,OrganizationsRemoveDocumentMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof organizationsRemoveDocument>>, TError,OrganizationsRemoveDocumentMutationVariables, TContext> => {
+
+const mutationKey = getOrganizationsRemoveDocumentMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof organizationsRemoveDocument>>, OrganizationsRemoveDocumentMutationVariables> = (props) => {
+          const {fileId} = props ?? {};
+
+          return  organizationsRemoveDocument(fileId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OrganizationsRemoveDocumentMutationResult = NonNullable<Awaited<ReturnType<typeof organizationsRemoveDocument>>>
+
+    export type OrganizationsRemoveDocumentMutationError = ErrorType<unknown>
+    export type OrganizationsRemoveDocumentMutationVariables = {fileId: string}
+
+    /**
+ * @summary Удалить документ
+ */
+export const useOrganizationsRemoveDocument = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsRemoveDocument>>, TError,OrganizationsRemoveDocumentMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof organizationsRemoveDocument>>,
+        TError,
+        OrganizationsRemoveDocumentMutationVariables,
+        TContext
+      > => {
+      return useMutation(getOrganizationsRemoveDocumentMutationOptions(options), queryClient);
+    }

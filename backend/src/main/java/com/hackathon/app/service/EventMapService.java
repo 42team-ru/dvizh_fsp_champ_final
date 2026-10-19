@@ -1,0 +1,75 @@
+package com.hackathon.app.service;
+
+import java.time.Duration;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import com.hackathon.app.domain.dto.EventMapFilter;
+import com.hackathon.app.domain.dto.EventMapResponse;
+import com.hackathon.app.domain.entity.Event;
+import com.hackathon.app.domain.exception.BadRequestException;
+import com.hackathon.app.domain.mapper.EventMapper;
+import com.hackathon.app.repository.DbTimeRepository;
+import com.hackathon.app.repository.EventMapRepository;
+import com.hackathon.app.repository.EventRepository;
+import com.hackathon.app.util.Strings;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+/** Мероприятия на карте: видимая область, окно по времени начала и фильтры ленты. */
+@Service
+@RequiredArgsConstructor
+public class EventMapService {
+
+	/** Больше точек за раз не отдаём: при отдалении карты фронт просит приблизить. */
+	static final int LIMIT = 1000;
+	/** Окно по умолчанию, если to не задан. */
+	static final Duration DEFAULT_WINDOW = Duration.ofDays(30);
+
+	private final EventMapRepository mapRepository;
+	private final EventRepository events;
+	private final EventListLookups listLookups;
+	private final DbTimeRepository dbTime;
+	private final EventMapper mapper;
+
+	/**
+	 * Опубликованные очные мероприятия с точкой в области и началом в [from, to], ближайшие первыми.
+	 * Прошедшие не показываем: from не раньше текущего момента. Больше LIMIT — отдаём первые и truncated.
+	 */
+	@Transactional(readOnly = true)
+	public EventMapResponse find(EventMapFilter filter, UUID userId) {
+		if (filter.minLat() > filter.maxLat()) {
+			throw new BadRequestException("Южная граница области должна быть не севернее северной");
+		}
+		var now = dbTime.now();
+		var from = filter.from() != null && filter.from().isAfter(now) ? filter.from() : now;
+		var to = filter.to() != null ? filter.to() : from.plus(DEFAULT_WINDOW);
+		if (to.isBefore(from)) {
+			throw new BadRequestException("Конец периода должен быть позже начала и не в прошлом");
+		}
+
+		var ids = mapRepository.findIdsInArea(filter.minLon(), filter.minLat(), filter.maxLon(), filter.maxLat(),
+				from, to, Strings.blankToNull(filter.searchText()), filter.sportId(), filter.level(),
+				filter.joinMode(), LIMIT + 1);
+		var truncated = ids.size() > LIMIT;
+		var shownIds = truncated ? ids.subList(0, LIMIT) : ids;
+
+		var eventList = sortedLike(events.findAllById(shownIds), shownIds);
+		var lookups = listLookups.load(eventList, userId);
+		var features = eventList.stream()
+				.map(event -> mapper.toMapFeature(event, lookups.sport(event), lookups.confirmed(event),
+						lookups.myStatus(event)))
+				.toList();
+		return mapper.toMapResponse(features, truncated, LIMIT);
+	}
+
+	/** findAllById не сохраняет порядок: возвращаем порядок из запроса по карте (по времени начала). */
+	private static List<Event> sortedLike(List<Event> eventList, List<UUID> orderedIds) {
+		var byId = eventList.stream().collect(Collectors.toMap(Event::getId, Function.identity()));
+		return orderedIds.stream().map(byId::get).filter(Objects::nonNull).toList();
+	}
+}

@@ -1,21 +1,18 @@
 package com.hackathon.app.service;
 
 import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import com.hackathon.app.domain.dto.EventFilter;
 import com.hackathon.app.domain.dto.EventRequest;
 import com.hackathon.app.domain.dto.EventResponse;
 import com.hackathon.app.domain.dto.EventSummaryResponse;
+import com.hackathon.app.domain.dto.FileUpload;
 import com.hackathon.app.domain.entity.AppUser;
 import com.hackathon.app.domain.entity.Event;
-import com.hackathon.app.domain.entity.Registration;
-import com.hackathon.app.domain.entity.Sport;
 import com.hackathon.app.domain.enums.EventFormat;
+import com.hackathon.app.domain.enums.FileKind;
 import com.hackathon.app.domain.enums.RegistrationStatus;
 import com.hackathon.app.domain.enums.SystemRole;
 import com.hackathon.app.domain.exception.BadRequestException;
@@ -28,7 +25,7 @@ import com.hackathon.app.repository.DbTimeRepository;
 import com.hackathon.app.repository.EventRepository;
 import com.hackathon.app.repository.EventSpecifications;
 import com.hackathon.app.repository.RegistrationRepository;
-import com.hackathon.app.repository.SportRepository;
+import com.hackathon.app.repository.StoredFileRepository;
 import com.hackathon.app.util.Strings;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -42,10 +39,10 @@ public class EventService {
 
     static final String NOT_FOUND = "Мероприятие не найдено";
     private static final int FEED_LIMIT = 100;
+    private static final int MAX_PHOTOS = 6;
 
     private final EventRepository events;
     private final RegistrationRepository registrations;
-    private final SportRepository sports;
     private final AppUserRepository users;
     private final SportService sportService;
     private final EventOrganizerService organizerService;
@@ -53,6 +50,9 @@ public class EventService {
     private final EventAccessPolicy policy;
     private final EventMapper mapper;
     private final OrganizationService organizations;
+    private final FileService files;
+    private final StoredFileRepository storedFiles;
+    private final EventListLookups listLookups;
 
     /**
      * Лента: только опубликованные и ещё не начавшиеся (если from не задан), ближайшие первыми.
@@ -97,7 +97,7 @@ public class EventService {
                 canSeePrivateDetails,
                 policy.commentBlockedReason(event) == null);
         return mapper.toResponse(event, sport, author, organization, organizerService.list(event), participants,
-                participants.size(), viewer,
+                participants.size(), files.eventPhotos(eventId), viewer,
                 canSeePrivateDetails ? event.getOnlineUrl() : null,
                 canSeePrivateDetails ? event.getPrivateDetails() : null);
     }
@@ -146,6 +146,42 @@ public class EventService {
     }
 
     /**
+     * Фото в галерею, в конец. Добавляет тот, кто может управлять мероприятием (EventAccessPolicy); не больше 6.
+     * Строка мероприятия заблокирована: параллельные загрузки не превысят лимит.
+     */
+    @Transactional
+    public EventResponse addPhoto(UUID eventId, UUID userId, FileUpload upload) {
+        var event = requireManageable(eventId, userId);
+        if (storedFiles.countByEventIdAndKind(eventId, FileKind.EVENT_PHOTO) >= MAX_PHOTOS) {
+            throw new ConflictException("Можно загрузить не больше " + MAX_PHOTOS + " фото");
+        }
+        int position = storedFiles.maxPosition(eventId, FileKind.EVENT_PHOTO) + 1;
+        files.store(FileKind.EVENT_PHOTO, upload, userId, null, event.getId(), position);
+        return get(eventId, userId);
+    }
+
+    @Transactional
+    public EventResponse removePhoto(UUID eventId, UUID fileId, UUID userId) {
+        requireManageable(eventId, userId);
+        var photo = storedFiles.findById(fileId)
+                .filter(f -> f.getKind() == FileKind.EVENT_PHOTO && eventId.equals(f.getEventId()))
+                .orElseThrow(() -> new NoSuchElementException(FileService.NOT_FOUND));
+        files.delete(photo);
+        return get(eventId, userId);
+    }
+
+    private Event requireManageable(UUID eventId, UUID userId) {
+        var event = events.findByIdForUpdate(eventId).orElseThrow(() -> new NoSuchElementException(NOT_FOUND));
+        if (!policy.isOrganizer(event, userId)) {
+            throw new ForbiddenException("Менять фото может только организатор");
+        }
+        if (!policy.canManage(event, userId)) {
+            throw new ConflictException("Мероприятие удалено, менять фото нельзя");
+        }
+        return event;
+    }
+
+    /**
      * Список для ленты и «моих»: счётчики и мои статусы — по одному запросу на весь список.
      */
     @Transactional(readOnly = true)
@@ -153,19 +189,11 @@ public class EventService {
         if (eventList.isEmpty()) {
             return List.of();
         }
-        var eventIds = eventList.stream().map(Event::getId).toList();
-        Map<UUID, Sport> sportsById = sports.findAllById(eventList.stream().map(Event::getSportId).distinct().toList())
-                .stream().collect(Collectors.toMap(Sport::getId, Function.identity()));
-        var confirmedByEventId = registrations.countByEventIds(eventIds, RegistrationStatus.CONFIRMED).stream()
-                .collect(Collectors.toMap(RegistrationRepository.EventCount::getEventId,
-                        RegistrationRepository.EventCount::getCount));
-        var myStatusByEventId = registrations.findByUserIdAndEventIdIn(userId, eventIds).stream()
-                .collect(Collectors.toMap(Registration::getEventId, Registration::getStatus));
+        var lookups = listLookups.load(eventList, userId);
+        var coverByEventId = files.eventCovers(eventList.stream().map(Event::getId).toList());
         return eventList.stream()
-                .map(event -> mapper.toSummary(event,
-                        sportsById.get(event.getSportId()),
-                        confirmedByEventId.getOrDefault(event.getId(), 0L),
-                        myStatusByEventId.get(event.getId())))
+                .map(event -> mapper.toSummary(event, lookups.sport(event), lookups.confirmed(event),
+                        lookups.myStatus(event), coverByEventId.get(event.getId())))
                 .toList();
     }
 
@@ -175,6 +203,12 @@ public class EventService {
         }
         if (request.format() == EventFormat.OFFLINE && Strings.blankToNull(request.address()) == null) {
             throw new BadRequestException("Для очного мероприятия нужен адрес");
+        }
+        if ((request.lat() == null) != (request.lon() == null)) {
+            throw new BadRequestException("Укажите и широту, и долготу");
+        }
+        if (request.format() == EventFormat.OFFLINE && request.lat() == null) {
+            throw new BadRequestException("Отметьте место на карте");
         }
     }
 }

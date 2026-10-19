@@ -33,5 +33,6 @@ public record EventSummaryResponse(
 		@Schema(description = "Причина снятия с публикации или удаления") String moderationReason,
 		@Schema(description = "Организатор-человек", requiredMode = REQUIRED) UUID authorId,
 		@Schema(description = "Организация; null — от частного лица") UUID organizationId,
-		@Schema(description = "Статус моей записи; null — не записан") RegistrationStatus myRegistrationStatus) {
+		@Schema(description = "Статус моей записи; null — не записан") RegistrationStatus myRegistrationStatus,
+		@Schema(description = "Обложка (первое фото): /api/files/{id}; null — без фото") String coverUrl) {
 }

@@ -4,6 +4,7 @@ import com.hackathon.app.domain.enums.ContactType;
 import com.hackathon.app.domain.enums.OrganizationStatus;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -12,5 +13,5 @@ import java.util.UUID;
 public record AdminOrganizationResponse(UUID id, String name, String description, String city,
 		Map<ContactType, String> contacts, OrganizationStatus status, String rejectReason,
 		Instant submittedAt, Instant reviewedAt, UUID reviewedById, OrganizationAccountResponse account,
-		Instant createdAt, Instant updatedAt) {
+		Instant createdAt, Instant updatedAt, String logoUrl, List<FileResponse> documents) {
 }

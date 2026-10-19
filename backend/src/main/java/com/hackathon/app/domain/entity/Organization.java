@@ -56,4 +56,6 @@ public class Organization extends AuditEntity {
 	private Instant submittedAt;
 	private Instant reviewedAt;
 	private UUID reviewedById;
+	/** Логотип (файл в S3); null — без логотипа. */
+	private UUID logoFileId;
 }

@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:8099",
+      "url": "http://localhost:8080",
       "description": "Generated server url"
     }
   ],
@@ -35,9 +35,77 @@
     {
       "name": "events",
       "description": "Мероприятия: лента, карточка, создание и редактирование"
+    },
+    {
+      "name": "users",
+      "description": "Профиль пользователя"
+    },
+    {
+      "name": "files",
+      "description": "Загруженные файлы: аватарки, логотипы, документы, фото мероприятий"
     }
   ],
   "paths": {
+    "/api/users/me/avatar": {
+      "put": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Загрузить аватар (JPG, PNG, WebP до 5 МБ)",
+        "description": "Заменяет прежний. Ссылка приходит в avatarUrl.",
+        "operationId": "users_uploadAvatar",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Изображение"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "Не тот формат или слишком большой файл",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Убрать аватар",
+        "operationId": "users_deleteAvatar",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/organizations/me": {
       "get": {
         "tags": [
@@ -74,6 +142,76 @@
           },
           "required": true
         },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/organizations/me/logo": {
+      "put": {
+        "tags": [
+          "organizations"
+        ],
+        "summary": "Загрузить логотип (JPG, PNG, WebP до 5 МБ)",
+        "description": "Заменяет прежний логотип. Статус допуска не меняется.",
+        "operationId": "organizations_uploadLogo",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Изображение"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "Не тот формат или слишком большой файл",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Анкета ещё не заполнена",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "organizations"
+        ],
+        "summary": "Убрать логотип",
+        "operationId": "organizations_deleteLogo",
         "responses": {
           "200": {
             "description": "OK",
@@ -296,6 +434,57 @@
           },
           "409": {
             "description": "Мест нет, мероприятие снято или участник сам отменил",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/organizations/me/documents": {
+      "post": {
+        "tags": [
+          "organizations"
+        ],
+        "summary": "Загрузить документ (PDF, JPG, PNG до 10 МБ)",
+        "description": "Устав, свидетельство и т.п. Видят организация, админ при проверке и все вошедшие после одобрения. Не больше 10.",
+        "operationId": "organizations_addDocument",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Документ"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "Не тот формат или слишком большой файл",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Уже 10 документов",
             "content": {
               "application/json": {
                 "schema": {
@@ -595,6 +784,88 @@
           },
           "409": {
             "description": "Запись закрыта: снято, уже началось, уже записан, отклонён, мест нет, своё мероприятие",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/{id}/photos": {
+      "post": {
+        "tags": [
+          "events"
+        ],
+        "summary": "Добавить фото в галерею (JPG, PNG, WebP до 5 МБ)",
+        "description": "В конец галереи; первое фото — обложка в ленте. Только организатор, не больше 6 фото.",
+        "operationId": "events_addPhoto",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Изображение"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Не тот формат или слишком большой файл",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Не организатор",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Уже 6 фото или мероприятие удалено",
             "content": {
               "application/json": {
                 "schema": {
@@ -1127,6 +1398,50 @@
         }
       }
     },
+    "/api/files/{id}": {
+      "get": {
+        "tags": [
+          "files"
+        ],
+        "summary": "Скачать или показать файл",
+        "description": "Картинки отдаются для показа (img src), документы — на скачивание. Чужие документы неодобренной организации — 404.",
+        "operationId": "files_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Содержимое файла",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Файла нет или нет доступа",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/events/mine": {
       "get": {
         "tags": [
@@ -1145,6 +1460,170 @@
                   "items": {
                     "$ref": "#/components/schemas/EventSummaryResponse"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/map": {
+      "get": {
+        "tags": [
+          "events"
+        ],
+        "summary": "Мероприятия на карте в видимой области",
+        "description": "GeoJSON FeatureCollection: опубликованные очные мероприятия с точкой внутри области и началом в [from, to]. Координаты [долгота, широта]. from по умолчанию и не раньше чем сейчас, to — from + 30 дней. Ближайшие первыми, не больше limit; если в области больше — truncated. minLon > maxLon — область через 180-й меридиан. Неверная область или период — 400.",
+        "operationId": "events_map",
+        "parameters": [
+          {
+            "name": "minLon",
+            "in": "query",
+            "description": "Западная граница (долгота юго-западного угла)",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "description": "Западная граница (долгота юго-западного угла)",
+              "example": 92.7,
+              "maximum": 180,
+              "minimum": -180
+            },
+            "example": 92.7
+          },
+          {
+            "name": "minLat",
+            "in": "query",
+            "description": "Южная граница (широта юго-западного угла)",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "description": "Южная граница (широта юго-западного угла)",
+              "example": 55.9,
+              "maximum": 90,
+              "minimum": -90
+            },
+            "example": 55.9
+          },
+          {
+            "name": "maxLon",
+            "in": "query",
+            "description": "Восточная граница (долгота северо-восточного угла)",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "description": "Восточная граница (долгота северо-восточного угла)",
+              "example": 93.1,
+              "maximum": 180,
+              "minimum": -180
+            },
+            "example": 93.1
+          },
+          {
+            "name": "maxLat",
+            "in": "query",
+            "description": "Северная граница (широта северо-восточного угла)",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "description": "Северная граница (широта северо-восточного угла)",
+              "example": 56.1,
+              "maximum": 90,
+              "minimum": -90
+            },
+            "example": 56.1
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "Начало не раньше; по умолчанию и не раньше чем сейчас",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Начало не раньше; по умолчанию и не раньше чем сейчас",
+              "example": "2027-05-01T00:00:00Z"
+            },
+            "example": "2027-05-01T00:00:00Z"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "Начало не позже; по умолчанию from + 30 дней",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Начало не позже; по умолчанию from + 30 дней",
+              "example": "2027-05-31T23:59:59Z"
+            },
+            "example": "2027-05-31T23:59:59Z"
+          },
+          {
+            "name": "searchText",
+            "in": "query",
+            "description": "Поиск по названию и описанию без учёта регистра",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Поиск по названию и описанию без учёта регистра",
+              "example": "футбол"
+            },
+            "example": "футбол"
+          },
+          {
+            "name": "sportId",
+            "in": "query",
+            "description": "Вид спорта",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Вид спорта"
+            }
+          },
+          {
+            "name": "level",
+            "in": "query",
+            "description": "Уровень; мероприятия «Любой уровень» подходят под любой",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Уровень; мероприятия «Любой уровень» подходят под любой",
+              "enum": [
+                "ANY",
+                "BEGINNER",
+                "AMATEUR",
+                "ADVANCED",
+                "PRO"
+              ]
+            }
+          },
+          {
+            "name": "joinMode",
+            "in": "query",
+            "description": "Режим записи",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Режим записи",
+              "enum": [
+                "FREE",
+                "REQUEST"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventMapResponse"
                 }
               }
             }
@@ -1436,6 +1915,38 @@
         }
       }
     },
+    "/api/organizations/me/documents/{fileId}": {
+      "delete": {
+        "tags": [
+          "organizations"
+        ],
+        "summary": "Удалить документ",
+        "operationId": "organizations_removeDocument",
+        "parameters": [
+          {
+            "name": "fileId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/events/{id}/registrations/me": {
       "delete": {
         "tags": [
@@ -1468,6 +1979,47 @@
           },
           "409": {
             "description": "Заявка отклонена или мероприятие уже началось",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/{id}/photos/{fileId}": {
+      "delete": {
+        "tags": [
+          "events"
+        ],
+        "summary": "Удалить фото из галереи",
+        "operationId": "events_removePhoto",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "fileId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "403": {
+            "description": "Не организатор",
             "content": {
               "application/json": {
                 "schema": {
@@ -1587,6 +2139,33 @@
   },
   "components": {
     "schemas": {
+      "ProblemDetail": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "type": "string",
+            "format": "uri"
+          },
+          "properties": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        }
+      },
       "SaveOrganizationRequest": {
         "type": "object",
         "properties": {
@@ -1617,6 +2196,40 @@
           "contacts",
           "description",
           "name"
+        ]
+      },
+      "FileResponse": {
+        "type": "object",
+        "description": "Загруженный файл",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "url": {
+            "type": "string",
+            "description": "Адрес для скачивания и показа: /api/files/{id}"
+          },
+          "name": {
+            "type": "string",
+            "description": "Имя файла, как его загрузили"
+          },
+          "contentType": {
+            "type": "string",
+            "description": "MIME-тип"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Размер в байтах"
+          }
+        },
+        "required": [
+          "contentType",
+          "id",
+          "name",
+          "size",
+          "url"
         ]
       },
       "OrganizationResponse": {
@@ -1667,6 +2280,15 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "logoUrl": {
+            "type": "string"
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FileResponse"
+            }
           }
         }
       },
@@ -1744,7 +2366,7 @@
           "lat": {
             "type": "number",
             "format": "double",
-            "description": "Широта",
+            "description": "Широта точки на карте; обязательна для очного, у онлайн не сохраняется",
             "example": 56.0153,
             "maximum": 90,
             "minimum": -90
@@ -1752,7 +2374,7 @@
           "lon": {
             "type": "number",
             "format": "double",
-            "description": "Долгота",
+            "description": "Долгота точки на карте; обязательна для очного, у онлайн не сохраняется",
             "example": 92.8932,
             "maximum": 180,
             "minimum": -180
@@ -1821,33 +2443,6 @@
           "startAt",
           "title"
         ]
-      },
-      "ProblemDetail": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "format": "uri"
-          },
-          "title": {
-            "type": "string"
-          },
-          "status": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "detail": {
-            "type": "string"
-          },
-          "instance": {
-            "type": "string",
-            "format": "uri"
-          },
-          "properties": {
-            "type": "object",
-            "additionalProperties": {}
-          }
-        }
       },
       "RejectRegistrationRequest": {
         "type": "object",
@@ -2018,6 +2613,13 @@
             "format": "date-time",
             "description": "Когда снято или удалено"
           },
+          "photos": {
+            "type": "array",
+            "description": "Фото по порядку, первое — обложка; до 6",
+            "items": {
+              "$ref": "#/components/schemas/FileResponse"
+            }
+          },
           "viewer": {
             "$ref": "#/components/schemas/ViewerResponse",
             "description": "Что могу делать я"
@@ -2041,6 +2643,7 @@
           "organizers",
           "participants",
           "participantsCount",
+          "photos",
           "sport",
           "startAt",
           "status",
@@ -2534,6 +3137,15 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "logoUrl": {
+            "type": "string"
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FileResponse"
+            }
           }
         }
       },
@@ -2687,6 +3299,10 @@
               "REJECTED",
               "CANCELLED"
             ]
+          },
+          "coverUrl": {
+            "type": "string",
+            "description": "Обложка (первое фото): /api/files/{id}; null — без фото"
           }
         },
         "required": [
@@ -2782,8 +3398,187 @@
             "additionalProperties": {
               "type": "string"
             }
+          },
+          "logoUrl": {
+            "type": "string"
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FileResponse"
+            }
           }
         }
+      },
+      "EventMapFeature": {
+        "type": "object",
+        "description": "GeoJSON Feature: мероприятие на карте",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "Feature"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "id мероприятия"
+          },
+          "geometry": {
+            "$ref": "#/components/schemas/PointGeometry"
+          },
+          "properties": {
+            "$ref": "#/components/schemas/EventMapProperties"
+          }
+        },
+        "required": [
+          "geometry",
+          "id",
+          "properties",
+          "type"
+        ]
+      },
+      "EventMapProperties": {
+        "type": "object",
+        "description": "Свойства точки на карте: хватает на маркер и короткую карточку",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "description": "Название"
+          },
+          "sport": {
+            "$ref": "#/components/schemas/SportResponse",
+            "description": "Вид спорта"
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Начало"
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Окончание"
+          },
+          "address": {
+            "type": "string",
+            "description": "Адрес"
+          },
+          "level": {
+            "type": "string",
+            "description": "Для какого уровня",
+            "enum": [
+              "ANY",
+              "BEGINNER",
+              "AMATEUR",
+              "ADVANCED",
+              "PRO"
+            ]
+          },
+          "joinMode": {
+            "type": "string",
+            "description": "Режим записи",
+            "enum": [
+              "FREE",
+              "REQUEST"
+            ]
+          },
+          "participantsCount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Подтверждённых участников"
+          },
+          "capacity": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Лимит мест; null — без лимита"
+          },
+          "myRegistrationStatus": {
+            "type": "string",
+            "description": "Статус моей записи; null — не записан",
+            "enum": [
+              "CONFIRMED",
+              "PENDING",
+              "REJECTED",
+              "CANCELLED"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "joinMode",
+          "level",
+          "participantsCount",
+          "sport",
+          "startAt",
+          "title"
+        ]
+      },
+      "EventMapResponse": {
+        "type": "object",
+        "description": "GeoJSON FeatureCollection с мероприятиями в видимой области",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "FeatureCollection"
+            ]
+          },
+          "features": {
+            "type": "array",
+            "description": "Ближайшие по времени начала, не больше limit",
+            "items": {
+              "$ref": "#/components/schemas/EventMapFeature"
+            }
+          },
+          "truncated": {
+            "type": "boolean",
+            "description": "В области больше limit мероприятий: показаны не все, стоит приблизить карту"
+          },
+          "limit": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Сколько точек отдаётся максимум",
+            "example": 1000
+          }
+        },
+        "required": [
+          "features",
+          "limit",
+          "truncated",
+          "type"
+        ]
+      },
+      "PointGeometry": {
+        "type": "object",
+        "description": "GeoJSON Point",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "Point"
+            ]
+          },
+          "coordinates": {
+            "type": "array",
+            "description": "[долгота, широта] — именно в таком порядке",
+            "items": {
+              "type": "number",
+              "format": "double"
+            },
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "required": [
+          "coordinates",
+          "type"
+        ]
       },
       "DemoAccountResponse": {
         "type": "object",

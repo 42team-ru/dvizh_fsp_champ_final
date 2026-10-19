@@ -22,7 +22,7 @@ import jakarta.validation.constraints.Size;
 /**
  * Форма создания и редактирования мероприятия (PUT заменяет все поля).
  * Вид спорта: либо sportId из справочника, либо sportName — свой (создастся, если такого ещё нет).
- * Очному нужен address. level по умолчанию ANY, joinMode — FREE, capacity пусто — без лимита.
+ * Очному нужны address и точка на карте (lat и lon). level по умолчанию ANY, joinMode — FREE, capacity пусто — без лимита.
  */
 @Schema(description = "Форма мероприятия: создание и полная замена при редактировании")
 public record EventRequest(
@@ -46,9 +46,9 @@ public record EventRequest(
 		@Size(max = 1000) String locationNote,
 		@Schema(description = "Ссылка на онлайн-встречу; видят только подтверждённые участники", example = "https://meet.example/abc")
 		@Size(max = 1000) String onlineUrl,
-		@Schema(description = "Широта", example = "56.0153")
+		@Schema(description = "Широта точки на карте; обязательна для очного, у онлайн не сохраняется", example = "56.0153")
 		@DecimalMin("-90") @DecimalMax("90") Double lat,
-		@Schema(description = "Долгота", example = "92.8932")
+		@Schema(description = "Долгота точки на карте; обязательна для очного, у онлайн не сохраняется", example = "92.8932")
 		@DecimalMin("-180") @DecimalMax("180") Double lon,
 		@Schema(description = "Для какого уровня; по умолчанию ANY")
 		EventLevel level,

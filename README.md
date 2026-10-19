@@ -10,7 +10,7 @@ docker compose up --build      # нужен только Docker
 
 ## Разработка
 ```bash
-make dev     # Postgres (порт 5440), один раз
+make dev     # Postgres (порт 5440) и S3/MinIO (порт 9440, консоль 9441), один раз
 make back    # бэкенд  :8080, в своём терминале
 make front   # фронт   :5173, в своём терминале
 ```
