@@ -8,9 +8,9 @@ export type BeaverMood = "idle" | "happy" | "sad" | "thinking";
 
 type Props = {
   mood?: BeaverMood;
-  /** Что надето: шапка, очки, футболка, вещь на шее. */
+  /** Что надето: головной убор или наушники, очки, одежда, экипировка, вещь на шее. */
   outfit?: BeaverOutfit;
-  /** Чем занят: чеканит мяч, ведёт баскетбольный, поднимает гантели, думает над шахматами. */
+  /** Инвентарь рядом или в лапах: мяч, гантели, шахматы, лыжи, хоккей, ноутбук. */
   activity?: BeaverActivity;
   /** Глаза следят за курсором. */
   followCursor?: boolean;
@@ -49,6 +49,16 @@ export function BeaverPet({ mood = "idle", outfit = {}, activity = "none", follo
     <div
       ref={ref}
       className={`beaver-pet ${className ?? ""}`}
+      role="button"
+      tabIndex={0}
+      aria-label="Бобр: подпрыгнуть и помахать"
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          rig.current?.hop();
+          onClick?.();
+        }
+      }}
       onClick={() => {
         rig.current?.hop();
         onClick?.();

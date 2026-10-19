@@ -86,8 +86,6 @@ export function createBeaverRig(root: HTMLElement, followCursor: boolean): Beave
   let activity: BeaverActivity = "none";
   let actT = 0;
   let ballRot = 0;
-  /** Верх головы с учётом шапки: от него отскакивает мяч при чеканке. */
-  let headTop = 32;
   let t = 0;
   let last = performance.now();
   let raf = 0;
@@ -147,37 +145,16 @@ export function createBeaverRig(root: HTMLElement, followCursor: boolean): Beave
     let ball: { x: number; y: number; sq: number; h: number; ground: number } | null = null;
 
     actT += dt;
-    if (activity === "juggle") {
-      // Чеканка головой: мяч летит по параболе, в момент касания голова чуть подбивает его вверх.
-      const T = 0.9, R = 28, H = 105;
+    if (activity === "juggle" || activity === "dribble") {
+      // Оба мяча просто отскакивают от земли рядом с бобром.
+      const T = activity === "juggle" ? 1.05 : 0.85;
       const u = (actT % T) / T;
       const d = Math.min(u, 1 - u);
-      const contact = Math.exp(-(d * d) / 0.002);
-      headYT -= 10 * contact;
-      const h = H * 4 * u * (1 - u);
-      const x = 187.5 + 5 * Math.sin(actT * 1.3);
-      const y = headTop - 2 + s.headY.x - R - h;
-      ball = { x, y, sq: 1 - 0.16 * Math.exp(-(d * d) / 0.0012), h: h + 470, ground: 524 };
-      ballRot += dt * 240;
-      lookX = (x - 187.5) / 4;
-      lookY = Math.max(-9, Math.min(6, (y - 150) / 12));
-      armLT = 16 + 3 * Math.sin(actT * 2);
-      armRT = -16 - 3 * Math.sin(actT * 2);
-      mouthT = 0.7;
-    } else if (activity === "dribble") {
-      // Дриблинг: резкий отскок от пола и мягкая точка у лапы.
-      const T = 0.62, R = 31;
-      const u = (actT % T) / T;
-      const up = Math.sin(Math.PI * u);
-      const ground = 524 - R;
-      const y = ground - 48 * up;
-      const d = Math.min(u, 1 - u);
-      ball = { x: 340, y, sq: 1 - 0.18 * Math.exp(-(d * d) / 0.001), h: ground - y, ground: 524 };
+      const h = 120 * 4 * u * (1 - u);
+      const sq = 1 - 0.14 * Math.exp(-(d * d) / 0.001);
+      // Нижняя точка остаётся на земле даже при сплющивании.
+      ball = { x: 478, y: 524 - 43.5 * sq - h, sq, h, ground: 524 };
       ballRot = 0;
-      armRT = -4 - 9 * up;
-      lookX = 6;
-      lookY = 7;
-      mouthT = 0.5;
     } else if (activity === "lift") {
       // Подъём гантелей в стороны: на пике напряжения прищур и сжатый рот.
       const raise = (1 - Math.cos((2 * Math.PI * actT) / 1.8)) / 2;
@@ -188,11 +165,11 @@ export function createBeaverRig(root: HTMLElement, followCursor: boolean): Beave
       browYT += 3 * raise;
       headYT += 2 * raise;
     } else if (activity === "chess") {
-      // Задумчиво разглядывает фигуру в лапе.
-      armRT = -22 + 2 * Math.sin(t * 1.2);
+      // Задумчиво разглядывает доску рядом.
+      armRT = -5 + 2 * Math.sin(t * 1.2);
       headRotT += 3 + 3 * Math.sin(t * 0.8);
       lookX = 7;
-      lookY = 1;
+      lookY = 8;
       mouthT = Math.min(mouthT, -0.2);
       lidT = Math.max(lidT, 0.12);
     }
@@ -279,14 +256,13 @@ export function createBeaverRig(root: HTMLElement, followCursor: boolean): Beave
       if (m === "happy" && mood !== "happy") this.hop();
       mood = m;
       if (blinkT < 0) nextBlink = t + 0.05;
+      if (reduced) frame(performance.now(), false);
     },
     setActivity(a) {
       activity = a;
       actT = 0;
       el.ball = root.querySelector<SVGGElement>("#prop-ball");
       el.ballShadow = root.querySelector<SVGEllipseElement>("#ball-shadow");
-      const hat = root.querySelector<SVGGElement>("#slot-hat");
-      headTop = hat && hat.childElementCount > 0 ? Math.min(32, hat.getBBox().y) : 32;
       if (reduced) frame(performance.now(), false);
     },
     hop() {

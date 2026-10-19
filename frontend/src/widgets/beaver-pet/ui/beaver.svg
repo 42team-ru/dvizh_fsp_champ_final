@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-10 -20 490 435" role="img" aria-labelledby="title desc">
   <title id="title">Бобр — вид спереди</title>
   <desc id="desc">Дружелюбный коричневый бобр с белой мордочкой, животиком, двумя передними зубами и плоским хвостом.</desc>
   <defs>
@@ -55,7 +55,7 @@
   </defs>
 
 
-  <g id="beaver" transform="translate(39 6) scale(0.73)"><g id="beaver-inner">
+  <g id="beaver" transform="translate(39 6) scale(0.73)"><g id="slot-scene"></g><g id="beaver-inner">
     <!-- Soft ground shadow. -->
     <ellipse id="shadow" cx="190" cy="524" rx="150" ry="11" fill="#2A1A12" opacity="0.18"/>
 
@@ -80,6 +80,7 @@
       </g>
     </g>
 
+    <g id="slot-feet"></g>
     <g id="torso">
       <path id="body" d="M110 275 C86 300 70 338 68 380 C66 425 76 462 97 485 C146 480 228 480 277 485 C298 462 308 425 306 380 C304 338 288 300 264 275 Z" fill="url(#fur)" stroke="#241510" stroke-width="5.5" stroke-linejoin="round"/>
 
@@ -90,6 +91,7 @@
 
       <!-- Outfit slots: wardrobe items are injected here and move with the part they belong to. -->
       <g id="slot-shirt"></g>
+      <g id="slot-bottom"></g>
       <g id="slot-neck"></g>
       <g id="slot-prop-back"></g>
 
@@ -102,6 +104,7 @@
           <path d="M98 314 C80 330 58 360 44 386 C34 404 38 421 54 425 C68 428 80 420 86 406 C94 386 106 362 114 340" stroke-width="5.5"/>
           <path d="M51 405 C50 413 53 419 57 421 M65 405 C64 413 67 418 71 420" stroke-width="4.5"/>
         </g>
+        <g id="slot-arm-cover-left"></g>
       </g>
       <g id="arm-right">
         <g id="slot-hold-right"></g>
@@ -112,6 +115,7 @@
           <path d="M323 405 C324 413 321 419 317 421 M309 405 C310 413 307 418 303 420" stroke-width="4.5"/>
         </g>
         <g id="slot-hold-front-right"></g>
+        <g id="slot-arm-cover-right"></g>
       </g>
     </g>
 
