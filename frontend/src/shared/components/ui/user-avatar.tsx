@@ -1,19 +1,42 @@
-import { useMemo, useState, type ComponentProps } from "react";
-import { Avatar, Style } from "@dicebear/core";
-import cameo from "@dicebear/styles/cameo.json";
+import { useState, type ComponentProps } from "react";
+import { cn } from "cn";
 
-const cameoStyle = new Style(cameo);
+type AvatarUser = {
+  id?: string;
+  avatarUrl?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  username?: string | null;
+};
 
-type AvatarUser = { id?: string; avatarUrl?: string | null };
+/** Две буквы: первая буква имени и фамилии. */
+export function userInitials(user?: AvatarUser | null) {
+  const two = `${user?.firstName?.[0] ?? ""}${user?.lastName?.[0] ?? ""}`.toUpperCase();
+  return two || (user?.username?.slice(0, 2).toUpperCase() ?? "");
+}
 
-/** Один ID — один Cameo; загруженное фото имеет приоритет. */
-export function UserAvatar({ user, alt = "", ...props }: Omit<ComponentProps<"img">, "src"> & { user?: AvatarUser }) {
-  const fallback = useMemo(
-    () => new Avatar(cameoStyle, { seed: user?.id ?? "anonymous", size: 192 }).toDataUri(),
-    [user?.id],
-  );
+/** Загруженное фото, а без него — инициалы в цветном блоке. */
+export function UserAvatar({
+  user,
+  alt = "",
+  className,
+  ...props
+}: Omit<ComponentProps<"img">, "src"> & { user?: AvatarUser }) {
   const [failedUrl, setFailedUrl] = useState<string>();
-  const src = user?.avatarUrl && user.avatarUrl !== failedUrl ? user.avatarUrl : fallback;
+  const url = user?.avatarUrl && user.avatarUrl !== failedUrl ? user.avatarUrl : undefined;
 
-  return <img {...props} src={src} alt={alt} onError={() => setFailedUrl(src)} />;
+  if (url) {
+    return <img {...props} src={url} alt={alt} className={className} onError={() => setFailedUrl(url)} />;
+  }
+  return (
+    <span
+      aria-hidden="true"
+      style={props.style}
+      className={cn("flex items-center justify-center overflow-hidden bg-sky [container-type:size]", className)}
+    >
+      <span className="font-display text-[38cqmin] leading-none font-extrabold text-foreground">
+        {userInitials(user)}
+      </span>
+    </span>
+  );
 }

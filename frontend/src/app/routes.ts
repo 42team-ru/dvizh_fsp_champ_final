@@ -11,6 +11,7 @@ export default [
     index("routes/home.tsx"),
     route("feed", "routes/feed.tsx"),
     route("profile", "routes/profile.tsx"),
+    route("users/:id", "routes/user.tsx"),
     route("activity", "routes/activity.tsx"),
     route("onboarding", "routes/onboarding.tsx"),
     route("events/new", "routes/event-create.tsx"),

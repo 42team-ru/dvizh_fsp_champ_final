@@ -65,9 +65,9 @@ const CLEAR_HARD = 14
 /** Доля попыток, в которых фигура садится «за блок»: центр на краю карточки, видна выглядывающая часть. */
 const STRADDLE_SHARE = 0.3
 /** Отступ между фигурами, px. */
-const SPACING = 22
+const SPACING = 80
 /** Сколько площади приходится на одну фигуру, px². Меньше — гуще. */
-const AREA_PER_SHAPE = 32000
+const AREA_PER_SHAPE = 160000
 /** Сколько ждать тишины в DOM перед раскладкой, мс. */
 const SETTLE_MS = 500
 /** Минимальное ожидание после монтирования страницы (шрифты, первые данные), мс. */
@@ -112,7 +112,7 @@ function layout(width: number, height: number, obstacles: Obstacles, seed: strin
   function pick<T>(list: readonly T[]): T {
     return list[Math.floor(rand() * list.length)]
   }
-  const total = Math.min(160, Math.max(10, Math.round((width * height) / (AREA_PER_SHAPE * scale * scale))))
+  const total = Math.min(35, Math.max(3, Math.round((width * height) / (AREA_PER_SHAPE * scale * scale))))
   const placed: { p: Placed; cx: number; cy: number; r: number }[] = []
   const blocks = obstacles.soft.filter((o) => o.r - o.l >= MIN_BLOCK.w && o.b - o.t >= MIN_BLOCK.h)
 

@@ -241,13 +241,15 @@ function Organizer({ m }: { m: EventModel }) {
   return (
     <Card className="absolute top-0 left-[721px] h-[286.5px] w-[495px] overflow-hidden bg-sky-soft">
       <div className="absolute top-[22px] left-[22px] flex h-14 w-[447px] items-center gap-[14px]">
-        <Disc
-          initials={e.organization ? e.organization.name.slice(0, 2).toUpperCase() : initials(e.author)}
-          user={e.organization ? undefined : e.author}
-          tone="bg-sky"
-          className="size-14"
-          textClassName="text-[19px] leading-[26px] tracking-[-0.5px]"
-        />
+        <Link to={`/users/${e.author.id}`} aria-label={fullName(e.author)} className="shrink-0">
+          <Disc
+            initials={e.organization ? e.organization.name.slice(0, 2).toUpperCase() : initials(e.author)}
+            user={e.organization ? undefined : e.author}
+            tone="bg-sky"
+            className="size-14"
+            textClassName="text-[19px] leading-[26px] tracking-[-0.5px]"
+          />
+        </Link>
         <div className="min-w-0">
           <p className="truncate text-[17px] leading-[23px] font-extrabold text-foreground">{m.organizerName}</p>
           <p className="truncate text-[13px] leading-[18px] font-medium text-muted-foreground">
@@ -342,7 +344,9 @@ function Chat({ m }: { m: EventModel }) {
         )}
         {m.comments.map((c) => (
           <div key={c.id} className="flex items-start gap-3">
-            <Disc user={c.author} initials={initials(c.author)} tone="bg-sky" className="size-9 shrink-0" textClassName="text-xs leading-[17px]" />
+            <Link to={`/users/${c.author.id}`} aria-label={fullName(c.author)} className="shrink-0">
+              <Disc user={c.author} initials={initials(c.author)} tone="bg-sky" className="size-9 shrink-0" textClassName="text-xs leading-[17px]" />
+            </Link>
             <div className={cn(
               "box-border max-w-[580px] rounded-tl-[4px] rounded-tr-[18px] rounded-br-[18px] rounded-bl-[18px] border-2 border-ink px-4 py-2.5",
               c.isOrganizer ? "bg-lime-soft" : "bg-card",
@@ -413,8 +417,9 @@ function Going({ m }: { m: EventModel }) {
       <div className="absolute top-[67px] left-6 h-[154px] w-[443px]">
         {shown.length === 0 && <p className="text-sm font-semibold text-muted-foreground">Пока никого — будьте первым.</p>}
         {shown.map((g, i) => (
-          <div
+          <Link
             key={g.id}
+            to={`/users/${g.id}`}
             className="absolute flex h-[71px] w-[102px] flex-col items-center gap-[6px]"
             style={{ left: GOING_LEFT[i % 4], top: i < 4 ? 0 : 83 }}
           >
@@ -426,7 +431,7 @@ function Going({ m }: { m: EventModel }) {
               textClassName="text-base leading-[22px] tracking-[-0.5px]"
             />
             <span className="max-w-[100px] truncate text-xs leading-[17px] font-bold text-foreground">{g.firstName || g.username}</span>
-          </div>
+          </Link>
         ))}
         {rest > 0 && (
           <div
