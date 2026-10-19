@@ -68,6 +68,10 @@ const STRADDLE_SHARE = 0.3
 const SPACING = 22
 /** Сколько площади приходится на одну фигуру, px². Меньше — гуще. */
 const AREA_PER_SHAPE = 32000
+/** Сколько ждать тишины в DOM перед раскладкой, мс. */
+const SETTLE_MS = 500
+/** Минимальное ожидание после монтирования страницы (шрифты, первые данные), мс. */
+const MIN_WAIT_MS = 900
 /** Доля попыток, в которых фигура садится вплотную (на CLEAR) к боковой стороне крупного блока. */
 const HUG_SHARE = 0.55
 /** Какие препятствия считаются крупными блоками, к которым можно прижаться. */
@@ -351,49 +355,45 @@ function MemphisBackground({
     const bg = ref.current
     const scope = bg?.parentElement
     if (!bg || !scope) return
-    let frame = 0
-    let lastSig = ""
+    let done = false
+    let timer = 0
+    const start = performance.now()
 
-    const run = () => {
-      frame = 0
+    // Рисунок строится один раз за жизнь страницы: ждём, пока подгрузятся шрифты и данные (DOM затих),
+    // раскладываем фигуры и больше не трогаем — масштаб карты, ресайз и обновления списков его не меняют.
+    const build = () => {
+      if (done) return
       const width = bg.offsetWidth
       const height = bg.offsetHeight
-      if (!width || !height) return
+      if (!width || !height) {
+        timer = window.setTimeout(build, 200)
+        return
+      }
       const obstacles = collectObstacles(bg, scope)
       const scale = variant === "mobile" || width < 640 ? 0.7 : 1
-      // пересчитываем рисунок, только если вёрстка правда поменялась
-      const sign = (list: Box[]) => list.map((o) => `${o.l | 0},${o.t | 0},${o.r | 0},${o.b | 0}`).join(";")
-      const sig = `${width}x${height}|${sign(obstacles.hard)}|${sign(obstacles.soft)}`
-      if (sig === lastSig) return
-      lastSig = sig
       setShapes(layout(width, height, obstacles, key, scale))
+      done = true
+      mutations.disconnect()
     }
     const schedule = () => {
-      if (frame) cancelAnimationFrame(frame)
-      frame = requestAnimationFrame(run)
+      if (done) return
+      window.clearTimeout(timer)
+      timer = window.setTimeout(build, Math.max(SETTLE_MS, MIN_WAIT_MS - (performance.now() - start)))
     }
 
-    schedule()
-    const resize = new ResizeObserver(schedule)
-    resize.observe(scope)
-    let timer = 0
     const mutations = new MutationObserver((records) => {
       // собственные изменения фона не считаем
       if (records.every((r) => bg.contains(r.target))) return
-      window.clearTimeout(timer)
-      timer = window.setTimeout(schedule, 200)
+      schedule()
     })
     mutations.observe(scope, { childList: true, subtree: true, characterData: true })
-    window.addEventListener("resize", schedule)
     document.fonts?.ready.then(schedule)
-    const timers = [400, 1200].map((ms) => window.setTimeout(schedule, ms))
+    schedule()
+
     return () => {
-      resize.disconnect()
+      done = true
       mutations.disconnect()
-      window.removeEventListener("resize", schedule)
-      timers.forEach(clearTimeout)
       window.clearTimeout(timer)
-      if (frame) cancelAnimationFrame(frame)
     }
   }, [key, variant])
 
