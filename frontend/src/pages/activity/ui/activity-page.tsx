@@ -150,8 +150,8 @@ function Feed() {
           dot
           action={
             <div className="flex shrink-0 gap-2">
-              <Button rough={false} className={XS}>Принять</Button>
-              <Button variant="soft" rough={false} className={XS}>
+              <Button className={XS}>Принять</Button>
+              <Button variant="accent" className={XS}>
                 Нет
               </Button>
             </div>
@@ -165,7 +165,7 @@ function Feed() {
           textWidth="w-[446px]"
           dot
           action={
-            <Button variant="soft" className={cn(XS, "shrink-0")}>
+            <Button variant="secondary" className={cn(XS, "shrink-0")}>
               Билет
             </Button>
           }
@@ -184,7 +184,7 @@ function Feed() {
           lead={<Avatar44 initials="СМ" />}
           textWidth="w-[423.5px]"
           action={
-            <Button variant="soft" className={cn(XS, "shrink-0")}>
+            <Button variant="soft" className={cn(XS, "shrink-0", "bg-sky")}>
               Ответить
             </Button>
           }
@@ -195,7 +195,7 @@ function Feed() {
           lead={<IconSquare tone="bg-secondary" icon="icon-trophy" />}
           textWidth="w-[420.5px]"
           action={
-            <Button variant="soft" className={cn(XS, "shrink-0")}>
+            <Button variant="secondary" className={cn(XS, "shrink-0")}>
               Смотреть
             </Button>
           }
@@ -214,7 +214,7 @@ function Feed() {
           lead={<Avatar44 initials="МС" />}
           textWidth="w-[437px]"
           action={
-            <Button variant="soft" className={cn(XS, "shrink-0")}>
+            <Button variant="soft" className={cn(XS, "shrink-0", "bg-sky")}>
               В ответ
             </Button>
           }

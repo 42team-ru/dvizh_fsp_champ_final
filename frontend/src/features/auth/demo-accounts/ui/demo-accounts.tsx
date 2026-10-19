@@ -11,11 +11,13 @@ interface DemoAccountsProps {
   disabled?: boolean;
 }
 
-const ROLE_LABEL: Record<string, string> = {
-  ADMIN: "админ",
-  USER: "пользователь",
-  ORG: "организация",
-};
+/** Какие демо-аккаунты показываем и как подписываем: админ, два пользователя (один из них организует события), организатор. */
+const DEMO_PICK: { username: string; label: string }[] = [
+  { username: "admin", label: "админ" },
+  { username: "anna", label: "пользователь" },
+  { username: "petr", label: "пользователь · организатор" },
+  { username: "ladya", label: "организатор" },
+];
 const TONES = ["bg-sky", "bg-mint", "bg-accent"];
 
 /**
@@ -24,73 +26,87 @@ const TONES = ["bg-sky", "bg-mint", "bg-accent"];
  */
 export default function DemoAccounts({ onPick, disabled }: DemoAccountsProps) {
   const { data } = useDemoAccounts({ query: { retry: false, staleTime: Infinity } });
-  const accounts = data?.status === 200 ? data.data : [];
+  const all = data?.status === 200 ? data.data : [];
+  const accounts = DEMO_PICK.flatMap((pick) => {
+    const account = all.find((a) => a.username === pick.username);
+    return account ? [{ account, label: pick.label }] : [];
+  });
   const [copied, setCopied] = useState(false);
 
   if (!accounts.length) {
     return null;
   }
 
-  const password = accounts[0]?.password;
+  const password = accounts[0]?.account.password;
 
   return (
     <div
       className={cn(
-        "mt-1 flex w-full max-w-[380px] flex-col gap-3 rounded-card border-2 border-ink bg-secondary p-[18px] shadow-[4px_4px_0_var(--ink)] lg:gap-[14px] lg:p-6",
-        "lg:absolute lg:top-[197px] lg:left-[484px] lg:mt-0 lg:w-[328px]"
+        "mt-1 flex w-full max-w-[400px] flex-col gap-4 rounded-card border-2 border-ink bg-secondary p-5 shadow-[4px_4px_0_var(--ink)] lg:p-6",
+        "xl:mt-0 xl:w-[364px] xl:max-w-none xl:shrink-0 2xl:w-[400px]"
       )}
     >
-      <div className="flex items-center justify-between">
-        <p className="font-display text-[17px] leading-[normal] font-bold lg:text-lg whitespace-nowrap text-foreground">
+      <div className="flex items-center justify-between gap-3">
+        <p className="font-display text-lg leading-[normal] font-bold whitespace-nowrap text-foreground lg:text-xl">
           Демо-аккаунты
         </p>
         <Badge className="h-auto border-0 bg-ink px-[10px] py-1 text-[11px] leading-normal font-extrabold tracking-[1px] text-secondary">
           тест
         </Badge>
       </div>
-      <p className="text-[13px] leading-[18px] font-semibold text-foreground">
+      <p className="text-sm leading-5 font-semibold text-foreground">
         Войди в один клик и посмотри, как всё устроено.
       </p>
-      {accounts.map((account, i) => {
-        const first = account.firstName ?? "";
-        const last = account.lastName ?? "";
-        return (
-          <div
-            key={account.username}
-            className="flex items-center gap-[10px] rounded-2xl border-2 border-ink bg-card p-[10px] lg:p-3"
-          >
-            <Disc
-              initials={`${first[0] ?? ""}${last[0] ?? ""}`.toUpperCase()}
-              tone={TONES[i % TONES.length]}
-              className="size-10 shrink-0"
-              textClassName="text-[13px]"
-            />
-            <div className="flex min-w-0 flex-1 flex-col gap-px whitespace-nowrap">
-              <p className="text-sm font-extrabold text-foreground">
-                {first} {last}
-              </p>
-              <p className="text-xs font-semibold text-muted-foreground">
-                {account.systemRole ? (ROLE_LABEL[account.systemRole] ?? account.systemRole) : ""}
-              </p>
-            </div>
-            <Button
-              type="button"
-              variant="ink"
-              disabled={disabled}
-              onClick={() => onPick(account.username ?? "", account.password ?? "")}
-              className="h-10 w-[70px] shrink-0 border-0 px-0 text-xs leading-normal shadow-none lg:h-8 lg:w-auto lg:px-3"
+
+      <ul className="flex flex-col gap-3">
+        {accounts.map(({ account, label }, i) => {
+          const first = account.firstName ?? "";
+          const last = account.lastName ?? "";
+          return (
+            <li
+              key={account.username}
+              className="flex items-center gap-3 rounded-2xl border-2 border-ink bg-card p-3"
             >
-              Войти
-            </Button>
-          </div>
-        );
-      })}
+              <Disc
+                initials={`${first[0] ?? ""}${last[0] ?? ""}`.toUpperCase()}
+                tone={TONES[i % TONES.length]}
+                className="size-11 shrink-0"
+                textClassName="text-sm"
+              />
+              <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <p className="text-[15px] leading-5 font-extrabold break-words text-foreground">
+                  {first} {last}
+                </p>
+                <p className="text-xs leading-4 font-semibold text-muted-foreground">{label}</p>
+              </div>
+              <Button
+                type="button"
+                variant="ink"
+                rough={false}
+                disabled={disabled}
+                onClick={() => onPick(account.username ?? "", account.password ?? "")}
+                className="h-9 w-[76px] shrink-0 px-0 text-[13px] leading-normal shadow-none"
+              >
+                Войти
+              </Button>
+            </li>
+          );
+        })}
+      </ul>
+
       {password ? (
-        <div className="flex items-center justify-between rounded-[14px] border-2 border-dashed border-ink px-[14px] py-[10px] font-extrabold whitespace-nowrap">
-          <p className="text-[13px] text-foreground">Пароль у всех: {password}</p>
+        <div className="flex items-center justify-between gap-3 rounded-2xl border-2 border-dashed border-ink px-4 py-3">
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <span className="text-[11px] leading-4 font-extrabold tracking-[1px] text-foreground uppercase">
+              Пароль у всех
+            </span>
+            <span className="font-mono text-[15px] leading-5 font-bold break-all text-foreground">
+              {password}
+            </span>
+          </div>
           <button
             type="button"
-            className="text-xs text-primary"
+            className="shrink-0 text-[13px] font-extrabold text-primary"
             onClick={() => {
               void navigator.clipboard?.writeText(password);
               setCopied(true);

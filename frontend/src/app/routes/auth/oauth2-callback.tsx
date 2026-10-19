@@ -10,7 +10,7 @@ export function meta({}: Route.MetaArgs) {
 export async function clientLoader() {
   try {
     await authRefresh({});
-    return redirect("/dashboard");
+    return redirect("/");
   } catch {
     return redirect("/auth/login");
   }

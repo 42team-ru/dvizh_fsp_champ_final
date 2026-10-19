@@ -1,6 +1,6 @@
 import { useForm } from "@tanstack/react-form";
 import { forgotSchema } from "./forgot-shema";
-import { toast } from "sonner";
+import { toast } from "@/shared/lib/toast";
 
 export function useForgotForm() {
   const form = useForm({

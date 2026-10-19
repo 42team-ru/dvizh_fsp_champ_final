@@ -251,3 +251,18 @@ select:-moz-autofill {
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* Масштаб на 2K/4K (см. ViewportScale): высота окна делится на зум, иначе страница выше экрана. */
+html,
+body,
+.min-h-dvh {
+  min-height: calc(100dvh / var(--vp-zoom, 1));
+}
+.h-dvh {
+  height: calc(100dvh / var(--vp-zoom, 1));
+}
+@media (min-width: 64rem) {
+  .lg\:h-dvh {
+    height: calc(100dvh / var(--vp-zoom, 1));
+  }
+}

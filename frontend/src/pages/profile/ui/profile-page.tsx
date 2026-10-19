@@ -1,5 +1,6 @@
 import { PetNameEditor } from "@/features/rename-pet/ui/pet-name-editor";
 import { useState } from "react";
+import { useAttendance } from "./use-attendance";
 import { MyBeaverPet } from "@/widgets/beaver-pet/ui/my-beaver-pet";
 import { ProfileMobile } from "./profile-mobile";
 import { AppHeader } from "@/widgets/app-header/ui/app-header";
@@ -211,19 +212,20 @@ function Pet() {
   );
 }
 
-function Streak() {
+function Attendance() {
+  const { total, text, word } = useAttendance();
   return (
     <Card className="absolute top-[646px] left-0 h-[235px] w-[392px] justify-between overflow-hidden rounded-[28px] bg-primary px-[28px] py-[26px]">
       <Img name="memphis2.svg" className="top-0 left-0 h-[260px] w-[400px]" />
       <div className="relative h-[81px] w-[336px]">
-        <Eyebrow className="text-lilac">СЕРИЯ</Eyebrow>
+        <Eyebrow className="text-lilac">ПОСЕЩЕНО</Eyebrow>
         <p className="absolute top-[18px] left-0 w-[167px] font-display font-extrabold whitespace-nowrap text-white">
-          <span className="text-[56px] leading-[56px]">12 </span>
-          <span className="text-[22px] leading-[56px]">дней</span>
+          <span className="text-[56px] leading-[56px]">{total} </span>
+          <span className="text-[22px] leading-[56px]">{word}</span>
         </p>
       </div>
       <p className="relative w-[213.5px] text-sm leading-[19.5px] font-semibold text-white">
-        Лучший результат — 16. Ещё 4 дня, и бейдж «Железная воля» твой.
+        {text}
       </p>
     </Card>
   );
@@ -367,7 +369,7 @@ export default function ProfilePage() {
           <Passport />
           <Pet />
           <Wardrobe />
-          <Streak />
+          <Attendance />
           <Achievements />
         </div>
       </main>

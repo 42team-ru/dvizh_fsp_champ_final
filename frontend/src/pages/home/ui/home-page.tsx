@@ -8,18 +8,7 @@ import { Icon } from "@/shared/components/ui/icon";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 import { RoughBorder } from "@/shared/components/ui/rough-border";
 import { Participants } from "@/shared/components/ui/participants";
-import { Progress } from "@/shared/components/ui/progress";
 import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar";
-
-const WEEK = [
-  { day: "Пн", state: "done" },
-  { day: "Вт", state: "empty" },
-  { day: "Ср", state: "done" },
-  { day: "Чт", state: "done" },
-  { day: "Пт", state: "empty" },
-  { day: "Сб", state: "today" },
-  { day: "Вс", state: "done" },
-] as const;
 
 const EVENTS = [
   {
@@ -237,57 +226,6 @@ function Tip() {
   );
 }
 
-function Week() {
-  return (
-    <Card className="h-[111px] overflow-hidden p-[22px]">
-      <div className="flex h-[63px] items-center gap-10">
-        <div className="w-[144px] shrink-0">
-          <p className="font-display text-[18px] leading-[22px] font-bold whitespace-nowrap text-foreground">
-            Твоя неделя
-          </p>
-          <p className="mt-1 text-[13px] leading-[18px] font-semibold text-muted-foreground">
-            13–19 окт
-          </p>
-        </div>
-
-        <div className="flex w-[388px] shrink-0 gap-[18px]">
-          {WEEK.map(({ day, state }) => (
-            <div key={day} className="flex w-10 flex-col items-center gap-[6px]">
-              <span
-                className={`flex size-10 items-center justify-center rounded-[20px] border-2 border-ink ${
-                  state === "done" ? "bg-secondary" : state === "today" ? "bg-primary" : "bg-card"
-                }`}
-              >
-                {state === "done" ? <Icon name="icon-check" className="size-[18px]" /> : null}
-                {state === "today" ? <Icon name="icon-run1" className="size-[18px]" /> : null}
-              </span>
-              <span className="text-xs leading-[17px] font-bold text-muted-foreground">{day}</span>
-            </div>
-          ))}
-        </div>
-
-        <div className="flex h-[55px] w-[301px] shrink-0 flex-col gap-2">
-          <div className="relative h-[35px]">
-            <p className="font-display leading-[17.5px] font-extrabold text-foreground">
-              <span className="text-[28px]">4</span>
-              <span className="font-sans text-base font-bold text-muted-foreground"> из 5 тренировок</span>
-            </p>
-            <span className="absolute top-[14px] left-[187px] text-[13px] leading-[18px] font-bold whitespace-nowrap text-muted-foreground">
-              ещё одна до цели
-            </span>
-          </div>
-          <Progress value={80} className="h-3" />
-        </div>
-
-        <Button variant="soft" rough className="shrink-0">
-          <Icon name="icon-coin" className="size-[18px]" />
-          Бублик ждёт монет
-        </Button>
-      </div>
-    </Card>
-  );
-}
-
 function EventCard({ event }: { event: (typeof EVENTS)[number] }) {
   const { cover } = event;
   return (
@@ -422,7 +360,6 @@ export default function HomePage() {
         <div className="mt-2">
           <Tip />
         </div>
-        <Week />
         <SectionHeading title="Рядом с тобой" hint="3 события" linkLabel="Вся лента" />
         <div className="grid grid-cols-3 gap-5">
           {EVENTS.map((e) => (

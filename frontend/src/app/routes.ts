@@ -22,9 +22,4 @@ export default [
     ]),
     route("oauth2/callback", "routes/auth/oauth2-callback.tsx"),
   ]),
-  layout("providers/guards/auth-guard.tsx", [
-    layout("routes/dashboard/layout.tsx", [
-      ...prefix("/dashboard", [index("routes/dashboard/index.tsx")]),
-    ]),
-  ]),
 ] satisfies RouteConfig;

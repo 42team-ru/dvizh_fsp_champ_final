@@ -1,5 +1,6 @@
 import { PetNameEditor } from "@/features/rename-pet/ui/pet-name-editor";
 import { useState } from "react";
+import { useAttendance } from "./use-attendance";
 import { MyBeaverPet } from "@/widgets/beaver-pet/ui/my-beaver-pet";
 import { MobileTabBar } from "@/widgets/mobile-shell/ui/mobile-tab-bar";
 import { Badge } from "@/shared/components/ui/badge";
@@ -169,19 +170,17 @@ function Pet() {
   );
 }
 
-function Streak() {
+function Attendance() {
+  const { total, text, word } = useAttendance();
   return (
     <div className="px-4">
       <div className="box-border flex w-full flex-col gap-2 rounded-[24px] border-2 border-ink bg-primary p-5">
-        <Eyebrow className={cn(small, "tracking-[1.5px] text-lilac")}>СЕРИЯ</Eyebrow>
+        <Eyebrow className={cn(small, "tracking-[1.5px] text-lilac")}>ПОСЕЩЕНО</Eyebrow>
         <div className="flex items-end gap-2 leading-[normal] whitespace-nowrap text-white">
-          <span className="font-display text-[52px] font-extrabold">12</span>
-          <span className="font-display text-xl font-bold">дней</span>
+          <span className="font-display text-[52px] font-extrabold">{total}</span>
+          <span className="font-display text-xl font-bold">{word}</span>
         </div>
-        <Progress value={75} indicatorClassName="bg-secondary border-r-0" className="bg-card" />
-        <p className="text-[13px] leading-[18px] font-bold text-white">
-          Лучший результат — 16. Ещё 4 дня, и бейдж «Железная воля» твой.
-        </p>
+        <p className="text-[13px] leading-[18px] font-bold text-white">{text}</p>
       </div>
     </div>
   );
@@ -306,7 +305,7 @@ export function ProfileMobile() {
       <AppBar />
       <Passport />
       <Pet />
-      <Streak />
+      <Attendance />
       <Achievements />
       <Wardrobe />
       <Settings />
