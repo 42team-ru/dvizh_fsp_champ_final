@@ -1,6 +1,6 @@
 import { useForm } from "@tanstack/react-form";
 import { useRef, useState } from "react";
-import { registerSchema, splitName } from "./register-shema";
+import { registerSchema } from "./register-shema";
 import {
   useAuthLogin,
   useAuthRegister,
@@ -10,7 +10,7 @@ import { useNavigate } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { USER_QUERY_KEY } from "@/entity/user/model/use-user";
 import { toast } from "@/shared/lib/toast";
-import { useEmailAvailability } from "./use-availability-check";
+import { useEmailAvailability, useUsernameAvailability } from "./use-availability-check";
 
 export function useRegisterForm() {
   const navigate = useNavigate();
@@ -21,44 +21,49 @@ export function useRegisterForm() {
   const formRef = useRef<any>(null);
 
   const emailCheck = useEmailAvailability(formRef);
+  const usernameCheck = useUsernameAvailability(formRef);
 
   const form = useForm({
     defaultValues: {
       accountType: "USER" as "USER" | "ORG",
-      name: "",
+      firstName: "",
+      lastName: "",
+      username: "",
       email: "",
       password: "",
-      city: "Красноярск",
-      agree: false,
     },
     validators: {
       onSubmit: registerSchema,
     },
     onSubmit: async ({ value }) => {
       const email = value.email.trim();
-      const isEmailFree = await emailCheck.checkNow(email);
-      if (isEmailFree === false) {
+      const username = value.username.trim();
+      const [isEmailFree, isUsernameFree] = await Promise.all([
+        emailCheck.checkNow(email),
+        usernameCheck.checkNow(username),
+      ]);
+      if (isEmailFree === false || isUsernameFree === false) {
         return;
       }
 
       try {
-        // Логин совпадает с email: отдельного поля в форме нет.
         await registerAsync({
           data: {
-            ...splitName(value.name),
-            username: email,
+            firstName: value.firstName.trim(),
+            lastName: value.lastName.trim(),
+            username,
             email,
             password: value.password,
             accountType: value.accountType,
           },
         });
         // Сразу входим, чтобы не заставлять человека повторять логин и пароль.
-        await loginAsync({ data: { username: email, password: value.password } });
+        await loginAsync({ data: { username, password: value.password } });
         queryClient.removeQueries({ queryKey: USER_QUERY_KEY });
 
         if (value.accountType === "ORG") {
           toast.success("Аккаунт клуба создан", { description: "Заполните анкету — это и есть заявка на допуск." });
-          navigate("/my/org", { viewTransition: true });
+          navigate("/onboarding/org", { viewTransition: true });
         } else {
           toast.success("Добро пожаловать!");
           navigate("/onboarding", { viewTransition: true });
@@ -75,8 +80,8 @@ export function useRegisterForm() {
 
   return {
     form,
-    isEmailChecking: emailCheck.isChecking,
-    scheduleEmailAvailabilityCheck: emailCheck.schedule,
+    emailCheck,
+    usernameCheck,
     showPassword,
     setShowPassword,
   };

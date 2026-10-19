@@ -14,6 +14,8 @@ interface AuthTextInputProps {
   errorMessage?: string;
   disabled?: boolean;
   startIcon?: ReactNode;
+  /** Метка справа внутри поля, например «свободен». */
+  endSlot?: ReactNode;
   type?: string;
 }
 
@@ -28,6 +30,7 @@ export function AuthTextInput({
   errorMessage,
   disabled,
   startIcon,
+  endSlot,
   type,
 }: AuthTextInputProps) {
   const errorId = `${name}-error`;
@@ -46,7 +49,7 @@ export function AuthTextInput({
           </span>
         )}
         <Input
-          className={cn(startIcon && "pl-9")}
+          className={cn(startIcon && "pl-9", endSlot && "pr-28")}
           id={name}
           name={name}
           type={type}
@@ -58,6 +61,9 @@ export function AuthTextInput({
           aria-describedby={isInvalid ? errorId : undefined}
           placeholder={placeholder}
         />
+        {endSlot && (
+          <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center">{endSlot}</span>
+        )}
       </div>
     </AuthField>
   );

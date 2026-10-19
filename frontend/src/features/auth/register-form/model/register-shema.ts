@@ -1,24 +1,20 @@
 import z from "zod";
 
-const name = z
+const personName = z
   .string()
   .trim()
-  .refine((value) => value.split(/\s+/).length >= 2, "Укажите имя и фамилию.")
-  .refine(
-    (value) => value.split(/\s+/).every((part) => part.length >= 2),
-    "Имя и фамилия должны содержать как минимум 2 символа.",
-  )
-  .refine((value) => value.length <= 200, "Слишком длинное имя.");
+  .min(2, "От 2 до 100 символов.")
+  .max(100, "От 2 до 100 символов.");
 
 const email = z
   .string()
   .email("Пожалуйста, введите действительный email адрес.")
   .max(50, "Email должен содержать не более 50 символов.");
 
-/** Логин совпадает с email: отдельного поля в форме нет. */
 const username = z
   .string()
-  .min(3, "Имя пользователя должно содержать как минимум 3 символа.");
+  .min(3, "Логин — от 3 до 50 символов.")
+  .max(50, "Логин — от 3 до 50 символов.");
 
 const password = z
   .string()
@@ -29,20 +25,14 @@ export { email as registerEmailSchema, username as registerUsernameSchema };
 
 export const registerSchema = z.object({
   accountType: z.enum(["USER", "ORG"]),
-  name,
+  firstName: personName,
+  lastName: personName,
+  username: username.trim(),
   email,
   password,
-  city: z.string(),
-  agree: z.literal(true, "Нужно принять правила и политику."),
 });
 
 export type RegisterFormValues = z.infer<typeof registerSchema>;
-
-/** Делит «Имя Фамилия» на имя и фамилию (всё после первого слова — фамилия). */
-export function splitName(value: string) {
-  const [firstName, ...rest] = value.trim().split(/\s+/);
-  return { firstName, lastName: rest.join(" ") };
-}
 
 /** Сколько из четырёх делений надёжности пароля заполнено. */
 export function passwordStrength(value: string): 0 | 1 | 2 | 3 | 4 {
@@ -55,5 +45,3 @@ export function passwordStrength(value: string): 0 | 1 | 2 | 3 | 4 {
 }
 
 export const STRENGTH_LABEL = ["", "Слабый", "Средний", "Хороший", "Надёжный"] as const;
-
-export const CITIES = ["Красноярск", "Новосибирск", "Томск", "Москва", "Санкт-Петербург"] as const;

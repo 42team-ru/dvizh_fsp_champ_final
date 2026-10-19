@@ -4,7 +4,7 @@ import type { MyRegistrationResponse, NotificationResponse } from "@/shared/api/
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { CancelledStamp } from "@/shared/components/ui/cancelled-stamp";
-import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "@/shared/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/shared/components/ui/dialog";
 import { Icon } from "@/shared/components/ui/icon";
 import { QrCode } from "@/shared/components/ui/qr-code";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
@@ -214,11 +214,10 @@ export function PlansDialog({ initialTab, totals, compact, children }: {
   return (
     <Dialog open={open} onOpenChange={(next) => { if (next) setTab(initialTab); setOpen(next); }}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      {/* Окно не прокручивается целиком: заголовок и вкладки на месте, листается только список,
+      {/* Окно не прокручивается целиком: вкладки на месте, листается только список,
           а полоса прокрутки идёт в своём жёлобе и не наезжает на билеты. */}
-      <DialogContent className="flex max-h-[85dvh] flex-col overflow-hidden sm:max-w-[680px]">
-        <DialogTitle>Мои записи</DialogTitle>
-        <DialogDescription>Ближайшие встречи, куда вы идёте, и заявки, которые ждут решения организатора.</DialogDescription>
+      <DialogContent aria-describedby={undefined} className="flex max-h-[85dvh] flex-col overflow-hidden sm:max-w-[680px]">
+        <DialogTitle className="sr-only">Мои записи</DialogTitle>
         <Tabs value={tab} onValueChange={(v) => setTab(v as PlansTab)} className="flex min-h-0 flex-1 flex-col">
           <TabsList className="shrink-0">
             {PLANS_TABS.map((t) => (

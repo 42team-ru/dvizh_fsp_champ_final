@@ -14,6 +14,7 @@ export default [
     route("users/:id", "routes/user.tsx"),
     route("activity", "routes/activity.tsx"),
     route("onboarding", "routes/onboarding.tsx"),
+    route("onboarding/org", "routes/org-onboarding.tsx"),
     route("events/new", "routes/event-create.tsx"),
     route("events/:id", "routes/event.tsx"),
     route("orgs/:id", "routes/org-public.tsx"),
