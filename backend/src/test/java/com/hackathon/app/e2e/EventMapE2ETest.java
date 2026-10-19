@@ -4,7 +4,9 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -56,7 +58,8 @@ class EventMapE2ETest {
 	 * ФЛОУ: пользователь находит очные встречи в видимой области и выбирает нужный вид спорта.
 	 * ШАГИ:
 	 *   1. Зарегистрировать организатора и участника; создать две подходящие встречи разных видов спорта.
-	 *   2. Записать участника на первую; создать встречи вне области, онлайн и позже конца периода.
+	 *   2. Записать участника на первую; создать встречи вне области, онлайн и позже конца периода;
+	 *      ещё одну встречу в области админ снимает с публикации.
 	 *   3. Запросить карту по области, уникальному названию и периоду; затем добавить фильтр sportId.
 	 * ПРОВЕРЯЕМ: точный состав FeatureCollection, порядок координат [lon, lat], название, вид спорта,
 	 *   число подтверждённых участников, limit=1000, truncated=false и сужение выдачи по виду спорта.
@@ -91,6 +94,10 @@ class EventMapE2ETest {
 		support.createdEventId(organizer, online);
 		support.createdEventId(organizer, eventForm(marker + " позже", 92.8932, 56.0153,
 				to.plus(1, ChronoUnit.HOURS)));
+		var unpublishedId = support.createdEventId(organizer, eventForm(marker + " снято", 92.8932, 56.0153, start));
+		mvc.perform(post("/api/admin/events/{id}/unpublish", unpublishedId).cookie(support.createAdminAndLogin())
+				.contentType(APPLICATION_JSON).content("{\"reason\":\"Площадка закрыта\"}"))
+				.andExpect(status().isOk());
 
 		// Без фильтра спорта остаются ровно две подходящие встречи.
 		mvc.perform(area(participant, marker, "92.89", "56.01", "92.90", "56.02")
