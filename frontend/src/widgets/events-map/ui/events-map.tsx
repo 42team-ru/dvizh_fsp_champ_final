@@ -1,6 +1,7 @@
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
 import { keepPreviousData } from "@tanstack/react-query";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEventsMap } from "@/shared/api/generated/core/events/events";
 import type { EventMapFeature, EventMapProperties, EventsMapParams } from "@/shared/api/generated/core/appAPI.schemas";
 import { Button } from "@/shared/components/ui/button";
@@ -23,6 +24,31 @@ const time = (iso: string) => new Date(iso).toLocaleTimeString("ru-RU", { hour: 
 const toPoint = (f: EventMapFeature): MapPoint => ({
   id: f.id, coordinates: [f.geometry.coordinates[0], f.geometry.coordinates[1]], data: f.properties,
 });
+
+/** Ряд чипов дней со стрелками: прокрутка на ~3 чипа, стрелка гаснет у края. */
+function DayScroller({ children }: { children: React.ReactNode }) {
+  const row = useRef<HTMLDivElement>(null);
+  const [edges, setEdges] = useState({ start: true, end: true });
+  const update = () => {
+    const el = row.current;
+    if (el) setEdges({ start: el.scrollLeft <= 1, end: el.scrollLeft + el.clientWidth >= el.scrollWidth - 1 });
+  };
+  useEffect(update, []);
+  const scroll = (dir: 1 | -1) => row.current?.scrollBy({ left: dir * 220, behavior: "smooth" });
+  const arrow = "size-[38px] shrink-0 rounded-pill border-2 border-ink bg-card disabled:opacity-30";
+  return (
+    <div className="flex shrink-0 items-center gap-1.5">
+      <button type="button" aria-label="Предыдущие дни" disabled={edges.start} onClick={() => scroll(-1)}
+        className={cn(arrow, "flex items-center justify-center")}><ChevronLeft className="size-5" /></button>
+      <div ref={row} onScroll={update} role="tablist" aria-label="День"
+        className="no-scrollbar flex min-w-0 flex-1 gap-2 overflow-x-auto py-0.5">
+        {children}
+      </div>
+      <button type="button" aria-label="Следующие дни" disabled={edges.end} onClick={() => scroll(1)}
+        className={cn(arrow, "flex items-center justify-center")}><ChevronRight className="size-5" /></button>
+    </div>
+  );
+}
 
 // Контейнер не перерисовывается React-ом, иначе карта пересоздастся.
 const MapContainer = memo(({ onReady }: { onReady(el: HTMLDivElement): void }) => (
@@ -157,7 +183,7 @@ export function EventsMap({ filters = {}, className, mapClassName }: {
 
       <aside aria-label="Лента времени" className="flex max-h-[680px] min-h-0 flex-col gap-3 rounded-[28px] border-2 border-ink bg-card p-4 lg:w-[340px]">
         <h2 className="font-display text-lg font-bold">Лента времени</h2>
-        <div className="no-scrollbar flex shrink-0 gap-2 overflow-x-auto pb-1" role="tablist" aria-label="День">
+        <DayScroller>
           <Button type="button" size="chip" role="tab" aria-selected={day == null} variant={day == null ? "ink" : "soft"}
             className="shrink-0" onClick={() => setDay(null)}>Все</Button>
           {days.map((d, i) => (
@@ -166,7 +192,7 @@ export function EventsMap({ filters = {}, className, mapClassName }: {
               {dayLabel(d, i)}
             </Button>
           ))}
-        </div>
+        </DayScroller>
         <div className="min-h-0 flex-1 overflow-y-auto pr-1">
           {bbox && onScreen.length === 0 && !query.isFetching && (
             <p className="text-sm font-semibold text-muted-foreground">В этой области событий нет — сдвиньте карту или выберите другой день.</p>
@@ -182,7 +208,7 @@ export function EventsMap({ filters = {}, className, mapClassName }: {
                         "flex w-full items-start gap-3 rounded-2xl border-2 px-3 py-2 text-left",
                         selected?.id === point.id ? "border-ink bg-secondary" : "border-transparent hover:border-ink",
                       )}>
-                      <span className="w-12 shrink-0 font-display text-base font-bold">{time(point.data.startAt)}</span>
+                      <span className="w-14 shrink-0 font-display text-base font-bold tabular-nums">{time(point.data.startAt)}</span>
                       <span className="min-w-0">
                         <span className="block truncate text-sm font-extrabold">{point.data.title}</span>
                         <span className="block truncate text-xs font-semibold text-muted-foreground">
