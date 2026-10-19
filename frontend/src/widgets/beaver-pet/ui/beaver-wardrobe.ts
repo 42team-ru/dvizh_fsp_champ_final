@@ -443,12 +443,12 @@ function gamingLaptop() {
 }
 
 const hockeyEquipment = () => `<g id="hockey-equipment">
-  <path d="M452 302 L485 479 L534 493 L533 512 L474 499 Q466 497 465 486 L433 306 Z" fill="#C4874F" ${line(5)}/>
-  <path d="M434 306 L442 346 L460 343 L452 302 Z M484 479 L494 482 L493 503 L474 499 L470 485 Z" fill="#1E2B3C"/>
-  <path d="M435 316 L454 313 M438 328 L456 325" stroke="#8A949E" stroke-width="3"/>
-  <ellipse cx="543" cy="521" rx="26" ry="5" fill="#2A1A12" opacity="0.18"/>
-  <path d="M522 510 V518 C522 529 564 529 564 518 V510 Z" fill="#3B4652" ${line(4)}/>
-  <ellipse cx="543" cy="510" rx="21" ry="7" fill="#1E2B3C" ${line(4)}/>
+  <ellipse id="puck-shadow" cx="478" cy="524" rx="27" ry="6" fill="#2A1A12" opacity="0.15"/>
+  <g id="prop-puck" transform="translate(478 492)">
+    <path d="M-25 -6 V5 C-25 18 25 18 25 5 V-6 Z" fill="#3B4652" ${line(4)}/>
+    <ellipse cy="-6" rx="25" ry="8" fill="#1E2B3C" ${line(4)}/>
+    <path d="M-17 6 Q0 13 17 6" fill="none" stroke="#8A949E" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
 </g>`;
 
 const ACTIVITY: Record<BeaverActivity, () => SlotContent> = {
