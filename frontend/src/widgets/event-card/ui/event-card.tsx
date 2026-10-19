@@ -33,7 +33,7 @@ export function EventCover({ cover }: { cover: EventCover }) {
     <>
       <div className={cn("absolute inset-0", cover.bg)}>
         {cover.photo ? (
-          <img src={cover.photo} alt="" className="size-full max-w-none object-cover" />
+          <img src={cover.photo} alt="" className="size-full max-w-none object-cover transition-transform duration-500 group-hover/card:scale-105" />
         ) : null}
         {cover.art ? (
           <img src={cover.art.src} alt="" className={cn("absolute max-w-none", cover.art.className)} />
@@ -106,7 +106,7 @@ export function EventCard({
   const large = size === "lg";
   const titleBox = large ? 31 : titleLines === 2 ? 43 : 21.5;
   return (
-    <Card className={cn("relative overflow-hidden p-0", className)}>
+    <Card interactive={!!href} className={cn("group/card relative overflow-hidden p-0", className)}>
       {href && <Link to={href} aria-label={event.title} className="absolute inset-0 z-10" />}
       {action && <div className="absolute top-3 right-3 z-20">{action}</div>}
       <div

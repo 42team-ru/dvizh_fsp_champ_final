@@ -1,3 +1,5 @@
+import { Compass } from "lucide-react";
+import { EmptyState } from "@/shared/components/ui/empty-state";
 import { DismissButton, useDismissRecommendation } from "@/features/dismiss-recommendation/ui/dismiss-button";
 import { Link } from "react-router";
 import { HomeMobile } from "./home-mobile";
@@ -271,9 +273,17 @@ function Recommendations() {
   }
   if (items.length === 0) {
     return (
-      <p className="text-lg font-semibold text-muted-foreground">
-        Пока нечего предложить — отметь любимые виды спорта в профиле, и Бублик подберёт встречи.
-      </p>
+      <EmptyState
+        icon={Compass}
+        tone="bg-mint"
+        title="Бублик ещё подбирает встречи"
+        text="Отметь любимые виды спорта в профиле — и здесь появятся встречи для тебя. А пока загляни в ленту."
+        action={
+          <Button asChild>
+            <Link to="/feed">Открыть ленту</Link>
+          </Button>
+        }
+      />
     );
   }
   return (

@@ -1,3 +1,5 @@
+import { MessageCircleQuestion } from "lucide-react";
+import { EmptyState } from "@/shared/components/ui/empty-state";
 import { useState } from "react";
 import { CancelledStamp } from "@/shared/components/ui/cancelled-stamp";
 import { Link } from "react-router";
@@ -395,7 +397,7 @@ function Chat({ m }: { m: EventModel }) {
       </div>
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-2">
         {m.comments.length === 0 && (
-          <p className="text-[15px] font-medium text-muted-foreground">Пока тихо. Спросите о месте, уровне или снаряжении — организатор ответит здесь.</p>
+          <EmptyState size="sm" icon={MessageCircleQuestion} tone="bg-sky" title="Пока тихо" text="Спросите о месте, уровне или снаряжении — организатор ответит здесь." />
         )}
         {m.comments.map((c) => (
           <div key={c.id} className="flex shrink-0 items-start gap-3">

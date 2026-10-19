@@ -1,3 +1,5 @@
+import { CalendarClock } from "lucide-react";
+import { EmptyState } from "@/shared/components/ui/empty-state";
 import { useAttendance } from "./use-attendance";
 import { PassportSpread, SPREAD_H } from "./passport-spread";
 import { HistoryCard } from "./history-card";
@@ -48,7 +50,7 @@ function UpcomingColumn({ className, style }: { className?: string; style?: Reac
     <Card className={cn("gap-4 overflow-hidden rounded-[24px] p-5", className)} style={style}>
       <h2 className="font-display text-[22px] leading-[27px] font-extrabold text-foreground">Скоро</h2>
       {events.length === 0 ? (
-        <p className="text-sm font-semibold text-muted-foreground">Ближайших событий нет.</p>
+        <EmptyState size="sm" icon={CalendarClock} tone="bg-sky" title="Ближайших событий нет" />
       ) : (
         <ul className="no-scrollbar flex min-h-0 flex-col gap-[10px] overflow-y-auto">
           {events.map((e) => (

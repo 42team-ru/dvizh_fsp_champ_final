@@ -1,3 +1,6 @@
+import { SearchX } from "lucide-react";
+import { useNavAccess } from "@/entity/user/model/use-nav-access";
+import { EmptyState } from "@/shared/components/ui/empty-state";
 import { FeedMobile } from "./feed-mobile";
 import { AppHeader } from "@/widgets/app-header/ui/app-header";
 import {
@@ -200,11 +203,7 @@ export default function FeedPage() {
           <EventsMap filters={toMapFilters(filters.params)} className="w-full" mapClassName="h-[436px]" />
         ) : (
         <div className="flex min-w-[1216px] flex-col gap-5">
-          {events?.length === 0 && (
-            <p className="text-lg font-semibold text-muted-foreground">
-              Ничего не нашлось — попробуйте другой фильтр или создайте своё событие.
-            </p>
-          )}
+          {events?.length === 0 && <FeedEmpty />}
           {list.isError && <p role="alert" className="text-lg font-semibold text-destructive">Не удалось загрузить ленту.</p>}
           {/* Ряды — отдельные сетки: если событий мало, пустеет конец ряда, а не съезжает раскладка. */}
           <div className="grid grid-cols-12 gap-5">
@@ -232,5 +231,23 @@ export default function FeedPage() {
       </main>
     </div>
     </>
+  );
+}
+
+/** Пустая лента: подсказать сменить фильтр или собрать свою встречу. */
+function FeedEmpty() {
+  const nav = useNavAccess();
+  return (
+    <EmptyState
+      icon={SearchX}
+      tone="bg-sky"
+      title="Ничего не нашлось"
+      text={nav.canCreate ? "Попробуйте другой фильтр — или соберите свою встречу, и люди подтянутся." : "Попробуйте другой фильтр или период."}
+      action={nav.canCreate && (
+        <Button asChild>
+          <Link to="/events/new">Создать событие</Link>
+        </Button>
+      )}
+    />
   );
 }

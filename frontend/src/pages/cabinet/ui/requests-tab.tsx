@@ -1,3 +1,5 @@
+import { Inbox, UsersRound } from "lucide-react";
+import { EmptyState } from "@/shared/components/ui/empty-state";
 import { useState } from "react";
 import {
   useRegistrationsApprove,
@@ -222,9 +224,11 @@ export function RequestsTab({ event, refresh }: { event: ManagedEvent; refresh: 
       {list.isLoading ? (
         <p className="text-base font-bold text-muted-foreground">Загружаем…</p>
       ) : shown.length === 0 ? (
-        <p className="rounded-[18px] border-2 border-dashed border-track bg-card p-6 text-center text-base font-bold text-muted-foreground">
-          {filter === "PENDING" ? "Новых заявок нет." : "Здесь пока никого."}
-        </p>
+        filter === "PENDING" ? (
+          <EmptyState icon={Inbox} tone="bg-mint" title="Новых заявок нет" text="Когда кто-то попросится на встречу, заявка появится здесь." />
+        ) : (
+          <EmptyState icon={UsersRound} tone="bg-secondary" title="Здесь пока никого" text="Поделитесь ссылкой на мероприятие — участники подтянутся." />
+        )
       ) : (
         <div className="flex flex-col gap-3">
           {shown.map((r) => (

@@ -1,3 +1,5 @@
+import { CalendarClock, Ticket } from "lucide-react";
+import { EmptyState } from "@/shared/components/ui/empty-state";
 import { Link } from "react-router";
 import { useRegistrationsMine } from "@/shared/api/generated/core/registrations/registrations";
 import { useUsersHistorySummary } from "@/shared/api/generated/core/users/users";
@@ -71,7 +73,7 @@ function PublicHistory({ owner }: { owner: PublicProfile }) {
       </p>
 
       {events.length === 0 ? (
-        <p className="text-sm font-semibold text-muted-foreground">Ближайших событий нет.</p>
+        <EmptyState size="sm" icon={CalendarClock} tone="bg-sky" title="Ближайших событий нет" />
       ) : (
         events.map((e) => (
           <Link
@@ -149,12 +151,8 @@ function MyHistory() {
       </p>
 
       {upcoming.length === 0 ? (
-        <p className="text-sm font-semibold text-muted-foreground">
-          Ближайших записей нет.{" "}
-          <Link to="/feed" className="text-primary underline underline-offset-4">
-            Найти событие
-          </Link>
-        </p>
+        <EmptyState size="sm" icon={Ticket} tone="bg-accent" title="Ближайших записей нет"
+          text={<>Запишитесь на первое мероприятие — <Link to="/feed" className="text-primary underline underline-offset-4">найти событие</Link></>} />
       ) : (
         upcoming.map((r) => {
           const tone = REG_TONES[r.status as keyof typeof REG_TONES];

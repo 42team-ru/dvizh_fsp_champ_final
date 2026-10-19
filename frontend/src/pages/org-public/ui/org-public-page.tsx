@@ -1,3 +1,5 @@
+import { CalendarClock } from "lucide-react";
+import { EmptyState } from "@/shared/components/ui/empty-state";
 import { Link, useParams } from "react-router";
 import { useOrganizationsGet } from "@/shared/api/generated/core/organizations/organizations";
 import { useEventsList } from "@/shared/api/generated/core/events/events";
@@ -111,7 +113,7 @@ export default function OrgPublicPage() {
               {events.isLoading ? (
                 <p className="text-base font-bold text-muted-foreground">Загружаем…</p>
               ) : items.length === 0 ? (
-                <Card className="p-6 text-base font-semibold text-muted-foreground">Пока нет запланированных встреч.</Card>
+                <EmptyState icon={CalendarClock} tone="bg-secondary" title="Пока нет запланированных встреч" text="Загляните позже — клуб скоро опубликует новые." />
               ) : (
                 <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                   {items.map((e) => (

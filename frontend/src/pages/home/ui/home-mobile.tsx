@@ -1,3 +1,5 @@
+import { Compass } from "lucide-react";
+import { EmptyState } from "@/shared/components/ui/empty-state";
 import { DismissButton, useDismissRecommendation } from "@/features/dismiss-recommendation/ui/dismiss-button";
 import { Link } from "react-router";
 import { BrandPlate } from "@/shared/components/ui/brand-plate";
@@ -212,9 +214,19 @@ function EventScroller() {
   if (isError) return <p role="alert" className="px-4 text-base font-semibold text-destructive">Не удалось загрузить подборку.</p>;
   if (items.length === 0) {
     return (
-      <p className="px-4 text-base font-semibold text-muted-foreground">
-        Отметь любимые виды спорта в профиле — и Бублик подберёт встречи.
-      </p>
+      <div className="px-4">
+        <EmptyState
+          icon={Compass}
+          tone="bg-mint"
+          title="Бублик ещё подбирает встречи"
+          text="Отметь любимые виды спорта в профиле — и Бублик подберёт встречи."
+          action={
+            <Button asChild>
+              <Link to="/feed">Открыть ленту</Link>
+            </Button>
+          }
+        />
+      </div>
     );
   }
   return (

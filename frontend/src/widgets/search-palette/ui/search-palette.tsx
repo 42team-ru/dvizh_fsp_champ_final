@@ -1,3 +1,5 @@
+import { Search, SearchX } from "lucide-react";
+import { EmptyState } from "@/shared/components/ui/empty-state";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { Dialog as DialogPrimitive } from "radix-ui";
@@ -92,15 +94,11 @@ export function SearchPalette() {
 
             <div className="min-h-0 flex-1 overflow-y-auto">
               {debounced.length === 0 ? (
-                <p className="px-2 py-4 text-center text-sm font-bold text-muted-foreground">
-                  Начните вводить название события или вид спорта.
-                </p>
+                <EmptyState size="sm" icon={Search} tone="bg-secondary" title="Что ищем?" text="Начните вводить название события или вид спорта." />
               ) : search.isLoading ? (
                 <p className="px-2 py-4 text-center text-sm font-bold text-muted-foreground">Ищем…</p>
               ) : results.length === 0 ? (
-                <p className="px-2 py-4 text-center text-sm font-bold text-muted-foreground">
-                  Ничего не нашлось. Попробуйте другое слово.
-                </p>
+                <EmptyState size="sm" icon={SearchX} tone="bg-sky" title="Ничего не нашлось" text="Попробуйте другое слово." />
               ) : (
                 <ul className="flex flex-col gap-2">
                   {results.map((event) => (

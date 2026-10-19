@@ -11,6 +11,7 @@ import type { Route } from "./+types/root";
 import "./styles/app.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
+import { MotionConfig } from "motion/react";
 import { ThemeProvider } from "./providers/theme-provider";
 import { ViewportScale } from "./providers/viewport-scale";
 
@@ -43,7 +44,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <QueryClientProvider client={queryClient}>
           <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
             <ViewportScale />
-            {children}
+            <MotionConfig reducedMotion="user">{children}</MotionConfig>
             <Toaster position="top-right" offset={20} expand visibleToasts={3} />
           </ThemeProvider>
         </QueryClientProvider>

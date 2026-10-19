@@ -2,6 +2,7 @@ import { Link } from "react-router";
 import { BriefcaseBusiness } from "lucide-react";
 import { Icon } from "@/shared/components/ui/icon";
 import { cn } from "cn";
+import { motion } from "motion/react";
 import { useNavAccess } from "@/entity/user/model/use-nav-access";
 import { useCabinetAccess } from "@/entity/user/model/use-cabinet-access";
 
@@ -39,7 +40,11 @@ export function MobileTabBar({ current }: { current: MobileTab }) {
         aria-current={active ? "page" : undefined}
         className="flex h-[62px] flex-col items-center justify-center gap-[2px]"
       >
-        <span
+        <motion.span
+          initial={active ? { scale: 0.6 } : false}
+          animate={{ scale: 1 }}
+          whileTap={{ scale: 0.85 }}
+          transition={{ type: "spring", stiffness: 500, damping: 18 }}
           className={cn(
             "relative box-border flex h-[30px] w-[52px] items-center justify-center rounded-[15px]",
             active && "border-2 border-ink bg-secondary"
@@ -51,7 +56,7 @@ export function MobileTabBar({ current }: { current: MobileTab }) {
               {t.count > 99 ? "99+" : t.count}
             </span>
           ) : null}
-        </span>
+        </motion.span>
         <span
           className={cn(
             "text-[11px] leading-[normal]",

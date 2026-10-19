@@ -1,3 +1,5 @@
+import { BellRing, Hourglass } from "lucide-react";
+import { EmptyState } from "@/shared/components/ui/empty-state";
 import { MobileTabBar } from "@/widgets/mobile-shell/ui/mobile-tab-bar";
 import { BrandPlate } from "@/shared/components/ui/brand-plate";
 import { Badge } from "@/shared/components/ui/badge";
@@ -115,7 +117,10 @@ export function ActivityMobile({ m }: { m: ActivityModel }) {
         <>
           <Label>ЖДУТ РЕШЕНИЯ ОРГАНИЗАТОРА</Label>
           {m.pendingItems.length === 0 && !m.pending.isPending && (
-            <p className="px-4 text-sm font-medium text-muted-foreground">Заявок в ожидании нет.</p>
+            <div className="px-4">
+              <EmptyState icon={Hourglass} tone="bg-secondary" title="Заявок в ожидании нет"
+                text="Записи по заявке появятся здесь, пока организатор их не рассмотрит." />
+            </div>
           )}
           {m.pendingItems.map((reg) => <div key={reg.id} className="px-4"><PendingRow reg={reg} /></div>)}
         </>
@@ -123,9 +128,17 @@ export function ActivityMobile({ m }: { m: ActivityModel }) {
         <>
           {m.list.isPending && <p className="px-4 text-sm font-medium text-muted-foreground">Загружаем…</p>}
           {m.list.isSuccess && m.groups.length === 0 && (
-            <p className="px-4 text-sm font-medium text-muted-foreground">{m.participant
-              ? "Здесь пока пусто: ответы, достижения и напоминания появятся тут."
-              : "Здесь пока пусто: вопросы участников в обсуждениях появятся тут."}</p>
+            <div className="px-4">
+              <EmptyState icon={BellRing} tone="bg-sky" title="Здесь пока тихо"
+                text={m.participant
+                  ? "Ответы, достижения и напоминания появятся тут."
+                  : "Вопросы участников в обсуждениях появятся тут."}
+                action={m.participant && (
+                  <Button asChild>
+                    <Link to="/feed">Записаться на встречу</Link>
+                  </Button>
+                )} />
+            </div>
           )}
           {m.groups.map((group) => (
             <div key={group.label} className="flex flex-col gap-3">
