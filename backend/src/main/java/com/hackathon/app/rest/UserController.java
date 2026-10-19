@@ -7,6 +7,11 @@ import java.util.UUID;
 import com.hackathon.app.domain.dto.AttendanceSummaryResponse;
 import com.hackathon.app.domain.dto.AttendedOccurrenceResponse;
 import com.hackathon.app.domain.dto.MeResponse;
+import com.hackathon.app.domain.dto.FileResponse;
+import org.springframework.web.bind.annotation.PostMapping;
+import com.hackathon.app.domain.dto.SaveUserPreferencesRequest;
+import com.hackathon.app.domain.dto.UserPreferencesResponse;
+import com.hackathon.app.service.UserPreferencesService;
 import com.hackathon.app.domain.dto.PageResponse;
 import com.hackathon.app.domain.dto.PublicUserResponse;
 import com.hackathon.app.domain.dto.SaveUserSportsRequest;
@@ -53,6 +58,7 @@ class UserController {
 
 	private final UserProfileService profiles;
 	private final UserSportService userSports;
+	private final UserPreferencesService preferences;
 	private final AttendanceHistoryService history;
 	private final WalletService wallet;
 	private final AchievementService achievements;
@@ -96,6 +102,31 @@ class UserController {
 		log.info("Endpoint called: PUT /api/users/me, userId={}, request={}", jwt.getSubject(), request);
 		var response = profiles.update(userId(jwt), request);
 		log.info("Endpoint response: PUT /api/users/me, userId={}", response.id());
+		return response;
+	}
+
+	@GetMapping("/me/preferences")
+	@Operation(operationId = "users_myPreferences", summary = "Мои предпочтения онбординга",
+			description = "До первого сохранения возвращает значения по умолчанию без записи в БД. "
+					+ "Настройки пока только сохраняются, без применения к подбору и уведомлениям.")
+	UserPreferencesResponse myPreferences(@AuthenticationPrincipal Jwt jwt) {
+		log.info("Endpoint called: GET /api/users/me/preferences, userId={}", jwt.getSubject());
+		var response = preferences.get(userId(jwt));
+		log.info("Endpoint response: GET /api/users/me/preferences, userId={}", jwt.getSubject());
+		return response;
+	}
+
+	@PutMapping(path = "/me/preferences", consumes = MediaType.APPLICATION_JSON_VALUE)
+	@Operation(operationId = "users_saveMyPreferences", summary = "Сохранить предпочтения онбординга целиком",
+			description = "Все поля обязательны. Дни возвращаются без повторов, с понедельника по воскресенье. "
+					+ "Общий уровень не меняет уровни отдельных видов спорта.")
+	@ApiResponse(responseCode = "400", description = "Некорректные предпочтения", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+	@ApiResponse(responseCode = "200", description = "Сохранённые предпочтения", useReturnTypeSchema = true)
+	UserPreferencesResponse saveMyPreferences(@AuthenticationPrincipal Jwt jwt,
+			@Valid @RequestBody SaveUserPreferencesRequest request) {
+		log.info("Endpoint called: PUT /api/users/me/preferences, userId={}, request={}", jwt.getSubject(), request);
+		var response = preferences.save(userId(jwt), request);
+		log.info("Endpoint response: PUT /api/users/me/preferences, userId={}", jwt.getSubject());
 		return response;
 	}
 
@@ -151,6 +182,40 @@ class UserController {
 		log.info("Endpoint response: GET /api/users/me/history/summary, total={}", response.total());
 		return response;
 	}
+
+    @GetMapping("/me/photos")
+    @Operation(operationId = "users_myPhotos", summary = "Мои фото в порядке загрузки, отдельно от аватара")
+    List<FileResponse> myPhotos(@AuthenticationPrincipal Jwt jwt) {
+        log.info("Endpoint called: GET /api/users/me/photos, userId={}", jwt.getSubject());
+        var response = profiles.photos(userId(jwt));
+        log.info("Endpoint response: GET /api/users/me/photos, count={}", response.size());
+        return response;
+    }
+
+    @PostMapping(path = "/me/photos", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(operationId = "users_addPhoto", summary = "Добавить фото в личную галерею (JPG, PNG, WebP до 5 МБ)",
+            description = "До 6 фото. Видны в публичном профиле всем вошедшим; аватар не меняется.")
+    @ApiResponse(responseCode = "200", description = "Галерея после загрузки", useReturnTypeSchema = true)
+    @ApiResponse(responseCode = "400", description = "Неверный формат или размер", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    @ApiResponse(responseCode = "409", description = "Уже 6 фото", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    List<FileResponse> addPhoto(@AuthenticationPrincipal Jwt jwt,
+            @Parameter(description = "Фото") @RequestPart("file") MultipartFile file) {
+        log.info("Endpoint called: POST /api/users/me/photos, userId={}, request={}", jwt.getSubject(), Uploads.describe(file));
+        var response = profiles.addPhoto(userId(jwt), Uploads.of(file));
+        log.info("Endpoint response: POST /api/users/me/photos, count={}", response.size());
+        return response;
+    }
+
+    @DeleteMapping("/me/photos/{fileId}")
+    @Operation(operationId = "users_removePhoto", summary = "Удалить своё фото из галереи")
+    @ApiResponse(responseCode = "200", description = "Галерея после удаления", useReturnTypeSchema = true)
+    @ApiResponse(responseCode = "404", description = "Фото не найдено в своей галерее", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    List<FileResponse> removePhoto(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID fileId) {
+        log.info("Endpoint called: DELETE /api/users/me/photos/{}, userId={}", fileId, jwt.getSubject());
+        var response = profiles.removePhoto(userId(jwt), fileId);
+        log.info("Endpoint response: DELETE /api/users/me/photos/{}, count={}", fileId, response.size());
+        return response;
+    }
 
 	@PutMapping(path = "/me/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Operation(operationId = "users_uploadAvatar", summary = "Загрузить аватар (JPG, PNG, WebP до 5 МБ)",

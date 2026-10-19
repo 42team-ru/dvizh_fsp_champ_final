@@ -35,8 +35,13 @@ import com.hackathon.app.domain.dto.EventRegistrationResponse;
 import com.hackathon.app.domain.dto.EventResponse;
 import com.hackathon.app.domain.dto.EventSummaryResponse;
 import com.hackathon.app.domain.dto.MeResponse;
+import com.hackathon.app.domain.dto.FileResponse;
+import org.springframework.mock.web.MockMultipartFile;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import com.hackathon.app.domain.dto.PublicUserResponse;
 import com.hackathon.app.domain.dto.SaveUserSportsRequest;
+import com.hackathon.app.domain.dto.SaveUserPreferencesRequest;
+import com.hackathon.app.domain.dto.UserPreferencesResponse;
 import com.hackathon.app.domain.dto.UpdateProfileRequest;
 import com.hackathon.app.domain.dto.UserSportResponse;
 import com.hackathon.app.domain.dto.MyRegistrationResponse;
@@ -50,7 +55,7 @@ import com.hackathon.app.domain.dto.UserResponse;
 import jakarta.servlet.http.Cookie;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder;
 import tools.jackson.databind.JavaType;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -138,6 +143,51 @@ public class Actor {
 	public List<UserSportResponse> saveMySports(SaveUserSportsRequest form) {
 		return send("PUT /api/users/me/sports", put("/api/users/me/sports"), form, listOf(UserSportResponse.class));
 	}
+
+	/** Прочитать собственные предпочтения онбординга. */
+	public UserPreferencesResponse myPreferences() {
+		return send("GET /api/users/me/preferences", get("/api/users/me/preferences"), null, type(UserPreferencesResponse.class));
+	}
+
+	/** Полностью заменить предпочтения онбординга. */
+	public UserPreferencesResponse saveMyPreferences(SaveUserPreferencesRequest form) {
+		return send("PUT /api/users/me/preferences", put("/api/users/me/preferences"), form, type(UserPreferencesResponse.class));
+	}
+
+    /** Личная галерея, отдельно от аватара. */
+    public List<FileResponse> myPhotos() {
+        return send("GET /api/users/me/photos", get("/api/users/me/photos"), null, listOf(FileResponse.class));
+    }
+
+    public List<FileResponse> addProfilePhoto(String name, String contentType, byte[] content) {
+        return send("POST /api/users/me/photos", multipart("/api/users/me/photos")
+                .file(new MockMultipartFile("file", name, contentType, content)), null, listOf(FileResponse.class));
+    }
+
+    public List<FileResponse> removeProfilePhoto(UUID fileId) {
+        return send("DELETE /api/users/me/photos/" + fileId,
+                delete("/api/users/me/photos/{fileId}", fileId), null, listOf(FileResponse.class));
+    }
+
+    public MeResponse uploadAvatar(byte[] content) {
+        return send("PUT /api/users/me/avatar", multipart(org.springframework.http.HttpMethod.PUT, "/api/users/me/avatar")
+                .file(new MockMultipartFile("file", "avatar.png", "image/png", content)), null, type(MeResponse.class));
+    }
+
+    public MeResponse deleteAvatar() {
+        return send("DELETE /api/users/me/avatar", delete("/api/users/me/avatar"), null, type(MeResponse.class));
+    }
+
+    /** Байты картинки; бинарный ответ не выражается JSON DTO. */
+    public byte[] downloadFile(UUID fileId) {
+        try {
+            var response = api.raw(get("/api/files/{id}", fileId), cookie).andReturn().getResponse();
+            assertThat(response.getStatus()).isEqualTo(200);
+            return response.getContentAsByteArray();
+        } catch (Exception e) {
+            throw new AssertionError("Не удалось скачать файл", e);
+        }
+    }
 
 	/** Проверить, что публичный API доступен без входа. */
 	public void ping() {
@@ -504,12 +554,12 @@ public class Actor {
 	 * Сырой запрос от имени участника для проверок, которые не укладываются в DTO:
 	 * тело с заведомо неверным JSON, флаги cookie, точный формат GeoJSON. В обычных сценариях не нужен.
 	 */
-	public ResultActions raw(MockHttpServletRequestBuilder request) {
+	public ResultActions raw(AbstractMockHttpServletRequestBuilder<?> request) {
 		return api.raw(request, cookie);
 	}
 
 	/** Произвольный запрос с телом и типом ответа — для эндпоинтов, которых ещё нет среди методов. */
-	public <T> T send(String label, MockHttpServletRequestBuilder request, Object body, JavaType responseType) {
+	public <T> T send(String label, AbstractMockHttpServletRequestBuilder<?> request, Object body, JavaType responseType) {
 		return api.send(label, request, cookie, body, responseType);
 	}
 

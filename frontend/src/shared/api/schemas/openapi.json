@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:8080",
+      "url": "http://localhost:8081",
       "description": "Generated server url"
     }
   ],
@@ -156,6 +156,68 @@
           },
           "400": {
             "description": "Не указан вид спорта или неизвестный sportId",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/me/preferences": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Мои предпочтения онбординга",
+        "description": "До первого сохранения возвращает значения по умолчанию без записи в БД. Настройки пока только сохраняются, без применения к подбору и уведомлениям.",
+        "operationId": "users_myPreferences",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPreferencesResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Сохранить предпочтения онбординга целиком",
+        "description": "Все поля обязательны. Дни возвращаются без повторов, с понедельника по воскресенье. Общий уровень не меняет уровни отдельных видов спорта.",
+        "operationId": "users_saveMyPreferences",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveUserPreferencesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Сохранённые предпочтения",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPreferencesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректные предпочтения",
             "content": {
               "application/json": {
                 "schema": {
@@ -942,6 +1004,92 @@
           },
           "404": {
             "description": "Нет такой вещи",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/me/photos": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Мои фото в порядке загрузки, отдельно от аватара",
+        "operationId": "users_myPhotos",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FileResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Добавить фото в личную галерею (JPG, PNG, WebP до 5 МБ)",
+        "description": "До 6 фото. Видны в публичном профиле всем вошедшим; аватар не меняется.",
+        "operationId": "users_addPhoto",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Фото"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Галерея после загрузки",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FileResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Неверный формат или размер",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Уже 6 фото",
             "content": {
               "application/json": {
                 "schema": {
@@ -3987,6 +4135,51 @@
         }
       }
     },
+    "/api/users/me/photos/{fileId}": {
+      "delete": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Удалить своё фото из галереи",
+        "operationId": "users_removePhoto",
+        "parameters": [
+          {
+            "name": "fileId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Галерея после удаления",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FileResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Фото не найдено в своей галерее",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/organizations/me/documents/{fileId}": {
       "delete": {
         "tags": [
@@ -4607,6 +4800,137 @@
         },
         "required": [
           "sport"
+        ]
+      },
+      "HelpersPreferences": {
+        "type": "object",
+        "properties": {
+          "reminders": {
+            "type": "boolean",
+            "description": "Напоминать о тренировках"
+          },
+          "nearby": {
+            "type": "boolean",
+            "description": "Подсказывать события рядом"
+          },
+          "cheer": {
+            "type": "boolean",
+            "description": "Радоваться достижениям"
+          }
+        },
+        "required": [
+          "cheer",
+          "nearby",
+          "reminders"
+        ]
+      },
+      "SaveUserPreferencesRequest": {
+        "type": "object",
+        "properties": {
+          "level": {
+            "type": "string",
+            "enum": [
+              "BEGINNER",
+              "AMATEUR",
+              "ADVANCED",
+              "PRO"
+            ]
+          },
+          "days": {
+            "type": "array",
+            "description": "Удобные дни недели; хотя бы один",
+            "items": {
+              "type": "string",
+              "enum": [
+                "MONDAY",
+                "TUESDAY",
+                "WEDNESDAY",
+                "THURSDAY",
+                "FRIDAY",
+                "SATURDAY",
+                "SUNDAY"
+              ]
+            },
+            "minItems": 1
+          },
+          "daytime": {
+            "type": "string",
+            "enum": [
+              "MORNING",
+              "DAY",
+              "EVENING"
+            ]
+          },
+          "radiusKm": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Радиус поиска в километрах",
+            "maximum": 20,
+            "minimum": 1
+          },
+          "helpers": {
+            "$ref": "#/components/schemas/HelpersPreferences"
+          }
+        },
+        "required": [
+          "days",
+          "daytime",
+          "helpers",
+          "level",
+          "radiusKm"
+        ]
+      },
+      "UserPreferencesResponse": {
+        "type": "object",
+        "properties": {
+          "level": {
+            "type": "string",
+            "enum": [
+              "BEGINNER",
+              "AMATEUR",
+              "ADVANCED",
+              "PRO"
+            ]
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "MONDAY",
+                "TUESDAY",
+                "WEDNESDAY",
+                "THURSDAY",
+                "FRIDAY",
+                "SATURDAY",
+                "SUNDAY"
+              ]
+            }
+          },
+          "daytime": {
+            "type": "string",
+            "enum": [
+              "MORNING",
+              "DAY",
+              "EVENING"
+            ]
+          },
+          "radiusKm": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 20,
+            "minimum": 1
+          },
+          "helpers": {
+            "$ref": "#/components/schemas/HelpersPreferences"
+          }
+        },
+        "required": [
+          "days",
+          "daytime",
+          "helpers",
+          "level",
+          "radiusKm"
         ]
       },
       "PetRequest": {
@@ -6677,6 +7001,13 @@
             "items": {
               "$ref": "#/components/schemas/EventSummaryResponse"
             }
+          },
+          "photos": {
+            "type": "array",
+            "description": "Фото личной галереи в порядке загрузки, до 6; отдельно от аватара",
+            "items": {
+              "$ref": "#/components/schemas/FileResponse"
+            }
           }
         },
         "required": [
@@ -6685,6 +7016,7 @@
           "firstName",
           "id",
           "lastName",
+          "photos",
           "sports",
           "username"
         ]

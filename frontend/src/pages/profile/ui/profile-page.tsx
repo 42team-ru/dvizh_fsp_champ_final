@@ -2,6 +2,7 @@ import { PetNameEditor } from "@/features/rename-pet/ui/pet-name-editor";
 import { useState } from "react";
 import { useAttendance } from "./use-attendance";
 import { MyBeaverPet } from "@/widgets/beaver-pet/ui/my-beaver-pet";
+import { ProfileGallery } from "./profile-gallery";
 import { ProfileMobile } from "./profile-mobile";
 import { AppHeader } from "@/widgets/app-header/ui/app-header";
 import { Badge } from "@/shared/components/ui/badge";
@@ -352,6 +353,7 @@ export default function ProfilePage() {
           <Attendance />
           <Achievements />
         </div>
+        <div className="mt-6"><ProfileGallery /></div>
       </main>
     </div>
     </>

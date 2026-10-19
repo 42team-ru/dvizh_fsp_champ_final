@@ -20,7 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder;
 import tools.jackson.databind.JavaType;
 import tools.jackson.databind.ObjectMapper;
 
@@ -116,7 +116,7 @@ public class TestApi {
 	// ---------- транспорт для Actor ----------
 
 	/** Выполнить запрос от имени cookie (null — гость) и вернуть тело как type; void-ответ — null. */
-	<T> T send(String label, MockHttpServletRequestBuilder request, Cookie cookie, Object body, JavaType type) {
+	<T> T send(String label, AbstractMockHttpServletRequestBuilder<?> request, Cookie cookie, Object body, JavaType type) {
 		if (cookie != null) {
 			request.cookie(cookie);
 		}
@@ -132,7 +132,7 @@ public class TestApi {
 	}
 
 	/** Сырой запрос для редких проверок формата (cookie, GeoJSON): ResultActions без разбора. */
-	ResultActions raw(MockHttpServletRequestBuilder request, Cookie cookie) {
+	ResultActions raw(AbstractMockHttpServletRequestBuilder<?> request, Cookie cookie) {
 		if (cookie != null) {
 			request.cookie(cookie);
 		}
@@ -151,7 +151,7 @@ public class TestApi {
 		return json.getTypeFactory().constructParametricType(container, parameter);
 	}
 
-	private ResultActions call(MockHttpServletRequestBuilder request) {
+	private ResultActions call(AbstractMockHttpServletRequestBuilder<?> request) {
 		try {
 			return mvc.perform(request);
 		} catch (Exception e) {

@@ -2,6 +2,7 @@ import { PetNameEditor } from "@/features/rename-pet/ui/pet-name-editor";
 import { useState } from "react";
 import { useAttendance } from "./use-attendance";
 import { MyBeaverPet } from "@/widgets/beaver-pet/ui/my-beaver-pet";
+import { ProfileGallery } from "./profile-gallery";
 import { MobileTabBar } from "@/widgets/mobile-shell/ui/mobile-tab-bar";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
@@ -289,6 +290,7 @@ export function ProfileMobile() {
       <MemphisBackground variant="mobile" seed="profile" />
       <AppBar />
       <Passport />
+      <div className="px-4"><ProfileGallery /></div>
       <Pet />
       <Attendance />
       <Achievements />

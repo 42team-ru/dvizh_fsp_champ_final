@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.hackathon.app.domain.dto.EventSummaryResponse;
+import com.hackathon.app.domain.dto.FileResponse;
 import com.hackathon.app.domain.dto.PublicUserResponse;
 import com.hackathon.app.domain.dto.UpdateProfileRequest;
 import com.hackathon.app.domain.dto.UserShortResponse;
@@ -23,7 +24,7 @@ public interface UserMapper {
     com.hackathon.app.domain.dto.AdminUserResponse toAdmin(AppUser user, long eventsCount, long registrationsCount);
 
 	PublicUserResponse toPublic(AppUser user, List<UserSportResponse> sports, long attendedCount,
-			List<EventSummaryResponse> events);
+			List<EventSummaryResponse> events, List<FileResponse> photos);
 
 	/** Правка профиля: имя, фамилия, город, о себе. */
 	void updateProfile(@MappingTarget AppUser user, UpdateProfileRequest request);

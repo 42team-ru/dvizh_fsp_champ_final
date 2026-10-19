@@ -27,13 +27,17 @@ import type {
 import type {
   AchievementResponse,
   AttendanceSummaryResponse,
+  FileResponse,
   MeResponse,
   PageResponseAttendedOccurrenceResponse,
   ProblemDetail,
   PublicUserResponse,
+  SaveUserPreferencesRequest,
   SaveUserSportsRequest,
   UpdateProfileRequest,
+  UserPreferencesResponse,
   UserSportResponse,
+  UsersAddPhotoBody,
   UsersHistoryParams,
   UsersHistorySummaryParams,
   UsersUploadAvatarBody,
@@ -389,6 +393,226 @@ export const useUsersSaveMySports = <TError = ErrorType<ProblemDetail>,
       > => {
       return useMutation(getUsersSaveMySportsMutationOptions(options), queryClient);
     }
+    export type usersMyPreferencesResponse200 = {
+  data: UserPreferencesResponse
+  status: 200
+}
+
+export type usersMyPreferencesResponseSuccess = (usersMyPreferencesResponse200) & {
+  headers: Headers;
+};
+;
+
+export type usersMyPreferencesResponse = (usersMyPreferencesResponseSuccess)
+
+export const getUsersMyPreferencesUrl = () => {
+
+
+
+
+  return `/api/users/me/preferences`
+}
+
+/**
+ * До первого сохранения возвращает значения по умолчанию без записи в БД. Настройки пока только сохраняются, без применения к подбору и уведомлениям.
+ * @summary Мои предпочтения онбординга
+ */
+export const usersMyPreferences = async ( options?: Parameters<typeof authMutator>[1]): Promise<usersMyPreferencesResponse> => {
+
+  return authMutator<usersMyPreferencesResponse>(getUsersMyPreferencesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getUsersMyPreferencesQueryKey = () => {
+    return [
+    `/api/users/me/preferences`
+    ] as const;
+    }
+
+
+export const getUsersMyPreferencesQueryOptions = <TData = Awaited<ReturnType<typeof usersMyPreferences>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersMyPreferences>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getUsersMyPreferencesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof usersMyPreferences>>> = ({ signal }) => usersMyPreferences({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof usersMyPreferences>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type UsersMyPreferencesQueryResult = NonNullable<Awaited<ReturnType<typeof usersMyPreferences>>>
+export type UsersMyPreferencesQueryError = ErrorType<unknown>
+
+
+export function useUsersMyPreferences<TData = Awaited<ReturnType<typeof usersMyPreferences>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersMyPreferences>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersMyPreferences>>,
+          TError,
+          Awaited<ReturnType<typeof usersMyPreferences>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUsersMyPreferences<TData = Awaited<ReturnType<typeof usersMyPreferences>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersMyPreferences>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersMyPreferences>>,
+          TError,
+          Awaited<ReturnType<typeof usersMyPreferences>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUsersMyPreferences<TData = Awaited<ReturnType<typeof usersMyPreferences>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersMyPreferences>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Мои предпочтения онбординга
+ */
+
+export function useUsersMyPreferences<TData = Awaited<ReturnType<typeof usersMyPreferences>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersMyPreferences>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getUsersMyPreferencesQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type usersSaveMyPreferencesResponse200 = {
+  data: UserPreferencesResponse
+  status: 200
+}
+
+export type usersSaveMyPreferencesResponse400 = {
+  data: ProblemDetail
+  status: 400
+}
+
+export type usersSaveMyPreferencesResponseSuccess = (usersSaveMyPreferencesResponse200) & {
+  headers: Headers;
+};
+export type usersSaveMyPreferencesResponseError = (usersSaveMyPreferencesResponse400) & {
+  headers: Headers;
+};
+
+export type usersSaveMyPreferencesResponse = (usersSaveMyPreferencesResponseSuccess | usersSaveMyPreferencesResponseError)
+
+export const getUsersSaveMyPreferencesUrl = () => {
+
+
+
+
+  return `/api/users/me/preferences`
+}
+
+/**
+ * Все поля обязательны. Дни возвращаются без повторов, с понедельника по воскресенье. Общий уровень не меняет уровни отдельных видов спорта.
+ * @summary Сохранить предпочтения онбординга целиком
+ */
+export const usersSaveMyPreferences = async (saveUserPreferencesRequest: SaveUserPreferencesRequest, options?: Parameters<typeof authMutator>[1]): Promise<usersSaveMyPreferencesResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return authMutator<usersSaveMyPreferencesResponse>(getUsersSaveMyPreferencesUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(saveUserPreferencesRequest)
+  }
+);}
+
+
+
+
+
+export const getUsersSaveMyPreferencesMutationKey = () => ['usersSaveMyPreferences'] as const;
+
+export const getUsersSaveMyPreferencesMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersSaveMyPreferences>>, TError,UsersSaveMyPreferencesMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof usersSaveMyPreferences>>, TError,UsersSaveMyPreferencesMutationVariables, TContext> => {
+
+const mutationKey = getUsersSaveMyPreferencesMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersSaveMyPreferences>>, UsersSaveMyPreferencesMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  usersSaveMyPreferences(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UsersSaveMyPreferencesMutationResult = NonNullable<Awaited<ReturnType<typeof usersSaveMyPreferences>>>
+    export type UsersSaveMyPreferencesMutationBody = SaveUserPreferencesRequest
+    export type UsersSaveMyPreferencesMutationError = ErrorType<ProblemDetail>
+    export type UsersSaveMyPreferencesMutationVariables = {data: SaveUserPreferencesRequest}
+
+    /**
+ * @summary Сохранить предпочтения онбординга целиком
+ */
+export const useUsersSaveMyPreferences = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersSaveMyPreferences>>, TError,UsersSaveMyPreferencesMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof usersSaveMyPreferences>>,
+        TError,
+        UsersSaveMyPreferencesMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUsersSaveMyPreferencesMutationOptions(options), queryClient);
+    }
     export type usersUploadAvatarResponse200 = {
   data: MeResponse
   status: 200
@@ -570,6 +794,220 @@ export const useUsersDeleteAvatar = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getUsersDeleteAvatarMutationOptions(options), queryClient);
+    }
+    export type usersMyPhotosResponse200 = {
+  data: FileResponse[]
+  status: 200
+}
+
+export type usersMyPhotosResponseSuccess = (usersMyPhotosResponse200) & {
+  headers: Headers;
+};
+;
+
+export type usersMyPhotosResponse = (usersMyPhotosResponseSuccess)
+
+export const getUsersMyPhotosUrl = () => {
+
+
+
+
+  return `/api/users/me/photos`
+}
+
+/**
+ * @summary Мои фото в порядке загрузки, отдельно от аватара
+ */
+export const usersMyPhotos = async ( options?: Parameters<typeof authMutator>[1]): Promise<usersMyPhotosResponse> => {
+
+  return authMutator<usersMyPhotosResponse>(getUsersMyPhotosUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getUsersMyPhotosQueryKey = () => {
+    return [
+    `/api/users/me/photos`
+    ] as const;
+    }
+
+
+export const getUsersMyPhotosQueryOptions = <TData = Awaited<ReturnType<typeof usersMyPhotos>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersMyPhotos>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getUsersMyPhotosQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof usersMyPhotos>>> = ({ signal }) => usersMyPhotos({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof usersMyPhotos>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type UsersMyPhotosQueryResult = NonNullable<Awaited<ReturnType<typeof usersMyPhotos>>>
+export type UsersMyPhotosQueryError = ErrorType<unknown>
+
+
+export function useUsersMyPhotos<TData = Awaited<ReturnType<typeof usersMyPhotos>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersMyPhotos>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersMyPhotos>>,
+          TError,
+          Awaited<ReturnType<typeof usersMyPhotos>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUsersMyPhotos<TData = Awaited<ReturnType<typeof usersMyPhotos>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersMyPhotos>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersMyPhotos>>,
+          TError,
+          Awaited<ReturnType<typeof usersMyPhotos>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUsersMyPhotos<TData = Awaited<ReturnType<typeof usersMyPhotos>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersMyPhotos>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Мои фото в порядке загрузки, отдельно от аватара
+ */
+
+export function useUsersMyPhotos<TData = Awaited<ReturnType<typeof usersMyPhotos>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersMyPhotos>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getUsersMyPhotosQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type usersAddPhotoResponse200 = {
+  data: FileResponse[]
+  status: 200
+}
+
+export type usersAddPhotoResponse400 = {
+  data: ProblemDetail
+  status: 400
+}
+
+export type usersAddPhotoResponse409 = {
+  data: ProblemDetail
+  status: 409
+}
+
+export type usersAddPhotoResponseSuccess = (usersAddPhotoResponse200) & {
+  headers: Headers;
+};
+export type usersAddPhotoResponseError = (usersAddPhotoResponse400 | usersAddPhotoResponse409) & {
+  headers: Headers;
+};
+
+export type usersAddPhotoResponse = (usersAddPhotoResponseSuccess | usersAddPhotoResponseError)
+
+export const getUsersAddPhotoUrl = () => {
+
+
+
+
+  return `/api/users/me/photos`
+}
+
+/**
+ * До 6 фото. Видны в публичном профиле всем вошедшим; аватар не меняется.
+ * @summary Добавить фото в личную галерею (JPG, PNG, WebP до 5 МБ)
+ */
+export const usersAddPhoto = async (usersAddPhotoBody?: UsersAddPhotoBody, options?: Parameters<typeof authMutator>[1]): Promise<usersAddPhotoResponse> => {
+    const formData = new FormData();
+if(usersAddPhotoBody?.file !== undefined) {
+ formData.append(`file`, usersAddPhotoBody.file);
+ }
+
+  return authMutator<usersAddPhotoResponse>(getUsersAddPhotoUrl(),
+  {
+    ...options,
+    method: 'POST'
+    ,
+    body: formData
+  }
+);}
+
+
+
+
+
+export const getUsersAddPhotoMutationKey = () => ['usersAddPhoto'] as const;
+
+export const getUsersAddPhotoMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersAddPhoto>>, TError,UsersAddPhotoMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof usersAddPhoto>>, TError,UsersAddPhotoMutationVariables, TContext> => {
+
+const mutationKey = getUsersAddPhotoMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersAddPhoto>>, UsersAddPhotoMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  usersAddPhoto(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UsersAddPhotoMutationResult = NonNullable<Awaited<ReturnType<typeof usersAddPhoto>>>
+    export type UsersAddPhotoMutationBody = UsersAddPhotoBody | undefined
+    export type UsersAddPhotoMutationError = ErrorType<ProblemDetail>
+    export type UsersAddPhotoMutationVariables = {data?: UsersAddPhotoBody}
+
+    /**
+ * @summary Добавить фото в личную галерею (JPG, PNG, WebP до 5 МБ)
+ */
+export const useUsersAddPhoto = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersAddPhoto>>, TError,UsersAddPhotoMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof usersAddPhoto>>,
+        TError,
+        UsersAddPhotoMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUsersAddPhotoMutationOptions(options), queryClient);
     }
     export type usersGetResponse200 = {
   data: PublicUserResponse
@@ -1161,3 +1599,95 @@ export function useUsersAchievements<TData = Awaited<ReturnType<typeof usersAchi
 
 
 
+export type usersRemovePhotoResponse200 = {
+  data: FileResponse[]
+  status: 200
+}
+
+export type usersRemovePhotoResponse404 = {
+  data: ProblemDetail
+  status: 404
+}
+
+export type usersRemovePhotoResponseSuccess = (usersRemovePhotoResponse200) & {
+  headers: Headers;
+};
+export type usersRemovePhotoResponseError = (usersRemovePhotoResponse404) & {
+  headers: Headers;
+};
+
+export type usersRemovePhotoResponse = (usersRemovePhotoResponseSuccess | usersRemovePhotoResponseError)
+
+export const getUsersRemovePhotoUrl = (fileId: string,) => {
+
+
+
+
+  return `/api/users/me/photos/${fileId}`
+}
+
+/**
+ * @summary Удалить своё фото из галереи
+ */
+export const usersRemovePhoto = async (fileId: string, options?: Parameters<typeof authMutator>[1]): Promise<usersRemovePhotoResponse> => {
+
+  return authMutator<usersRemovePhotoResponse>(getUsersRemovePhotoUrl(fileId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getUsersRemovePhotoMutationKey = () => ['usersRemovePhoto'] as const;
+
+export const getUsersRemovePhotoMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersRemovePhoto>>, TError,UsersRemovePhotoMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof usersRemovePhoto>>, TError,UsersRemovePhotoMutationVariables, TContext> => {
+
+const mutationKey = getUsersRemovePhotoMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersRemovePhoto>>, UsersRemovePhotoMutationVariables> = (props) => {
+          const {fileId} = props ?? {};
+
+          return  usersRemovePhoto(fileId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UsersRemovePhotoMutationResult = NonNullable<Awaited<ReturnType<typeof usersRemovePhoto>>>
+
+    export type UsersRemovePhotoMutationError = ErrorType<ProblemDetail>
+    export type UsersRemovePhotoMutationVariables = {fileId: string}
+
+    /**
+ * @summary Удалить своё фото из галереи
+ */
+export const useUsersRemovePhoto = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersRemovePhoto>>, TError,UsersRemovePhotoMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof usersRemovePhoto>>,
+        TError,
+        UsersRemovePhotoMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUsersRemovePhotoMutationOptions(options), queryClient);
+    }
