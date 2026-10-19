@@ -1,3 +1,4 @@
+import { PetNameEditor } from "@/features/rename-pet/ui/pet-name-editor";
 import { useState } from "react";
 import { MyBeaverPet } from "@/widgets/beaver-pet/ui/my-beaver-pet";
 import { MobileTabBar } from "@/widgets/mobile-shell/ui/mobile-tab-bar";
@@ -136,13 +137,11 @@ function Pet() {
   return (
     <div className="px-4">
       <div className="box-border flex w-full flex-col gap-3 rounded-[26px] border-2 border-ink bg-sky p-[18px] shadow-[4px_4px_0_var(--ink)]">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <MyBeaverPet speechContainer={speechContainer} className="size-28 shrink-0 [&_.beaver-pet]:h-full [&_svg]:h-full" />
-          <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
+          <div className="flex min-w-[180px] flex-1 flex-col items-start gap-1">
             <Eyebrow className={cn(small, "text-foreground")}>ТВОЙ ПИТОМЕЦ</Eyebrow>
-            <p className="font-display text-[22px] leading-[normal] font-extrabold whitespace-nowrap text-foreground">
-              Бублик
-            </p>
+            <PetNameEditor />
             <p className="text-[13px] leading-[normal] font-bold whitespace-nowrap text-foreground">
               Бобр · уровень 4
             </p>

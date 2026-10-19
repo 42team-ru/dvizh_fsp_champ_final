@@ -1276,6 +1276,7 @@ export interface PetResponse {
   activity: string;
   outfit: PetResponseOutfit;
   status?: PetStatusResponse;
+  name: string;
 }
 
 /**
@@ -1741,6 +1742,10 @@ export interface PageResponseAdminEventResponse {
   size?: number;
   totalElements?: number;
   totalPages?: number;
+}
+
+export interface PetRenameRequest {
+  name: string;
 }
 
 export type UsersUploadAvatarBody = {

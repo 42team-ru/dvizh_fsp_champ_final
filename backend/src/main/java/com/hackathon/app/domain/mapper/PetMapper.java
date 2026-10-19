@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import com.hackathon.app.domain.dto.PetItemResponse;
 import com.hackathon.app.domain.dto.PetSlotResponse;
+import com.hackathon.app.domain.entity.AppUser;
 import com.hackathon.app.domain.entity.PetItem;
 import com.hackathon.app.domain.entity.PetSlot;
 import com.hackathon.app.domain.entity.UserPetEquipment;
@@ -15,6 +16,9 @@ import org.mapstruct.MappingTarget;
 
 @Mapper(config = MappingConfig.class)
 public interface PetMapper {
+
+	/** Сменить только имя, сохранив остальные поля аккаунта. */
+	void rename(@MappingTarget AppUser user, String petName);
 
 	PetSlot toSlot(String code, String label, PetSlotKind kind, int position, boolean builtIn);
 

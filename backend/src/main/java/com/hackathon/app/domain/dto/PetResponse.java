@@ -7,6 +7,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 /** Образ и настроение бобра; личное состояние отдаётся только владельцу. */
 public record PetResponse(
+        /** Имя питомца; по умолчанию Бублик. */
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String name,
         /** Настроение, вычисленное сервером; в публичном ответе idle. */
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) PetMood mood,
         /** Инвентарь; none — без инвентаря. */

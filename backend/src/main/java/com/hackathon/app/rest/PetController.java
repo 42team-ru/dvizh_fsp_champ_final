@@ -5,6 +5,7 @@ import java.util.UUID;
 import com.hackathon.app.domain.dto.PetCatalogResponse;
 import com.hackathon.app.domain.dto.PetEquipRequest;
 import com.hackathon.app.domain.dto.PetRequest;
+import com.hackathon.app.domain.dto.PetRenameRequest;
 import com.hackathon.app.domain.dto.PetResponse;
 import com.hackathon.app.service.PetCatalogService;
 import com.hackathon.app.service.PetService;
@@ -65,6 +66,17 @@ class PetController {
 		log.info("Endpoint called: PUT /api/users/me/pet, userId={}, request={}", jwt.getSubject(), request);
 		var response = pets.save(userId(jwt), request);
 		log.info("Endpoint response: PUT /api/users/me/pet, response={}", response);
+		return response;
+	}
+
+	@PutMapping("/users/me/pet/name")
+	@Operation(operationId = "pets_rename", summary = "Переименовать питомца")
+	@ApiResponse(responseCode = "200", description = "Питомец с новым именем", content = @Content(schema = @Schema(implementation = PetResponse.class)))
+	@ApiResponse(responseCode = "400", description = "Имя питомца — от 1 до 30 символов", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+	PetResponse rename(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody PetRenameRequest request) {
+		log.info("Endpoint called: PUT /api/users/me/pet/name, userId={}, request={}", jwt.getSubject(), request);
+		var response = pets.rename(userId(jwt), request.name());
+		log.info("Endpoint response: PUT /api/users/me/pet/name, response={}", response);
 		return response;
 	}
 

@@ -7,6 +7,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.hackathon.app.domain.dto.PetRequest;
+import com.hackathon.app.util.Strings;
 import com.hackathon.app.domain.dto.PetResponse;
 import com.hackathon.app.domain.enums.PetMood;
 import com.hackathon.app.domain.entity.PetItem;
@@ -57,6 +58,18 @@ public class PetService {
             throw new NoSuchElementException("Пользователь не найден");
         }
         return toResponse(userId, catalogService.load(), false);
+    }
+
+    /** Сменить имя питомца, не затрагивая гардероб. */
+    @Transactional
+    public PetResponse rename(UUID userId, String name) {
+        var normalized = Strings.blankToNull(name == null ? null : name.replaceAll("(?U)\\s+", " "));
+        if (normalized == null || normalized.codePointCount(0, normalized.length()) > 30) {
+            throw new BadRequestException("Имя питомца — от 1 до 30 символов");
+        }
+        var user = users.findById(userId).orElseThrow(() -> new NoSuchElementException("Пользователь не найден"));
+        mapper.rename(user, normalized);
+        return toResponse(userId, catalogService.load(), true);
     }
 
     /**
@@ -138,6 +151,7 @@ public class PetService {
             }
         }
         var status = own ? moods.compute(userId) : null;
-        return new PetResponse(status == null ? PetMood.IDLE : status.mood(), activity, outfit, status);
+        var name = users.findById(userId).orElseThrow(() -> new NoSuchElementException("Пользователь не найден")).getPetName();
+        return new PetResponse(name == null ? "Бублик" : name, status == null ? PetMood.IDLE : status.mood(), activity, outfit, status);
     }
 }

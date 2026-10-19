@@ -120,7 +120,7 @@ export default function PetPage() {
   return (
     <main className="mx-auto min-h-dvh max-w-5xl px-4 py-8 sm:px-8">
       <div className="mb-6 text-center">
-        <h1 className="text-3xl font-bold">Одень бобра</h1>
+        <h1 className="text-3xl font-bold">{current?.name ?? "Питомец"}: гардероб</h1>
         <p className="mt-2 text-muted-foreground">Выбери готовый образ или собери свой из отдельных вещей.</p>
       </div>
       <div className="grid items-start gap-8 md:grid-cols-2">

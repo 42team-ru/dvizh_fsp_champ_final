@@ -3419,6 +3419,47 @@
           }
         }
       }
+    },
+    "/api/users/me/pet/name": {
+      "put": {
+        "tags": [
+          "pets"
+        ],
+        "summary": "Переименовать питомца",
+        "operationId": "pets_rename",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PetRenameRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Питомец с новым именем",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PetResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Имя питомца — от 1 до 30 символов",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -5369,11 +5410,15 @@
           },
           "status": {
             "$ref": "#/components/schemas/PetStatusResponse"
+          },
+          "name": {
+            "type": "string"
           }
         },
         "required": [
           "activity",
           "mood",
+          "name",
           "outfit"
         ]
       },
@@ -6343,6 +6388,17 @@
             "format": "int32"
           }
         }
+      },
+      "PetRenameRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
       }
     },
     "securitySchemes": {

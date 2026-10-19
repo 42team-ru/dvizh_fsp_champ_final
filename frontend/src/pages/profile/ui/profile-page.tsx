@@ -1,3 +1,4 @@
+import { PetNameEditor } from "@/features/rename-pet/ui/pet-name-editor";
 import { useState } from "react";
 import { MyBeaverPet } from "@/widgets/beaver-pet/ui/my-beaver-pet";
 import { ProfileMobile } from "./profile-mobile";
@@ -171,29 +172,23 @@ function Pet() {
         <Img name="memphis1.svg" className="top-0 left-0 size-[330px]" />
         <MyBeaverPet speechContainer={speechContainer} className="absolute top-[18px] left-[12px] h-[300px] w-[300px] [&_.beaver-pet]:h-full [&_svg]:h-full" />
       </div>
-      <div className="flex h-[326px] w-[367px] shrink-0 flex-col items-start justify-between px-[28px] py-[26px]">
-        <div className="flex h-[82px] w-[311px] items-start justify-between">
-          <div className="relative h-[82px] w-[165px]">
-            <Eyebrow>ТВОЙ ПИТОМЕЦ</Eyebrow>
-            <p className="absolute top-[19px] left-0 font-display text-[34px] leading-[42px] font-extrabold text-foreground">
-              Бублик
-            </p>
-            <p className="absolute top-[63px] left-0 text-sm leading-[19px] font-semibold whitespace-nowrap text-muted-foreground">
-              Бобр · уровень 4
-            </p>
-          </div>
-          <Badge
-            variant="secondary"
-            className="h-[38px] gap-[6px] border-2 px-[14px] text-[15px] leading-[21px] font-extrabold"
-          >
-            <Icon name="profile/icon-coin" className="size-[18px]" />
-            150
-          </Badge>
+      <div className="flex h-[326px] w-[367px] shrink-0 flex-col items-start gap-2 px-[28px] py-4">
+        <div className="w-full min-w-0 shrink-0">
+          <Eyebrow>ТВОЙ ПИТОМЕЦ</Eyebrow>
+          <PetNameEditor>
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm font-semibold text-muted-foreground">Бобр · уровень 4</p>
+              <Badge variant="secondary" className="h-[38px] gap-[6px] border-2 px-[14px] text-[15px] font-extrabold">
+                <Icon name="profile/icon-coin" className="size-[18px]" />
+                150
+              </Badge>
+            </div>
+          </PetNameEditor>
         </div>
 
-        <div ref={setSpeechContainer} className="relative h-[72.5px] w-[311px]" />
+        <div ref={setSpeechContainer} className="relative min-h-6 w-[311px] flex-1" />
 
-        <div className="flex h-20 w-[311px] flex-col gap-3">
+        <div className="flex h-20 w-[311px] shrink-0 flex-col gap-3">
           {[
             { label: "Энергия", value: "4 из 5", pct: 80, bar: "bg-mint" },
             { label: "Стиль", value: "1 из 5", pct: 20, bar: undefined },

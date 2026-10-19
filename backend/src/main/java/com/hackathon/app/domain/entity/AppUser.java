@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import com.hackathon.app.domain.enums.AuthProvider;
 import com.hackathon.app.domain.enums.SystemRole;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -46,4 +47,7 @@ public class AppUser {
      * Город.
      */
     private String city;
+    /** Имя питомца; null — имя по умолчанию «Бублик». */
+    @Column(length = 30)
+    private String petName;
 }

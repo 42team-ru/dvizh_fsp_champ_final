@@ -20,6 +20,7 @@ import java.util.UUID;
 
 import com.hackathon.app.domain.dto.AdminEventResponse;
 import com.hackathon.app.domain.dto.PetResponse;
+import com.hackathon.app.domain.dto.PetRenameRequest;
 import com.hackathon.app.domain.dto.PetRequest;
 import com.hackathon.app.domain.dto.PetCatalogResponse;
 import com.hackathon.app.domain.dto.AdminOrganizationResponse;
@@ -106,6 +107,11 @@ public class Actor {
     /** Заменить гардероб без выбора настроения. */
     public PetResponse savePet(PetRequest request) {
         return send("PUT /api/users/me/pet", put("/api/users/me/pet"), request, type(PetResponse.class));
+    }
+
+    /** Переименовать питомца без изменения гардероба. */
+    public PetResponse renamePet(String name) {
+        return send("PUT /api/users/me/pet/name", put("/api/users/me/pet/name"), new PetRenameRequest(name), type(PetResponse.class));
     }
 
     /** Встроенный каталог. */

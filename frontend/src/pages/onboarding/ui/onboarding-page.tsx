@@ -1,3 +1,5 @@
+import { useQueryClient } from "@tanstack/react-query";
+import { getPetsGetMineQueryKey, usePetsRename } from "@/shared/api/generated/core/pets/pets";
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { Button } from "@/shared/components/ui/button";
@@ -60,7 +62,16 @@ export default function OnboardingPage() {
   const [data, setData] = useState<OnboardingData>(INITIAL_DATA);
 
   const update = (patch: Partial<OnboardingData>) => setData((prev) => ({ ...prev, ...patch }));
-  const finish = (to: string) => navigate(to);
+  const queryClient = useQueryClient();
+  const rename = usePetsRename({
+    mutation: {
+      onSuccess: () => queryClient.invalidateQueries({ queryKey: getPetsGetMineQueryKey() }),
+    },
+  });
+  const finish = (to: string) => {
+    rename.mutate({ data: { name: data.petName } });
+    navigate(to);
+  };
 
   // На втором шаге нужен хотя бы один вид спорта, на третьем — хотя бы один день.
   const canNext =
