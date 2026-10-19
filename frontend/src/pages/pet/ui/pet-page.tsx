@@ -59,7 +59,7 @@ const ACTIVITIES: { value: BeaverActivity; label: string }[] = [
   { value: "none", label: "Без инвентаря" }, { value: "juggle", label: "Футбольный мяч" },
   { value: "dribble", label: "Баскетбольный мяч" }, { value: "lift", label: "Гантели" },
   { value: "chess", label: "Шахматная доска и фигуры" }, { value: "ski", label: "Лыжи и палки" },
-  { value: "hockey", label: "Клюшка и шайба" }, { value: "esports", label: "Игровой ноутбук" },
+  { value: "hockey", label: "Летающая шайба" }, { value: "esports", label: "Игровой ноутбук" },
 ];
 const button = (active: boolean) =>
   `rounded-xl border px-4 py-2 text-base transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${active ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:bg-muted"}`;

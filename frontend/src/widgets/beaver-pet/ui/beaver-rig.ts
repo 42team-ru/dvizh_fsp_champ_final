@@ -70,6 +70,8 @@ export function createBeaverRig(root: HTMLElement, followCursor: boolean): Beave
     // Предметы активности вставляются позже, поэтому ищем их в setActivity.
     ball: null as SVGGElement | null,
     ballShadow: null as SVGEllipseElement | null,
+    puck: null as SVGGElement | null,
+    puckShadow: null as SVGEllipseElement | null,
   };
 
   const s = {
@@ -244,6 +246,16 @@ export function createBeaverRig(root: HTMLElement, followCursor: boolean): Beave
       el.ballShadow?.setAttribute("opacity", (0.2 * k).toFixed(3));
     }
 
+    if (activity === "hockey" && el.puck) {
+      // Шайба летает туда-обратно рядом, за бобром; тень скользит по земле.
+      const phase = (2 * Math.PI * actT) / 2.4;
+      const x = 478 + 65 * Math.sin(phase);
+      const y = 492 - 10 * Math.sin(phase * 2);
+      el.puck.setAttribute("transform", `translate(${x.toFixed(2)} ${y.toFixed(2)})`);
+      el.puckShadow?.setAttribute("cx", x.toFixed(2));
+      el.puckShadow?.setAttribute("opacity", (0.15 - (492 - y) * 0.002).toFixed(3));
+    }
+
     if (loop) raf = requestAnimationFrame((n) => frame(n));
   }
 
@@ -263,6 +275,8 @@ export function createBeaverRig(root: HTMLElement, followCursor: boolean): Beave
       actT = 0;
       el.ball = root.querySelector<SVGGElement>("#prop-ball");
       el.ballShadow = root.querySelector<SVGEllipseElement>("#ball-shadow");
+      el.puck = root.querySelector<SVGGElement>("#prop-puck");
+      el.puckShadow = root.querySelector<SVGEllipseElement>("#puck-shadow");
       if (reduced) frame(performance.now(), false);
     },
     hop() {
