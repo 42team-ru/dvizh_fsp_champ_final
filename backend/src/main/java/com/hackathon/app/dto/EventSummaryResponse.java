@@ -1,14 +1,33 @@
 package com.hackathon.app.dto;
 
+import static io.swagger.v3.oas.annotations.media.Schema.RequiredMode.REQUIRED;
+
 import java.time.Instant;
 import java.util.UUID;
 
 import com.hackathon.app.entity.Event;
 import com.hackathon.app.entity.Registration;
+import io.swagger.v3.oas.annotations.media.Schema;
 
-/** Мероприятие в списке (лента, мои события, мои записи): без приватных деталей; myRegistrationStatus — моя запись или null. */
-public record EventSummaryResponse(UUID id, String title, SportResponse sport, Instant startAt, Instant endAt,
-		Event.Format format, String address, String locationNote, Event.Level level, Event.Kind kind,
-		Event.JoinMode joinMode, Integer capacity, long participantsCount, Event.Status status, String moderationReason,
-		UUID authorId, UUID organizationId, Registration.Status myRegistrationStatus) {
+/** Мероприятие в списке (лента, мои события, мои записи): без приватных деталей. */
+@Schema(description = "Мероприятие в списке: лента, мои мероприятия, мои записи")
+public record EventSummaryResponse(
+		@Schema(requiredMode = REQUIRED) UUID id,
+		@Schema(description = "Название", requiredMode = REQUIRED) String title,
+		@Schema(description = "Вид спорта", requiredMode = REQUIRED) SportResponse sport,
+		@Schema(description = "Начало", requiredMode = REQUIRED) Instant startAt,
+		@Schema(description = "Окончание") Instant endAt,
+		@Schema(description = "Очно или онлайн", requiredMode = REQUIRED) Event.Format format,
+		@Schema(description = "Адрес") String address,
+		@Schema(description = "Как найти место") String locationNote,
+		@Schema(description = "Для какого уровня", requiredMode = REQUIRED) Event.Level level,
+		@Schema(description = "Вид мероприятия") Event.Kind kind,
+		@Schema(description = "Режим записи", requiredMode = REQUIRED) Event.JoinMode joinMode,
+		@Schema(description = "Лимит мест; null — без лимита") Integer capacity,
+		@Schema(description = "Подтверждённых участников («записались 8 из 16»)", requiredMode = REQUIRED) long participantsCount,
+		@Schema(description = "Статус мероприятия", requiredMode = REQUIRED) Event.Status status,
+		@Schema(description = "Причина снятия с публикации или удаления") String moderationReason,
+		@Schema(description = "Организатор-человек", requiredMode = REQUIRED) UUID authorId,
+		@Schema(description = "Организация; null — от частного лица") UUID organizationId,
+		@Schema(description = "Статус моей записи; null — не записан") Registration.Status myRegistrationStatus) {
 }

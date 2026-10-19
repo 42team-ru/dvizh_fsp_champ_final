@@ -1,10 +1,22 @@
 package com.hackathon.app.dto;
 
+import static io.swagger.v3.oas.annotations.media.Schema.RequiredMode.REQUIRED;
+
 import java.time.Instant;
 import java.util.UUID;
 
 import com.hackathon.app.entity.Registration;
+import io.swagger.v3.oas.annotations.media.Schema;
 
-public record RegistrationResponse(UUID id, UUID eventId, UUID userId, Registration.Status status, String message,
-		String decisionReason, Instant decidedAt, UUID decidedById, Instant createdAt) {
+@Schema(description = "Запись на мероприятие после действия (записаться, отменить, принять, отклонить)")
+public record RegistrationResponse(
+		@Schema(requiredMode = REQUIRED) UUID id,
+		@Schema(description = "Мероприятие", requiredMode = REQUIRED) UUID eventId,
+		@Schema(description = "Участник", requiredMode = REQUIRED) UUID userId,
+		@Schema(description = "Статус записи", requiredMode = REQUIRED) Registration.Status status,
+		@Schema(description = "Сообщение к заявке") String message,
+		@Schema(description = "Причина решения организатора") String decisionReason,
+		@Schema(description = "Когда решено; null — ещё нет") Instant decidedAt,
+		@Schema(description = "Кто решил; null — автоматически при свободной записи") UUID decidedById,
+		@Schema(requiredMode = REQUIRED) Instant createdAt) {
 }

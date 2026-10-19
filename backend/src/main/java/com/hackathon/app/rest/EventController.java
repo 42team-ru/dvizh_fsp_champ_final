@@ -9,6 +9,9 @@ import com.hackathon.app.dto.EventResponse;
 import com.hackathon.app.dto.EventSummaryResponse;
 import com.hackathon.app.service.EventService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ProblemDetail;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,7 +32,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
-@Tag(name = "events")
+@Tag(name = "events", description = "Мероприятия: лента, карточка, создание и редактирование")
 @RestController
 @RequestMapping(path = "/api/events", produces = MediaType.APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
@@ -37,7 +41,8 @@ class EventController {
     private final EventService events;
 
     @GetMapping
-    @Operation(operationId = "events_list")
+    @Operation(operationId = "events_list", summary = "Лента мероприятий",
+            description = "Только опубликованные, ближайшие первыми, до 100 штук. Без from — начиная с текущего момента.")
     List<EventSummaryResponse> list(@AuthenticationPrincipal Jwt jwt, @ParameterObject EventFilter filter) {
         log.info("Endpoint called: GET /api/events, userId={}, request={}", jwt.getSubject(), filter);
         var response = events.list(filter, userId(jwt));
@@ -46,7 +51,8 @@ class EventController {
     }
 
     @GetMapping("/mine")
-    @Operation(operationId = "events_mine")
+    @Operation(operationId = "events_mine", summary = "Мои мероприятия как организатора",
+            description = "Во всех статусах, включая снятые и удалённые.")
     List<EventSummaryResponse> mine(@AuthenticationPrincipal Jwt jwt) {
         log.info("Endpoint called: GET /api/events/mine, userId={}", jwt.getSubject());
         var response = events.mine(userId(jwt));
@@ -55,7 +61,9 @@ class EventController {
     }
 
     @GetMapping("/{id}")
-    @Operation(operationId = "events_get")
+    @Operation(operationId = "events_get", summary = "Карточка мероприятия",
+            description = "Открывается в любом статусе: снятое и удалённое — с причиной. Блок viewer говорит, какие кнопки показать.")
+    @ApiResponse(responseCode = "404", description = "Мероприятия нет", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     EventResponse get(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
         log.info("Endpoint called: GET /api/events/{}, userId={}", id, jwt.getSubject());
         var response = events.get(id, userId(jwt));
@@ -64,7 +72,10 @@ class EventController {
     }
 
     @PostMapping
-    @Operation(operationId = "events_create")
+    @Operation(operationId = "events_create", summary = "Создать мероприятие",
+            description = "Публикуется сразу. Вид спорта — sportId из справочника или sportName (свой, создастся без дублей).")
+    @ApiResponse(responseCode = "400", description = "Ошибка в форме", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    @ApiResponse(responseCode = "403", description = "Администратор не создаёт мероприятия", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @ResponseStatus(HttpStatus.CREATED)
     EventResponse create(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody EventRequest request) {
         log.info("Endpoint called: POST /api/events, userId={}, request={}", jwt.getSubject(), request);
@@ -74,7 +85,12 @@ class EventController {
     }
 
     @PutMapping("/{id}")
-    @Operation(operationId = "events_update")
+    @Operation(operationId = "events_update", summary = "Изменить мероприятие",
+            description = "Только организатор. Заменяет все поля формы; статус и модерация не меняются.")
+    @ApiResponse(responseCode = "400", description = "Ошибка в форме", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    @ApiResponse(responseCode = "403", description = "Не организатор", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    @ApiResponse(responseCode = "404", description = "Мероприятия нет", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    @ApiResponse(responseCode = "409", description = "Удалено или лимит мест меньше уже записанных", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     EventResponse update(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,
                          @Valid @RequestBody EventRequest request) {
         log.info("Endpoint called: PUT /api/events/{}, userId={}, request={}", id, jwt.getSubject(), request);

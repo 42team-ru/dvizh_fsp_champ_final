@@ -40,7 +40,9 @@ public class RegistrationService {
     private final EventAccessPolicy policy;
     private final RegistrationMapper mapper;
 
-    /** FREE — сразу CONFIRMED, REQUEST — PENDING. После отмены та же строка переиспользуется. */
+    /**
+     * FREE — сразу CONFIRMED, REQUEST — PENDING. После отмены та же строка переиспользуется.
+     */
     @Transactional
     public RegistrationResponse create(UUID eventId, UUID userId, String message) {
         var e = events.findByIdForUpdate(eventId).orElseThrow(() -> new NoSuchElementException(EventService.NOT_FOUND));
@@ -64,7 +66,9 @@ public class RegistrationService {
         }
     }
 
-    /** Отмена своей записи или заявки; повторное нажатие ничего не меняет. */
+    /**
+     * Отмена своей записи или заявки; повторное нажатие ничего не меняет.
+     */
     @Transactional
     public RegistrationResponse cancel(UUID eventId, UUID userId) {
         var e = events.findById(eventId).orElseThrow(() -> new NoSuchElementException(EventService.NOT_FOUND));
@@ -81,7 +85,9 @@ public class RegistrationService {
         return mapper.toResponse(registrations.saveAndFlush(mapper.cancel(my, now, userId)));
     }
 
-    /** Участники и заявки — только организатору; status — необязательный фильтр. */
+    /**
+     * Участники и заявки — только организатору; status — необязательный фильтр.
+     */
     @Transactional(readOnly = true)
     public List<EventRegistrationResponse> listForEvent(UUID eventId, UUID userId, Registration.Status status) {
         var e = events.findById(eventId).orElseThrow(() -> new NoSuchElementException(EventService.NOT_FOUND));
@@ -96,7 +102,9 @@ public class RegistrationService {
         return list.stream().map(r -> mapper.toEventRegistration(r, usersById.get(r.getUserId()))).toList();
     }
 
-    /** Подтвердить можно и ранее отклонённую заявку — так организатор исправляет ошибку. */
+    /**
+     * Подтвердить можно и ранее отклонённую заявку — так организатор исправляет ошибку.
+     */
     @Transactional
     public RegistrationResponse approve(UUID registrationId, UUID userId) {
         var reg = managed(registrationId, userId);
@@ -111,7 +119,9 @@ public class RegistrationService {
         return decide(reg.registration(), Registration.Status.CONFIRMED, null, userId);
     }
 
-    /** Отклонить можно и подтверждённого (исключить из участников); причину участник увидит в своей записи. */
+    /**
+     * Отклонить можно и подтверждённого (исключить из участников); причину участник увидит в своей записи.
+     */
     @Transactional
     public RegistrationResponse reject(UUID registrationId, UUID userId, String reason) {
         var reg = managed(registrationId, userId);
@@ -122,7 +132,9 @@ public class RegistrationService {
         return decide(reg.registration(), Registration.Status.REJECTED, reason, userId);
     }
 
-    /** Мои записи со статусом мероприятия: снятое с публикации тоже видно. */
+    /**
+     * Мои записи со статусом мероприятия: снятое с публикации тоже видно.
+     */
     @Transactional(readOnly = true)
     public List<MyRegistrationResponse> mine(UUID userId) {
         var list = registrations.findByUserIdOrderByCreatedAtDesc(userId);
@@ -138,7 +150,9 @@ public class RegistrationService {
     private record Managed(Registration registration, Event event) {
     }
 
-    /** Заявка + её мероприятие под блокировкой; решать может только организатор (админ — нет, правило 7). */
+    /**
+     * Заявка + её мероприятие под блокировкой; решать может только организатор (админ — нет, правило 7).
+     */
     private Managed managed(UUID registrationId, UUID userId) {
         var reg = registrations.findById(registrationId).orElseThrow(() -> new NoSuchElementException("Заявка не найдена"));
         var e = events.findByIdForUpdate(reg.getEventId()).orElseThrow();

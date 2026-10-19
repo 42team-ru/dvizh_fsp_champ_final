@@ -2,6 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "appAPI",
+    "description": "Платформа совместных спортивных активностей. Ошибки — ProblemDetail (RFC 9457), текст для человека в поле detail.",
     "version": "v1"
   },
   "servers": [
@@ -10,12 +11,36 @@
       "description": "Generated server url"
     }
   ],
+  "security": [
+    {
+      "cookieAuth": []
+    },
+    {
+      "bearerAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "sports",
+      "description": "Справочник видов спорта"
+    },
+    {
+      "name": "registrations",
+      "description": "Запись на мероприятия и решения организатора по заявкам"
+    },
+    {
+      "name": "events",
+      "description": "Мероприятия: лента, карточка, создание и редактирование"
+    }
+  ],
   "paths": {
     "/api/events/{id}": {
       "get": {
         "tags": [
           "events"
         ],
+        "summary": "Карточка мероприятия",
+        "description": "Открывается в любом статусе: снятое и удалённое — с причиной. Блок viewer говорит, какие кнопки показать.",
         "operationId": "events_get",
         "parameters": [
           {
@@ -29,12 +54,12 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "OK",
+          "404": {
+            "description": "Мероприятия нет",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/EventResponse"
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -45,6 +70,8 @@
         "tags": [
           "events"
         ],
+        "summary": "Изменить мероприятие",
+        "description": "Только организатор. Заменяет все поля формы; статус и модерация не меняются.",
         "operationId": "events_update",
         "parameters": [
           {
@@ -68,12 +95,42 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "OK",
+          "400": {
+            "description": "Ошибка в форме",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/EventResponse"
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Не организатор",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Мероприятия нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Удалено или лимит мест меньше уже записанных",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -86,6 +143,8 @@
         "tags": [
           "registrations"
         ],
+        "summary": "Отклонить заявку",
+        "description": "Только организатор. Можно отклонить и подтверждённого. Причину участник увидит в своей записи.",
         "operationId": "registrations_reject",
         "parameters": [
           {
@@ -108,12 +167,32 @@
           }
         },
         "responses": {
-          "200": {
-            "description": "OK",
+          "403": {
+            "description": "Не организатор (админ тоже не решает)",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RegistrationResponse"
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Заявки нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Участник сам отменил запись",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -126,6 +205,8 @@
         "tags": [
           "registrations"
         ],
+        "summary": "Принять заявку",
+        "description": "Только организатор. Можно принять и ранее отклонённую — так исправляется ошибка.",
         "operationId": "registrations_approve",
         "parameters": [
           {
@@ -139,12 +220,32 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "OK",
+          "403": {
+            "description": "Не организатор (админ тоже не решает)",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RegistrationResponse"
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Заявки нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Мест нет, мероприятие снято или участник сам отменил",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -157,49 +258,67 @@
         "tags": [
           "events"
         ],
+        "summary": "Лента мероприятий",
+        "description": "Только опубликованные, ближайшие первыми, до 100 штук. Без from — начиная с текущего момента.",
         "operationId": "events_list",
         "parameters": [
           {
             "name": "q",
             "in": "query",
+            "description": "Поиск по названию и описанию без учёта регистра",
             "required": false,
             "schema": {
-              "type": "string"
-            }
+              "type": "string",
+              "description": "Поиск по названию и описанию без учёта регистра",
+              "example": "футбол"
+            },
+            "example": "футбол"
           },
           {
             "name": "sportId",
             "in": "query",
+            "description": "Вид спорта",
             "required": false,
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "format": "uuid",
+              "description": "Вид спорта"
             }
           },
           {
             "name": "from",
             "in": "query",
+            "description": "Начало не раньше; по умолчанию — сейчас (прошедшие не показываем)",
             "required": false,
             "schema": {
               "type": "string",
-              "format": "date-time"
-            }
+              "format": "date-time",
+              "description": "Начало не раньше; по умолчанию — сейчас (прошедшие не показываем)",
+              "example": "2027-05-01T00:00:00Z"
+            },
+            "example": "2027-05-01T00:00:00Z"
           },
           {
             "name": "to",
             "in": "query",
+            "description": "Начало не позже",
             "required": false,
             "schema": {
               "type": "string",
-              "format": "date-time"
-            }
+              "format": "date-time",
+              "description": "Начало не позже",
+              "example": "2027-05-31T23:59:59Z"
+            },
+            "example": "2027-05-31T23:59:59Z"
           },
           {
             "name": "level",
             "in": "query",
+            "description": "Уровень; мероприятия «Любой уровень» подходят под любой",
             "required": false,
             "schema": {
               "type": "string",
+              "description": "Уровень; мероприятия «Любой уровень» подходят под любой",
               "enum": [
                 "ANY",
                 "BEGINNER",
@@ -212,9 +331,11 @@
           {
             "name": "joinMode",
             "in": "query",
+            "description": "Режим записи",
             "required": false,
             "schema": {
               "type": "string",
+              "description": "Режим записи",
               "enum": [
                 "FREE",
                 "REQUEST"
@@ -224,9 +345,11 @@
           {
             "name": "format",
             "in": "query",
+            "description": "Очно или онлайн",
             "required": false,
             "schema": {
               "type": "string",
+              "description": "Очно или онлайн",
               "enum": [
                 "OFFLINE",
                 "ONLINE"
@@ -254,6 +377,8 @@
         "tags": [
           "events"
         ],
+        "summary": "Создать мероприятие",
+        "description": "Публикуется сразу. Вид спорта — sportId из справочника или sportName (свой, создастся без дублей).",
         "operationId": "events_create",
         "requestBody": {
           "content": {
@@ -275,6 +400,26 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Ошибка в форме",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Администратор не создаёт мероприятия",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -284,6 +429,8 @@
         "tags": [
           "registrations"
         ],
+        "summary": "Участники и заявки мероприятия",
+        "description": "Только организатору. status — необязательный фильтр, например PENDING или REJECTED.",
         "operationId": "registrations_listForEvent",
         "parameters": [
           {
@@ -311,15 +458,22 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "OK",
+          "403": {
+            "description": "Не организатор",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/EventRegistrationResponse"
-                  }
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Мероприятия нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -330,6 +484,8 @@
         "tags": [
           "registrations"
         ],
+        "summary": "Записаться на мероприятие",
+        "description": "FREE — сразу CONFIRMED, REQUEST — PENDING (ждёт организатора). После отмены можно записаться снова.",
         "operationId": "registrations_create",
         "parameters": [
           {
@@ -358,6 +514,26 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RegistrationResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Мероприятия нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Запись закрыта: снято, уже началось, уже записан, отклонён, мест нет, своё мероприятие",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -483,15 +659,19 @@
         "tags": [
           "sports"
         ],
+        "summary": "Виды спорта",
+        "description": "Без query — весь справочник по алфавиту; с query — поиск по подстроке без учёта регистра, пробелов и ё/е.",
         "operationId": "sports_search",
         "parameters": [
           {
             "name": "query",
             "in": "query",
+            "description": "Часть названия",
             "required": false,
             "schema": {
               "type": "string"
-            }
+            },
+            "example": "фут"
           }
         ],
         "responses": {
@@ -516,6 +696,8 @@
         "tags": [
           "registrations"
         ],
+        "summary": "Мои записи",
+        "description": "Со статусом записи и мероприятия: снятое с публикации тоже видно.",
         "operationId": "registrations_mine",
         "responses": {
           "200": {
@@ -559,6 +741,8 @@
         "tags": [
           "events"
         ],
+        "summary": "Мои мероприятия как организатора",
+        "description": "Во всех статусах, включая снятые и удалённые.",
         "operationId": "events_mine",
         "responses": {
           "200": {
@@ -685,6 +869,8 @@
         "tags": [
           "registrations"
         ],
+        "summary": "Отменить свою запись",
+        "description": "Место освобождается. Повторная отмена ничего не меняет (200).",
         "operationId": "registrations_cancel",
         "parameters": [
           {
@@ -698,12 +884,22 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "OK",
+          "404": {
+            "description": "Мероприятия нет или я не записан",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RegistrationResponse"
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Заявка отклонена или мероприятие уже началось",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -716,36 +912,49 @@
     "schemas": {
       "EventRequest": {
         "type": "object",
+        "description": "Форма мероприятия: создание и полная замена при редактировании",
         "properties": {
           "title": {
             "type": "string",
+            "description": "Название",
+            "example": "Футбол в парке Горького",
             "maxLength": 200,
             "minLength": 0
           },
           "description": {
             "type": "string",
+            "description": "Описание",
+            "example": "Играем 5 на 5, мяч есть",
             "maxLength": 5000,
             "minLength": 0
           },
           "sportId": {
             "type": "string",
-            "format": "uuid"
+            "format": "uuid",
+            "description": "Вид спорта из справочника; не указывать вместе с sportName"
           },
           "sportName": {
             "type": "string",
+            "description": "Свой вид спорта, если в справочнике нет; не указывать вместе с sportId",
+            "example": "Петанк",
             "maxLength": 100,
             "minLength": 0
           },
           "startAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "Начало, в будущем",
+            "example": "2027-05-01T16:00:00Z"
           },
           "endAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "Окончание, позже начала",
+            "example": "2027-05-01T18:00:00Z"
           },
           "format": {
             "type": "string",
+            "description": "Очно или онлайн",
             "enum": [
               "OFFLINE",
               "ONLINE"
@@ -753,33 +962,44 @@
           },
           "address": {
             "type": "string",
+            "description": "Адрес; обязателен для очного",
+            "example": "Красноярск, о. Татышев",
             "maxLength": 500,
             "minLength": 0
           },
           "locationNote": {
             "type": "string",
+            "description": "Как найти место",
+            "example": "У главного входа",
             "maxLength": 1000,
             "minLength": 0
           },
           "onlineUrl": {
             "type": "string",
+            "description": "Ссылка на онлайн-встречу; видят только подтверждённые участники",
+            "example": "https://meet.example/abc",
             "maxLength": 1000,
             "minLength": 0
           },
           "lat": {
             "type": "number",
             "format": "double",
+            "description": "Широта",
+            "example": 56.0153,
             "maximum": 90,
             "minimum": -90
           },
           "lon": {
             "type": "number",
             "format": "double",
+            "description": "Долгота",
+            "example": 92.8932,
             "maximum": 180,
             "minimum": -180
           },
           "level": {
             "type": "string",
+            "description": "Для какого уровня; по умолчанию ANY",
             "enum": [
               "ANY",
               "BEGINNER",
@@ -790,6 +1010,7 @@
           },
           "kind": {
             "type": "string",
+            "description": "Вид мероприятия",
             "enum": [
               "TRAINING",
               "GAME",
@@ -799,22 +1020,29 @@
           },
           "requirements": {
             "type": "string",
+            "description": "Требования к участникам",
+            "example": "Без опыта можно",
             "maxLength": 2000,
             "minLength": 0
           },
           "equipment": {
             "type": "string",
+            "description": "Что взять с собой",
+            "example": "Форма, вода",
             "maxLength": 2000,
             "minLength": 0
           },
           "capacity": {
             "type": "integer",
             "format": "int32",
+            "description": "Лимит мест; пусто — без лимита",
+            "example": 10,
             "maximum": 10000,
             "minimum": 1
           },
           "joinMode": {
             "type": "string",
+            "description": "Режим записи; по умолчанию FREE",
             "enum": [
               "FREE",
               "REQUEST"
@@ -822,6 +1050,8 @@
           },
           "privateDetails": {
             "type": "string",
+            "description": "Детали только для участников: точное место, ссылка на чат",
+            "example": "Чат: https://t.me/example",
             "maxLength": 2000,
             "minLength": 0
           }
@@ -832,63 +1062,118 @@
           "title"
         ]
       },
+      "ProblemDetail": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "type": "string",
+            "format": "uri"
+          },
+          "properties": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        }
+      },
+      "RejectRegistrationRequest": {
+        "type": "object",
+        "description": "Отказ по заявке; тело можно не передавать",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "Причина отказа; участник увидит её в своей записи",
+            "example": "Группа уже набрана",
+            "maxLength": 1000,
+            "minLength": 0
+          }
+        }
+      },
       "EventResponse": {
         "type": "object",
+        "description": "Карточка мероприятия; открывается в любом статусе, снятое — с причиной",
         "properties": {
           "id": {
             "type": "string",
             "format": "uuid"
           },
           "title": {
-            "type": "string"
+            "type": "string",
+            "description": "Название"
           },
           "description": {
-            "type": "string"
+            "type": "string",
+            "description": "Описание"
           },
           "sport": {
-            "$ref": "#/components/schemas/SportResponse"
+            "$ref": "#/components/schemas/SportResponse",
+            "description": "Вид спорта"
           },
           "author": {
-            "$ref": "#/components/schemas/UserShortResponse"
+            "$ref": "#/components/schemas/UserShortResponse",
+            "description": "Организатор-человек"
           },
           "organizationId": {
             "type": "string",
-            "format": "uuid"
+            "format": "uuid",
+            "description": "Организация, от имени которой мероприятие; null — от частного лица"
           },
           "startAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "Начало"
           },
           "endAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "Окончание"
           },
           "format": {
             "type": "string",
+            "description": "Очно или онлайн",
             "enum": [
               "OFFLINE",
               "ONLINE"
             ]
           },
           "address": {
-            "type": "string"
+            "type": "string",
+            "description": "Адрес"
           },
           "locationNote": {
-            "type": "string"
+            "type": "string",
+            "description": "Как найти место"
           },
           "onlineUrl": {
-            "type": "string"
+            "type": "string",
+            "description": "Ссылка на онлайн-встречу; null, если viewer.canSeePrivateDetails = false"
           },
           "lat": {
             "type": "number",
-            "format": "double"
+            "format": "double",
+            "description": "Широта"
           },
           "lon": {
             "type": "number",
-            "format": "double"
+            "format": "double",
+            "description": "Долгота"
           },
           "level": {
             "type": "string",
+            "description": "Для какого уровня",
             "enum": [
               "ANY",
               "BEGINNER",
@@ -899,6 +1184,7 @@
           },
           "kind": {
             "type": "string",
+            "description": "Вид мероприятия",
             "enum": [
               "TRAINING",
               "GAME",
@@ -907,30 +1193,37 @@
             ]
           },
           "requirements": {
-            "type": "string"
+            "type": "string",
+            "description": "Требования к участникам"
           },
           "equipment": {
-            "type": "string"
+            "type": "string",
+            "description": "Что взять с собой"
           },
           "privateDetails": {
-            "type": "string"
+            "type": "string",
+            "description": "Детали для участников; null, если viewer.canSeePrivateDetails = false"
           },
           "capacity": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "Лимит мест; null — без лимита"
           },
           "participantsCount": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "Подтверждённых участников"
           },
           "participants": {
             "type": "array",
+            "description": "Подтверждённые участники",
             "items": {
               "$ref": "#/components/schemas/UserShortResponse"
             }
           },
           "joinMode": {
             "type": "string",
+            "description": "Режим записи",
             "enum": [
               "FREE",
               "REQUEST"
@@ -938,6 +1231,7 @@
           },
           "status": {
             "type": "string",
+            "description": "Статус мероприятия",
             "enum": [
               "PUBLISHED",
               "UNPUBLISHED",
@@ -945,14 +1239,17 @@
             ]
           },
           "moderationReason": {
-            "type": "string"
+            "type": "string",
+            "description": "Причина снятия с публикации или удаления"
           },
           "moderatedAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "Когда снято или удалено"
           },
           "viewer": {
-            "$ref": "#/components/schemas/ViewerResponse"
+            "$ref": "#/components/schemas/ViewerResponse",
+            "description": "Что могу делать я"
           },
           "createdAt": {
             "type": "string",
@@ -962,49 +1259,92 @@
             "type": "string",
             "format": "date-time"
           }
-        }
+        },
+        "required": [
+          "author",
+          "createdAt",
+          "format",
+          "id",
+          "joinMode",
+          "level",
+          "participants",
+          "participantsCount",
+          "sport",
+          "startAt",
+          "status",
+          "title",
+          "updatedAt",
+          "viewer"
+        ]
       },
       "SportResponse": {
         "type": "object",
+        "description": "Вид спорта",
         "properties": {
           "id": {
             "type": "string",
             "format": "uuid"
           },
           "name": {
-            "type": "string"
+            "type": "string",
+            "description": "Название",
+            "example": "Футбол"
           },
           "slug": {
-            "type": "string"
+            "type": "string",
+            "description": "Код для URL",
+            "example": "football"
           },
           "custom": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Добавлен пользователем, а не из справочника"
           }
-        }
+        },
+        "required": [
+          "custom",
+          "id",
+          "name",
+          "slug"
+        ]
       },
       "UserShortResponse": {
         "type": "object",
+        "description": "Публичная карточка человека: организатор или участник, без email",
         "properties": {
           "id": {
             "type": "string",
             "format": "uuid"
           },
           "username": {
-            "type": "string"
+            "type": "string",
+            "description": "Логин",
+            "example": "ivan"
           },
           "firstName": {
-            "type": "string"
+            "type": "string",
+            "description": "Имя",
+            "example": "Иван"
           },
           "lastName": {
-            "type": "string"
+            "type": "string",
+            "description": "Фамилия",
+            "example": "Петров"
           }
-        }
+        },
+        "required": [
+          "firstName",
+          "id",
+          "lastName",
+          "username"
+        ]
       },
       "ViewerResponse": {
         "type": "object",
+        "description": "Права текущего пользователя на мероприятие: фронт рисует кнопки только по этому блоку",
         "properties": {
           "registrationStatus": {
             "type": "string",
+            "description": "Статус моей записи; null — не записан",
             "enum": [
               "CONFIRMED",
               "PENDING",
@@ -1013,30 +1353,47 @@
             ]
           },
           "canRegister": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Можно ли записаться"
           },
           "registerBlockedReason": {
-            "type": "string"
+            "type": "string",
+            "description": "Почему нельзя записаться, текст для человека; null — можно",
+            "example": "Мест нет"
           },
           "isOrganizer": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Я организатор"
           },
           "canManage": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Могу редактировать и решать заявки"
           },
           "canCancel": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Могу отменить свою запись"
           },
           "canSeePrivateDetails": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Вижу onlineUrl и privateDetails"
           }
-        }
+        },
+        "required": [
+          "canCancel",
+          "canManage",
+          "canRegister",
+          "canSeePrivateDetails",
+          "isOrganizer"
+        ]
       },
-      "RejectRegistrationRequest": {
+      "RegistrationRequest": {
         "type": "object",
+        "description": "Запись на мероприятие; тело можно не передавать",
         "properties": {
-          "reason": {
+          "message": {
             "type": "string",
+            "description": "Сообщение организатору (для записи по заявке)",
+            "example": "Играю два года, возьму свой мяч",
             "maxLength": 1000,
             "minLength": 0
           }
@@ -1044,6 +1401,7 @@
       },
       "RegistrationResponse": {
         "type": "object",
+        "description": "Запись на мероприятие после действия (записаться, отменить, принять, отклонить)",
         "properties": {
           "id": {
             "type": "string",
@@ -1051,14 +1409,17 @@
           },
           "eventId": {
             "type": "string",
-            "format": "uuid"
+            "format": "uuid",
+            "description": "Мероприятие"
           },
           "userId": {
             "type": "string",
-            "format": "uuid"
+            "format": "uuid",
+            "description": "Участник"
           },
           "status": {
             "type": "string",
+            "description": "Статус записи",
             "enum": [
               "CONFIRMED",
               "PENDING",
@@ -1067,34 +1428,35 @@
             ]
           },
           "message": {
-            "type": "string"
+            "type": "string",
+            "description": "Сообщение к заявке"
           },
           "decisionReason": {
-            "type": "string"
+            "type": "string",
+            "description": "Причина решения организатора"
           },
           "decidedAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "Когда решено; null — ещё нет"
           },
           "decidedById": {
             "type": "string",
-            "format": "uuid"
+            "format": "uuid",
+            "description": "Кто решил; null — автоматически при свободной записи"
           },
           "createdAt": {
             "type": "string",
             "format": "date-time"
           }
-        }
-      },
-      "RegistrationRequest": {
-        "type": "object",
-        "properties": {
-          "message": {
-            "type": "string",
-            "maxLength": 1000,
-            "minLength": 0
-          }
-        }
+        },
+        "required": [
+          "createdAt",
+          "eventId",
+          "id",
+          "status",
+          "userId"
+        ]
       },
       "RegisterRequest": {
         "type": "object",
@@ -1196,40 +1558,49 @@
       },
       "EventSummaryResponse": {
         "type": "object",
+        "description": "Мероприятие в списке: лента, мои мероприятия, мои записи",
         "properties": {
           "id": {
             "type": "string",
             "format": "uuid"
           },
           "title": {
-            "type": "string"
+            "type": "string",
+            "description": "Название"
           },
           "sport": {
-            "$ref": "#/components/schemas/SportResponse"
+            "$ref": "#/components/schemas/SportResponse",
+            "description": "Вид спорта"
           },
           "startAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "Начало"
           },
           "endAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "Окончание"
           },
           "format": {
             "type": "string",
+            "description": "Очно или онлайн",
             "enum": [
               "OFFLINE",
               "ONLINE"
             ]
           },
           "address": {
-            "type": "string"
+            "type": "string",
+            "description": "Адрес"
           },
           "locationNote": {
-            "type": "string"
+            "type": "string",
+            "description": "Как найти место"
           },
           "level": {
             "type": "string",
+            "description": "Для какого уровня",
             "enum": [
               "ANY",
               "BEGINNER",
@@ -1240,6 +1611,7 @@
           },
           "kind": {
             "type": "string",
+            "description": "Вид мероприятия",
             "enum": [
               "TRAINING",
               "GAME",
@@ -1249,6 +1621,7 @@
           },
           "joinMode": {
             "type": "string",
+            "description": "Режим записи",
             "enum": [
               "FREE",
               "REQUEST"
@@ -1256,14 +1629,17 @@
           },
           "capacity": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "Лимит мест; null — без лимита"
           },
           "participantsCount": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "Подтверждённых участников («записались 8 из 16»)"
           },
           "status": {
             "type": "string",
+            "description": "Статус мероприятия",
             "enum": [
               "PUBLISHED",
               "UNPUBLISHED",
@@ -1271,18 +1647,22 @@
             ]
           },
           "moderationReason": {
-            "type": "string"
+            "type": "string",
+            "description": "Причина снятия с публикации или удаления"
           },
           "authorId": {
             "type": "string",
-            "format": "uuid"
+            "format": "uuid",
+            "description": "Организатор-человек"
           },
           "organizationId": {
             "type": "string",
-            "format": "uuid"
+            "format": "uuid",
+            "description": "Организация; null — от частного лица"
           },
           "myRegistrationStatus": {
             "type": "string",
+            "description": "Статус моей записи; null — не записан",
             "enum": [
               "CONFIRMED",
               "PENDING",
@@ -1290,10 +1670,23 @@
               "CANCELLED"
             ]
           }
-        }
+        },
+        "required": [
+          "authorId",
+          "format",
+          "id",
+          "joinMode",
+          "level",
+          "participantsCount",
+          "sport",
+          "startAt",
+          "status",
+          "title"
+        ]
       },
       "MyRegistrationResponse": {
         "type": "object",
+        "description": "Моя запись вместе с мероприятием",
         "properties": {
           "id": {
             "type": "string",
@@ -1301,6 +1694,7 @@
           },
           "status": {
             "type": "string",
+            "description": "Статус записи",
             "enum": [
               "CONFIRMED",
               "PENDING",
@@ -1309,23 +1703,33 @@
             ]
           },
           "message": {
-            "type": "string"
+            "type": "string",
+            "description": "Моё сообщение к заявке"
           },
           "decisionReason": {
-            "type": "string"
+            "type": "string",
+            "description": "Причина решения организатора, например отказа"
           },
           "decidedAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "Когда решено"
           },
           "createdAt": {
             "type": "string",
             "format": "date-time"
           },
           "event": {
-            "$ref": "#/components/schemas/EventSummaryResponse"
+            "$ref": "#/components/schemas/EventSummaryResponse",
+            "description": "Мероприятие; event.status — снято ли оно с публикации"
           }
-        }
+        },
+        "required": [
+          "createdAt",
+          "event",
+          "id",
+          "status"
+        ]
       },
       "PingResponse": {
         "type": "object",
@@ -1334,41 +1738,6 @@
             "type": "string"
           },
           "time": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "EventRegistrationResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "participant": {
-            "$ref": "#/components/schemas/UserShortResponse"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "CONFIRMED",
-              "PENDING",
-              "REJECTED",
-              "CANCELLED"
-            ]
-          },
-          "message": {
-            "type": "string"
-          },
-          "decisionReason": {
-            "type": "string"
-          },
-          "decidedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "createdAt": {
             "type": "string",
             "format": "date-time"
           }
@@ -1448,6 +1817,19 @@
             "format": "date-time"
           }
         }
+      }
+    },
+    "securitySchemes": {
+      "cookieAuth": {
+        "type": "apiKey",
+        "description": "Ставится при POST /api/auth/login",
+        "name": "access_token",
+        "in": "cookie"
+      },
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
       }
     }
   }
