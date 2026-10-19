@@ -1,3 +1,4 @@
+import { MyBeaverBadge } from "@/widgets/beaver-pet/ui/my-beaver-badge";
 import { DismissButton, useDismissRecommendation } from "@/features/dismiss-recommendation/ui/dismiss-button";
 import { Link } from "react-router";
 import { HomeMobile } from "./home-mobile";
@@ -173,11 +174,7 @@ function Tip() {
       : "Расскажи, чем любишь заниматься, — подберу встречи рядом";
   return (
     <Card className="relative h-[104px] flex-row items-center gap-5 bg-mint-soft pr-[26px] pl-[152px]">
-      <img
-        src="/home/wave.png"
-        alt=""
-        className="pointer-events-none absolute top-[-30px] left-[18px] h-[128px] w-[124px] max-w-none object-cover"
-      />
+      <MyBeaverBadge className="absolute top-[-22px] left-[14px] h-[118px] w-[132px]" />
       <div className="min-w-0 flex-1">
         <Eyebrow>БУБЛИК ПОДСКАЗЫВАЕТ</Eyebrow>
         <p className="mt-[6px] truncate font-display text-[18px] leading-[23.5px] font-bold text-foreground">{text}</p>

@@ -219,6 +219,8 @@
   }
   html {
     scroll-behavior: smooth;
+    /* место под полосу прокрутки всегда зарезервировано: короткая и длинная страницы одной ширины, шапка не сдвигается */
+    scrollbar-gutter: stable;
   }
   [id] {
     scroll-margin-top: 5rem;

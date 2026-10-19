@@ -156,7 +156,7 @@ export function EventMobile({ m }: { m: EventModel }) {
           className="absolute top-0 left-0 size-full max-w-none object-cover"
         />
         <CircleButton label="Назад" icon="icon-back" to="/feed" className="left-4" />
-        <CircleButton label="Поделиться" icon="icon-share" className="right-4" onClick={() => setShareOpen(true)} />
+        {!m.moderated && <CircleButton label="Поделиться" icon="icon-share" className="right-4" onClick={() => setShareOpen(true)} />}
         <EventShare m={m} open={shareOpen} onOpenChange={setShareOpen} />
         <Badge
           variant="outline"
@@ -240,7 +240,7 @@ export function EventMobile({ m }: { m: EventModel }) {
                     hint={f.label === "КОГДА" ? f.lines[1] : f.lines.filter(Boolean).join(" · ")} />
                 ))}
               </div>
-              <QrCode path={`/events/${e.id}`} label="QR-код: страница встречи" className="size-[76px]" />
+              {!m.moderated && <QrCode path={`/events/${e.id}`} label="QR-код: страница встречи" className="size-[76px]" />}
             </div>
             {/* Детали для участников: сами детали или пояснение по ситуации (как на десктопе) */}
             <p className="rounded-xl border-2 border-dashed border-ink px-3 py-2 text-xs leading-[17px] font-bold text-foreground">

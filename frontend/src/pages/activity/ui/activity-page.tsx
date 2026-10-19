@@ -170,7 +170,9 @@ function Tickets({ m }: { m: ActivityModel }) {
                 </div>
               </div>
               <div className="relative w-[104px] shrink-0 overflow-hidden border-l-2 border-dashed border-ink bg-secondary">
-                <QrCode path={`/events/${reg.event.id}`} label="QR-код: страница встречи" className="absolute top-[8px] left-[26px] size-[52px]" />
+                {!reg.event.cancelledByOrganizer && reg.event.status === "PUBLISHED" && (
+                  <QrCode path={`/events/${reg.event.id}`} label="QR-код: страница встречи" className="absolute top-[8px] left-[26px] size-[52px]" />
+                )}
                 {reg.event.cancelledByOrganizer || reg.event.status !== "PUBLISHED" ? (
                   <CancelledStamp className="bottom-[6px] left-[10px] h-[28px] w-[84px] rotate-[7deg]" />
                 ) : (

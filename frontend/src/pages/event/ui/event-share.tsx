@@ -6,7 +6,8 @@ type EventModel = ReturnType<typeof useEvent>;
 /** «Поделиться» встречей: билет с QR на страницу встречи. */
 export function EventShare({ m, open, onOpenChange }: { m: EventModel; open: boolean; onOpenChange(open: boolean): void }) {
   const e = m.event;
-  if (!e) return null;
+  // снятое или удалённое не раздаём: ни QR, ни ссылки
+  if (!e || m.moderated) return null;
   const path = `/events/${e.id}`;
   return (
     <ShareDialog open={open} onOpenChange={onOpenChange} path={path} title="Поделиться встречей"
