@@ -109,11 +109,9 @@ function AppBar() {
   return (
     <div className="flex h-16 shrink-0 items-center justify-between px-4">
       <div className="flex items-center gap-2">
-        <span className="flex size-9 items-center justify-center rounded-[11px] border-2 border-ink bg-secondary">
-          <Icon name={`${dir}/icon-run`} className="size-5" />
-        </span>
+        <img src="/icon.svg" alt="" className="size-9 shrink-0" />
         <span className="font-display text-base leading-[normal] font-bold whitespace-nowrap text-foreground">
-          [Название]
+          Движ
         </span>
       </div>
       <div className="flex items-center gap-2">

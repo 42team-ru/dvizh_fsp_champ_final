@@ -17,7 +17,7 @@ export default [
   ...prefix("/auth", [
     layout("routes/auth/auth-layout.tsx", [
       route("login", "routes/auth/login.tsx"),
-      route("register", "routes/auth/register.tsx"),
+      route("register", "routes/auth/register.tesx"),
       route("forgot-password", "routes/auth/forgot-password.tsx"),
     ]),
     route("oauth2/callback", "routes/auth/oauth2-callback.tsx"),

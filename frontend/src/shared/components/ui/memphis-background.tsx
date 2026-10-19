@@ -58,12 +58,20 @@ const FOOTPRINT: Record<Shape, number> = {
 const ROTATABLE = new Set<Shape>(["triangle", "halfdisc", "stripes", "capsule", "squiggle", "zigzag", "grid"])
 const LINEAR = new Set<Shape>(["plus", "stripes", "dots"])
 
-/** Отступ фигуры от блоков и текста, px. */
-const CLEAR = 18
+/** Отступ фигуры от боковых сторон блоков, px. */
+const CLEAR = 32
+/** Отступ от текста, кнопок, полей и картинок, px: на них фигуры не залезают никогда. */
+const CLEAR_HARD = 14
+/** Доля попыток, в которых фигура садится «за блок»: центр на краю карточки, видна выглядывающая часть. */
+const STRADDLE_SHARE = 0.3
 /** Отступ между фигурами, px. */
 const SPACING = 22
 /** Сколько площади приходится на одну фигуру, px². Меньше — гуще. */
-const AREA_PER_SHAPE = 24000
+const AREA_PER_SHAPE = 32000
+/** Доля попыток, в которых фигура садится вплотную (на CLEAR) к боковой стороне крупного блока. */
+const HUG_SHARE = 0.55
+/** Какие препятствия считаются крупными блоками, к которым можно прижаться. */
+const MIN_BLOCK = { w: 160, h: 50 }
 
 function mulberry(seed: number) {
   let a = seed >>> 0
@@ -91,14 +99,18 @@ function distToBox(x: number, y: number, box: Box) {
   return Math.hypot(dx, dy)
 }
 
+/** `hard` — текст, кнопки, поля, картинки; `soft` — сплошные блоки (карточки), за которыми фигура может прятаться. */
+type Obstacles = { hard: Box[]; soft: Box[] }
+
 /** Раскладка фигур по свободному месту прямоугольника width × height с препятствиями. */
-function layout(width: number, height: number, obstacles: Box[], seed: string, scale: number): Placed[] {
+function layout(width: number, height: number, obstacles: Obstacles, seed: string, scale: number): Placed[] {
   const rand = mulberry(hashSeed(seed))
   function pick<T>(list: readonly T[]): T {
     return list[Math.floor(rand() * list.length)]
   }
   const total = Math.min(160, Math.max(10, Math.round((width * height) / (AREA_PER_SHAPE * scale * scale))))
   const placed: { p: Placed; cx: number; cy: number; r: number }[] = []
+  const blocks = obstacles.soft.filter((o) => o.r - o.l >= MIN_BLOCK.w && o.b - o.t >= MIN_BLOCK.h)
 
   for (const tier of TIERS) {
     const want = Math.round(total * tier.share)
@@ -108,9 +120,38 @@ function layout(width: number, height: number, obstacles: Box[], seed: string, s
       const r = size * FOOTPRINT[shape]
       for (let attempt = 0; attempt < 50; attempt++) {
         // центр может уйти за край на четверть размера — фигура выглядывает из-за экрана
-        const cx = -size * 0.25 + rand() * (width + size * 0.5)
-        const cy = -size * 0.25 + rand() * (height + size * 0.5)
-        if (obstacles.some((o) => distToBox(cx, cy, o) < r + CLEAR)) continue
+        let cx = -size * 0.25 + rand() * (width + size * 0.5)
+        let cy = -size * 0.25 + rand() * (height + size * 0.5)
+        let behind = false
+        const mode = rand()
+        if (blocks.length && mode < STRADDLE_SHARE) {
+          // за блоком: центр на краю карточки, наружу выглядывает примерно две трети фигуры
+          const o = pick(blocks)
+          const side = Math.floor(rand() * 4)
+          const out = r * 0.35
+          if (side === 0) {
+            cx = o.l + rand() * (o.r - o.l)
+            cy = o.t - out
+          } else if (side === 1) {
+            cx = o.l + rand() * (o.r - o.l)
+            cy = o.b + out
+          } else if (side === 2) {
+            cx = o.l - out
+            cy = o.t + rand() * (o.b - o.t)
+          } else {
+            cx = o.r + out
+            cy = o.t + rand() * (o.b - o.t)
+          }
+          behind = true
+        } else if (blocks.length && mode < STRADDLE_SHARE + HUG_SHARE * (1 - STRADDLE_SHARE)) {
+          // прижимаемся к боковой стороне блока: край фигуры ровно в CLEAR px от него
+          const o = pick(blocks)
+          cx = rand() < 0.5 ? o.r + r + CLEAR : o.l - r - CLEAR
+          cy = o.t + rand() * (o.b - o.t)
+        }
+        if (obstacles.hard.some((o) => distToBox(cx, cy, o) < r + CLEAR_HARD - 0.5)) continue
+        // сплошные блоки: фигура либо стоит от них на CLEAR, либо намеренно прячется за краем
+        if (!behind && obstacles.soft.some((o) => distToBox(cx, cy, o) < r + CLEAR - 0.5)) continue
         if (placed.some((q) => Math.hypot(q.cx - cx, q.cy - cy) < q.r + r + SPACING)) continue
         placed.push({
           cx,
@@ -141,14 +182,14 @@ function isTransparent(color: string) {
 }
 
 /** Блоки, текст и элементы управления, на которые узоры не должны залезать (в px контейнера фона). */
-function collectObstacles(bg: HTMLElement, scope: HTMLElement): Box[] {
+function collectObstacles(bg: HTMLElement, scope: HTMLElement): Obstacles {
   const base = bg.getBoundingClientRect()
   const zoom = base.width / (bg.offsetWidth || 1) || 1
   const maxArea = base.width * base.height * 0.6
-  const boxes: Box[] = []
-  const push = (rect: DOMRect) => {
+  const result: Obstacles = { hard: [], soft: [] }
+  const push = (rect: DOMRect, kind: keyof Obstacles) => {
     if (rect.width <= 0 || rect.height <= 0 || rect.width * rect.height > maxArea) return
-    boxes.push({
+    result[kind].push({
       l: (rect.left - base.left) / zoom,
       t: (rect.top - base.top) / zoom,
       r: (rect.right - base.left) / zoom,
@@ -170,19 +211,22 @@ function collectObstacles(bg: HTMLElement, scope: HTMLElement): Box[] {
       style.backgroundImage !== "none" ||
       parseFloat(style.borderTopWidth) > 0 ||
       style.boxShadow !== "none"
-    if (solid || TEXT_TAGS.test(node.tagName)) {
-      push(rect)
+    if (TEXT_TAGS.test(node.tagName)) {
+      push(rect, "hard")
       continue
+    }
+    if (solid) {
+      push(rect, "soft")
     }
     // текст прямо внутри обычного div/span
     const hasText = Array.from(node.childNodes).some((c) => c.nodeType === Node.TEXT_NODE && c.textContent?.trim())
     if (hasText) {
       const range = document.createRange()
       range.selectNodeContents(node)
-      push(range.getBoundingClientRect())
+      push(range.getBoundingClientRect(), "hard")
     }
   }
-  return boxes
+  return result
 }
 
 /* ---------- Рисунки фигур ---------- */
@@ -318,7 +362,8 @@ function MemphisBackground({
       const obstacles = collectObstacles(bg, scope)
       const scale = variant === "mobile" || width < 640 ? 0.7 : 1
       // пересчитываем рисунок, только если вёрстка правда поменялась
-      const sig = `${width}x${height}|${obstacles.map((o) => `${o.l | 0},${o.t | 0},${o.r | 0},${o.b | 0}`).join(";")}`
+      const sign = (list: Box[]) => list.map((o) => `${o.l | 0},${o.t | 0},${o.r | 0},${o.b | 0}`).join(";")
+      const sig = `${width}x${height}|${sign(obstacles.hard)}|${sign(obstacles.soft)}`
       if (sig === lastSig) return
       lastSig = sig
       setShapes(layout(width, height, obstacles, key, scale))

@@ -15,6 +15,7 @@ import { ThemeProvider } from "./providers/theme-provider";
 import { ViewportScale } from "./providers/viewport-scale";
 
 export const links: Route.LinksFunction = () => [
+  { rel: "icon", type: "image/svg+xml", href: "/icon.svg" },
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
     rel: "preconnect",

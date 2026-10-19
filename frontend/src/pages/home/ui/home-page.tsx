@@ -160,7 +160,7 @@ function Hero() {
         </div>
       </div>
 
-      <article className="absolute top-[42px] left-[800px] box-border h-[244px] w-[356px] overflow-hidden rounded-[22px] border-2 border-ink bg-card p-[2px] shadow-hard">
+      <article className="absolute top-[42px] left-[800px] box-border h-[244px] w-[356px] overflow-hidden rounded-[22px] border-2 border-ink bg-card p-0 shadow-hard">
         <div className="relative h-[118px] w-[352px] shrink-0 overflow-hidden border-b-2 border-ink">
           <div className="absolute inset-x-0 top-0 h-[116px] bg-orange">
             <img
@@ -229,7 +229,7 @@ function Tip() {
 function EventCard({ event }: { event: (typeof EVENTS)[number] }) {
   const { cover } = event;
   return (
-    <Card className="h-[323.5px] overflow-hidden p-[2px]">
+    <Card className="h-[323.5px] overflow-hidden p-0">
       <div className="relative h-[180px] w-[388px] shrink-0 overflow-hidden border-b-2 border-ink">
         <div className={`absolute inset-x-0 top-0 h-[178px] ${"bg" in cover ? cover.bg : ""}`}>
           {"photo" in cover ? (

@@ -239,39 +239,46 @@ function Tickets() {
         {TICKETS.map((t) => (
           <div
             key={t.number}
-            className="relative box-border flex h-[104px] w-[443px] shrink-0 items-start overflow-hidden rounded-[18px] border-2 border-ink bg-card p-[2px]"
+            className="relative box-border flex h-[104px] w-[443px] shrink-0 items-stretch overflow-hidden rounded-[18px] border-2 border-ink bg-card"
           >
-            <div className={cn("relative h-[100px] w-[96px] shrink-0 text-white", t.tone)}>
-              <p className="absolute top-[14.5px] inset-x-0 text-center text-[11px] leading-[15px] font-extrabold tracking-[1.5px]">
+            <div className={cn("relative w-[88px] shrink-0 border-r-2 border-dashed border-ink text-white", t.tone)}>
+              <p className="absolute inset-x-0 top-[12px] text-center text-[10px] leading-[14px] font-extrabold tracking-[1.5px]">
                 ОКТ
               </p>
-              <p className="absolute top-[29.5px] inset-x-0 text-center font-display text-[30px] leading-[37px] font-extrabold">
+              <p className="absolute inset-x-0 top-[26px] text-center font-display text-[30px] leading-[37px] font-extrabold">
                 {t.day}
               </p>
-              <p className="absolute top-[67.5px] inset-x-0 text-center text-[13px] leading-[18px] font-bold">
+              <p className="absolute inset-x-0 top-[68px] text-center text-[13px] leading-[18px] font-bold">
                 {t.time}
               </p>
             </div>
-            <div className="absolute top-[14px] left-[96px] h-[72px] w-[2px] border-l-2 border-dashed border-ink" />
-            <span className="absolute top-[89px] left-[85px] box-border size-[22px] rounded-[11px] border-2 border-b-0 border-ink bg-card" />
-            <div className="flex h-[100px] w-[265px] shrink-0 flex-col justify-center gap-1 py-[14px] pr-4 pl-[22px]">
-              <div className={cn("w-[227px] shrink-0", t.titleBox)}>
-                <p className="-mt-px font-display text-[15px] leading-[19px] font-bold text-foreground">
-                  {t.title}
+
+            <div className="flex min-w-0 flex-1 flex-col">
+              {/* полоса «посадочного талона» */}
+              <div className="flex h-[22px] shrink-0 items-center justify-between bg-primary px-3 text-[9px] font-extrabold whitespace-nowrap">
+                <span className="tracking-[1.5px] text-secondary">ПОСАДОЧНЫЙ ТАЛОН</span>
+                <span className="tracking-[1px] text-white">{t.number}</span>
+              </div>
+              <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 px-4">
+                <p className="font-display text-[15px] leading-[19px] font-bold text-foreground">{t.title}</p>
+                <div className="flex items-center gap-1">
+                  <Icon name="activity/icon-pin" className="size-[14px] shrink-0" />
+                  <span className="truncate text-[13px] leading-[18px] font-medium text-muted-foreground">
+                    {t.place}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* корешок: QR и штамп «допущен» */}
+            <div className="relative w-[104px] shrink-0 overflow-hidden border-l-2 border-dashed border-ink bg-secondary">
+              <img src="/event/qr.svg" alt="" className="absolute top-[8px] left-[26px] size-[52px] rounded-md border-2 border-ink bg-card p-[3px]" />
+              <div className="pointer-events-none absolute bottom-[6px] left-[10px] h-[28px] w-[84px] rotate-[7deg] text-primary">
+                <img src="/event/stamp-admitted.svg" alt="" className="absolute inset-0 size-full max-w-none" />
+                <p className="absolute inset-x-0 top-[7px] text-center font-display text-[11px] leading-[14px] font-extrabold">
+                  ДОПУЩЕН
                 </p>
               </div>
-              <div className="flex h-[18px] items-center gap-1">
-                <Icon name="activity/icon-pin" className="size-[14px]" />
-                <span className="text-[13px] leading-[18px] font-medium whitespace-nowrap text-muted-foreground">
-                  {t.place}
-                </span>
-              </div>
-              <p className="text-[11px] leading-[15px] font-extrabold tracking-[1px] text-foreground">
-                БИЛЕТ {t.number}
-              </p>
-            </div>
-            <div className="flex h-[100px] w-[78px] shrink-0 items-center py-[14px] pr-[14px]">
-              <img src={`/activity/${t.qr}`} alt="" className="size-16" />
             </div>
           </div>
         ))}

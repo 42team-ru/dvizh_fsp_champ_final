@@ -85,8 +85,8 @@ function TopBar() {
 
 function TicketHero() {
   return (
-    <Card className="relative h-[400px] w-[1216px] shrink-0 flex-row items-start overflow-hidden rounded-[28px] p-[2px] shadow-hard">
-      <div className="relative h-[396px] w-[270px] shrink-0 overflow-hidden rounded-l-[24px] border-r-2 border-ink">
+    <Card className="relative h-[400px] w-[1216px] shrink-0 flex-row items-start overflow-hidden rounded-[28px] p-0 shadow-hard">
+      <div className="relative h-[396px] w-[270px] shrink-0 overflow-hidden border-r-2 border-ink">
         <img src="/event/box.png" alt="" className="absolute top-0 left-0 h-[396px] w-[268px] object-cover" />
         <div className="absolute top-0 left-0 h-[396px] w-[268px] bg-gradient-to-b from-[rgba(22,24,31,0.05)] via-[rgba(22,24,31,0.15)] via-55% to-[rgba(22,24,31,0.7)]" />
         <div className="absolute top-[18px] left-[18px] flex gap-[6px]">
@@ -101,15 +101,16 @@ function TicketHero() {
         </div>
       </div>
 
-      <div className="flex h-[396px] w-[642px] shrink-0 flex-col items-start justify-between pt-[30px] pr-[30px] pb-[26px] pl-[10px]">
-        <div className="relative h-[126.5px] w-[602px]">
-          <div className="absolute top-0 left-5 flex h-[26px] items-center gap-[10px]">
-            <Eyebrow className="w-[214.5px] text-foreground">БИЛЕТ НА ТРЕНИРОВКУ · № 0124</Eyebrow>
-            <Badge variant="mint" className="bg-mint-soft">
-              Бесплатно
-            </Badge>
-          </div>
-          <h1 className="absolute top-[36px] left-5 w-[454.5px] font-display text-[40px] leading-[43px] font-extrabold tracking-[-1px] text-foreground">
+      {/* полоса «посадочного талона» над основной частью билета */}
+      <div className="absolute top-0 left-[270px] z-10 flex h-10 w-[642px] items-center justify-between bg-primary px-8 text-[11px] font-extrabold whitespace-nowrap">
+        <span className="tracking-[2px] text-secondary">ПОСАДОЧНЫЙ ТАЛОН · ТРЕНИРОВКА</span>
+        <img src="/event/dots.svg" alt="" className="absolute left-[340px] h-[26px] w-[40px] max-w-none" />
+        <span className="tracking-[1.5px] text-white">БИЛЕТ № 0124 · БЕСПЛАТНО</span>
+      </div>
+
+      <div className="flex h-[396px] w-[642px] shrink-0 flex-col items-start justify-between pt-[64px] pr-[30px] pb-[26px] pl-[10px]">
+        <div className="relative h-[86px] w-[602px]">
+          <h1 className="absolute top-0 left-5 w-[454.5px] font-display text-[40px] leading-[43px] font-extrabold tracking-[-1px] text-foreground">
             Пробежка вокруг
             <br />
             Татышева
@@ -136,9 +137,22 @@ function TicketHero() {
         </div>
       </div>
 
-      <div className="relative flex h-[396px] w-[300px] shrink-0 flex-col items-start justify-between overflow-hidden rounded-r-[24px] bg-secondary pt-[30px] pr-[26px] pb-[26px] pl-8">
+      <div className="relative flex h-[396px] w-[300px] shrink-0 flex-col items-start justify-between overflow-hidden bg-secondary pt-[50px] pr-[26px] pb-[26px] pl-8">
         <Img src="memphis.svg" className="top-0 left-0 h-[400px] w-[300px]" />
-        <Img src="ticket.png" className="top-[172px] left-[173px] h-[124px] w-[103px] object-cover" />
+        <span className="absolute top-[14px] left-8 text-[10px] font-extrabold tracking-[2px] text-foreground">
+          КОНТРОЛЬ
+        </span>
+        <span className="absolute top-[14px] right-[26px] text-[10px] font-extrabold tracking-[1px] text-foreground">
+          № 0124
+        </span>
+        {/* штамп организатора: запись подтверждена */}
+        <div className="pointer-events-none absolute top-[220px] left-[34px] h-[66px] w-[178px] rotate-[9deg] text-primary">
+          <img src="/event/stamp-admitted.svg" alt="" className="absolute inset-0 size-full max-w-none" />
+          <p className="absolute inset-x-0 top-3 text-center font-display text-[20px] font-extrabold">ДОПУЩЕН</p>
+          <p className="absolute inset-x-0 top-10 text-center text-[9px] font-extrabold tracking-[1px]">
+            орг. Дима К. · 18.10
+          </p>
+        </div>
         <div className="relative h-[143px] w-[242px]">
           <Eyebrow className="text-foreground">УЧАСТНИКИ</Eyebrow>
           <p className="absolute top-[14px] left-0 font-display text-[54px] leading-[67px] font-extrabold text-foreground">

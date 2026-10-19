@@ -21,11 +21,9 @@ const STEPS = 5;
 function Logo() {
   return (
     <div className="absolute top-5 left-12 flex items-center gap-[10px]">
-      <span className="flex size-9 items-center justify-center rounded-[11px] border-2 border-ink bg-secondary">
-        <img src="/onboarding/run.svg" alt="" className="size-5" />
-      </span>
+      <img src="/icon.svg" alt="" className="size-9 shrink-0" />
       <span className="font-display text-base leading-[normal] font-bold whitespace-nowrap text-foreground">
-        [Название]
+        Движ
       </span>
     </div>
   );

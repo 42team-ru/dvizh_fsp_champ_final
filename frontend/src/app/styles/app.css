@@ -16,6 +16,7 @@
   --lavender-soft: #e3e0ff;
   --lime-soft: #f0fac2;
   --mint-soft: #d7f3e6;
+  --green: #159a6b;
   --sky-soft: #ddeeff;
   --peach: #ffe6d2;
   --rose: #ffe3ec;
@@ -138,6 +139,7 @@
   --color-lavender-soft: var(--lavender-soft);
   --color-lime-soft: var(--lime-soft);
   --color-mint-soft: var(--mint-soft);
+  --color-green: var(--green);
   --color-sky-soft: var(--sky-soft);
   --color-peach: var(--peach);
   --color-rose: var(--rose);

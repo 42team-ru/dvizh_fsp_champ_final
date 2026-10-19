@@ -104,9 +104,9 @@ export function EventCard({
   const large = size === "lg";
   const titleBox = large ? 31 : titleLines === 2 ? 43 : 21.5;
   return (
-    <Card className={cn("absolute overflow-hidden p-[2px]", className)}>
+    <Card className={cn("absolute overflow-hidden p-0", className)}>
       <div
-        className="relative w-[calc(100%+4px)] shrink-0 overflow-hidden border-b-2 border-ink"
+        className="relative w-full shrink-0 overflow-hidden border-b-2 border-ink"
         style={{ height: coverHeight }}
       >
         <EventCover cover={event.cover} height={coverHeight - 2} />
@@ -117,7 +117,7 @@ export function EventCard({
       </div>
       <div
         className={cn(
-          "flex w-[calc(100%+4px)] shrink-0 flex-col gap-3",
+          "flex w-full shrink-0 flex-col gap-3",
           large ? "p-5" : "px-[18px] pt-4 pb-[18px]"
         )}
       >

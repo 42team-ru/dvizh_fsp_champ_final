@@ -25,9 +25,22 @@ public class ScheduleDescriptions {
 
 	private static final String FALLBACK = "по расписанию";
 	private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("HH:mm");
+	/**
+	 * Первым инициализируем RecurrenceRule: у lib-recur RecurrenceRule и Part ссылаются друг на друга в static-блоках,
+	 * и если первым тронуть Part (EnumSet.of ниже), инициализация падает с «Part not an enum».
+	 */
+	private static final Class<?> RECURRENCE_RULE = initRecurrenceRule();
 	/** Части правила, которые умеем сказать словами. */
 	private static final Set<Part> SUPPORTED = EnumSet.of(Part.FREQ, Part.INTERVAL, Part.BYDAY, Part.BYMONTHDAY,
 			Part.COUNT, Part.UNTIL, Part.WKST);
+
+	private static Class<?> initRecurrenceRule() {
+		try {
+			return Class.forName(RecurrenceRule.class.getName(), true, RecurrenceRule.class.getClassLoader());
+		} catch (ClassNotFoundException e) {
+			throw new IllegalStateException(e);
+		}
+	}
 
 	/** Все правила через «; » в их порядке. */
 	public static String describe(List<LocalDateTime> firstStarts, List<String> rrules) {

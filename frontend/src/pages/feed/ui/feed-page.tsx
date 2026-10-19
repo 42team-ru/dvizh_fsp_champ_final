@@ -189,7 +189,7 @@ function NearbyPeople() {
 
 function BikeCard() {
   return (
-    <Card className="absolute top-[1040px] left-0 h-[330px] w-[495px] flex-row items-start overflow-hidden p-[2px]">
+    <Card className="absolute top-[1040px] left-0 h-[330px] w-[495px] flex-row items-start overflow-hidden p-0">
       <div className="relative h-[326px] w-[226px] shrink-0 overflow-hidden border-r-2 border-ink">
         <div className="absolute inset-y-0 left-0 w-[224px]">
           <EventCover

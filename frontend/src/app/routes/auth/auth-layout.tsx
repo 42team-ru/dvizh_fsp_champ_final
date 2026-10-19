@@ -59,11 +59,9 @@ function BrandPanel({ brand }: { brand: Brand }) {
         className="absolute top-0 left-0 h-[820px] w-[420px] max-w-none"
       />
       <div className="absolute top-10 left-10 flex items-center gap-[10px]">
-        <span className="flex size-10 items-center justify-center rounded-[12px] border-2 border-ink bg-secondary">
-          <img src="/login/run.svg" alt="" className="size-[22px]" />
-        </span>
+        <img src="/icon.svg" alt="" className="size-10 shrink-0" />
         <span className="font-display text-[17px] font-bold whitespace-nowrap text-white">
-          [Название]
+          Движ
         </span>
       </div>
       <h2 className="absolute top-[130px] left-10 w-[340px] font-display text-[32px] leading-10 font-extrabold tracking-[-0.5px] text-white">
@@ -100,11 +98,9 @@ function MobileBanner({ brand }: { brand: Brand }) {
     >
       <img src={`${dir}/memphis-decor.svg`} alt="" className="absolute inset-0 size-full max-w-none" />
       <div className="absolute top-[18px] left-4 flex items-center gap-2">
-        <span className="flex size-9 items-center justify-center rounded-[11px] border-2 border-ink bg-secondary">
-          <img src={`${dir}/icon-run.svg`} alt="" className="size-5" />
-        </span>
+        <img src="/icon.svg" alt="" className="size-9 shrink-0" />
         <span className="font-display text-base leading-[normal] font-bold whitespace-nowrap text-white">
-          [Название]
+          Движ
         </span>
       </div>
       <p className="absolute top-[76px] left-4 w-[200px] break-words font-display text-[22px] leading-7 font-extrabold tracking-[-0.3px] text-white">
