@@ -2,7 +2,7 @@ import { Link } from "react-router";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Icon } from "@/shared/components/ui/icon";
-import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar";
+import { UserAvatar } from "@/shared/components/ui/user-avatar";
 import { useUser } from "@/entity/user/model/use-user";
 import { SearchPalette } from "@/widgets/search-palette/ui/search-palette";
 
@@ -61,12 +61,7 @@ export function AppHeader({ current = "home" }: { current?: "home" | "feed" | "p
           </Button>
 
           <Link to="/profile" aria-label="Профиль" className="shrink-0">
-            <Avatar className="size-[42px] after:hidden">
-              {user?.avatarUrl && <AvatarImage src={user.avatarUrl} alt="" className="border-2 border-ink object-cover" />}
-              <AvatarFallback className="border-2 border-ink bg-sky text-sm leading-[19px] font-extrabold text-foreground">
-                {((user?.firstName?.[0] ?? "") + (user?.lastName?.[0] ?? "")).toUpperCase() || user?.username?.[0]?.toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+            <UserAvatar user={user} className="size-[42px] rounded-full border-2 border-ink object-cover" />
           </Link>
         </div>
       </div>

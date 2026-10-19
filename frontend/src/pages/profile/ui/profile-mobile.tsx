@@ -1,4 +1,5 @@
 import { PetNameEditor } from "@/features/rename-pet/ui/pet-name-editor";
+import { UserAvatar } from "@/shared/components/ui/user-avatar";
 import { useState } from "react";
 import { useAttendance } from "./use-attendance";
 import { useProfile } from "../model/use-profile";
@@ -68,11 +69,7 @@ function Passport() {
         </div>
         <div className="flex flex-col gap-[14px] p-[18px]">
           <div className="flex items-center gap-[14px]">
-            {p.user?.avatarUrl
-              ? <img src={p.user.avatarUrl} alt="" className="box-border size-[72px] shrink-0 rounded-[36px] border-2 border-ink object-cover" />
-              : <span className="box-border flex size-[72px] shrink-0 items-center justify-center rounded-[36px] border-2 border-ink bg-sky text-[15px] leading-[normal] font-extrabold text-foreground">
-                  {p.initials}
-                </span>}
+            <UserAvatar user={p.user} className="box-border size-[72px] shrink-0 rounded-[36px] border-2 border-ink object-cover" />
             <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
               <Eyebrow className={small}>ИМЯ</Eyebrow>
               <p className="w-[190px] font-display text-[19px] leading-6 font-bold text-foreground">

@@ -1,4 +1,5 @@
 import { useUser } from "@/entity/user/model/use-user";
+import { UserAvatar } from "@/shared/components/ui/user-avatar";
 import { EditProfileDialog } from "@/features/edit-profile/ui/edit-profile-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { useRegistrationsMine } from "@/shared/api/generated/core/registrations/registrations";
@@ -79,7 +80,6 @@ function DataPage() {
   const list = sports.data?.status === 200 ? sports.data.data : [];
   const number = passportNumber(user?.id);
   const issued = dateShort(user?.createdAt);
-  const initials = `${user?.firstName?.[0] ?? ""}${user?.lastName?.[0] ?? ""}`.toUpperCase();
   const mood = user?.pet ? (MOOD_LABEL[user.pet.mood] ?? user.pet.mood) : undefined;
   const [mrz1, mrz2] = mrzLines(user ?? {});
 
@@ -107,17 +107,7 @@ function DataPage() {
       </header>
 
       <div className="relative flex items-start gap-[22px]">
-        {user?.avatarUrl ? (
-          <img
-            src={user.avatarUrl}
-            alt=""
-            className="h-[190px] w-[150px] shrink-0 rounded-xl border-2 border-ink object-cover"
-          />
-        ) : (
-          <div className="flex h-[190px] w-[150px] shrink-0 items-center justify-center rounded-xl border-2 border-ink bg-sky">
-            <span className="font-display text-[44px] font-extrabold text-foreground">{initials}</span>
-          </div>
-        )}
+        <UserAvatar user={user} className="h-[190px] w-[150px] shrink-0 rounded-xl border-2 border-ink object-cover" />
         <div className="flex min-w-0 flex-1 flex-col gap-3">
           <div className="flex gap-4">
             <Field label="ФАМИЛИЯ / SURNAME" value={user?.lastName ?? "—"} large />

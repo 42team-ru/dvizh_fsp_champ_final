@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { useUser } from "@/entity/user/model/use-user";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 import { MobileTabBar } from "@/widgets/mobile-shell/ui/mobile-tab-bar";
 import { Badge } from "@/shared/components/ui/badge";
@@ -106,6 +107,7 @@ function SectionHead({ title, link }: { title: string; link?: string }) {
 }
 
 function AppBar() {
+  const { user } = useUser();
   return (
     <div className="flex h-16 shrink-0 items-center justify-between px-4">
       <div className="flex items-center gap-2">
@@ -125,6 +127,7 @@ function AppBar() {
         </Link>
         <Link to="/profile" aria-label="Профиль">
           <Disc
+            user={user}
             initials="АС"
             tone="bg-sky"
             className="size-11"

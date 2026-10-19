@@ -7,14 +7,16 @@ import {
 } from "@react-router/dev/routes";
 
 export default [
-  index("routes/home.tsx"),
-  route("feed", "routes/feed.tsx"),
-  route("profile", "routes/profile.tsx"),
-  route("activity", "routes/activity.tsx"),
-  route("onboarding", "routes/onboarding.tsx"),
-  route("events/new", "routes/event-create.tsx"),
-  route("events/:id", "routes/event.tsx"),
-  route("pet", "routes/pet.tsx"),
+  layout("providers/guards/auth-guard.tsx", [
+    index("routes/home.tsx"),
+    route("feed", "routes/feed.tsx"),
+    route("profile", "routes/profile.tsx"),
+    route("activity", "routes/activity.tsx"),
+    route("onboarding", "routes/onboarding.tsx"),
+    route("events/new", "routes/event-create.tsx"),
+    route("events/:id", "routes/event.tsx"),
+    route("pet", "routes/pet.tsx"),
+  ]),
   ...prefix("/auth", [
     layout("routes/auth/auth-layout.tsx", [
       route("login", "routes/auth/login.tsx"),

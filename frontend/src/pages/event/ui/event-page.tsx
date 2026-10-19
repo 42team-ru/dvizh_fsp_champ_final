@@ -161,6 +161,7 @@ function TicketHero({ m }: { m: EventModel }) {
               <Disc
                 key={p.id}
                 initials={initials(p)}
+                user={p}
                 tone={TONES[i % TONES.length]}
                 className="absolute top-0 size-[30px]"
                 textClassName="text-[10px] leading-[14px]"
@@ -242,6 +243,7 @@ function Organizer({ m }: { m: EventModel }) {
       <div className="absolute top-[22px] left-[22px] flex h-14 w-[447px] items-center gap-[14px]">
         <Disc
           initials={e.organization ? e.organization.name.slice(0, 2).toUpperCase() : initials(e.author)}
+          user={e.organization ? undefined : e.author}
           tone="bg-sky"
           className="size-14"
           textClassName="text-[19px] leading-[26px] tracking-[-0.5px]"
@@ -340,7 +342,7 @@ function Chat({ m }: { m: EventModel }) {
         )}
         {m.comments.map((c) => (
           <div key={c.id} className="flex items-start gap-3">
-            <Disc initials={initials(c.author)} tone="bg-sky" className="size-9 shrink-0" textClassName="text-xs leading-[17px]" />
+            <Disc user={c.author} initials={initials(c.author)} tone="bg-sky" className="size-9 shrink-0" textClassName="text-xs leading-[17px]" />
             <div className={cn(
               "box-border max-w-[580px] rounded-tl-[4px] rounded-tr-[18px] rounded-br-[18px] rounded-bl-[18px] border-2 border-ink px-4 py-2.5",
               c.isOrganizer ? "bg-lime-soft" : "bg-card",
@@ -418,6 +420,7 @@ function Going({ m }: { m: EventModel }) {
           >
             <Disc
               initials={initials(g)}
+              user={g}
               tone={TONES[i % TONES.length]}
               className="size-12"
               textClassName="text-base leading-[22px] tracking-[-0.5px]"

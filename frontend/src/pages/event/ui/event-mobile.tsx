@@ -89,7 +89,7 @@ function MobileChat({ m }: { m: EventModel }) {
       {m.comments.length === 0 && <p className="text-[13px] font-medium text-muted-foreground">Спросите о месте или снаряжении — организатор ответит здесь.</p>}
       {m.comments.map((c, i) => (
         <div key={c.id} className="flex items-start gap-2">
-          <Disc initials={initials(c.author)} tone={TONES[i % TONES.length]} className="size-8 shrink-0" textClassName="text-xs leading-[normal]" />
+          <Disc user={c.author} initials={initials(c.author)} tone={TONES[i % TONES.length]} className="size-8 shrink-0" textClassName="text-xs leading-[normal]" />
           <div className={cn(
             "box-border flex min-w-0 flex-1 flex-col gap-[2px] rounded-[14px] border-[1.5px] border-ink px-3 py-2",
             c.isOrganizer ? "bg-lime-soft" : "bg-sky-soft",
@@ -177,6 +177,7 @@ export function EventMobile({ m }: { m: EventModel }) {
         <div className="box-border flex w-full items-center gap-3 rounded-[20px] border-2 border-ink bg-card p-3">
           <Disc
             initials={e.organization ? e.organization.name.slice(0, 2).toUpperCase() : initials(e.author)}
+            user={e.organization ? undefined : e.author}
             tone="bg-sky"
             className="size-12 shrink-0"
             textClassName="text-[15px] leading-[normal]"
@@ -247,6 +248,7 @@ export function EventMobile({ m }: { m: EventModel }) {
               <Disc
                 key={g.id}
                 initials={initials(g)}
+                user={g}
                 tone={TONES[i % TONES.length]}
                 className={cn("size-7", i < 3 && "mr-[-8px]")}
                 textClassName="text-xs leading-[normal]"
@@ -326,6 +328,7 @@ export function EventMobile({ m }: { m: EventModel }) {
               <div key={g.id} className="flex w-[46px] flex-col items-center gap-1">
                 <Disc
                   initials={initials(g)}
+                  user={g}
                   tone={TONES[i % TONES.length]}
                   className="size-[46px]"
                   textClassName="text-xs leading-[normal]"

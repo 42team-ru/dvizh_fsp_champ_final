@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import { UserAvatar } from "@/shared/components/ui/user-avatar";
 import { useQueryClient } from "@tanstack/react-query";
 import { USER_QUERY_KEY } from "@/entity/user/model/use-user";
 import {
@@ -72,11 +73,7 @@ function EditProfileForm({ user, onDone }: { user: UserResponse; onDone(): void 
       </DialogHeader>
 
       <div className="flex items-center gap-3">
-        {user.avatarUrl
-          ? <img src={user.avatarUrl} alt="" className="size-16 rounded-2xl border-2 border-ink object-cover" />
-          : <span className="flex size-16 items-center justify-center rounded-2xl border-2 border-ink bg-sky font-display text-xl font-extrabold">
-              {(form.firstName[0] ?? "") + (form.lastName[0] ?? "")}
-            </span>}
+        <UserAvatar user={user} className="size-16 rounded-2xl border-2 border-ink object-cover" />
         <label className="inline-flex h-10 cursor-pointer items-center rounded-pill border-2 border-ink bg-card px-4 text-sm font-extrabold">
           {uploadAvatar.isPending ? "Загружаем…" : "Загрузить фото"}
           <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only"

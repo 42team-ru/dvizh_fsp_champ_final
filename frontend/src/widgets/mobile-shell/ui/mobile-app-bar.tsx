@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { useUser } from "@/entity/user/model/use-user";
 import { Disc } from "@/shared/components/ui/disc";
 import { Icon } from "@/shared/components/ui/icon";
 import { cn } from "cn";
@@ -14,6 +15,7 @@ export function MobileAppBar({
   title: string;
   titleClassName?: string;
 }) {
+  const { user } = useUser();
   return (
     <div className="flex h-16 shrink-0 items-center justify-between px-4">
       <div className="flex items-center gap-2">
@@ -38,6 +40,7 @@ export function MobileAppBar({
         </Link>
         <Link to="/profile" aria-label="Профиль">
           <Disc
+            user={user}
             initials="АС"
             tone="bg-sky"
             className="size-11"
