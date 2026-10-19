@@ -23,6 +23,7 @@ import com.hackathon.app.domain.entity.AppUser;
 import com.hackathon.app.domain.entity.Organization;
 import com.hackathon.app.domain.entity.Sport;
 import com.hackathon.app.domain.entity.UserSport;
+import com.hackathon.app.domain.entity.Event;
 import com.hackathon.app.domain.enums.Daytime;
 import com.hackathon.app.domain.enums.DismissReason;
 import com.hackathon.app.domain.enums.EventFormat;
@@ -32,6 +33,7 @@ import com.hackathon.app.domain.enums.SystemRole;
 import com.hackathon.app.domain.exception.BadRequestException;
 import com.hackathon.app.repository.AppUserRepository;
 import com.hackathon.app.repository.OrganizationRepository;
+import com.hackathon.app.repository.EventRepository;
 import com.hackathon.app.repository.RecommendationDismissalRepository;
 import com.hackathon.app.repository.RecommendationRepository;
 import com.hackathon.app.repository.SportRepository;
@@ -71,6 +73,8 @@ class RecommendationSignals {
 
 	private final RecommendationRepository signals;
 	private final RecommendationDismissalRepository dismissals;
+	/** Скрытые мероприятия: из них берутся образцы «такое не надо». */
+	private final EventRepository events;
 	private final UserSportRepository userSports;
 	private final UserPreferencesRepository preferences;
 	private final AppUserRepository users;
@@ -78,6 +82,13 @@ class RecommendationSignals {
 	private final SportRepository sports;
 	private final RecommendationProperties properties;
 	private final NotificationProperties notificationProperties;
+
+	/**
+	 * Скрытое мной мероприятие как образец «такое не надо»: вид спорта, организатор, местные день и время суток,
+	 * место (null — онлайн) и вес — затухание по давности скрытия.
+	 */
+	record Dismissed(UUID sportId, UUID organizerKey, DayOfWeek day, Daytime daytime, Geo.Point place, double weight) {
+	}
 
 	/** Откуда точка отсчёта расстояния: от неё зависит текст причины. */
 	enum OriginSource {
@@ -106,6 +117,7 @@ class RecommendationSignals {
 	 * @param organizerVisits ключ организатора → сколько раз я у него был
 	 * @param dismissedEvents скрытые мной мероприятия
 	 * @param sportDismissals вид спорта → затухающее число скрытий «Не мой вид спорта»
+	 * @param dismissed       скрытые мной мероприятия как образцы «такое не надо» (для штрафа похожим)
 	 * @param myStatus        мероприятие → статус моей записи
 	 */
 	record Profile(UUID userId, SystemRole role, String city, Map<UUID, Double> affinity, Set<UUID> explicitSports,
@@ -113,7 +125,7 @@ class RecommendationSignals {
 			int[] habit, int habitTotal, Geo.Point origin, OriginSource originSource, double radiusKm, ZoneId zone,
 			Map<UUID, Integer> coParticipants, Map<UUID, String> coParticipantNames,
 			Map<UUID, Integer> organizerVisits, Set<UUID> dismissedEvents, Map<UUID, Double> sportDismissals,
-			Map<UUID, RegistrationStatus> myStatus) {
+			List<Dismissed> dismissed, Map<UUID, RegistrationStatus> myStatus) {
 
 		/** Нет ни интересов, ни истории: подборка строится без вида спорта. */
 		boolean coldStart() {
@@ -332,10 +344,26 @@ class RecommendationSignals {
 
 		var dismissedEvents = new HashSet<UUID>();
 		var sportDismissals = new HashMap<UUID, Double>();
-		for (var dismissal : dismissals.findByUserId(userId)) {
+		var myDismissals = dismissals.findByUserId(userId);
+		var dismissedById = events.findAllById(myDismissals.stream().map(d -> d.getEventId()).toList()).stream()
+				.collect(Collectors.toMap(Event::getId, e -> e));
+		var dismissed = new ArrayList<Dismissed>();
+		for (var dismissal : myDismissals) {
 			dismissedEvents.add(dismissal.getEventId());
+			var weight = decay(dismissal.getUpdatedAt(), now, halfLife);
 			if (dismissal.getReason() == DismissReason.NOT_MY_SPORT) {
-				sportDismissals.merge(dismissal.getSportId(), decay(dismissal.getUpdatedAt(), now, halfLife), Double::sum);
+				sportDismissals.merge(dismissal.getSportId(), weight, Double::sum);
+			}
+			var event = dismissedById.get(dismissal.getEventId());
+			if (event != null) {
+				var eventZone = event.getTimeZone() != null ? ZoneId.of(event.getTimeZone())
+						: Geo.zoneNear(event.getLat(), event.getLon(), defaultZone);
+				var local = event.getStartAt().atZone(eventZone);
+				dismissed.add(new Dismissed(event.getSportId(),
+						event.getOrganizationId() != null ? event.getOrganizationId() : event.getAuthorId(),
+						local.getDayOfWeek(), daytimeOf(local.getHour()),
+						event.getLat() != null && event.getLon() != null ? new Geo.Point(event.getLat(), event.getLon()) : null,
+						weight));
 			}
 		}
 
@@ -345,7 +373,7 @@ class RecommendationSignals {
 				mySports.stream().map(UserSport::getSportId).collect(Collectors.toSet()), levels, generalLevel,
 				prefs != null && !prefs.getDays().isEmpty() ? EnumSet.copyOf(prefs.getDays()) : null,
 				prefs != null ? prefs.getDaytime() : null, habit, attended.size(), origin, originSource, radius, zone,
-				coParticipants, coNames, organizerVisits, dismissedEvents, sportDismissals, myStatus);
+				coParticipants, coNames, organizerVisits, dismissedEvents, sportDismissals, List.copyOf(dismissed), myStatus);
 	}
 
 	/** Подписи организаторов по ключам: название организации или имя человека. */

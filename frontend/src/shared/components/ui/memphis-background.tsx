@@ -68,10 +68,41 @@ const STRADDLE_SHARE = 0.3
 const SPACING = 80
 /** Сколько площади приходится на одну фигуру, px². Меньше — гуще. */
 const AREA_PER_SHAPE = 160000
-/** Сколько ждать тишины в DOM перед раскладкой, мс. */
-const SETTLE_MS = 500
-/** Минимальное ожидание после монтирования страницы (шрифты, первые данные), мс. */
-const MIN_WAIT_MS = 900
+/** Сколько ждать тишины в DOM перед дочисткой рисунка, мс. */
+const SETTLE_MS = 400
+/**
+ * Потолок ожидания дочистки, мс: на страницах, где DOM меняется постоянно (карта, ленты с автообновлением, бобр),
+ * тишины может не быть вовсе — тогда дочищаем по тому, что уже на экране.
+ */
+const MAX_WAIT_MS = 1500
+/** Версия кэша раскладок: поменялся алгоритм — меняем, старые раскладки не подхватятся. */
+const CACHE_VERSION = 1
+
+/**
+ * Ключ кэша: страница (seed), вариант и ширина с округлением. Высоту не берём: при первом рендере страница ещё
+ * без данных и ниже итоговой — с высотой в ключе кэш почти не совпадал бы; лишние фигуры ниже края обрезаются.
+ */
+function cacheKey(key: string, variant: Variant, width: number) {
+  return `memphis:v${CACHE_VERSION}:${variant}:${key}:${Math.round(width / 40) * 40}`
+}
+
+/** Готовая раскладка из кэша браузера; хранилище может быть недоступно (приватный режим) — тогда null. */
+function readCache(cache: string): Placed[] | null {
+  try {
+    const raw = window.localStorage.getItem(cache)
+    return raw ? (JSON.parse(raw) as Placed[]) : null
+  } catch {
+    return null
+  }
+}
+
+function writeCache(cache: string, shapes: Placed[]) {
+  try {
+    window.localStorage.setItem(cache, JSON.stringify(shapes))
+  } catch {
+    // нет места или хранилище выключено — просто посчитаем в следующий раз заново
+  }
+}
 /** Доля попыток, в которых фигура садится вплотную (на CLEAR) к боковой стороне крупного блока. */
 const HUG_SHARE = 0.55
 /** Какие препятствия считаются крупными блоками, к которым можно прижаться. */
@@ -106,8 +137,23 @@ function distToBox(x: number, y: number, box: Box) {
 /** `hard` — текст, кнопки, поля, картинки; `soft` — сплошные блоки (карточки), за которыми фигура может прятаться. */
 type Obstacles = { hard: Box[]; soft: Box[] }
 
-/** Раскладка фигур по свободному месту прямоугольника width × height с препятствиями. */
-function layout(width: number, height: number, obstacles: Obstacles, seed: string, scale: number): Placed[] {
+/** К какой размерной группе относится фигура (с учётом масштаба). */
+function tierOf(size: number, scale: number) {
+  return size >= 70 * scale ? 0 : size >= 40 * scale ? 1 : 2
+}
+
+/**
+ * Раскладка фигур по свободному месту прямоугольника width × height с препятствиями.
+ * `keep` — уже нарисованные фигуры: те, на которые не наехал контент, остаются на месте, остальное место добирается новыми.
+ */
+function layout(
+  width: number,
+  height: number,
+  obstacles: Obstacles,
+  seed: string,
+  scale: number,
+  keep: Placed[] = [],
+): Placed[] {
   const rand = mulberry(hashSeed(seed))
   function pick<T>(list: readonly T[]): T {
     return list[Math.floor(rand() * list.length)]
@@ -115,9 +161,18 @@ function layout(width: number, height: number, obstacles: Obstacles, seed: strin
   const total = Math.min(35, Math.max(3, Math.round((width * height) / (AREA_PER_SHAPE * scale * scale))))
   const placed: { p: Placed; cx: number; cy: number; r: number }[] = []
   const blocks = obstacles.soft.filter((o) => o.r - o.l >= MIN_BLOCK.w && o.b - o.t >= MIN_BLOCK.h)
+  const kept = [0, 0, 0]
+  for (const p of keep) {
+    const r = p.size * FOOTPRINT[p.shape]
+    const cx = p.x + p.size / 2
+    const cy = p.y + p.size / 2
+    if (obstacles.hard.some((o) => distToBox(cx, cy, o) < r + CLEAR_HARD - 0.5)) continue
+    placed.push({ p, cx, cy, r })
+    kept[tierOf(p.size, scale)]++
+  }
 
-  for (const tier of TIERS) {
-    const want = Math.round(total * tier.share)
+  for (const [index, tier] of TIERS.entries()) {
+    const want = Math.round(total * tier.share) - kept[index]
     for (let n = 0; n < want; n++) {
       const shape = pick(tier.shapes)
       const size = Math.round((tier.size[0] + rand() * (tier.size[1] - tier.size[0])) * scale)
@@ -201,12 +256,17 @@ function collectObstacles(bg: HTMLElement, scope: HTMLElement): Obstacles {
     })
   }
 
-  for (const node of Array.from(scope.querySelectorAll<Element>("*"))) {
-    if (bg.contains(node)) continue
-    // внутренности svg-иконок отдельно не считаем: хватает самого svg
-    if (node instanceof SVGElement && node.tagName !== "svg") continue
+  // Обход вглубь со стеком: скрытые и fixed-ветки отбрасываются целиком (на страницах лежат сразу десктопная
+  // и мобильная вёрстки, одна из них display:none), внутрь svg, canvas, текста и кнопок не заходим — хватает их рамки.
+  const stack = Array.from(scope.children)
+  while (stack.length) {
+    const node = stack.pop()!
+    if (node === bg) continue
     const style = getComputedStyle(node)
-    if (style.position === "fixed" || style.display === "none" || style.visibility === "hidden") continue
+    if (style.display === "none" || style.position === "fixed") continue
+    const leaf = node.tagName === "svg" || node.tagName === "CANVAS" || (TEXT_TAGS.test(node.tagName) && node.tagName !== "A")
+    if (!leaf) stack.push(...Array.from(node.children))
+    if (style.visibility === "hidden") continue
     const rect = node.getBoundingClientRect()
     if (rect.width === 0 || rect.height === 0) continue
 
@@ -358,27 +418,47 @@ function MemphisBackground({
     let done = false
     let timer = 0
     const start = performance.now()
+    let current: Placed[] = []
 
-    // Рисунок строится один раз за жизнь страницы: ждём, пока подгрузятся шрифты и данные (DOM затих),
-    // раскладываем фигуры и больше не трогаем — масштаб карты, ресайз и обновления списков его не меняют.
-    const build = () => {
-      if (done) return
+    const place = (keep: Placed[]) => {
       const width = bg.offsetWidth
       const height = bg.offsetHeight
-      if (!width || !height) {
-        timer = window.setTimeout(build, 200)
+      if (!width || !height) return null
+      const scale = variant === "mobile" || width < 640 ? 0.7 : 1
+      current = layout(width, height, collectObstacles(bg, scope), key, scale, keep)
+      setShapes(current)
+      return width
+    }
+
+    // Первый кадр: фигуры сразу — из кэша (страница этого размера уже раскладывалась) или посчитанные
+    // по тому, что уже есть на экране. useLayoutEffect успевает до отрисовки, пустого фона не видно.
+    const cached = bg.offsetWidth ? readCache(cacheKey(key, variant, bg.offsetWidth)) : null
+    if (cached) {
+      current = cached
+      setShapes(cached)
+    } else {
+      place([])
+    }
+
+    // Дочистка один раз, когда подгрузятся данные: убираем фигуры, на которые наехал контент, и добираем
+    // свободное место. Остальные фигуры не двигаются; дальше рисунок не трогаем до ухода со страницы.
+    const refine = () => {
+      if (done) return
+      const width = place(current)
+      if (!width) {
+        timer = window.setTimeout(refine, 200)
         return
       }
-      const obstacles = collectObstacles(bg, scope)
-      const scale = variant === "mobile" || width < 640 ? 0.7 : 1
-      setShapes(layout(width, height, obstacles, key, scale))
+      writeCache(cacheKey(key, variant, width), current)
       done = true
       mutations.disconnect()
     }
     const schedule = () => {
       if (done) return
       window.clearTimeout(timer)
-      timer = window.setTimeout(build, Math.max(SETTLE_MS, MIN_WAIT_MS - (performance.now() - start)))
+      const elapsed = performance.now() - start
+      // ждём тишины, но не дольше MAX_WAIT_MS с момента монтирования
+      timer = window.setTimeout(refine, Math.min(SETTLE_MS, Math.max(0, MAX_WAIT_MS - elapsed)))
     }
 
     const mutations = new MutationObserver((records) => {

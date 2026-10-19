@@ -1,3 +1,4 @@
+import { DismissButton, useDismissRecommendation } from "@/features/dismiss-recommendation/ui/dismiss-button";
 import { MobileAppBar } from "@/widgets/mobile-shell/ui/mobile-app-bar";
 import { MobileTabBar } from "@/widgets/mobile-shell/ui/mobile-tab-bar";
 import { Badge } from "@/shared/components/ui/badge";
@@ -41,7 +42,7 @@ const NEAR = [
 const tag =
   "h-auto border-[1.5px] px-[10px] py-1 text-[10px] leading-[normal] font-extrabold tracking-[1px]";
 
-function BigCard({ e, index }: { e: EventSummaryResponse; index: number }) {
+function BigCard({ e, index, onDismiss }: { e: EventSummaryResponse; index: number; onDismiss?: (id: string) => void }) {
   const style = BIG_STYLES[index % BIG_STYLES.length];
   const going = goingOf(e);
   const total = e.capacity ?? undefined;
@@ -50,6 +51,7 @@ function BigCard({ e, index }: { e: EventSummaryResponse; index: number }) {
     <div className="px-4">
       <Card className="relative overflow-hidden rounded-[22px]">
         <Link to={`/events/${e.id}`} aria-label={e.title} className="absolute inset-0 z-10" />
+        {onDismiss && <DismissButton onDismiss={() => onDismiss(e.id)} className="absolute top-12 right-3" />}
         <div className={cn("relative shrink-0 overflow-hidden", style.photo)} style={{ height: style.height }}>
           <img
             src={e.coverUrl ?? `/${dir}/${style.decor}`}
@@ -96,7 +98,7 @@ function BigCard({ e, index }: { e: EventSummaryResponse; index: number }) {
   );
 }
 
-function SmallRow({ items }: { items: EventSummaryResponse[] }) {
+function SmallRow({ items, onDismiss }: { items: EventSummaryResponse[]; onDismiss?: (id: string) => void }) {
   return (
     <div className="grid grid-cols-2 gap-4 px-4">
       {items.map((e, i) => {
@@ -110,6 +112,11 @@ function SmallRow({ items }: { items: EventSummaryResponse[] }) {
         return (
         <Card key={e.id} className="relative overflow-hidden rounded-[20px]">
           <Link to={`/events/${e.id}`} aria-label={e.title} className="absolute inset-0 z-10" />
+          {onDismiss && (
+            <button type="button" aria-label="Не интересно — скрыть из подборки" title="Не интересно"
+              onClick={(ev) => { ev.preventDefault(); ev.stopPropagation(); onDismiss(e.id); }}
+              className="absolute top-2 right-2 z-20 flex size-7 items-center justify-center rounded-full border-2 border-ink bg-card text-xs font-extrabold">✕</button>
+          )}
           <div className={cn("relative h-[84px] shrink-0 overflow-hidden", s.tone)}>
             <img
               src={`/${dir}/decor.svg`}
@@ -211,6 +218,8 @@ export function FeedMobile() {
   const [more, setMore] = useState(false);
   const params = searchText ? { ...filters.params, searchText } : filters.params;
   const list = useFeedEvents(params, filters);
+  const { dismiss } = useDismissRecommendation();
+  const onDismiss = filters.forYou ? dismiss : undefined;
   const events = list.events ?? [];
   // Узор ленты: крупная карточка, затем пара мелких — и так по кругу.
   const groups: EventSummaryResponse[][] = [];
@@ -304,8 +313,8 @@ export function FeedMobile() {
           )}
           {groups.map((group, i) => (
             <div key={group[0].id} className="flex flex-col gap-4">
-              <BigCard e={group[0]} index={i} />
-              {group.length > 1 && <SmallRow items={group.slice(1)} />}
+              <BigCard e={group[0]} index={i} onDismiss={onDismiss} />
+              {group.length > 1 && <SmallRow items={group.slice(1)} onDismiss={onDismiss} />}
               {i === 0 && <NearbyPeople />}
             </div>
           ))}

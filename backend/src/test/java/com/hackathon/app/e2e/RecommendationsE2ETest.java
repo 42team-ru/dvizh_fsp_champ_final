@@ -123,7 +123,8 @@ class RecommendationsE2ETest {
 		fan.dismissRecommendation(near, "NOT_MY_SPORT");
 		assertThat(ids(fan.recommendedEvents(bySport))).doesNotContain(near).contains(nearSecond);
 		assertThat(fan.explainRecommendation(near).excludedReason()).isEqualTo("Вы скрыли его из подборки");
-		assertThat(fan.explainRecommendation(nearSecond).dismissPenalty()).isCloseTo(0.5, within(0.01));
+		// близнец скрытого (тот же вид, автор, время, место): штраф упирается в пол app.recommendations.dismiss.floor
+		assertThat(fan.explainRecommendation(nearSecond).dismissPenalty()).isCloseTo(0.35, within(0.01));
 		fan.dismissRecommendation(near, "NOT_MY_SPORT"); // повтор не создаёт дубль и не падает
 
 		// 5. «Вернуть».
