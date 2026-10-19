@@ -157,8 +157,8 @@ public class DemoSeeder {
 			pending(clubTournament, ids.get("olga"), "Играла в молодости, хочу вспомнить");
 			pending(clubTournament, ids.get("nikolai"), "Есть второй разряд");
 			pending(clubTournament, ids.get("dmitry"), null);
-			comment(clubTournament, ids.get("elena"), "Нужно ли уметь записывать партии?");
-			comment(clubTournament, ids.get("ladya"), "Желательно, но не обязательно: бланки и подсказку по нотации дадим на месте.");
+			var notationQuestion = comment(clubTournament, ids.get("elena"), "Нужно ли уметь записывать партии?");
+			reply(clubTournament, ids.get("ladya"), "Желательно, но не обязательно: бланки и подсказку по нотации дадим на месте.", notationQuestion);
 		}
 		var chessLesson = event(ids.get("ladya"), ladya, "Шахматы", new EventRequest(
 				"Открытый урок шахмат для начинающих",
@@ -188,9 +188,11 @@ public class DemoSeeder {
 			confirmed(football, ids.get("sergey"), now);
 			confirmed(football, ids.get("elena"), now);
 			// Сценарий 5: вопрос участника, ответы автора и соорганизатора с меткой «Организатор».
-			comment(football, ids.get("anna"), "Давно не играла, можно прийти просто попробовать?");
-			comment(football, ids.get("dmitry"), "Конечно! Поставим в команду поопытнее, играем без жёстких стыков.");
-			comment(football, ids.get("nikolai"), "Возьмите сменную обувь: поле искусственное.");
+			var annaQuestion = comment(football, ids.get("anna"), "Давно не играла, можно прийти просто попробовать?");
+			var dmitryAnswer = reply(football, ids.get("dmitry"), "Конечно! Поставим в команду поопытнее, играем без жёстких стыков.", annaQuestion);
+			reply(football, ids.get("nikolai"), "Возьмите сменную обувь: поле искусственное.", annaQuestion);
+			reply(football, ids.get("anna"), "Спасибо! Тогда записываюсь 🙂", dmitryAnswer);
+			comment(football, ids.get("sergey"), "Кто-нибудь едет от Октябрьского моста? Могу подхватить двоих");
 		}
 
 		// Сценарий 4: запись по заявке — автор Пётр, заявки в обоих исходах и ждущие решения.
@@ -284,8 +286,8 @@ public class DemoSeeder {
 			attend(cancelled, ids.get("anna"));
 			occurrenceMapper.cancel(cancelled, "Зал занят: в школе соревнования", now, ids.get("petr"));
 			occurrences.save(cancelled);
-			comment(basketball, ids.get("anna"), "Если пропущу вторник, можно прийти в воскресенье?");
-			comment(basketball, ids.get("petr"), "Да, отмечайтесь на любые даты — главное, чтобы были места.");
+			var sundayQuestion = comment(basketball, ids.get("anna"), "Если пропущу вторник, можно прийти в воскресенье?");
+			reply(basketball, ids.get("petr"), "Да, отмечайтесь на любые даты — главное, чтобы были места.", sundayQuestion);
 		}
 
 		// Сценарий 6: снятое с публикации — нет в ленте, у записавшейся Анны видно с причиной.
@@ -384,9 +386,14 @@ public class DemoSeeder {
 		attendances.save(occurrenceMapper.toAttendance(occurrence.getId(), occurrence.getEventId(), userId));
 	}
 
-	/** saveAndFlush по одному: порядок createdAt — порядок реплик в обсуждении. */
-	private void comment(Event event, UUID authorId, String text) {
-		comments.saveAndFlush(commentMapper.toEntity(event.getId(), authorId, text));
+	/** Сообщение в общий поток. saveAndFlush по одному: порядок createdAt — порядок реплик в обсуждении. */
+	private UUID comment(Event event, UUID authorId, String text) {
+		return reply(event, authorId, text, null);
+	}
+
+	/** Ответ на сообщение replyToId (цитата над ответом). */
+	private UUID reply(Event event, UUID authorId, String text, UUID replyToId) {
+		return comments.saveAndFlush(commentMapper.toEntity(event.getId(), authorId, text, replyToId)).getId();
 	}
 
 	private void coOrganizer(Event event, UUID userId) {

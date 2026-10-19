@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:8080",
+      "url": "http://localhost:8099",
       "description": "Generated server url"
     }
   ],
@@ -21,12 +21,12 @@
   ],
   "tags": [
     {
-      "name": "pets",
-      "description": "Бобр-маскот: каталог вещей и образ"
+      "name": "comments",
+      "description": "Обсуждение под мероприятием как чат: сообщения, ответы на сообщения, правка и удаление своего"
     },
     {
-      "name": "comments",
-      "description": "Обсуждение под мероприятием: вопросы и ответы организатора"
+      "name": "pets",
+      "description": "Бобр-маскот: каталог вещей и образ"
     },
     {
       "name": "sports",
@@ -512,6 +512,141 @@
           },
           "409": {
             "description": "Занятие отменено или уже началось, в это время уже есть занятие, разовое или удалённое мероприятие",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/{id}/comments/{commentId}": {
+      "put": {
+        "tags": [
+          "comments"
+        ],
+        "summary": "Исправить своё сообщение",
+        "description": "В ответе появится editedAt.",
+        "operationId": "comments_update",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "commentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommentUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "403": {
+            "description": "Чужое сообщение",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Нет мероприятия или сообщения",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Сообщение удалено или обсуждение закрыто",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "comments"
+        ],
+        "summary": "Удалить своё сообщение",
+        "description": "Мягко: в ленте остаётся «Сообщение удалено» (text = null, deleted = true), ответы на него сохраняются.",
+        "operationId": "comments_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "commentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "403": {
+            "description": "Чужое сообщение",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Нет мероприятия или сообщения",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Уже удалено или обсуждение закрыто",
             "content": {
               "application/json": {
                 "schema": {
@@ -1520,8 +1655,8 @@
         "tags": [
           "comments"
         ],
-        "summary": "Обсуждение мероприятия",
-        "description": "Старые сверху. isOrganizer — показать у автора метку «Организатор».",
+        "summary": "Сообщения обсуждения",
+        "description": "Старые сверху. replyTo — цитата сообщения, на которое ответили; isMine — моё; canEdit — могу исправить или удалить. after — только сообщения новее этого момента (подгрузка новых).",
         "operationId": "comments_list",
         "parameters": [
           {
@@ -1532,6 +1667,17 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "description": "Только сообщения новее этого момента: createdAt последнего полученного",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "example": "2026-10-19T09:00:00Z"
           }
         ],
         "responses": {
@@ -1551,8 +1697,8 @@
         "tags": [
           "comments"
         ],
-        "summary": "Написать в обсуждение",
-        "description": "Любой вошедший, даже не записанный. У удалённого мероприятия обсуждение закрыто.",
+        "summary": "Написать сообщение или ответить на сообщение",
+        "description": "Любой вошедший, даже не записанный. replyToId — ответ на сообщение. У удалённого мероприятия обсуждение закрыто.",
         "operationId": "comments_create",
         "parameters": [
           {
@@ -1587,7 +1733,7 @@
             }
           },
           "400": {
-            "description": "Пустой или слишком длинный текст",
+            "description": "Пустой или слишком длинный текст, нет сообщения для ответа",
             "content": {
               "application/json": {
                 "schema": {
@@ -1607,7 +1753,7 @@
             }
           },
           "409": {
-            "description": "Мероприятие удалено",
+            "description": "Мероприятие удалено или ответ на удалённое сообщение",
             "content": {
               "application/json": {
                 "schema": {
@@ -3496,6 +3642,22 @@
           "startAt"
         ]
       },
+      "CommentUpdateRequest": {
+        "type": "object",
+        "description": "Исправить своё сообщение",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Новый текст",
+            "example": "Можно прийти без своих шиповок? Размер 43",
+            "maxLength": 2000,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "text"
+        ]
+      },
       "RejectRegistrationRequest": {
         "type": "object",
         "description": "Отказ по заявке; тело можно не передавать",
@@ -4267,7 +4429,7 @@
       },
       "CommentRequest": {
         "type": "object",
-        "description": "Новый комментарий в обсуждении мероприятия",
+        "description": "Новое сообщение в обсуждении мероприятия",
         "properties": {
           "text": {
             "type": "string",
@@ -4275,15 +4437,48 @@
             "example": "Можно прийти без своих шиповок?",
             "maxLength": 2000,
             "minLength": 0
+          },
+          "replyToId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Ответ на сообщение (id); пусто — в общий поток"
           }
         },
         "required": [
           "text"
         ]
       },
+      "CommentReplyResponse": {
+        "type": "object",
+        "description": "Сообщение, на которое ответили: автор и начало текста",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "id исходного сообщения — для перехода к нему"
+          },
+          "author": {
+            "$ref": "#/components/schemas/UserShortResponse",
+            "description": "Автор исходного сообщения"
+          },
+          "text": {
+            "type": "string",
+            "description": "Начало текста (до 140 символов); null — сообщение удалено"
+          },
+          "deleted": {
+            "type": "boolean",
+            "description": "Исходное сообщение удалено"
+          }
+        },
+        "required": [
+          "author",
+          "deleted",
+          "id"
+        ]
+      },
       "CommentResponse": {
         "type": "object",
-        "description": "Комментарий в обсуждении мероприятия",
+        "description": "Сообщение в обсуждении мероприятия",
         "properties": {
           "id": {
             "type": "string",
@@ -4291,27 +4486,57 @@
           },
           "author": {
             "$ref": "#/components/schemas/UserShortResponse",
-            "description": "Автор"
+            "description": "Кто написал"
           },
           "text": {
             "type": "string",
-            "description": "Текст"
+            "description": "Текст; null — сообщение удалено (показать «Сообщение удалено»)"
           },
           "isOrganizer": {
             "type": "boolean",
             "description": "Автор — организатор мероприятия: показать метку «Организатор»"
           },
+          "isMine": {
+            "type": "boolean",
+            "description": "Моё сообщение: показать справа, как в мессенджере"
+          },
+          "canEdit": {
+            "type": "boolean",
+            "description": "Могу исправить или удалить: моё, не удалено, обсуждение открыто"
+          },
+          "replyTo": {
+            "$ref": "#/components/schemas/CommentReplyResponse",
+            "description": "Ответ на это сообщение (цитата над текстом); null — сообщение в общий поток"
+          },
+          "repliesCount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Сколько ответов на это сообщение"
+          },
           "createdAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "Когда отправлено"
+          },
+          "editedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Когда изменено; null — не менялось (показать «изменено»)"
+          },
+          "deleted": {
+            "type": "boolean",
+            "description": "Удалено автором"
           }
         },
         "required": [
           "author",
+          "canEdit",
           "createdAt",
+          "deleted",
           "id",
+          "isMine",
           "isOrganizer",
-          "text"
+          "repliesCount"
         ]
       },
       "RegisterRequest": {

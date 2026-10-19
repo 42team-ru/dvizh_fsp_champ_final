@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import com.hackathon.app.domain.entity.AppUser;
+import com.hackathon.app.domain.entity.Comment;
 import com.hackathon.app.domain.entity.Event;
 import com.hackathon.app.domain.entity.EventOccurrence;
 import com.hackathon.app.domain.entity.Organization;
@@ -187,6 +188,26 @@ public class EventAccessPolicy {
 	/** Писать в обсуждение может любой вошедший, даже не записанный; у удалённого мероприятия обсуждение закрыто. */
 	public String commentBlockedReason(Event event) {
 		return event.getStatus() == EventStatus.DELETED ? "Мероприятие удалено, обсуждение закрыто" : null;
+	}
+
+	/** Ответить можно на неудалённое сообщение этого же мероприятия, пока обсуждение открыто. */
+	public String replyBlockedReason(Event event, Comment parent) {
+		var blocked = commentBlockedReason(event);
+		if (blocked != null) {
+			return blocked;
+		}
+		return parent.getDeletedAt() != null ? "Нельзя ответить на удалённое сообщение" : null;
+	}
+
+	/** Исправить и удалить можно только своё неудалённое сообщение, пока обсуждение открыто. Админ чужие не правит. */
+	public String commentEditBlockedReason(Event event, Comment comment, UUID userId) {
+		if (!comment.getAuthorId().equals(userId)) {
+			return "Изменить можно только своё сообщение";
+		}
+		if (comment.getDeletedAt() != null) {
+			return "Сообщение уже удалено";
+		}
+		return commentBlockedReason(event);
 	}
 
 	/** Все организаторы мероприятия одним запросом: автор и соорганизаторы. Для меток «Организатор» в обсуждении. */

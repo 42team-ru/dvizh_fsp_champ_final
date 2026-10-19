@@ -27,6 +27,8 @@ import type {
 import type {
   CommentRequest,
   CommentResponse,
+  CommentUpdateRequest,
+  CommentsListParams,
   ProblemDetail
 } from '../appAPI.schemas';
 
@@ -53,7 +55,225 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   return result;
 };
 
-export type commentsListResponse404 = {
+export type commentsUpdateResponse403 = {
+  data: ProblemDetail
+  status: 403
+}
+
+export type commentsUpdateResponse404 = {
+  data: ProblemDetail
+  status: 404
+}
+
+export type commentsUpdateResponse409 = {
+  data: ProblemDetail
+  status: 409
+}
+
+;
+export type commentsUpdateResponseError = (commentsUpdateResponse403 | commentsUpdateResponse404 | commentsUpdateResponse409) & {
+  headers: Headers;
+};
+
+export type commentsUpdateResponse = (commentsUpdateResponseError)
+
+export const getCommentsUpdateUrl = (id: string,
+    commentId: string,) => {
+
+
+
+
+  return `/api/events/${id}/comments/${commentId}`
+}
+
+/**
+ * В ответе появится editedAt.
+ * @summary Исправить своё сообщение
+ */
+export const commentsUpdate = async (id: string,
+    commentId: string,
+    commentUpdateRequest: CommentUpdateRequest, options?: Parameters<typeof authMutator>[1]): Promise<commentsUpdateResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return authMutator<commentsUpdateResponse>(getCommentsUpdateUrl(id,commentId),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(commentUpdateRequest)
+  }
+);}
+
+
+
+
+
+export const getCommentsUpdateMutationKey = () => ['commentsUpdate'] as const;
+
+export const getCommentsUpdateMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof commentsUpdate>>, TError,CommentsUpdateMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof commentsUpdate>>, TError,CommentsUpdateMutationVariables, TContext> => {
+
+const mutationKey = getCommentsUpdateMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof commentsUpdate>>, CommentsUpdateMutationVariables> = (props) => {
+          const {id,commentId,data} = props ?? {};
+
+          return  commentsUpdate(id,commentId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CommentsUpdateMutationResult = NonNullable<Awaited<ReturnType<typeof commentsUpdate>>>
+    export type CommentsUpdateMutationBody = CommentUpdateRequest
+    export type CommentsUpdateMutationError = ErrorType<ProblemDetail>
+    export type CommentsUpdateMutationVariables = {id: string;commentId: string;data: CommentUpdateRequest}
+
+    /**
+ * @summary Исправить своё сообщение
+ */
+export const useCommentsUpdate = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof commentsUpdate>>, TError,CommentsUpdateMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof commentsUpdate>>,
+        TError,
+        CommentsUpdateMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCommentsUpdateMutationOptions(options), queryClient);
+    }
+    export type commentsDeleteResponse204 = {
+  data: void
+  status: 204
+}
+
+export type commentsDeleteResponse403 = {
+  data: ProblemDetail
+  status: 403
+}
+
+export type commentsDeleteResponse404 = {
+  data: ProblemDetail
+  status: 404
+}
+
+export type commentsDeleteResponse409 = {
+  data: ProblemDetail
+  status: 409
+}
+
+export type commentsDeleteResponseSuccess = (commentsDeleteResponse204) & {
+  headers: Headers;
+};
+export type commentsDeleteResponseError = (commentsDeleteResponse403 | commentsDeleteResponse404 | commentsDeleteResponse409) & {
+  headers: Headers;
+};
+
+export type commentsDeleteResponse = (commentsDeleteResponseSuccess | commentsDeleteResponseError)
+
+export const getCommentsDeleteUrl = (id: string,
+    commentId: string,) => {
+
+
+
+
+  return `/api/events/${id}/comments/${commentId}`
+}
+
+/**
+ * Мягко: в ленте остаётся «Сообщение удалено» (text = null, deleted = true), ответы на него сохраняются.
+ * @summary Удалить своё сообщение
+ */
+export const commentsDelete = async (id: string,
+    commentId: string, options?: Parameters<typeof authMutator>[1]): Promise<commentsDeleteResponse> => {
+
+  return authMutator<commentsDeleteResponse>(getCommentsDeleteUrl(id,commentId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getCommentsDeleteMutationKey = () => ['commentsDelete'] as const;
+
+export const getCommentsDeleteMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof commentsDelete>>, TError,CommentsDeleteMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof commentsDelete>>, TError,CommentsDeleteMutationVariables, TContext> => {
+
+const mutationKey = getCommentsDeleteMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof commentsDelete>>, CommentsDeleteMutationVariables> = (props) => {
+          const {id,commentId} = props ?? {};
+
+          return  commentsDelete(id,commentId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CommentsDeleteMutationResult = NonNullable<Awaited<ReturnType<typeof commentsDelete>>>
+
+    export type CommentsDeleteMutationError = ErrorType<ProblemDetail>
+    export type CommentsDeleteMutationVariables = {id: string;commentId: string}
+
+    /**
+ * @summary Удалить своё сообщение
+ */
+export const useCommentsDelete = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof commentsDelete>>, TError,CommentsDeleteMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof commentsDelete>>,
+        TError,
+        CommentsDeleteMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCommentsDeleteMutationOptions(options), queryClient);
+    }
+    export type commentsListResponse404 = {
   data: ProblemDetail
   status: 404
 }
@@ -65,21 +285,30 @@ export type commentsListResponseError = (commentsListResponse404) & {
 
 export type commentsListResponse = (commentsListResponseError)
 
-export const getCommentsListUrl = (id: string,) => {
+export const getCommentsListUrl = (id: string,
+    params?: CommentsListParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/events/${id}/comments`
+  return stringifiedParams.length > 0 ? `/api/events/${id}/comments?${stringifiedParams}` : `/api/events/${id}/comments`
 }
 
 /**
- * Старые сверху. isOrganizer — показать у автора метку «Организатор».
- * @summary Обсуждение мероприятия
+ * Старые сверху. replyTo — цитата сообщения, на которое ответили; isMine — моё; canEdit — могу исправить или удалить. after — только сообщения новее этого момента (подгрузка новых).
+ * @summary Сообщения обсуждения
  */
-export const commentsList = async (id: string, options?: Parameters<typeof authMutator>[1]): Promise<commentsListResponse> => {
+export const commentsList = async (id: string,
+    params?: CommentsListParams, options?: Parameters<typeof authMutator>[1]): Promise<commentsListResponse> => {
 
-  return authMutator<commentsListResponse>(getCommentsListUrl(id),
+  return authMutator<commentsListResponse>(getCommentsListUrl(id,params),
   {
     ...options,
     method: 'GET'
@@ -92,23 +321,25 @@ export const commentsList = async (id: string, options?: Parameters<typeof authM
 
 
 
-export const getCommentsListQueryKey = (id: string,) => {
+export const getCommentsListQueryKey = (id: string,
+    params?: CommentsListParams,) => {
     return [
-    `/api/events/${id}/comments`
+    `/api/events/${id}/comments`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getCommentsListQueryOptions = <TData = Awaited<ReturnType<typeof commentsList>>, TError = ErrorType<ProblemDetail>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof commentsList>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+export const getCommentsListQueryOptions = <TData = Awaited<ReturnType<typeof commentsList>>, TError = ErrorType<ProblemDetail>>(id: string,
+    params?: CommentsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof commentsList>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getCommentsListQueryKey(id);
+  const queryKey =  queryOptions?.queryKey ?? getCommentsListQueryKey(id,params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof commentsList>>> = ({ signal }) => commentsList(id, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof commentsList>>> = ({ signal }) => commentsList(id,params, { signal, ...requestOptions });
 
 
 
@@ -122,7 +353,8 @@ export type CommentsListQueryError = ErrorType<ProblemDetail>
 
 
 export function useCommentsList<TData = Awaited<ReturnType<typeof commentsList>>, TError = ErrorType<ProblemDetail>>(
- id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof commentsList>>, TError, TData>> & Pick<
+ id: string,
+    params: undefined |  CommentsListParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof commentsList>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof commentsList>>,
           TError,
@@ -132,7 +364,8 @@ export function useCommentsList<TData = Awaited<ReturnType<typeof commentsList>>
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useCommentsList<TData = Awaited<ReturnType<typeof commentsList>>, TError = ErrorType<ProblemDetail>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof commentsList>>, TError, TData>> & Pick<
+ id: string,
+    params?: CommentsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof commentsList>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof commentsList>>,
           TError,
@@ -142,19 +375,21 @@ export function useCommentsList<TData = Awaited<ReturnType<typeof commentsList>>
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useCommentsList<TData = Awaited<ReturnType<typeof commentsList>>, TError = ErrorType<ProblemDetail>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof commentsList>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ id: string,
+    params?: CommentsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof commentsList>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Обсуждение мероприятия
+ * @summary Сообщения обсуждения
  */
 
 export function useCommentsList<TData = Awaited<ReturnType<typeof commentsList>>, TError = ErrorType<ProblemDetail>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof commentsList>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ id: string,
+    params?: CommentsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof commentsList>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getCommentsListQueryOptions(id,options)
+  const queryOptions = getCommentsListQueryOptions(id,params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -204,8 +439,8 @@ export const getCommentsCreateUrl = (id: string,) => {
 }
 
 /**
- * Любой вошедший, даже не записанный. У удалённого мероприятия обсуждение закрыто.
- * @summary Написать в обсуждение
+ * Любой вошедший, даже не записанный. replyToId — ответ на сообщение. У удалённого мероприятия обсуждение закрыто.
+ * @summary Написать сообщение или ответить на сообщение
  */
 export const commentsCreate = async (id: string,
     commentRequest: CommentRequest, options?: Parameters<typeof authMutator>[1]): Promise<commentsCreateResponse> => {
@@ -272,7 +507,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type CommentsCreateMutationVariables = {id: string;data: CommentRequest}
 
     /**
- * @summary Написать в обсуждение
+ * @summary Написать сообщение или ответить на сообщение
  */
 export const useCommentsCreate = <TError = ErrorType<ProblemDetail>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof commentsCreate>>, TError,CommentsCreateMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}

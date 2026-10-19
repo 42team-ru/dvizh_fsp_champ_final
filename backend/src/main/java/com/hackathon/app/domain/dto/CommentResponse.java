@@ -8,14 +8,24 @@ import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-@Schema(description = "Комментарий в обсуждении мероприятия")
+@Schema(description = "Сообщение в обсуждении мероприятия")
 public record CommentResponse(
 		@Schema(requiredMode = REQUIRED) UUID id,
-		@Schema(description = "Автор", requiredMode = REQUIRED) UserShortResponse author,
-		@Schema(description = "Текст", requiredMode = REQUIRED) String text,
+		@Schema(description = "Кто написал", requiredMode = REQUIRED) UserShortResponse author,
+		@Schema(description = "Текст; null — сообщение удалено (показать «Сообщение удалено»)") String text,
 		// имя в JSON фиксируем явно, как в ViewerResponse: у boolean с префиксом is Jackson и springdoc могут вывести «organizer»
 		@JsonProperty("isOrganizer")
 		@Schema(description = "Автор — организатор мероприятия: показать метку «Организатор»", requiredMode = REQUIRED)
 		boolean isOrganizer,
-		@Schema(requiredMode = REQUIRED) Instant createdAt) {
+		@JsonProperty("isMine")
+		@Schema(description = "Моё сообщение: показать справа, как в мессенджере", requiredMode = REQUIRED)
+		boolean isMine,
+		@Schema(description = "Могу исправить или удалить: моё, не удалено, обсуждение открыто", requiredMode = REQUIRED)
+		boolean canEdit,
+		@Schema(description = "Ответ на это сообщение (цитата над текстом); null — сообщение в общий поток")
+		CommentReplyResponse replyTo,
+		@Schema(description = "Сколько ответов на это сообщение", requiredMode = REQUIRED) long repliesCount,
+		@Schema(description = "Когда отправлено", requiredMode = REQUIRED) Instant createdAt,
+		@Schema(description = "Когда изменено; null — не менялось (показать «изменено»)") Instant editedAt,
+		@Schema(description = "Удалено автором", requiredMode = REQUIRED) boolean deleted) {
 }

@@ -306,6 +306,18 @@ export interface OccurrenceRequest {
 }
 
 /**
+ * Исправить своё сообщение
+ */
+export interface CommentUpdateRequest {
+  /**
+     * Новый текст
+     * @minLength 0
+     * @maxLength 2000
+     */
+  text: string;
+}
+
+/**
  * Отказ по заявке; тело можно не передавать
  */
 export interface RejectRegistrationRequest {
@@ -758,7 +770,7 @@ export interface CancelOccurrenceRequest {
 }
 
 /**
- * Новый комментарий в обсуждении мероприятия
+ * Новое сообщение в обсуждении мероприятия
  */
 export interface CommentRequest {
   /**
@@ -767,20 +779,49 @@ export interface CommentRequest {
      * @maxLength 2000
      */
   text: string;
+  /** Ответ на сообщение (id); пусто — в общий поток */
+  replyToId?: string;
 }
 
 /**
- * Комментарий в обсуждении мероприятия
+ * Сообщение, на которое ответили: автор и начало текста
+ */
+export interface CommentReplyResponse {
+  /** id исходного сообщения — для перехода к нему */
+  id: string;
+  /** Автор исходного сообщения */
+  author: UserShortResponse;
+  /** Начало текста (до 140 символов); null — сообщение удалено */
+  text?: string;
+  /** Исходное сообщение удалено */
+  deleted: boolean;
+}
+
+/**
+ * Сообщение в обсуждении мероприятия
  */
 export interface CommentResponse {
   id: string;
-  /** Автор */
+  /** Кто написал */
   author: UserShortResponse;
-  /** Текст */
-  text: string;
+  /** Текст; null — сообщение удалено (показать «Сообщение удалено») */
+  text?: string;
   /** Автор — организатор мероприятия: показать метку «Организатор» */
   isOrganizer: boolean;
+  /** Моё сообщение: показать справа, как в мессенджере */
+  isMine: boolean;
+  /** Могу исправить или удалить: моё, не удалено, обсуждение открыто */
+  canEdit: boolean;
+  /** Ответ на это сообщение (цитата над текстом); null — сообщение в общий поток */
+  replyTo?: CommentReplyResponse;
+  /** Сколько ответов на это сообщение */
+  repliesCount: number;
+  /** Когда отправлено */
   createdAt: string;
+  /** Когда изменено; null — не менялось (показать «изменено») */
+  editedAt?: string;
+  /** Удалено автором */
+  deleted: boolean;
 }
 
 export type RegisterRequestAccountType = typeof RegisterRequestAccountType[keyof typeof RegisterRequestAccountType];
@@ -1575,6 +1616,13 @@ from?: string;
  * Начало не позже
  */
 to?: string;
+};
+
+export type CommentsListParams = {
+/**
+ * Только сообщения новее этого момента: createdAt последнего полученного
+ */
+after?: string;
 };
 
 export type AdminCreatePetItemParams = {

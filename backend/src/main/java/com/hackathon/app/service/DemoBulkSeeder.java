@@ -418,29 +418,53 @@ public class DemoBulkSeeder {
                 continue; // событие опубликовано только что — вопросов ещё нет
             }
             var askedAt = run.between(askFrom, askTo);
-            comment(run, event, askerId, qa.question(), askedAt);
+            var questionId = comment(run, event, askerId, qa.question(), askedAt, null);
             var answeredAt = askedAt.plus(Duration.ofMinutes(run.between(10, 600)));
             if (run.chance(0.85) && answeredAt.isBefore(run.now)) {
+                // организатор отвечает именно на вопрос — с цитатой, как в мессенджере
                 var answerer = coOrganizerId != null && run.chance(0.3) ? coOrganizerId : authorId;
-                comment(run, event, answerer, qa.answer(), answeredAt);
+                var answerId = comment(run, event, answerer, qa.answer(), answeredAt, questionId);
+                var thanksAt = answeredAt.plus(Duration.ofMinutes(run.between(5, 180)));
+                if (run.chance(0.35) && thanksAt.isBefore(run.now)) {
+                    comment(run, event, askerId, run.pick(DemoBulkData.THANKS), thanksAt, answerId);
+                }
+            }
+            var echoAt = askedAt.plus(Duration.ofMinutes(run.between(5, 300)));
+            if (!locals.isEmpty() && run.chance(0.2) && echoAt.isBefore(run.now)) {
+                var echoerId = run.pick(locals).id();
+                if (!echoerId.equals(askerId) && !echoerId.equals(authorId)) {
+                    comment(run, event, echoerId, run.pick(DemoBulkData.ECHOES), echoAt, questionId);
+                }
             }
         }
         if (endAt.plus(Duration.ofHours(1)).isBefore(run.now) && !participants.isEmpty() && run.chance(0.5)) {
             var qa = run.pick(DemoBulkData.AFTER_EVENT);
             var saidAt = run.between(endAt.plus(Duration.ofMinutes(30)), min(endAt.plus(Duration.ofDays(2)), run.now));
-            comment(run, event, run.pick(participants), qa.question(), saidAt);
+            var reviewId = comment(run, event, run.pick(participants), qa.question(), saidAt, null);
             var answeredAt = saidAt.plus(Duration.ofMinutes(run.between(15, 300)));
             if (answeredAt.isBefore(run.now)) {
-                comment(run, event, authorId, qa.answer(), answeredAt);
+                comment(run, event, authorId, qa.answer(), answeredAt, reviewId);
             }
         }
     }
 
-    private void comment(Run run, Event event, UUID authorId, String text, Instant at) {
-        var saved = comments.save(commentMapper.toEntity(event.getId(), authorId, text));
+    /** Сообщение (replyToId — ответ на него). Изредка автор его правит или удаляет — как в живом чате. */
+    private UUID comment(Run run, Event event, UUID authorId, String text, Instant at, UUID replyToId) {
+        var comment = commentMapper.toEntity(event.getId(), authorId, text, replyToId);
+        var laterAt = at.plus(Duration.ofMinutes(run.between(1, 30)));
+        if (laterAt.isBefore(run.now)) {
+            double roll = run.random.nextDouble();
+            if (roll < 0.06) {
+                commentMapper.edit(comment, text + " " + run.pick(DemoBulkData.EDIT_TAILS), laterAt);
+            } else if (roll < 0.3 && DemoBulkData.ECHOES.contains(text)) { // удаляют только реплики, на которые не отвечали
+                commentMapper.delete(comment, laterAt);
+            }
+        }
+        var saved = comments.save(comment);
         comments.flush();
         demoData.backdate(Comment.class, saved.getId(), at);
         run.comments++;
+        return saved.getId();
     }
 
     // --- Бобры ---

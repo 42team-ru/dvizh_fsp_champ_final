@@ -1,5 +1,6 @@
 package com.hackathon.app.domain.entity;
 
+import java.time.Instant;
 import java.util.UUID;
 
 import jakarta.persistence.Column;
@@ -33,4 +34,10 @@ public class Comment extends AuditEntity {
 	private String text;
 	/** Скрыт модератором (модерация сообщений — доп. фича, пока всегда false). */
 	private boolean hidden;
+	/** На какое сообщение это ответ (id); null — сообщение в общий поток. */
+	private UUID parentId;
+	/** Когда автор последний раз изменил текст; null — не менялось. */
+	private Instant editedAt;
+	/** Когда автор удалил сообщение (мягко: ответы на него остаются); null — не удалено. */
+	private Instant deletedAt;
 }
