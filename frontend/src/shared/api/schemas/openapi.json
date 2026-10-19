@@ -33,6 +33,10 @@
       "description": "Бобр-маскот: каталог вещей и образ"
     },
     {
+      "name": "albums",
+      "description": "Альбом: фото с мероприятий"
+    },
+    {
       "name": "admin",
       "description": "Администрирование"
     },
@@ -470,6 +474,91 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/me/album/{photoId}": {
+      "put": {
+        "tags": [
+          "albums"
+        ],
+        "summary": "Подписать своё фото",
+        "operationId": "albums_updateCaption",
+        "parameters": [
+          {
+            "name": "photoId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlbumCaptionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Фото с новой подписью",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlbumPhotoResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Нет такого фото у вас",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "albums"
+        ],
+        "summary": "Удалить своё фото",
+        "operationId": "albums_delete",
+        "parameters": [
+          {
+            "name": "photoId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Нет такого фото у вас",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
                 }
               }
             }
@@ -1247,6 +1336,97 @@
           },
           "409": {
             "description": "Уже 6 фото",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/me/album": {
+      "post": {
+        "tags": [
+          "albums"
+        ],
+        "summary": "Добавить фото в свой альбом (JPG, PNG, WebP до 5 МБ)",
+        "operationId": "albums_add",
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "query",
+            "description": "Мероприятие, с которого фото",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "caption",
+            "in": "query",
+            "description": "Подпись, до 300 символов",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Картинка"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Фото добавлено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlbumPhotoResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Не картинка, нет мероприятия или длинная подпись",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Встреча не ваша",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Мероприятие удалено или альбом заполнен",
             "content": {
               "application/json": {
                 "schema": {
@@ -3487,6 +3667,147 @@
         }
       }
     },
+    "/api/users/{id}/album": {
+      "get": {
+        "tags": [
+          "albums"
+        ],
+        "summary": "Альбом человека",
+        "description": "Фильтр по мероприятию и виду спорта; sort: NEWEST, OLDEST, EVENT_NEWEST, EVENT_OLDEST. size до 100.",
+        "operationId": "albums_list",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "eventId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "sportId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "NEWEST",
+              "enum": [
+                "NEWEST",
+                "OLDEST",
+                "EVENT_NEWEST",
+                "EVENT_OLDEST"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 30
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Страница фото",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseAlbumPhotoResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Нет такого пользователя",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/{id}/album/events": {
+      "get": {
+        "tags": [
+          "albums"
+        ],
+        "summary": "Мероприятия в альбоме человека с числом фото",
+        "operationId": "albums_events",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Мероприятия, последние встречи первыми",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AlbumEventResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Нет такого пользователя",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/users/me/wallet": {
       "get": {
         "tags": [
@@ -3628,6 +3949,31 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AttendanceSummaryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/me/album/eligible-events": {
+      "get": {
+        "tags": [
+          "albums"
+        ],
+        "summary": "Куда я могу добавить фото",
+        "description": "Мои встречи как участника (подтверждённая запись) или организатора, последние первыми.",
+        "operationId": "albums_eligibleEvents",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AlbumEventResponse"
+                  }
                 }
               }
             }
@@ -4215,6 +4561,51 @@
             "description": "Файл iCalendar",
             "content": {
               "text/calendar": {}
+            }
+          }
+        }
+      }
+    },
+    "/api/events/{id}/album": {
+      "get": {
+        "tags": [
+          "albums"
+        ],
+        "summary": "Фото участников с мероприятия",
+        "operationId": "albums_forEvent",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Фото по порядку добавления",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AlbumPhotoResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Нет такого мероприятия",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
             }
           }
         }
@@ -5752,6 +6143,138 @@
           "name"
         ]
       },
+      "AlbumCaptionRequest": {
+        "type": "object",
+        "description": "Подпись к фото альбома",
+        "properties": {
+          "caption": {
+            "type": "string",
+            "description": "Подпись; пусто — без подписи",
+            "example": "Финиш у моста",
+            "maxLength": 300,
+            "minLength": 0
+          }
+        }
+      },
+      "AlbumEventResponse": {
+        "type": "object",
+        "description": "Мероприятие в альбоме",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "description": "Название"
+          },
+          "sport": {
+            "$ref": "#/components/schemas/SportResponse",
+            "description": "Вид спорта"
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Начало (у серии — первое занятие)"
+          },
+          "photosCount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Сколько фото с этого мероприятия в альбоме; в списке доступных для загрузки — 0"
+          }
+        },
+        "required": [
+          "id",
+          "photosCount",
+          "sport",
+          "startAt",
+          "title"
+        ]
+      },
+      "AlbumPhotoResponse": {
+        "type": "object",
+        "description": "Фото альбома",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "url": {
+            "type": "string",
+            "description": "Ссылка на картинку",
+            "example": "/api/files/…"
+          },
+          "caption": {
+            "type": "string",
+            "description": "Подпись"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Когда добавлено"
+          },
+          "author": {
+            "$ref": "#/components/schemas/UserShortResponse",
+            "description": "Кто добавил"
+          },
+          "event": {
+            "$ref": "#/components/schemas/AlbumEventResponse",
+            "description": "С какого мероприятия"
+          },
+          "mine": {
+            "type": "boolean",
+            "description": "Моё фото: можно подписать и удалить"
+          }
+        },
+        "required": [
+          "author",
+          "createdAt",
+          "event",
+          "id",
+          "mine",
+          "url"
+        ]
+      },
+      "UserShortResponse": {
+        "type": "object",
+        "description": "Публичная карточка человека: организатор или участник, без email",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "username": {
+            "type": "string",
+            "description": "Логин",
+            "example": "ivan"
+          },
+          "firstName": {
+            "type": "string",
+            "description": "Имя",
+            "example": "Иван"
+          },
+          "lastName": {
+            "type": "string",
+            "description": "Фамилия",
+            "example": "Петров"
+          },
+          "avatarUrl": {
+            "type": "string",
+            "description": "Ссылка на аватар"
+          },
+          "city": {
+            "type": "string",
+            "description": "Город",
+            "example": "Красноярск"
+          }
+        },
+        "required": [
+          "firstName",
+          "id",
+          "lastName",
+          "username"
+        ]
+      },
       "SaveOrganizationRequest": {
         "type": "object",
         "properties": {
@@ -6789,46 +7312,6 @@
           "durationMinutes",
           "firstStart",
           "rrule"
-        ]
-      },
-      "UserShortResponse": {
-        "type": "object",
-        "description": "Публичная карточка человека: организатор или участник, без email",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "username": {
-            "type": "string",
-            "description": "Логин",
-            "example": "ivan"
-          },
-          "firstName": {
-            "type": "string",
-            "description": "Имя",
-            "example": "Иван"
-          },
-          "lastName": {
-            "type": "string",
-            "description": "Фамилия",
-            "example": "Петров"
-          },
-          "avatarUrl": {
-            "type": "string",
-            "description": "Ссылка на аватар"
-          },
-          "city": {
-            "type": "string",
-            "description": "Город",
-            "example": "Красноярск"
-          }
-        },
-        "required": [
-          "firstName",
-          "id",
-          "lastName",
-          "username"
         ]
       },
       "ViewerResponse": {
@@ -8107,6 +8590,33 @@
           "sports",
           "username"
         ]
+      },
+      "PageResponseAlbumPhotoResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlbumPhotoResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
       },
       "WalletEntryResponse": {
         "type": "object",
