@@ -1,4 +1,5 @@
 import { usePetName } from "@/entity/user/model/use-pet-name";
+import { MyBeaverBadge } from "@/widgets/beaver-pet/ui/my-beaver-badge";
 import { SearchX } from "lucide-react";
 import { useNavAccess } from "@/entity/user/model/use-nav-access";
 import { EmptyState } from "@/shared/components/ui/empty-state";
@@ -133,11 +134,15 @@ function CtaCard({ className }: { className?: string }) {
         alt=""
         className="absolute inset-0 size-full max-w-none object-cover object-left-top"
       />
-      <img
-        src="/feed/ask.png"
-        alt=""
-        className="pointer-events-none absolute top-[92px] right-[14px] h-[150px] w-[145px] max-w-none object-cover"
-      />
+      {/* бобр хозяина задумался «ну и где все?» (с его же инвентарём), над головой — облачко мысли с вопросом */}
+      <div aria-hidden="true" className="pointer-events-none absolute right-4 bottom-2 h-[222px] w-[250px]">
+        <MyBeaverBadge pose="think" className="size-full" />
+        <span className="absolute top-[40px] left-[146px] size-[7px] rounded-full border-2 border-ink bg-card" />
+        <span className="absolute top-[24px] left-[154px] size-3 rounded-full border-2 border-ink bg-card" />
+        <span className="absolute -top-7 left-[160px] flex size-12 rotate-6 items-center justify-center rounded-full border-2 border-ink bg-card font-display text-[28px] leading-none font-extrabold text-primary shadow-hard-sm">
+          ?
+        </span>
+      </div>
       <div className="relative">
         <div className="h-[64.5px]">
           <h2 className="w-[276px] font-display text-[28px] leading-8 font-extrabold text-foreground">

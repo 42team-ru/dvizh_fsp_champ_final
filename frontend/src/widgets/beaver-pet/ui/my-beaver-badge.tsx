@@ -7,17 +7,19 @@ import { scopeSvgIds, svgResourceIds } from "./scope-svg-ids";
 const baseReferenceIds = new Set([...svgResourceIds(beaverSvg), "head-outline"]);
 
 /**
- * Застывшие кадры анимации «помахать» (повороты в градусах вокруг тех же точек, что в beaver-rig).
- * Без `pose` кадр выбирается случайно при каждом показе.
+ * Застывшие кадры (повороты в градусах вокруг тех же точек, что в beaver-rig; лапа влево — плюс, вправо — минус).
+ * hello/cheer/high/low — кадры взмаха; think — «ну и где все?»: левая лапа у подбородка, правая разведена в сторону.
+ * Без `pose` случайно берётся один из кадров взмаха.
  */
 const POSES = {
-  hello: { armRight: -86, head: -5, mouth: 0 },
-  cheer: { armRight: -58, head: 6, mouth: 0.55 },
-  high: { armRight: -100, head: -8, mouth: 0.35 },
-  low: { armRight: -44, head: 3, mouth: 0.2 },
+  hello: { armLeft: 0, armRight: -86, head: -5, mouth: 0 },
+  cheer: { armLeft: 0, armRight: -58, head: 6, mouth: 0.55 },
+  high: { armLeft: 0, armRight: -100, head: -8, mouth: 0.35 },
+  low: { armLeft: 0, armRight: -44, head: 3, mouth: 0.2 },
+  think: { armLeft: -124, armRight: -52, head: 5, mouth: 0.15 },
 } as const;
 export type BeaverPose = keyof typeof POSES;
-const POSE_IDS = Object.keys(POSES) as BeaverPose[];
+const WAVE_POSES: BeaverPose[] = ["hello", "cheer", "high", "low"];
 
 const rotate = (deg: number, x: number, y: number) => `rotate(${deg} ${x} ${y})`;
 
@@ -26,7 +28,7 @@ const rotate = (deg: number, x: number, y: number) => `rotate(${deg} ${x} ${y})`
  * но без анимации, реплик и реакции на клики. Пока наряд грузится — бобр без вещей.
  */
 export function MyBeaverBadge({ className, pose: fixed }: { className?: string; pose?: BeaverPose }) {
-  const [random] = useState(() => POSE_IDS[Math.floor(Math.random() * POSE_IDS.length)]);
+  const [random] = useState(() => WAVE_POSES[Math.floor(Math.random() * WAVE_POSES.length)]);
   const pose = fixed ?? random;
   const instanceId = useId();
   const prefix = `beaver-badge-${instanceId.replace(/[^a-zA-Z0-9_-]/g, (c) => `_${c.codePointAt(0)!.toString(16)}_`)}`;
@@ -53,6 +55,10 @@ export function MyBeaverBadge({ className, pose: fixed }: { className?: string; 
       if (slot) slot.innerHTML = scopeSvgIds(content[id] ?? "", prefix, refs);
     }
     const frame = POSES[pose];
+    const armLeft = root.querySelector("#arm-left");
+    armLeft?.setAttribute("transform", rotate(frame.armLeft, 102, 320));
+    // лапа у подбородка рисуется поверх головы — как в beaver-rig
+    if (frame.armLeft < -45) root.querySelector("#head")?.after(armLeft!);
     root.querySelector("#arm-right")?.setAttribute("transform", rotate(frame.armRight, 272, 320));
     root.querySelector("#head")?.setAttribute("transform", rotate(frame.head, 188, 288));
     const mouth = root.querySelector("#mouth-open");

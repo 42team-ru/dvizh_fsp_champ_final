@@ -1,7 +1,7 @@
 import { MessageCircleQuestion } from "lucide-react";
 import { EmptyState } from "@/shared/components/ui/empty-state";
 import { WavingBeaver } from "@/widgets/beaver-pet/ui/waving-beaver";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { CancelledStamp } from "@/shared/components/ui/cancelled-stamp";
 import { Link } from "react-router";
 import { EventMobile } from "./event-mobile";
@@ -380,7 +380,14 @@ function RouteMap({ m }: { m: EventModel }) {
 function Chat({ m }: { m: EventModel }) {
   const [text, setText] = useState("");
   const [replyTo, setReplyTo] = useState<{ id: string; who: string } | null>(null);
+  const input = useRef<HTMLInputElement>(null);
   const canComment = m.event!.viewer.canComment;
+  // «Ответить»: сразу в поле ввода — фокус и прокрутка к нему, без второго клика
+  const reply = (id: string, who: string) => {
+    setReplyTo({ id, who });
+    input.current?.focus({ preventScroll: true });
+    input.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
   const send = async () => {
     if (!text.trim()) return;
     try {
@@ -431,7 +438,7 @@ function Chat({ m }: { m: EventModel }) {
               </p>
               {canComment && !c.deleted && (
                 <button type="button" className="mt-1 text-xs font-bold text-muted-foreground underline"
-                  onClick={() => setReplyTo({ id: c.id, who: fullName(c.author) })}>Ответить</button>
+                  onClick={() => reply(c.id, fullName(c.author))}>Ответить</button>
               )}
             </div>
           </div>
@@ -446,7 +453,7 @@ function Chat({ m }: { m: EventModel }) {
             </p>
           )}
           <div className="box-border flex h-12 items-center gap-[10px] rounded-pill border-2 border-ink bg-background pr-1.5 pl-5">
-            <input value={text} maxLength={2000} onChange={(event) => setText(event.target.value)} aria-label="Сообщение"
+            <input ref={input} value={text} maxLength={2000} onChange={(event) => setText(event.target.value)} aria-label="Сообщение"
               placeholder="Задайте вопрос или напишите участникам" className="min-w-0 flex-1 bg-transparent text-[15px] outline-none" />
             <Button type="submit" size="sm" disabled={!text.trim() || m.commentPending}>Отправить</Button>
           </div>

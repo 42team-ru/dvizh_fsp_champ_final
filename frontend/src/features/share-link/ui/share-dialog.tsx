@@ -39,23 +39,28 @@ export function ShareDialog({ open, onOpenChange, path, title, description, chil
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92dvh] gap-4 overflow-y-auto bg-background sm:max-w-[440px]">
-        <div className="pr-8">
-          <DialogTitle className="font-display text-lg leading-6 font-bold text-foreground">{title}</DialogTitle>
-          <DialogDescription className="mt-1 text-sm font-semibold text-muted-foreground">{description}</DialogDescription>
-        </div>
-        {children}
-        <p className="truncate rounded-xl border-2 border-dashed border-track px-3 py-2 text-center text-[13px] font-bold text-muted-foreground" title={url}>
-          {url}
-        </p>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="ink" className="h-12 flex-1 basis-full" onClick={() => void copy()}>Скопировать ссылку</Button>
-          {canShare && (
-            <Button variant="soft" className="h-11 flex-1" onClick={() => void navigator.share({ title, url }).catch(() => undefined)}>
-              Отправить
-            </Button>
-          )}
-          <Button variant="soft" className="h-11 flex-1" onClick={download}>Скачать QR</Button>
+      {/* широкое окно под экран: на компьютере карточка слева, текст и кнопки справа — всё видно без прокрутки */}
+      <DialogContent className="max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] gap-0 overflow-x-hidden sm:max-w-[calc(100vw-2rem)] overflow-y-auto bg-background p-5 [scrollbar-width:none] sm:p-8 lg:max-w-[1040px] [&::-webkit-scrollbar]:hidden">
+        <div className="grid items-center gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:gap-10">
+          <div className="flex min-w-0 justify-center">{children}</div>
+          <div className="flex min-w-0 flex-col gap-4">
+            <div className="pr-8">
+              <DialogTitle className="font-display text-2xl leading-8 font-bold text-foreground">{title}</DialogTitle>
+              <DialogDescription className="mt-2 text-base font-semibold text-muted-foreground">{description}</DialogDescription>
+            </div>
+            <p className="truncate rounded-xl border-2 border-dashed border-track px-3 py-2.5 text-center text-sm font-bold text-muted-foreground" title={url}>
+              {url}
+            </p>
+            <Button variant="ink" className="h-12 w-full" onClick={() => void copy()}>Скопировать ссылку</Button>
+            <div className="flex gap-2">
+              {canShare && (
+                <Button variant="soft" className="h-12 min-w-0 flex-1 px-3" onClick={() => void navigator.share({ title, url }).catch(() => undefined)}>
+                  Отправить
+                </Button>
+              )}
+              <Button variant="soft" className="h-12 min-w-0 flex-1 px-3" onClick={download}>Скачать QR</Button>
+            </div>
+          </div>
         </div>
         <QRCodeCanvas ref={canvas} value={url} size={512} level="M" marginSize={2} bgColor="#ffffff" fgColor="#000000" className="hidden" />
       </DialogContent>
@@ -72,7 +77,7 @@ export function ShareTicket({ path, number, sport, title, rows }: {
   rows: { label: string; value: string }[];
 }) {
   return (
-    <div className="relative flex overflow-hidden rounded-[22px] border-2 border-ink bg-lavender shadow-hard-sm">
+    <div className="relative mr-[3px] mb-[3px] flex w-full overflow-hidden rounded-[22px] border-2 border-ink bg-lavender shadow-hard-sm">
       <div className="flex min-w-0 flex-1 flex-col gap-3 p-4">
         <span className="truncate text-[10px] font-extrabold tracking-[1.5px] text-muted-foreground">ПОСАДОЧНЫЙ ТАЛОН · № {number}</span>
         <span className="w-fit max-w-full truncate rounded-pill border-[1.5px] border-ink bg-card px-[10px] py-[3px] text-[11px] font-extrabold text-foreground">
@@ -111,7 +116,7 @@ export function SharePassport({ path, name, handle }: { path: string; name: stri
           <span className="text-[9px] font-extrabold tracking-[2px] text-muted-foreground">SPORT PASSPORT</span>
         </div>
         <div className="relative rounded-xl border-2 border-ink bg-card p-2">
-          <QrCode path={path} label="QR-код: профиль спортсмена" className="size-[124px] border-0" />
+          <QrCode path={path} label="QR-код: профиль спортсмена" className="size-[112px] border-0" />
         </div>
         <div className="relative flex w-full min-w-0 flex-col gap-px">
           <p className="truncate font-display text-lg leading-6 font-bold text-foreground">{name}</p>

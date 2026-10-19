@@ -1,3 +1,4 @@
+import { MyBeaverBadge, type BeaverPose } from "@/widgets/beaver-pet/ui/my-beaver-badge";
 import type { ReactNode } from "react";
 import type { SportResponse } from "@/shared/api/generated/core/appAPI.schemas";
 import { cn } from "cn";
@@ -56,10 +57,11 @@ export function RoundButton({
 }
 
 type EmptyKind = "mine" | "nothing" | "later";
-const EMPTY_ART: Record<EmptyKind, { img: string; tone: string }> = {
-  mine: { img: "beaver-empty.png", tone: "bg-sky" },
-  nothing: { img: "beaver-nothing.png", tone: "bg-peach" },
-  later: { img: "beaver-later.png", tone: "bg-lime-soft" },
+/** Бобр смотрящего в своём наряде: задумался над пустой галереей, машет «загляни позже» и т.п. */
+const EMPTY_ART: Record<EmptyKind, { pose: BeaverPose; tone: string; ask?: boolean }> = {
+  mine: { pose: "think", tone: "bg-sky", ask: true },
+  nothing: { pose: "cheer", tone: "bg-peach" },
+  later: { pose: "hello", tone: "bg-lime-soft" },
 };
 
 /** Пустое состояние с бобром: заголовок, пояснение и действие. */
@@ -77,8 +79,13 @@ export function EmptyState({
   const art = EMPTY_ART[kind];
   return (
     <div className="mx-auto flex w-full max-w-[384px] flex-col items-center gap-[10px] rounded-[20px] border-2 border-ink bg-card p-[22px] text-center">
-      <div className={cn("h-[130px] w-[150px] overflow-hidden rounded-2xl border-2 border-ink", art.tone)}>
-        <img src={`${IMG}/${art.img}`} alt="" className="size-full object-contain" />
+      <div className={cn("relative h-[130px] w-[150px] overflow-hidden rounded-2xl border-2 border-ink", art.tone)}>
+        <MyBeaverBadge pose={art.pose} className="absolute inset-x-2 top-3 bottom-1" />
+        {art.ask && (
+          <span aria-hidden="true" className="absolute top-2 right-2 flex size-8 rotate-6 items-center justify-center rounded-full border-2 border-ink bg-card font-display text-lg leading-none font-extrabold text-primary">
+            ?
+          </span>
+        )}
       </div>
       <p className="font-display text-[17px] leading-[22px] font-extrabold text-foreground">{title}</p>
       <p className="text-[13px] leading-[19px] font-medium text-muted-foreground">{text}</p>
