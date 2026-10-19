@@ -41,7 +41,7 @@ const CHIP_TONES = [
 ];
 
 /** Высота страницы паспорта; разворот выше на 2 × 12 px рамки. */
-const PAGE_H = 700;
+const PAGE_H = 760;
 
 /** Вся подпись поля паспорта: мелкий заголовок и значение. */
 function Field({
@@ -55,15 +55,15 @@ function Field({
 }) {
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-[2px]">
-      <p className="text-[9px] font-extrabold tracking-[1.2px] whitespace-nowrap text-muted-foreground">
+      <p className="text-[11px] font-extrabold tracking-[1.2px] whitespace-nowrap text-muted-foreground">
         {label}
       </p>
       <p
         className={cn(
           "truncate text-foreground",
           large
-            ? "font-display text-[17px] font-bold"
-            : "text-[15px] font-bold",
+            ? "font-display text-[21px] font-bold"
+            : "text-[18px] font-bold",
         )}
       >
         {value}
@@ -87,11 +87,11 @@ function SportChip({
         CHIP_TONES[index % CHIP_TONES.length],
       )}
     >
-      <span className="text-[13px] font-extrabold whitespace-nowrap text-foreground">
+      <span className="text-[15px] font-extrabold whitespace-nowrap text-foreground">
         {sport.sport.name}
       </span>
       {sport.level ? (
-        <span className="text-xs font-bold whitespace-nowrap text-muted-foreground">
+        <span className="text-sm font-bold whitespace-nowrap text-muted-foreground">
           · {SPORT_LEVEL_LABEL[sport.level]}
         </span>
       ) : null}
@@ -110,6 +110,43 @@ function SportChip({
         </span>
       ) : null}
     </span>
+  );
+}
+
+/** Небо с узором Мемфис и полоса земли, на которой стоит питомец. */
+function PetBackdrop() {
+  const ink = "var(--ink)";
+  const dots = [0, 1, 2, 3].flatMap((r) => [0, 1, 2, 3].map((c) => ({ x: 40 + c * 16, y: 250 + r * 16 })));
+  return (
+    <>
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 540 420"
+        preserveAspectRatio="xMidYMin slice"
+        className="pointer-events-none absolute inset-x-0 top-0 bottom-[84px] h-[calc(100%-84px)] w-full"
+      >
+        <circle cx="270" cy="210" r="150" fill="var(--sky-soft)" />
+        <circle cx="86" cy="86" r="40" fill="var(--orange)" stroke={ink} strokeWidth="3" />
+        <path d="M86 24 v-14 M86 148 v14 M24 86 h-14 M148 86 h14 M42 42 l-10 -10 M130 130 l10 10 M130 42 l10 -10 M42 130 l-10 10" stroke={ink} strokeWidth="4" strokeLinecap="round" />
+        <path d="M330 120 h120 a22 22 0 0 0 0 -44 a30 30 0 0 0 -56 -8 a26 26 0 0 0 -64 18 a17 17 0 0 0 0 34 z" fill="var(--card)" stroke={ink} strokeWidth="3" strokeLinejoin="round" />
+        <path d="M30 330 h96 a16 16 0 0 0 0 -32 a22 22 0 0 0 -42 -6 a20 20 0 0 0 -48 14 a12 12 0 0 0 -6 24 z" fill="var(--card)" stroke={ink} strokeWidth="3" strokeLinejoin="round" />
+        <circle cx="470" cy="250" r="30" fill="none" stroke="var(--primary)" strokeWidth="11" />
+        <path d="M200 40 l30 52 h-60 z" fill="var(--lilac)" stroke={ink} strokeWidth="3" strokeLinejoin="round" />
+        <path d="M400 330 l16 -24 l16 24 l16 -24 l16 24 l16 -24" fill="none" stroke={ink} strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M190 200 q14 -20 28 0 t28 0 t28 0" fill="none" stroke="var(--orange)" strokeWidth="6" strokeLinecap="round" />
+        <g stroke="var(--primary)" strokeWidth="6" strokeLinecap="round">
+          <path d="M310 40 v24 M298 52 h24" />
+          <path d="M60 220 v24 M48 232 h24" />
+        </g>
+        <rect x="470" y="150" width="26" height="26" rx="4" fill="var(--lime)" stroke={ink} strokeWidth="3" transform="rotate(14 483 163)" />
+        {dots.map((d) => (
+          <circle key={`${d.x}-${d.y}`} cx={d.x} cy={d.y} r="3" fill={ink} />
+        ))}
+      </svg>
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[84px] border-t-2 border-ink bg-lime">
+        <div className="absolute inset-x-0 top-[14px] h-[6px] [background:repeating-linear-gradient(90deg,var(--ink)_0_14px,transparent_14px_30px)] opacity-25" />
+      </div>
+    </>
   );
 }
 
@@ -173,14 +210,10 @@ function PetPage() {
       </div>
 
       <div className="relative min-h-0 flex-1 overflow-hidden rounded-[18px] border-2 border-ink bg-sky">
-        <img
-          src={`${IMG}/memphis1.svg`}
-          alt=""
-          className="pointer-events-none absolute bottom-0 left-1/2 size-[440px] max-w-none -translate-x-1/2"
-        />
+<PetBackdrop />
         <ProfileBeaverPet
           speechContainer={speechContainer}
-          className="absolute top-[24px] left-1/2 h-[420px] w-[420px] -translate-x-1/2 [&_.beaver-pet]:h-full [&_svg]:h-full"
+          className="absolute bottom-[-172px] left-1/2 h-[420px] w-[420px] -translate-x-1/2 [&_.beaver-pet]:h-full [&_svg]:h-full"
         />
         <div
           ref={setSpeechContainer}
@@ -260,9 +293,9 @@ const STAMP: Record<
   },
 };
 
-/** Холст штампов 753×278 (потом уменьшается до ширины страницы). */
-const STAMP_SCALE = 0.72;
-const STAMP_CANVAS = { w: 753, h: 278 };
+/** Холст штампов 640×262 (четыре печати в один ряд, ниже визы) (потом уменьшается до ширины страницы). */
+const STAMP_SCALE = 0.84;
+const STAMP_CANVAS = { w: 640, h: 262 };
 
 /** Четыре места под печати: центр на холсте, поворот и вид оттиска. */
 const STAMP_SLOTS: {
@@ -271,16 +304,16 @@ const STAMP_SLOTS: {
   cy: number;
   rotate: number;
 }[] = [
-  { type: "round", cx: 80, cy: 78, rotate: 6 },
-  { type: "rect", cx: 275, cy: 72, rotate: -4 },
-  { type: "oval", cx: 470, cy: 70, rotate: 3 },
-  { type: "star", cx: 655, cy: 78, rotate: -7 },
+  { type: "round", cx: 68, cy: 74, rotate: 6 },
+  { type: "rect", cx: 230, cy: 70, rotate: -4 },
+  { type: "oval", cx: 408, cy: 70, rotate: 3 },
+  { type: "star", cx: 570, cy: 74, rotate: -7 },
 ];
 
 /** Места под визы (записи на будущие события). */
 const VISA_SLOTS = [
-  { cx: 110, cy: 205, rotate: 2 },
-  { cx: 330, cy: 200, rotate: -3 },
+  { cx: 100, cy: 200, rotate: 2 },
+  { cx: 300, cy: 198, rotate: -3 },
 ];
 
 /** Название вида спорта в оттиске: чем длиннее, тем мельче, чтобы влезло. */
@@ -320,7 +353,7 @@ function Stamp({
         className="absolute inset-0 size-full max-w-none"
       />
       <p
-        className="absolute inset-x-0 text-center text-[8px] font-extrabold tracking-[1.5px]"
+        className="absolute inset-x-0 text-center text-[9px] font-extrabold tracking-[1.5px]"
         style={{ top: s.kind }}
       >
         {kind}
@@ -343,7 +376,7 @@ function Stamp({
       </p>
       {!inline && place ? (
         <p
-          className="absolute inset-x-3 truncate text-center text-[9px] font-bold"
+          className="absolute inset-x-3 truncate text-center text-[10px] font-bold"
           style={{ top: s.place }}
         >
           {place}
@@ -380,18 +413,18 @@ function Visa({
       )}
       style={{
         left: slot.cx - 92,
-        top: slot.cy - 42,
+        top: slot.cy - 50,
         transform: `rotate(${slot.rotate}deg)`,
       }}
     >
-      <div className="flex items-center justify-between text-[9px] font-extrabold whitespace-nowrap">
+      <div className="flex items-center justify-between text-[11px] font-extrabold whitespace-nowrap">
         <span className="tracking-[2px]">ВИЗА</span>
         <span className="tracking-[1.2px]">{visa.status}</span>
       </div>
-      <p className="line-clamp-2 font-display text-xs leading-4 font-bold">
+      <p className="line-clamp-2 font-display text-sm leading-5 font-bold">
         {visa.title}
       </p>
-      <p className="text-[11px] font-extrabold whitespace-nowrap">
+      <p className="text-[13px] font-extrabold whitespace-nowrap">
         {whenLabel(visa.startAt)}
       </p>
     </div>
@@ -473,18 +506,18 @@ function StampsView({
   const emptyAt =
     attended.length < STAMP_SLOTS.length
       ? STAMP_SLOTS[attended.length]
-      : { cx: 570, cy: 205 };
+      : { cx: 480, cy: 200 };
 
   return (
     <div className="relative flex flex-col gap-2">
       <div className="flex items-center gap-2">
-        <h3 className="text-[9px] font-extrabold tracking-[1.2px] whitespace-nowrap text-muted-foreground">
+        <h3 className="text-[11px] font-extrabold tracking-[1.2px] whitespace-nowrap text-muted-foreground">
           ОТМЕТКИ О ПОСЕЩЕНИИ
         </h3>
-        <span className="rounded-pill border-[1.5px] border-ink bg-secondary px-[10px] py-[3px] text-[10px] font-extrabold tracking-[1px] whitespace-nowrap text-foreground">
+        <span className="rounded-pill border-[1.5px] border-ink bg-secondary px-[10px] py-[3px] text-xs font-extrabold tracking-[1px] whitespace-nowrap text-foreground">
           ВСЕГО {total}
         </span>
-        <span className="min-w-0 truncate text-[10px] font-semibold text-muted-foreground">
+        <span className="min-w-0 truncate text-xs font-semibold text-muted-foreground">
           {hint}
         </span>
       </div>
@@ -535,8 +568,6 @@ function DataPage() {
     ? owner.user.sports
     : sports.data?.status === 200 ? sports.data.data : [];
   const number = passportNumber(user?.id);
-  // дата регистрации и роль в публичный профиль не входят
-  const issued = owner ? undefined : dateShort(me?.createdAt);
 
   return (
     <section
@@ -606,48 +637,31 @@ function DataPage() {
         </div>
       </div>
 
-      {/* штамп «действителен» поверх фото */}
-      <div className="pointer-events-none absolute top-[157px] left-[102px] flex size-[99px] items-center justify-center">
-        <div className="relative size-[83px] -rotate-12 text-accent">
-          <img
-            src={`${IMG}/stamp-valid.svg`}
-            alt=""
-            className="absolute inset-0 size-full"
-          />
-          <p className="absolute inset-x-0 top-6 text-center text-[6.4px] font-extrabold tracking-[0.8px]">
-            ДЕЙСТВИТЕЛЕН
-          </p>
-          <p className="absolute inset-x-0 top-[35px] text-center font-display text-[11.2px] font-extrabold">
-            ГОДЕН
-          </p>
-          {issued && (
-            <p className="absolute inset-x-0 top-[51px] text-center text-[7.2px] font-extrabold">
-              с {issued}
-            </p>
-          )}
-        </div>
-      </div>
-
       <div className="relative flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          <p className="text-[9px] font-extrabold tracking-[1.2px] whitespace-nowrap text-muted-foreground">
+          <p className="text-[11px] font-extrabold tracking-[1.2px] whitespace-nowrap text-muted-foreground">
             ВИДЫ СПОРТА И РАЗРЯД
           </p>
           {!owner && (
             <EditProfileDialog user={me}>
-              <Button variant="soft" className="h-8 px-4 text-xs leading-[17px]">
-                Править
+              <Button
+                variant="soft"
+                aria-label="Править профиль"
+                title="Править профиль"
+                className="-mt-2 -mr-1 size-11 shrink-0 p-0"
+              >
+                <Pencil className="size-6" />
               </Button>
             </EditProfileDialog>
           )}
         </div>
-        <div className="flex max-h-[72px] flex-wrap gap-2 overflow-hidden">
+        <div className="flex max-h-[80px] flex-wrap gap-2 overflow-hidden">
           {list.length > 0 ? (
             list.map((s, i) => (
               <SportChip key={s.sport.id} sport={s} index={i} />
             ))
           ) : (
-            <span className="text-[13px] font-semibold text-muted-foreground">
+            <span className="text-[15px] font-semibold text-muted-foreground">
               Виды спорта пока не выбраны.
             </span>
           )}
@@ -655,10 +669,10 @@ function DataPage() {
       </div>
 
       <div className="relative flex flex-col gap-1">
-        <p className="text-[9px] font-extrabold tracking-[1.2px] whitespace-nowrap text-muted-foreground">
+        <p className="text-[11px] font-extrabold tracking-[1.2px] whitespace-nowrap text-muted-foreground">
           ОСОБЫЕ ОТМЕТКИ
         </p>
-        <p className="line-clamp-2 text-[13px] leading-[18px] font-medium text-foreground">
+        <p className="line-clamp-2 text-[15px] leading-[21px] font-medium text-foreground">
           {user?.bio || "Пока ничего не написано."}
         </p>
       </div>
