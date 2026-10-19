@@ -109,6 +109,17 @@ class PetController {
 		return response;
 	}
 
+	@PostMapping("/users/me/pet/cheer")
+	@Operation(operationId = "pets_cheer", summary = "Развеселить бобра",
+			description = "Первый тычок или поглаживание: плохие новости до этого момента больше не портят настроение.")
+	@ApiResponse(responseCode = "200", description = "Бобр с пересчитанным настроением", content = @Content(schema = @Schema(implementation = PetResponse.class)))
+	PetResponse cheer(@AuthenticationPrincipal Jwt jwt) {
+		log.info("Endpoint called: POST /api/users/me/pet/cheer, userId={}", jwt.getSubject());
+		var response = pets.cheer(userId(jwt));
+		log.info("Endpoint response: POST /api/users/me/pet/cheer, mood={}", response.mood());
+		return response;
+	}
+
 	@PutMapping("/users/me/pet/slots/{slot}")
 	@Operation(operationId = "pets_equip", summary = "Надеть или снять вещь в одном слоте",
 			description = "Например, сменить головной убор: slot = hat, item = helmet. item = null — снять.")

@@ -11,6 +11,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.hackathon.app.domain.dto.PetStatusResponse;
+import com.hackathon.app.domain.entity.AppUser;
 import com.hackathon.app.domain.entity.Event;
 import com.hackathon.app.domain.entity.Registration;
 import com.hackathon.app.domain.enums.EventStatus;
@@ -19,6 +20,7 @@ import com.hackathon.app.domain.enums.OccurrenceStatus;
 import com.hackathon.app.domain.enums.PetMood;
 import com.hackathon.app.domain.enums.PetStatusReason;
 import com.hackathon.app.domain.enums.RegistrationStatus;
+import com.hackathon.app.repository.AppUserRepository;
 import com.hackathon.app.repository.CoinLedgerRepository;
 import com.hackathon.app.repository.DbTimeRepository;
 import com.hackathon.app.repository.UserAchievementRepository;
@@ -45,6 +47,8 @@ public class PetMoodService {
     private final ShopService shop;
     /** Единое бизнес-время базы. */
     private final DbTimeRepository time;
+    /** Когда бобра развеселили. */
+    private final AppUserRepository users;
     /** Пояс для разовых встреч, у которых нет собственного timeZone; совпадает с демо-городом. */
     private static final ZoneId DEFAULT_ZONE = ZoneId.of("Asia/Krasnoyarsk");
     /** Начисления за встречи (достижения отдельно). */
@@ -57,7 +61,8 @@ public class PetMoodService {
 
     public PetMoodService(EventRepository events, RegistrationRepository registrations,
             EventOccurrenceRepository occurrences, CoinLedgerRepository ledger,
-            UserAchievementRepository achievements, ShopService shop, DbTimeRepository time) {
+            UserAchievementRepository achievements, ShopService shop, DbTimeRepository time, AppUserRepository users) {
+        this.users = users;
         this.ledger = ledger;
         this.achievements = achievements;
         this.shop = shop;
@@ -71,6 +76,8 @@ public class PetMoodService {
     @Transactional(readOnly = true)
     public PetStatusResponse compute(UUID userId) {
         var now = time.now();
+        // Развеселили — плохие новости до этого момента больше не грустят (правила 1–3 и 8).
+        var cheered = users.findById(userId).map(AppUser::getPetCheeredAt).orElse(null);
         var mine = registrations.findByUserIdOrderByCreatedAtDesc(userId);
         var organized = events.findOrganizedBy(userId);
         var related = new HashMap<UUID, Event>();
@@ -81,7 +88,8 @@ public class PetMoodService {
                 .thenComparing(Event::getId);
 
         // 1. Недавно снятая встреча автора или соорганизатора.
-        var moderated = organized.stream().filter(e -> moderated(e, now)).sorted(latestModeration).findFirst();
+        var moderated = organized.stream().filter(e -> moderated(e, now) && after(e.getModeratedAt(), cheered))
+                .sorted(latestModeration).findFirst();
         if (moderated.isPresent()) {
             var event = moderated.get();
             return state(PetMood.OFFENDED, "Мою встречу «" + event.getTitle() + "» сняли" + suffix(event.getModerationReason()),
@@ -89,7 +97,7 @@ public class PetMoodService {
         }
         // 2. Недавно снятая встреча, на которую пользователь записан или ожидает решения.
         moderated = mine.stream().filter(PetMoodService::active).map(r -> related.get(r.getEventId()))
-                .filter(e -> moderated(e, now)).sorted(latestModeration).findFirst();
+                .filter(e -> moderated(e, now) && after(e.getModeratedAt(), cheered)).sorted(latestModeration).findFirst();
         if (moderated.isPresent()) {
             var event = moderated.get();
             return state(PetMood.SAD, "Встречу «" + event.getTitle() + "» отменили" + suffix(event.getModerationReason()),
@@ -99,7 +107,8 @@ public class PetMoodService {
                 .sorted(Comparator.comparing(Registration::getDecidedAt).reversed().thenComparing(Registration::getId)).toList();
         // 3. Отказ за последние трое суток.
         for (var r : decisions) {
-            if (r.getStatus() == RegistrationStatus.REJECTED && recent(r.getDecidedAt(), now, Duration.ofDays(3))) {
+            if (r.getStatus() == RegistrationStatus.REJECTED && recent(r.getDecidedAt(), now, Duration.ofDays(3))
+                    && after(r.getDecidedAt(), cheered)) {
                 var event = related.get(r.getEventId());
                 return state(PetMood.SAD, "Не взяли на «" + event.getTitle() + "»" + suffix(r.getDecisionReason()),
                         PetStatusReason.REGISTRATION_REJECTED, event);
@@ -175,7 +184,7 @@ public class PetMoodService {
                     PetStatusReason.AWAITING_APPROVAL, event);
         }
         // 8. Нет будущих встреч и активности за последние 14 дней. Для создания события считаем только автора.
-        if (confirmed.isEmpty() && futureOrganized.isEmpty()
+        if (confirmed.isEmpty() && futureOrganized.isEmpty() && !recent(cheered, now, Duration.ofDays(1))
                 && mine.stream().noneMatch(r -> recent(r.getCreatedAt(), now, Duration.ofDays(14)))
                 && organized.stream().filter(e -> e.getAuthorId().equals(userId))
                         .noneMatch(e -> recent(e.getCreatedAt(), now, Duration.ofDays(14)))) {
@@ -188,6 +197,11 @@ public class PetMoodService {
                     + date(event, starts.get(event.getId()), now), PetStatusReason.DEFAULT, event);
         }
         return state(PetMood.IDLE, "Найдём компанию для тренировки?", PetStatusReason.DEFAULT, null);
+    }
+
+    /** Событие случилось после того, как бобра развеселили (или его ещё ни разу не веселили). */
+    private static boolean after(Instant at, Instant cheered) {
+        return cheered == null || (at != null && at.isAfter(cheered));
     }
 
     private static boolean active(Registration registration) {

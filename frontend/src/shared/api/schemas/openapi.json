@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:8090",
+      "url": "http://localhost:8082",
       "description": "Generated server url"
     }
   ],
@@ -1350,6 +1350,28 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/me/pet/cheer": {
+      "post": {
+        "tags": [
+          "pets"
+        ],
+        "summary": "Развеселить бобра",
+        "description": "Первый тычок или поглаживание: плохие новости до этого момента больше не портят настроение.",
+        "operationId": "pets_cheer",
+        "responses": {
+          "200": {
+            "description": "Бобр с пересчитанным настроением",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PetResponse"
                 }
               }
             }

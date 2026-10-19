@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import { EventMobile } from "./event-mobile";
-import { fullName, initials, useEvent } from "../model/use-event";
+import { fullName, initials, privateNote, useEvent } from "../model/use-event";
 import { AppHeader } from "@/widgets/app-header/ui/app-header";
 import { LocationPicker } from "@/widgets/events-map/ui/location-picker";
 import { Disc } from "@/shared/components/ui/disc";
@@ -237,9 +237,7 @@ function TicketHero({ m }: { m: EventModel }) {
 function About({ m }: { m: EventModel }) {
   const e = m.event!;
   const take = (e.equipment ?? "").split(/[,\n;]/).map((t) => t.trim()).filter(Boolean).slice(0, 4);
-  const note = e.viewer.canSeePrivateDetails && e.privateDetails
-    ? e.privateDetails
-    : "Запишись — и здесь появятся детали для участников";
+  const note = privateNote(e);
   return (
     <Card className="absolute top-0 left-0 h-[286.5px] w-[701px] overflow-hidden">
       <h2 className="absolute top-7 left-7 font-display text-[22px] leading-[27px] font-bold text-foreground">

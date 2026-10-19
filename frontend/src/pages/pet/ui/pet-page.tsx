@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getPetsGetMineQueryKey, usePetsCatalog, usePetsGetMine, usePetsSaveMine } from "@/shared/api/generated/core/pets/pets";
 import { BeaverPet, type BeaverMood, type BeaverPetHandle } from "@/widgets/beaver-pet/ui/beaver-pet";
+import { useCheerPet } from "@/widgets/beaver-pet/model/use-cheer-pet";
 import { CLUBS, type ClubId } from "@/widgets/beaver-pet/ui/beaver-clubs";
 import { HOCKEY_CLUBS, type HockeyClubId } from "@/widgets/beaver-pet/ui/beaver-hockey-clubs";
 import type { BeaverActivity, BeaverArts, BeaverOutfit } from "@/widgets/beaver-pet/ui/beaver-wardrobe";
@@ -95,6 +96,7 @@ export default function PetPage() {
     .filter((item) => item.art).map((item) => ({ value: item.id, label: item.label })) ?? [];
   const queryClient = useQueryClient();
   const current = query.data?.data;
+  const cheer = useCheerPet(current?.mood);
   const [draft, setDraft] = useState<Pick<Look, "outfit" | "activity"> | null>(null);
   const save = usePetsSaveMine({ mutation: {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: getPetsGetMineQueryKey() }),
@@ -140,7 +142,7 @@ export default function PetPage() {
         <div className="md:sticky md:top-6">
           <div className="rounded-[3rem] bg-[#F6EEE4] px-2 pb-5 pt-8 sm:px-4">
             {query.isPending ? <div className="aspect-square animate-pulse rounded-3xl bg-white/40" role="status" aria-label="Загружаем питомца" /> :
-              <BeaverPet ref={pet} mood={query.isError ? "idle" : mood} outfit={shownOutfit} activity={shownActivity} extraArts={previewArts}
+              <BeaverPet ref={pet} onCheer={cheer} mood={query.isError ? "idle" : mood} outfit={shownOutfit} activity={shownActivity} extraArts={previewArts}
                 say={query.isError ? undefined : current?.status?.message}
                 sayHref={current?.status?.eventId ? `/events/${current.status.eventId}` : undefined} /> }
           </div>

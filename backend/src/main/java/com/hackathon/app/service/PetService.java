@@ -17,6 +17,7 @@ import com.hackathon.app.domain.enums.PetSlotKind;
 import com.hackathon.app.domain.exception.BadRequestException;
 import com.hackathon.app.domain.mapper.PetMapper;
 import com.hackathon.app.repository.AppUserRepository;
+import com.hackathon.app.repository.DbTimeRepository;
 import com.hackathon.app.repository.UserPetEquipmentRepository;
 import com.hackathon.app.service.PetCatalogService.Catalog;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +42,8 @@ public class PetService {
     private final ShopService shop;
     /** Вычисление личного настроения и фразы. */
     private final PetMoodService moods;
+    /** Время БД: когда бобра развеселили. */
+    private final DbTimeRepository dbTime;
 
     /**
      * Образ пользователя; без сохранённого — none и ничего не надето, настроение вычисляется. Нет пользователя — 404.
@@ -60,6 +63,19 @@ public class PetService {
             throw new NoSuchElementException("Пользователь не найден");
         }
         return toResponse(userId, catalogService.load(), false);
+    }
+
+    /**
+     * Хозяин развеселил бобра (первый тычок или поглаживание): запоминаем момент, и плохие новости до него
+     * больше не портят настроение. Возвращает пересчитанное состояние.
+     */
+    @Transactional
+    public PetResponse cheer(UUID userId) {
+        var user = users.findById(userId).orElseThrow(() -> new NoSuchElementException("Пользователь не найден"));
+        mapper.cheer(user, dbTime.now());
+        users.saveAndFlush(user);
+        log.info("Pet cheered: userId={}", userId);
+        return toResponse(userId, catalogService.load(), true);
     }
 
     /** Сменить имя питомца, не затрагивая гардероб. */
