@@ -15,6 +15,7 @@ import type { EventSummaryResponse } from "@/shared/api/generated/core/appAPI.sc
 import { formatWhen } from "@/entity/event/lib/event-format";
 import { FEED_CHIPS, useFeedFilters } from "@/entity/event/model/use-feed-filters";
 import { EventsMap } from "@/widgets/events-map/ui/events-map";
+import { FeedExtraFilters } from "@/widgets/feed-filters/ui/feed-extra-filters";
 
 const dir = "m-feed";
 const PEOPLE_TONES = ["bg-sky", "bg-mint", "bg-peach"];
@@ -206,6 +207,7 @@ export function FeedMobile() {
     return () => window.clearTimeout(timer);
   }, [search]);
   const [view, setView] = useState<"list" | "map">("list");
+  const [more, setMore] = useState(false);
   const params = searchText ? { ...filters.params, searchText } : filters.params;
   const list = useEventsList(params, { query: { enabled: filters.ready } });
   const events = list.data?.status === 200 ? list.data.data : [];
@@ -231,11 +233,23 @@ export function FeedMobile() {
         <button
           type="button"
           aria-label="Фильтры"
-          className="box-border flex size-[52px] shrink-0 items-center justify-center rounded-2xl border-2 border-ink bg-primary shadow-hard-sm"
+          aria-expanded={more}
+          onClick={() => setMore((m) => !m)}
+          className={cn(
+            "relative box-border flex size-[52px] shrink-0 items-center justify-center rounded-2xl border-2 border-ink shadow-hard-sm",
+            more ? "bg-secondary" : "bg-primary",
+          )}
         >
+          {filters.extraCount > 0 && (
+            <span className="absolute -top-2 -right-2 flex size-5 items-center justify-center rounded-full border-2 border-ink bg-ink text-[11px] font-extrabold text-white">
+              {filters.extraCount}
+            </span>
+          )}
           <Icon name={`${dir}/icon-filter`} className="size-[22px]" />
         </button>
       </div>
+
+      {more && <FeedExtraFilters value={filters.extra} onChange={filters.setExtra} className="mx-4 p-4" />}
 
       <div className="no-scrollbar flex gap-2 overflow-x-auto px-4">
         {FEED_CHIPS.map((c) => (
