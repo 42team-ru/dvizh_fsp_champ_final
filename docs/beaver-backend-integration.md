@@ -50,11 +50,11 @@ SVG, цвета и анимации уже лежат на фронтенде. �
 | `outfit.eyewear` | `sunglasses`, `goggles` |
 | `outfit.neck` | `medal`, `whistle` |
 | `outfit.bottom` | `swimshorts`, `hockeypants` |
-| `outfit.shirt`, обычная одежда | `football`, `running`, `training`, `judo`, `hockey` |
+| `outfit.shirt`, обычная одежда | `football`, `running`, `training`, `judo`, `hockey`, `programming` |
 | `outfit.shirt`, футбольные клубы | `zenit`, `cska`, `fakel`, `yenisey`, `krasnodar`, `lokomotiv`, `spartak`, `rostov`, `dynamo`, `akron`, `beavers` |
 | `outfit.shirt`, хоккейные клубы | `hc-cska`, `hc-metallurg`, `hc-lokomotiv`, `hc-severstal`, `hc-torpedo`, `hc-barys`, `hc-spartak`, `hc-neftekhimik`, `hc-sokol` |
 
-Одинаковые названия футбольного и хоккейного клуба — разные значения. `lokomotiv` означает ФК «Локомотив» Москва, `hc-lokomotiv` — ХК «Локомотив» Ярославль. `cska` и `hc-cska`, `spartak` и `hc-spartak` тоже не взаимозаменяемы. `dynamo` — футбольное «Динамо» Москва. `hockey` — общий объёмный свитер «Хищных бобров».
+Одинаковые названия футбольного и хоккейного клуба — разные значения. `lokomotiv` означает ФК «Локомотив» Москва, `hc-lokomotiv` — ХК «Локомотив» Ярославль. `cska` и `hc-cska`, `spartak` и `hc-spartak` тоже не взаимозаменяемы. `dynamo` — футбольное «Динамо» Москва. `hockey` — общий объёмный свитер «Хищных бобров». `outfit.shirt = "programming"` — тёмная футболка с логотипом ФСП России; это отдельное поле от `activity = "programming"` (ноутбук с кодом). Готовый образ «Спортивное программирование» включает оба значения.
 
 Значения чувствительны к регистру, уже выпущенные id не переименовывать. Если на сервере используются Java enum, JSON должен содержать именно эти строки, включая дефисы у `hc-*`, а не Java-имена `HC_CSKA`.
 

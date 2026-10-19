@@ -1,3 +1,4 @@
+import programmingEmblem from "./emblems/programming.svg?raw";
 import { CLUBS, type ClubId } from "./beaver-clubs";
 import { HOCKEY_CLUBS, type HockeyClubId } from "./beaver-hockey-clubs";
 
@@ -10,7 +11,7 @@ import { HOCKEY_CLUBS, type HockeyClubId } from "./beaver-hockey-clubs";
 
 export type HatId = "cap" | "headband" | "beanie" | "swimcap" | "helmet" | "headphones";
 export type EyewearId = "sunglasses" | "goggles";
-export type ShirtId = "football" | "running" | "training" | "judo" | "hockey" | ClubId | HockeyClubId;
+export type ShirtId = "football" | "running" | "training" | "judo" | "hockey" | "programming" | ClubId | HockeyClubId;
 export type BottomId = "swimshorts" | "hockeypants";
 export type NeckId = "medal" | "whistle";
 /** Активность — предмет в лапах или рядом и движение с ним. */
@@ -95,6 +96,14 @@ const number = (text: string, y: number, size: number, fill = "#FFFFFF") =>
 
 const emblem = (svg: string) => svg.replace("<svg ", '<svg x="138" y="330" width="100" height="100" ');
 
+/** Исходный широкий логотип ФСП раскладывается в два ряда без перерисовки контуров. */
+function programmingBadge() {
+  const part = (x: number, y: number, width: number, height: number, viewBox: string) => programmingEmblem
+    .replace("<svg ", `<svg x="${x}" y="${y}" width="${width}" height="${height}" overflow="hidden" `)
+    .replace('viewBox="0 0 509 66"', `viewBox="${viewBox}"`);
+  return part(103, 335, 170, 56, "0 0 200 66") + part(90, 396, 196, 42, "200 0 309 66");
+}
+
 const clubShirts = Object.fromEntries(Object.entries(CLUBS).map(([id, club]) => [id, () => shirt({
   color: club.color, collar: club.trim, trim: club.trim,
   front: `${(id === "zenit" || id === "cska" || id === "akron") ? '<rect x="132" y="326" width="112" height="112" rx="14" fill="#FFFFFF"/>' : ""}${id === "spartak" ? '<path d="M45 351 H330 V398 H45 Z" fill="#FFFFFF"/>' : ""}${emblem(club.svg)}`,
@@ -149,6 +158,10 @@ const SHIRTS: Record<ShirtId, () => SlotContent> = {
   ...clubShirts,
   ...hockeyShirts,
   hockey: () => hockeyJersey(),
+  programming: () => shirt({
+    color: "#1E2B3C", collar: "#F4EBDD", trim: "#F4EBDD",
+    front: `<g id="programming-shirt-emblem">${programmingBadge()}</g>`,
+  }),
   football: () =>
     shirt({
       color: "#D8402F",
