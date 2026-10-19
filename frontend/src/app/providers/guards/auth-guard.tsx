@@ -4,7 +4,8 @@ import LoadingPage from "@/pages/loading/ui/loading-page";
 import { AuroraBackground } from "@/shared/components/ui/aurora-background";
 import { Button } from "@/shared/components/ui/button";
 import { Loader2Icon, TriangleAlertIcon } from "lucide-react";
-import { Link, Navigate, Outlet, useLocation } from "react-router";
+import { PageTransition } from "@/shared/components/ui/page-transition";
+import { Link, Navigate, useLocation } from "react-router";
 
 const RequireAuth = () => {
   const location = useLocation();
@@ -84,7 +85,7 @@ const RequireAuth = () => {
     );
   }
 
-  return <Outlet />;
+  return <PageTransition />;
 };
 
 export default RequireAuth;

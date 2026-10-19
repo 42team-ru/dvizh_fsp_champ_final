@@ -1,3 +1,6 @@
+import { SearchX } from "lucide-react";
+import { useNavAccess } from "@/entity/user/model/use-nav-access";
+import { EmptyState } from "@/shared/components/ui/empty-state";
 import { DismissButton, useDismissRecommendation } from "@/features/dismiss-recommendation/ui/dismiss-button";
 import { MobileAppBar } from "@/widgets/mobile-shell/ui/mobile-app-bar";
 import { MobileTabBar } from "@/widgets/mobile-shell/ui/mobile-tab-bar";
@@ -300,9 +303,7 @@ export function FeedMobile() {
         <>
           {list.isPending && <p className="px-4 text-base font-semibold text-muted-foreground">Загружаем события…</p>}
           {list.isError && <p role="alert" className="px-4 text-base font-semibold text-destructive">Не удалось загрузить ленту.</p>}
-          {!list.isPending && events.length === 0 && (
-            <p className="px-4 text-base font-semibold text-muted-foreground">Ничего не нашлось — попробуйте другой фильтр.</p>
-          )}
+          {!list.isPending && events.length === 0 && <FeedEmpty />}
           {groups.map((group, i) => (
             <div key={group[0].id} className="flex flex-col gap-4">
               <BigCard e={group[0]} index={i} reason={list.topReasonOf(group[0].id)} onDismiss={onDismiss} />
@@ -313,6 +314,26 @@ export function FeedMobile() {
         </>
       )}
       <MobileTabBar current="feed" />
+    </div>
+  );
+}
+
+/** Пустая лента: подсказать сменить фильтр или собрать свою встречу. */
+function FeedEmpty() {
+  const nav = useNavAccess();
+  return (
+    <div className="px-4">
+      <EmptyState
+        icon={SearchX}
+        tone="bg-sky"
+        title="Ничего не нашлось"
+        text="Попробуйте другой фильтр — или соберите свою встречу."
+        action={nav.canCreate && (
+          <Button asChild>
+            <Link to="/events/new">Создать событие</Link>
+          </Button>
+        )}
+      />
     </div>
   );
 }

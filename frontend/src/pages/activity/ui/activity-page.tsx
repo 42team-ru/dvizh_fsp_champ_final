@@ -1,4 +1,6 @@
 import { NotificationSettingsButton } from "@/features/notification-settings/ui/notification-settings-dialog";
+import { BellRing, Hourglass, Ticket } from "lucide-react";
+import { EmptyState } from "@/shared/components/ui/empty-state";
 import { Link } from "react-router";
 import { ActivityMobile } from "./activity-mobile";
 import { PendingRow, PlansDialog, PlansSwitch, TicketRow, viewOf } from "./activity-parts";
@@ -72,9 +74,15 @@ function Feed({ m }: { m: ActivityModel }) {
             {m.list.isPending && <p className="text-[15px] font-medium text-muted-foreground">Загружаем…</p>}
             {m.list.isError && <p role="alert" className="text-[15px] font-medium text-destructive">Не удалось загрузить активность.</p>}
             {m.list.isSuccess && m.groups.length === 0 && (
-              <p className="text-[15px] font-medium text-muted-foreground">{m.participant
-                ? "Здесь пока пусто. Ответы в обсуждениях, новые достижения и напоминания о встречах появятся тут."
-                : "Здесь пока пусто. Вопросы участников в обсуждениях ваших мероприятий появятся тут."}</p>
+              <EmptyState icon={BellRing} tone="bg-sky" title="Здесь пока тихо"
+                text={m.participant
+                  ? "Ответы в обсуждениях, новые достижения и напоминания о встречах появятся тут."
+                  : "Вопросы участников в обсуждениях ваших мероприятий появятся тут."}
+                action={m.participant && (
+                  <Button asChild>
+                    <Link to="/feed">Записаться на встречу</Link>
+                  </Button>
+                )} />
             )}
             {m.groups.map((group) => (
               <section key={group.label} className="flex flex-col gap-[10px]">
@@ -122,18 +130,21 @@ function Plans({ m }: { m: ActivityModel }) {
         {m.plansTab === "going" ? (
           <>
             {m.goingItems.length === 0 && !m.going.isPending && (
-              <p className="text-sm font-semibold text-muted-foreground">
-                Ближайших подтверждённых записей нет. <Link to="/feed" className="underline">Найти встречу</Link>
-              </p>
+              <EmptyState size="sm" icon={Ticket} tone="bg-accent" title="Билетов пока нет"
+                text="Запишитесь на первую встречу — билет появится здесь."
+                action={
+                  <Button asChild size="sm">
+                    <Link to="/feed">Найти встречу</Link>
+                  </Button>
+                } />
             )}
             {m.goingItems.map((reg, i) => <TicketRow key={reg.id} reg={reg} index={i} />)}
           </>
         ) : (
           <>
             {m.pendingItems.length === 0 && !m.pending.isPending && (
-              <p className="text-sm font-semibold text-muted-foreground">
-                Заявок в ожидании нет. Записи по заявке появятся здесь, пока организатор их не рассмотрит.
-              </p>
+              <EmptyState size="sm" icon={Hourglass} tone="bg-secondary" title="Заявок в ожидании нет"
+                text="Записи по заявке появятся здесь, пока организатор их не рассмотрит." />
             )}
             {m.pendingItems.map((reg) => <PendingRow key={reg.id} reg={reg} />)}
           </>

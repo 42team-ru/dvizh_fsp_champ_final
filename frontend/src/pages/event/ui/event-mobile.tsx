@@ -1,3 +1,5 @@
+import { MessageCircleQuestion } from "lucide-react";
+import { EmptyState } from "@/shared/components/ui/empty-state";
 import { useState } from "react";
 import { Link } from "react-router";
 import { Badge } from "@/shared/components/ui/badge";
@@ -88,7 +90,7 @@ function MobileChat({ m }: { m: EventModel }) {
         <h2 className="font-display text-[17px] text-foreground">Обсуждение</h2>
         <span className="text-[13px] text-muted-foreground">{m.comments.length} {plural(m.comments.length, ["сообщение", "сообщения", "сообщений"])}</span>
       </div>
-      {m.comments.length === 0 && <p className="text-[13px] font-medium text-muted-foreground">Спросите о месте или снаряжении — организатор ответит здесь.</p>}
+      {m.comments.length === 0 && <EmptyState size="sm" icon={MessageCircleQuestion} tone="bg-sky" title="Пока тихо" text="Спросите о месте или снаряжении — организатор ответит здесь." />}
       {m.comments.map((c, i) => (
         <div key={c.id} className="flex items-start gap-2">
           <Link to={`/users/${c.author.id}`} aria-label={fullName(c.author)} className="shrink-0">

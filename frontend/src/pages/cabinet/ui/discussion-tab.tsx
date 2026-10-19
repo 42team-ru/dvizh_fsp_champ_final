@@ -1,3 +1,5 @@
+import { MessagesSquare } from "lucide-react";
+import { EmptyState } from "@/shared/components/ui/empty-state";
 import { useState, type FormEvent } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "cn";
@@ -79,7 +81,7 @@ export function DiscussionTab({ event }: { event: ManagedEvent }) {
         <span className="text-[13px] font-semibold text-muted-foreground">Править и удалять можно только свои сообщения</span>
       </div>
       {comments.length === 0 && !list.isLoading && (
-        <p className="text-[15px] font-medium text-muted-foreground">Пока вопросов нет — участники напишут здесь.</p>
+        <EmptyState icon={MessagesSquare} tone="bg-sky" title="Вопросов пока нет" text="Участники напишут здесь — вы получите уведомление." />
       )}
       <div className="flex flex-col gap-3">
         {comments.map((c) => (

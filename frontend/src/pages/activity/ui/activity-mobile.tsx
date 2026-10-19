@@ -1,7 +1,8 @@
 import { NotificationSettingsButton } from "@/features/notification-settings/ui/notification-settings-dialog";
+import { BellRing, Hourglass, Ticket } from "lucide-react";
+import { EmptyState } from "@/shared/components/ui/empty-state";
 import { MobileTabBar } from "@/widgets/mobile-shell/ui/mobile-tab-bar";
 import { BrandPlate } from "@/shared/components/ui/brand-plate";
-import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Disc } from "@/shared/components/ui/disc";
 import { Icon } from "@/shared/components/ui/icon";
@@ -117,9 +118,17 @@ export function ActivityMobile({ m }: { m: ActivityModel }) {
       <>
           {m.list.isPending && <p className="px-4 text-sm font-medium text-muted-foreground">Загружаем…</p>}
           {m.list.isSuccess && m.groups.length === 0 && (
-            <p className="px-4 text-sm font-medium text-muted-foreground">{m.participant
-              ? "Здесь пока пусто: ответы, достижения и напоминания появятся тут."
-              : "Здесь пока пусто: вопросы участников в обсуждениях появятся тут."}</p>
+            <div className="px-4">
+              <EmptyState icon={BellRing} tone="bg-sky" title="Здесь пока тихо"
+                text={m.participant
+                  ? "Ответы, достижения и напоминания появятся тут."
+                  : "Вопросы участников в обсуждениях появятся тут."}
+                action={m.participant && (
+                  <Button asChild>
+                    <Link to="/feed">Записаться на встречу</Link>
+                  </Button>
+                )} />
+            </div>
           )}
           {m.groups.map((group) => (
             <div key={group.label} className="flex flex-col gap-3">
@@ -154,14 +163,15 @@ export function ActivityMobile({ m }: { m: ActivityModel }) {
           {m.plansTab === "going" ? (
             <>
               {m.goingItems.length === 0 && !m.going.isPending && (
-                <p className="text-sm font-medium text-muted-foreground">Ближайших подтверждённых записей нет.</p>
+                <EmptyState size="sm" icon={Ticket} tone="bg-accent" title="Билетов пока нет"
+                  text="Запишитесь на первую встречу — билет появится здесь." />
               )}
               {m.goingItems.map((reg, i) => <TicketRow key={reg.id} reg={reg} index={i} compact />)}
             </>
           ) : (
             <>
               {m.pendingItems.length === 0 && !m.pending.isPending && (
-                <p className="text-sm font-medium text-muted-foreground">Заявок в ожидании нет.</p>
+                <EmptyState size="sm" icon={Hourglass} tone="bg-secondary" title="Заявок в ожидании нет" />
               )}
               {m.pendingItems.map((reg) => <PendingRow key={reg.id} reg={reg} />)}
             </>

@@ -1,5 +1,6 @@
+import { EmptyState } from "@/shared/components/ui/empty-state";
 import { useState } from "react";
-import { CalendarDays, Plus, X } from "lucide-react";
+import { CalendarDays, CalendarX, Plus, X } from "lucide-react";
 import { cn } from "cn";
 import { useOccurrencesAttendees, useOccurrencesList } from "@/shared/api/generated/core/occurrences/occurrences";
 import type { OccurrenceResponse } from "@/shared/api/generated/core/appAPI.schemas";
@@ -228,9 +229,9 @@ export function OccurrencesTab({ event, refresh }: { event: ManagedEvent; refres
           {list.isLoading ? (
             <p className="text-base font-bold text-muted-foreground">Загружаем…</p>
           ) : shown.length === 0 ? (
-            <p className="rounded-[18px] border-2 border-dashed border-track bg-card p-6 text-center text-base font-bold text-muted-foreground">
-              {!event.recurring ? "Занятие уже прошло." : period === "MONTH" ? "В ближайшие 30 дней занятий нет." : "Будущих занятий нет."}
-            </p>
+            <EmptyState icon={CalendarX} tone="bg-sky"
+              title={!event.recurring ? "Занятие уже прошло" : period === "MONTH" ? "В ближайшие 30 дней занятий нет" : "Будущих занятий нет"}
+              text={event.recurring ? "Добавьте разовую дату или поправьте расписание серии." : undefined} />
           ) : (
             shown.map((o) => (
               <OccurrenceRow

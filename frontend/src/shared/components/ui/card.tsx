@@ -1,17 +1,28 @@
 import * as React from "react"
+import { motion, type HTMLMotionProps } from "motion/react"
 import { cn } from "cn"
 import { RoughBorder, type RoughOptions } from "@/shared/components/ui/rough-border"
 
-/** `rough` — нарисовать рамку от руки (rough.js) вместо обычной. */
+/**
+ * `rough` — нарисовать рамку от руки (rough.js) вместо обычной.
+ * Карточка мягко всплывает, когда попадает в экран; `interactive` — ещё и приподнимается при наведении.
+ */
 function Card({
   className,
   rough,
+  interactive,
   children,
   ...props
-}: React.ComponentProps<"div"> & { rough?: boolean | RoughOptions }) {
+}: HTMLMotionProps<"div"> & { rough?: boolean | RoughOptions; interactive?: boolean; children?: React.ReactNode }) {
   const options = typeof rough === "object" ? rough : {}
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: 18 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "0px 0px -40px 0px" }}
+      transition={{ type: "spring", stiffness: 240, damping: 24 }}
+      whileHover={interactive ? { y: -4, rotate: -0.4 } : undefined}
+      whileTap={interactive ? { scale: 0.98 } : undefined}
       data-slot="card"
       className={cn(
         "flex flex-col rounded-card border-2 border-ink bg-card text-card-foreground",
@@ -22,7 +33,7 @@ function Card({
     >
       {children}
       {rough ? <RoughBorder radius={24} {...options} /> : null}
-    </div>
+    </motion.div>
   )
 }
 

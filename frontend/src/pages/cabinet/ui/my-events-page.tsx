@@ -1,3 +1,5 @@
+import { CalendarPlus, PartyPopper } from "lucide-react";
+import { EmptyState } from "@/shared/components/ui/empty-state";
 import { useState } from "react";
 import { Link } from "react-router";
 import { Plus } from "lucide-react";
@@ -114,11 +116,17 @@ export default function MyEventsPage() {
       {query.isLoading ? (
         <p className="text-base font-bold text-muted-foreground">Загружаем…</p>
       ) : items.length === 0 ? (
-        <div className="rounded-[24px] border-2 border-dashed border-track bg-card p-8 text-center">
-          <p className="text-base font-bold text-muted-foreground">
-            {status === "PUBLISHED" ? "Пока нет опубликованных мероприятий." : "Здесь пусто — и это хорошо."}
-          </p>
-        </div>
+        status === "PUBLISHED" ? (
+          <EmptyState icon={CalendarPlus} tone="bg-secondary" title="Пока нет мероприятий"
+            text="Создайте первое — укажите вид спорта, время и место, и участники найдут его в ленте."
+            action={
+              <Button asChild>
+                <Link to="/events/new">Создать событие</Link>
+              </Button>
+            } />
+        ) : (
+          <EmptyState icon={PartyPopper} tone="bg-mint" title="Здесь пусто — и это хорошо" />
+        )
       ) : (
         <div className="flex flex-col gap-3">
           {items.map((e) => (

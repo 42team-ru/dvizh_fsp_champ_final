@@ -1,4 +1,5 @@
-import { Outlet, useLocation } from "react-router";
+import { useLocation } from "react-router";
+import { PageTransition } from "@/shared/components/ui/page-transition";
 import { BrandPlate } from "@/shared/components/ui/brand-plate";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 
@@ -44,7 +45,7 @@ export default function AuthLayout() {
       <MobileBanner brand={brand} />
       <BrandPanel brand={brand} />
       <div className={`relative flex-1 px-4 pt-[18px] pb-5 lg:flex lg:items-center-safe lg:justify-center-safe lg:overflow-y-auto lg:px-6 lg:py-10`}>
-        <Outlet />
+        <PageTransition />
       </div>
     </div>
   );
