@@ -104,6 +104,47 @@ class DemoEconomySeeder {
 				CAMPUS, -7, 18, 2, List.of(sergey, nikolai, elena, anna));
 
 		scheduleClubHistory(cast, people);
+		scheduleCollector(cast, people);
+	}
+
+	/** Виды спорта встреч Виктории по кругу. */
+	private static final List<String> COLLECTOR_SPORTS = List.of("Бег", "Футбол", "Баскетбол", "Йога", "Волейбол", "Бадминтон");
+
+	/**
+	 * Виктория зарабатывает на весь гардероб бобра так же, как любой пользователь. Полтора месяца она проводит по две
+	 * встречи в день (больше за день не платят) с 10+ гостями — это потолок награды организатору, и корона за проведённые
+	 * встречи. Сама ходит на 10 чужих встреч, одна из них у «Хищных бобров»: медаль и «Свой бобр». Покупки — в
+	 * {@link DemoPetSeeder#dressCollector}.
+	 */
+	private void scheduleCollector(DemoCast cast, List<Person> people) {
+		var vika = cast.id("vika");
+		// гости — самые давние аккаунты массовки: им точно больше суток к любой встрече
+		var guests = people.stream().sorted(Comparator.comparing(Person::signedUpAt)).limit(40).map(Person::id).toList();
+		var today = LocalDate.ofInstant(clock.instant(), MeetingAttendance.ZONE);
+		int meeting = 0;
+		for (int daysAgo = 50; daysAgo >= 6; daysAgo--) {
+			for (int hour : new int[] {10, 18}) {
+				var sport = COLLECTOR_SPORTS.get(meeting % COLLECTOR_SPORTS.size());
+				var start = today.minusDays(daysAgo).atTime(hour, 0).atZone(MeetingAttendance.ZONE).toInstant();
+				var invited = rotate(guests, meeting * 3, 10);
+				history.add(start, start.plus(Duration.ofHours(1)), () -> create(cast, vika, sport, sport + " с Викторией",
+						"Открытая тренировка: разминка, игра и заминка. Приходите с друзьями.", PARK, start, 1, invited));
+				meeting++;
+			}
+		}
+		// чужие встречи, куда ходит Виктория: девять у людей из массовки и одна у «Хищных бобров»
+		for (int i = 0; i < 9; i++) {
+			var host = guests.get(30 + i);
+			var start = today.minusDays(48 - i * 4).atTime(20, 0).atZone(MeetingAttendance.ZONE).toInstant();
+			var invited = new ArrayList<>(rotate(guests, i * 2, 4));
+			invited.add(vika);
+			history.add(start, start.plus(Duration.ofHours(1)), () -> create(cast, host, "Настольный теннис",
+					"Вечерний настольный теннис", "Играем на вылет, ракетки есть.", HALL, start, 1, invited));
+		}
+		var bobryStart = today.minusDays(9).atTime(20, 0).atZone(MeetingAttendance.ZONE).toInstant();
+		history.add(bobryStart, bobryStart.plus(Duration.ofHours(2)), () -> create(cast, cast.id("bobry"), "Хоккей",
+				"Вечерняя тренировка «Хищных бобров»", "Открытая тренировка клуба для всех желающих.", CAMPUS, bobryStart, 2,
+				List.of(vika, guests.get(0), guests.get(1), guests.get(2))));
 	}
 
 	/**
