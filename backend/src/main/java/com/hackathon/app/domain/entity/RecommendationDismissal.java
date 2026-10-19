@@ -15,7 +15,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** «Не интересно» в подборке: событие больше не рекомендуется. Одна запись на пару (пользователь, событие), unique в V27. */
+/** «Не интересно» в подборке: событие больше не рекомендуется. Одна запись на пару (пользователь, событие), unique в V28. */
 @Entity
 @Table(name = "recommendation_dismissals")
 @Getter
