@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { BrandPlate } from "@/shared/components/ui/brand-plate";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Icon } from "@/shared/components/ui/icon";
@@ -18,11 +19,13 @@ export function AppHeader({ current = "home" }: { current?: "home" | "feed" | "p
   return (
     <header className="box-border h-[76px] border-b-2 border-ink bg-background">
       <div className="mx-auto flex h-full w-full max-w-[1280px] items-center px-8">
-        <Link to="/" className="flex h-10 items-center gap-[10px]">
-          <img src="/icon.svg" alt="" className="size-10 shrink-0" />
-          <span className="font-display text-[17px] leading-[21px] font-bold text-foreground">
-            Движ
-          </span>
+        <Link to="/" aria-label="Движ — на главную">
+          <BrandPlate className="gap-[10px]">
+            <img src="/icon.svg" alt="" className="size-10 shrink-0" />
+            <span className="font-display text-[17px] leading-[21px] font-bold text-foreground">
+              Движ
+            </span>
+          </BrandPlate>
         </Link>
 
         <nav className="ml-7 flex shrink-0 gap-[2px]">

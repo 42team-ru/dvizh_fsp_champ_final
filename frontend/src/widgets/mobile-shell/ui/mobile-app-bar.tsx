@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { BrandPlate } from "@/shared/components/ui/brand-plate";
 import { useUser } from "@/entity/user/model/use-user";
 import { Disc } from "@/shared/components/ui/disc";
 import { Icon } from "@/shared/components/ui/icon";
@@ -18,7 +19,7 @@ export function MobileAppBar({
   const { user } = useUser();
   return (
     <div className="flex h-16 shrink-0 items-center justify-between px-4">
-      <div className="flex items-center gap-2">
+      <BrandPlate>
         <img src="/icon.svg" alt="" className="size-9 shrink-0" />
         <span
           className={cn(
@@ -28,7 +29,7 @@ export function MobileAppBar({
         >
           {title}
         </span>
-      </div>
+      </BrandPlate>
       <div className="flex items-center gap-2">
         <Link
           to="/activity"

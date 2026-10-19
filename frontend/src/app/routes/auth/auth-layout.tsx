@@ -1,4 +1,5 @@
 import { Outlet, useLocation } from "react-router";
+import { BrandPlate } from "@/shared/components/ui/brand-plate";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 
 type Brand = {
@@ -58,12 +59,12 @@ function BrandPanel({ brand }: { brand: Brand }) {
         alt=""
         className="absolute top-0 left-0 h-[820px] w-[420px] max-w-none"
       />
-      <div className="absolute top-10 left-10 flex items-center gap-[10px]">
+      <BrandPlate className="absolute top-10 left-10 gap-[10px]">
         <img src="/icon.svg" alt="" className="size-10 shrink-0" />
-        <span className="font-display text-[17px] font-bold whitespace-nowrap text-white">
+        <span className="font-display text-[17px] font-bold whitespace-nowrap text-foreground">
           Движ
         </span>
-      </div>
+      </BrandPlate>
       <h2 className="absolute top-[130px] left-10 w-[340px] font-display text-[32px] leading-10 font-extrabold tracking-[-0.5px] text-white">
         {brand.title}
       </h2>
@@ -97,12 +98,12 @@ function MobileBanner({ brand }: { brand: Brand }) {
       style={{ height: banner.height }}
     >
       <img src={`${dir}/memphis-decor.svg`} alt="" className="absolute inset-0 size-full max-w-none" />
-      <div className="absolute top-[18px] left-4 flex items-center gap-2">
+      <BrandPlate className="absolute top-[18px] left-4">
         <img src="/icon.svg" alt="" className="size-9 shrink-0" />
-        <span className="font-display text-base leading-[normal] font-bold whitespace-nowrap text-white">
+        <span className="font-display text-base leading-[normal] font-bold whitespace-nowrap text-foreground">
           Движ
         </span>
-      </div>
+      </BrandPlate>
       <p className="absolute top-[76px] left-4 w-[200px] break-words font-display text-[22px] leading-7 font-extrabold tracking-[-0.3px] text-white">
         {brand.mobileTitle}
       </p>

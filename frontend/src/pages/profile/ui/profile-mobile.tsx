@@ -1,4 +1,6 @@
+import { WardrobeDialog } from "@/features/pet-wardrobe/ui/wardrobe-dialog";
 import { PetNameEditor } from "@/features/rename-pet/ui/pet-name-editor";
+import { BrandPlate } from "@/shared/components/ui/brand-plate";
 import { UserAvatar } from "@/shared/components/ui/user-avatar";
 import { useState } from "react";
 import { useAttendance } from "./use-attendance";
@@ -46,12 +48,12 @@ function AppBar() {
   const { user } = useProfile();
   return (
     <div className="flex h-16 shrink-0 items-center justify-between px-4">
-      <div className="flex items-center gap-2">
+      <BrandPlate>
         <img src="/icon.svg" alt="" className="size-9 shrink-0" />
         <span className="font-display text-xl leading-[normal] font-bold text-foreground">
           Профиль
         </span>
-      </div>
+      </BrandPlate>
       <EditProfileDialog user={user}>
         <button
           type="button"
@@ -271,9 +273,11 @@ function Wardrobe() {
             <span className="line-clamp-1 text-center text-xs leading-[normal] font-bold text-muted-foreground">
               {w.slot}
             </span>
-            <Button asChild variant="soft" className="h-10 w-full px-5 text-xs">
-              <Link to="/pet">Сменить</Link>
-            </Button>
+            <WardrobeDialog>
+              <Button variant="soft" className="h-10 w-full px-5 text-xs">
+                Сменить
+              </Button>
+            </WardrobeDialog>
           </div>
         ))}
       </div>
