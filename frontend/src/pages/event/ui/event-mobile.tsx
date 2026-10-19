@@ -7,11 +7,12 @@ import { Disc } from "@/shared/components/ui/disc";
 import { Eyebrow } from "@/shared/components/ui/eyebrow";
 import { Icon } from "@/shared/components/ui/icon";
 import { Progress } from "@/shared/components/ui/progress";
-import { toast } from "@/shared/lib/toast";
 import { cn } from "cn";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 import { LocationPicker } from "@/widgets/events-map/ui/location-picker";
 import { fullName, initials, privateNote, type useEvent } from "../model/use-event";
+import { QrCode } from "@/shared/components/ui/qr-code";
+import { EventShare } from "./event-share";
 
 const dir = "m-event";
 const TONES = ["bg-sky", "bg-mint", "bg-peach", "bg-secondary", "bg-lavender-soft"];
@@ -128,6 +129,7 @@ function MobileChat({ m }: { m: EventModel }) {
 }
 
 export function EventMobile({ m }: { m: EventModel }) {
+  const [shareOpen, setShareOpen] = useState(false);
   const e = m.event;
   if (!e) {
     return (
@@ -143,7 +145,6 @@ export function EventMobile({ m }: { m: EventModel }) {
   const point: [number, number] | null = e.lon != null && e.lat != null ? [e.lon, e.lat] : null;
   const take = (e.equipment ?? "").split(/[,\n;]/).map((t) => t.trim()).filter(Boolean);
   const free = e.capacity != null ? Math.max(0, e.capacity - m.going) : null;
-  const share = () => navigator.clipboard.writeText(window.location.href).then(() => toast.success("Ссылка скопирована"), () => undefined);
   return (
     <div className="relative isolate flex min-h-dvh overflow-clip flex-col gap-4 bg-background pb-[100px] lg:hidden">
       <MemphisBackground variant="mobile" seed="event" />
@@ -154,7 +155,8 @@ export function EventMobile({ m }: { m: EventModel }) {
           className="absolute top-0 left-0 size-full max-w-none object-cover"
         />
         <CircleButton label="Назад" icon="icon-back" to="/feed" className="left-4" />
-        <CircleButton label="Поделиться" icon="icon-share" className="right-4" onClick={() => void share()} />
+        <CircleButton label="Поделиться" icon="icon-share" className="right-4" onClick={() => setShareOpen(true)} />
+        <EventShare m={m} open={shareOpen} onOpenChange={setShareOpen} />
         <Badge
           variant="outline"
           className="absolute top-[188px] left-4 h-auto border-[1.5px] bg-card px-[10px] py-1 text-[11px] leading-[normal] font-extrabold tracking-[1px]"
@@ -219,10 +221,15 @@ export function EventMobile({ m }: { m: EventModel }) {
             <span className="absolute top-0 right-[-11px] box-border size-[22px] rounded-[11px] border-2 border-ink bg-background" />
           </div>
           <div className="flex flex-col gap-3 bg-card px-5 pt-[6px] pb-[18px]">
-            {m.facts.slice(0, 2).map((f) => (
-              <IconRow key={f.label} icon={f.icon} label={f.label} value={`${f.value}${f.label === "КОГДА" ? ` · ${f.lines[0]}` : ""}`}
-                hint={f.label === "КОГДА" ? f.lines[1] : f.lines.filter(Boolean).join(" · ")} />
-            ))}
+            <div className="flex items-center gap-3">
+              <div className="flex min-w-0 flex-1 flex-col gap-3">
+                {m.facts.slice(0, 2).map((f) => (
+                  <IconRow key={f.label} icon={f.icon} label={f.label} value={`${f.value}${f.label === "КОГДА" ? ` · ${f.lines[0]}` : ""}`}
+                    hint={f.label === "КОГДА" ? f.lines[1] : f.lines.filter(Boolean).join(" · ")} />
+                ))}
+              </div>
+              <QrCode path={`/events/${e.id}`} label="QR-код: страница встречи" className="size-[76px]" />
+            </div>
             {/* Детали для участников: сами детали или пояснение по ситуации (как на десктопе) */}
             <p className="rounded-xl border-2 border-dashed border-ink px-3 py-2 text-xs leading-[17px] font-bold text-foreground">
               {viewer.canSeePrivateDetails && e.format === "ONLINE" && e.onlineUrl

@@ -24,6 +24,7 @@ import { Icon } from "@/shared/components/ui/icon";
 import { RoughBorder } from "@/shared/components/ui/rough-border";
 import { cn } from "cn";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
+import { ProfileShare } from "./profile-share";
 
 const dir = "m-profile";
 
@@ -149,6 +150,7 @@ function Passport() {
               </div>
             ))}
           </div>
+          <ProfileShare user={p.user} className="w-full" />
         </div>
       </div>
     </div>

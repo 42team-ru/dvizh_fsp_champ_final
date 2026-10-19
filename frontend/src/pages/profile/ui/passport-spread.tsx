@@ -31,6 +31,7 @@ import {
   passportNumber,
   whenLabel,
 } from "./passport-utils";
+import { ProfileShare } from "./profile-share";
 
 const IMG = "/profile";
 const CHIP_TONES = [
@@ -668,13 +669,16 @@ function DataPage() {
         </div>
       </div>
 
-      <div className="relative flex flex-col gap-1">
-        <p className="text-[11px] font-extrabold tracking-[1.2px] whitespace-nowrap text-muted-foreground">
-          ОСОБЫЕ ОТМЕТКИ
-        </p>
-        <p className="line-clamp-2 text-[15px] leading-[21px] font-medium text-foreground">
-          {user?.bio || "Пока ничего не написано."}
-        </p>
+      <div className="relative flex items-center gap-4">
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <p className="text-[11px] font-extrabold tracking-[1.2px] whitespace-nowrap text-muted-foreground">
+            ОСОБЫЕ ОТМЕТКИ
+          </p>
+          <p className="line-clamp-2 text-[15px] leading-[21px] font-medium text-foreground">
+            {user?.bio || "Пока ничего не написано."}
+          </p>
+        </div>
+        <ProfileShare user={user} className="shrink-0" />
       </div>
 
       <div className="relative mt-auto">
