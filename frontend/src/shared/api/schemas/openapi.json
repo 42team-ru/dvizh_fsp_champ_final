@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:8099",
+      "url": "http://localhost:18080",
       "description": "Generated server url"
     }
   ],
@@ -27,6 +27,10 @@
     {
       "name": "pets",
       "description": "Бобр-маскот: каталог вещей и образ"
+    },
+    {
+      "name": "admin",
+      "description": "Администрирование"
     },
     {
       "name": "sports",
@@ -54,6 +58,92 @@
     }
   ],
   "paths": {
+    "/api/users/me": {
+      "put": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Изменить свой профиль",
+        "description": "Имя, фамилия, город и о себе целиком. Пустые город и о себе стирают значение.",
+        "operationId": "users_updateMe",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Не заполнено имя или слишком длинный текст",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/me/sports": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Мои виды спорта и уровень в каждом",
+        "operationId": "users_mySports",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserSportResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Сохранить мои виды спорта целиком",
+        "description": "Вид из справочника — sportId, свой — sportName (создаётся, если его нет). Чего нет в списке — убирается; пустой список очищает. По ним строится лента «Для меня» (forMe).",
+        "operationId": "users_saveMySports",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveUserSportsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Не указан вид спорта или неизвестный sportId",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/users/me/pet": {
       "get": {
         "tags": [
@@ -936,6 +1026,16 @@
               "type": "string",
               "format": "uuid",
               "description": "Только мероприятия этой организации — для её публичной страницы"
+            }
+          },
+          {
+            "name": "forMe",
+            "in": "query",
+            "description": "«Для меня»: только виды спорта из моего профиля и подходящие моему уровню в них (уровень мероприятия «Любой» или как у меня; уровень не указан — любой)",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "«Для меня»: только виды спорта из моего профиля и подходящие моему уровню в них (уровень мероприятия «Любой» или как у меня; уровень не указан — любой)"
             }
           }
         ],
@@ -2168,6 +2268,16 @@
           }
         ],
         "responses": {
+          "200": {
+            "description": "Публичный профиль",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicUserResponse"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Пользователь не найден",
             "content": {
@@ -2207,6 +2317,133 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/me/history": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "История посещений",
+        "description": "Прошедшие занятия, на которые я собирался: разовое — подтверждённая запись, серия — отметка на занятие. Отменённые занятия и снятые мероприятия не считаются. Свежие сверху, page с нуля.",
+        "operationId": "users_history",
+        "parameters": [
+          {
+            "name": "sportId",
+            "in": "query",
+            "description": "Вид спорта",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "Занятия не раньше",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "example": "2026-01-01T00:00:00Z"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "Занятия раньше этого момента; по умолчанию и не позже чем сейчас",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "example": "2026-12-31T00:00:00Z"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Страница истории посещений",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseAttendedOccurrenceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Начало периода не раньше конца",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/me/history/summary": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Сводка истории посещений: всего и по видам спорта",
+        "operationId": "users_historySummary",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttendanceSummaryResponse"
                 }
               }
             }
@@ -2257,18 +2494,63 @@
           "registrations"
         ],
         "summary": "Мои записи",
-        "description": "Со статусом записи и мероприятия: снятое с публикации тоже видно.",
+        "description": "Со статусом записи и мероприятия: снятое с публикации тоже видно. Новые сверху; page с нуля, size до 100. UPCOMING — есть будущее занятие SCHEDULED, PAST — будущих занятий нет.",
         "operationId": "registrations_mine",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "CONFIRMED",
+                "PENDING",
+                "REJECTED",
+                "CANCELLED"
+              ]
+            }
+          },
+          {
+            "name": "when",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "UPCOMING",
+                "PAST"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/MyRegistrationResponse"
-                  }
+                  "$ref": "#/components/schemas/PageResponseMyRegistrationResponse"
                 }
               }
             }
@@ -2452,18 +2734,70 @@
           "events"
         ],
         "summary": "Мои мероприятия как организатора",
-        "description": "Во всех статусах, включая снятые и удалённые.",
+        "description": "Во всех статусах, включая снятые и удалённые. Новые сверху; page с нуля, size до 100. UPCOMING — есть будущее занятие SCHEDULED, PAST — будущих занятий нет.",
         "operationId": "events_mine",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PUBLISHED",
+                "UNPUBLISHED",
+                "DELETED"
+              ]
+            }
+          },
+          {
+            "name": "when",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "UPCOMING",
+                "PAST"
+              ]
+            }
+          },
+          {
+            "name": "searchText",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/EventSummaryResponse"
-                  }
+                  "$ref": "#/components/schemas/PageResponseEventSummaryResponse"
                 }
               }
             }
@@ -2619,6 +2953,16 @@
                 "REQUEST"
               ]
             }
+          },
+          {
+            "name": "forMe",
+            "in": "query",
+            "description": "«Для меня»: только виды спорта из моего профиля и подходящие моему уровню, как в ленте",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "«Для меня»: только виды спорта из моего профиля и подходящие моему уровню, как в ленте"
+            }
           }
         ],
         "responses": {
@@ -2731,6 +3075,71 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/users": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Поиск пользователей",
+        "description": "По логину, email, имени и фамилии; новые сверху. Счётчики включают созданные мероприятия и подтверждённые записи.",
+        "operationId": "admin_listUsers",
+        "parameters": [
+          {
+            "name": "searchText",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "USER",
+                "ORG",
+                "ADMIN"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseAdminUserResponse"
                 }
               }
             }
@@ -3190,6 +3599,116 @@
   },
   "components": {
     "schemas": {
+      "UpdateProfileRequest": {
+        "type": "object",
+        "description": "Профиль целиком: имя, фамилия, город, о себе",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "description": "Имя",
+            "example": "Анна",
+            "maxLength": 100,
+            "minLength": 2
+          },
+          "lastName": {
+            "type": "string",
+            "description": "Фамилия",
+            "example": "Смирнова",
+            "maxLength": 100,
+            "minLength": 2
+          },
+          "city": {
+            "type": "string",
+            "description": "Город",
+            "example": "Красноярск",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "bio": {
+            "type": "string",
+            "description": "О себе",
+            "example": "Бегаю по утрам, хочу попробовать йогу",
+            "maxLength": 1000,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "firstName",
+          "lastName"
+        ]
+      },
+      "ProblemDetail": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "type": "string",
+            "format": "uri"
+          },
+          "properties": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        }
+      },
+      "SaveUserSportsRequest": {
+        "type": "object",
+        "description": "Виды спорта профиля целиком; пустой список очищает",
+        "properties": {
+          "sports": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserSportRequest"
+            },
+            "maxItems": 30,
+            "minItems": 0
+          }
+        },
+        "required": [
+          "sports"
+        ]
+      },
+      "UserSportRequest": {
+        "type": "object",
+        "description": "Вид спорта в профиле: sportId из справочника или sportName — свой вид",
+        "properties": {
+          "sportId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Вид спорта из справочника"
+          },
+          "sportName": {
+            "type": "string",
+            "description": "Свой вид, если его нет в справочнике; создаётся автоматически",
+            "example": "Падел",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "level": {
+            "type": "string",
+            "description": "Уровень; не указан — подходят мероприятия любого уровня",
+            "enum": [
+              "BEGINNER",
+              "AMATEUR",
+              "ADVANCED",
+              "PRO"
+            ]
+          }
+        }
+      },
       "PetRequest": {
         "type": "object",
         "description": "Полная замена образа бобра",
@@ -3221,33 +3740,6 @@
           "mood",
           "outfit"
         ]
-      },
-      "ProblemDetail": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "format": "uri"
-          },
-          "title": {
-            "type": "string"
-          },
-          "status": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "detail": {
-            "type": "string"
-          },
-          "instance": {
-            "type": "string",
-            "format": "uri"
-          },
-          "properties": {
-            "type": "object",
-            "additionalProperties": {}
-          }
-        }
       },
       "PetEquipRequest": {
         "type": "object",
@@ -4867,39 +5359,6 @@
           "reason"
         ]
       },
-      "PetResponse": {
-        "type": "object",
-        "description": "Образ бобра: коды вещей из каталога. Без сохранённых настроек — {mood: idle, activity: none, outfit: {}}",
-        "properties": {
-          "mood": {
-            "type": "string",
-            "description": "Настроение",
-            "example": "happy"
-          },
-          "activity": {
-            "type": "string",
-            "description": "Инвентарь; none — без инвентаря",
-            "example": "hockey"
-          },
-          "outfit": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Надетое: код слота → код вещи. Пустой слот отсутствует в объекте",
-            "example": {
-              "shirt": "hc-sokol",
-              "hat": "helmet",
-              "bottom": "hockeypants"
-            }
-          }
-        },
-        "required": [
-          "activity",
-          "mood",
-          "outfit"
-        ]
-      },
       "EventSummaryResponse": {
         "type": "object",
         "description": "Мероприятие в списке: лента, мои мероприятия, мои записи",
@@ -5071,6 +5530,227 @@
           "title"
         ]
       },
+      "PublicUserResponse": {
+        "type": "object",
+        "description": "Публичный профиль организатора-человека и его ближайшие мероприятия",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "username": {
+            "type": "string",
+            "description": "Логин",
+            "example": "ivan"
+          },
+          "firstName": {
+            "type": "string",
+            "description": "Имя",
+            "example": "Иван"
+          },
+          "lastName": {
+            "type": "string",
+            "description": "Фамилия",
+            "example": "Петров"
+          },
+          "avatarUrl": {
+            "type": "string",
+            "description": "Ссылка на аватар"
+          },
+          "city": {
+            "type": "string",
+            "description": "Город",
+            "example": "Красноярск"
+          },
+          "bio": {
+            "type": "string",
+            "description": "О себе",
+            "example": "Играю в футбол по выходным"
+          },
+          "sports": {
+            "type": "array",
+            "description": "Виды спорта и уровень в каждом",
+            "items": {
+              "$ref": "#/components/schemas/UserSportResponse"
+            }
+          },
+          "attendedCount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Сколько встреч посетил",
+            "example": 14
+          },
+          "events": {
+            "type": "array",
+            "description": "Опубликованные и ещё не начавшиеся мероприятия, где человек автор; ближайшие первыми",
+            "items": {
+              "$ref": "#/components/schemas/EventSummaryResponse"
+            }
+          }
+        },
+        "required": [
+          "attendedCount",
+          "events",
+          "firstName",
+          "id",
+          "lastName",
+          "sports",
+          "username"
+        ]
+      },
+      "UserSportResponse": {
+        "type": "object",
+        "description": "Вид спорта в профиле и уровень в нём",
+        "properties": {
+          "sport": {
+            "$ref": "#/components/schemas/SportResponse"
+          },
+          "level": {
+            "type": "string",
+            "description": "Уровень; null — не указан",
+            "enum": [
+              "BEGINNER",
+              "AMATEUR",
+              "ADVANCED",
+              "PRO"
+            ]
+          }
+        },
+        "required": [
+          "sport"
+        ]
+      },
+      "PetResponse": {
+        "type": "object",
+        "description": "Образ бобра: коды вещей из каталога. Без сохранённых настроек — {mood: idle, activity: none, outfit: {}}",
+        "properties": {
+          "mood": {
+            "type": "string",
+            "description": "Настроение",
+            "example": "happy"
+          },
+          "activity": {
+            "type": "string",
+            "description": "Инвентарь; none — без инвентаря",
+            "example": "hockey"
+          },
+          "outfit": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Надетое: код слота → код вещи. Пустой слот отсутствует в объекте",
+            "example": {
+              "shirt": "hc-sokol",
+              "hat": "helmet",
+              "bottom": "hockeypants"
+            }
+          }
+        },
+        "required": [
+          "activity",
+          "mood",
+          "outfit"
+        ]
+      },
+      "AttendedOccurrenceResponse": {
+        "type": "object",
+        "description": "Прошедшее занятие, на котором человек был записан или отмечен",
+        "properties": {
+          "occurrenceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Начало занятия"
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Окончание занятия"
+          },
+          "event": {
+            "$ref": "#/components/schemas/EventSummaryResponse",
+            "description": "Мероприятие; время в нём — ближайшего будущего занятия, для истории берите startAt выше"
+          }
+        },
+        "required": [
+          "event",
+          "occurrenceId",
+          "startAt"
+        ]
+      },
+      "PageResponseAttendedOccurrenceResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttendedOccurrenceResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "AttendanceSummaryResponse": {
+        "type": "object",
+        "description": "Сводка истории посещений: всего и по видам спорта",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Всего посещений",
+            "example": 27
+          },
+          "bySport": {
+            "type": "array",
+            "description": "По видам спорта, самые частые первыми",
+            "items": {
+              "$ref": "#/components/schemas/SportAttendanceResponse"
+            }
+          }
+        },
+        "required": [
+          "bySport",
+          "total"
+        ]
+      },
+      "SportAttendanceResponse": {
+        "type": "object",
+        "description": "Сколько посещений в виде спорта",
+        "properties": {
+          "sport": {
+            "$ref": "#/components/schemas/SportResponse"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Посещений",
+            "example": 12
+          }
+        },
+        "required": [
+          "count",
+          "sport"
+        ]
+      },
       "MyRegistrationResponse": {
         "type": "object",
         "description": "Моя запись вместе с мероприятием",
@@ -5121,6 +5801,33 @@
           "id",
           "status"
         ]
+      },
+      "PageResponseMyRegistrationResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MyRegistrationResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
       },
       "PingResponse": {
         "type": "object",
@@ -5179,6 +5886,33 @@
             "items": {
               "$ref": "#/components/schemas/FileResponse"
             }
+          }
+        }
+      },
+      "PageResponseEventSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EventSummaryResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -5452,6 +6186,96 @@
           },
           "pet": {
             "$ref": "#/components/schemas/PetResponse"
+          }
+        }
+      },
+      "AdminUserResponse": {
+        "type": "object",
+        "description": "Пользователь для администратора",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "username": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "systemRole": {
+            "type": "string",
+            "enum": [
+              "USER",
+              "ORG",
+              "ADMIN"
+            ]
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "city": {
+            "type": "string",
+            "description": "Город"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "eventsCount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Число мероприятий, созданных пользователем"
+          },
+          "registrationsCount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Число подтверждённых записей"
+          }
+        },
+        "required": [
+          "active",
+          "createdAt",
+          "email",
+          "eventsCount",
+          "firstName",
+          "id",
+          "lastName",
+          "registrationsCount",
+          "systemRole",
+          "username"
+        ]
+      },
+      "PageResponseAdminUserResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminUserResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },

@@ -25,8 +25,16 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AttendanceSummaryResponse,
   MeResponse,
+  PageResponseAttendedOccurrenceResponse,
   ProblemDetail,
+  PublicUserResponse,
+  SaveUserSportsRequest,
+  UpdateProfileRequest,
+  UserSportResponse,
+  UsersHistoryParams,
+  UsersHistorySummaryParams,
   UsersUploadAvatarBody
 } from '../appAPI.schemas';
 
@@ -53,7 +61,319 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   return result;
 };
 
-export type usersUploadAvatarResponse400 = {
+export type usersUpdateMeResponse400 = {
+  data: ProblemDetail
+  status: 400
+}
+
+;
+export type usersUpdateMeResponseError = (usersUpdateMeResponse400) & {
+  headers: Headers;
+};
+
+export type usersUpdateMeResponse = (usersUpdateMeResponseError)
+
+export const getUsersUpdateMeUrl = () => {
+
+
+
+
+  return `/api/users/me`
+}
+
+/**
+ * Имя, фамилия, город и о себе целиком. Пустые город и о себе стирают значение.
+ * @summary Изменить свой профиль
+ */
+export const usersUpdateMe = async (updateProfileRequest: UpdateProfileRequest, options?: Parameters<typeof authMutator>[1]): Promise<usersUpdateMeResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return authMutator<usersUpdateMeResponse>(getUsersUpdateMeUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateProfileRequest)
+  }
+);}
+
+
+
+
+
+export const getUsersUpdateMeMutationKey = () => ['usersUpdateMe'] as const;
+
+export const getUsersUpdateMeMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersUpdateMe>>, TError,UsersUpdateMeMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof usersUpdateMe>>, TError,UsersUpdateMeMutationVariables, TContext> => {
+
+const mutationKey = getUsersUpdateMeMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersUpdateMe>>, UsersUpdateMeMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  usersUpdateMe(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UsersUpdateMeMutationResult = NonNullable<Awaited<ReturnType<typeof usersUpdateMe>>>
+    export type UsersUpdateMeMutationBody = UpdateProfileRequest
+    export type UsersUpdateMeMutationError = ErrorType<ProblemDetail>
+    export type UsersUpdateMeMutationVariables = {data: UpdateProfileRequest}
+
+    /**
+ * @summary Изменить свой профиль
+ */
+export const useUsersUpdateMe = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersUpdateMe>>, TError,UsersUpdateMeMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof usersUpdateMe>>,
+        TError,
+        UsersUpdateMeMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUsersUpdateMeMutationOptions(options), queryClient);
+    }
+    export type usersMySportsResponse200 = {
+  data: UserSportResponse[]
+  status: 200
+}
+
+export type usersMySportsResponseSuccess = (usersMySportsResponse200) & {
+  headers: Headers;
+};
+;
+
+export type usersMySportsResponse = (usersMySportsResponseSuccess)
+
+export const getUsersMySportsUrl = () => {
+
+
+
+
+  return `/api/users/me/sports`
+}
+
+/**
+ * @summary Мои виды спорта и уровень в каждом
+ */
+export const usersMySports = async ( options?: Parameters<typeof authMutator>[1]): Promise<usersMySportsResponse> => {
+
+  return authMutator<usersMySportsResponse>(getUsersMySportsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getUsersMySportsQueryKey = () => {
+    return [
+    `/api/users/me/sports`
+    ] as const;
+    }
+
+
+export const getUsersMySportsQueryOptions = <TData = Awaited<ReturnType<typeof usersMySports>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersMySports>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getUsersMySportsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof usersMySports>>> = ({ signal }) => usersMySports({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof usersMySports>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type UsersMySportsQueryResult = NonNullable<Awaited<ReturnType<typeof usersMySports>>>
+export type UsersMySportsQueryError = ErrorType<unknown>
+
+
+export function useUsersMySports<TData = Awaited<ReturnType<typeof usersMySports>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersMySports>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersMySports>>,
+          TError,
+          Awaited<ReturnType<typeof usersMySports>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUsersMySports<TData = Awaited<ReturnType<typeof usersMySports>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersMySports>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersMySports>>,
+          TError,
+          Awaited<ReturnType<typeof usersMySports>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUsersMySports<TData = Awaited<ReturnType<typeof usersMySports>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersMySports>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Мои виды спорта и уровень в каждом
+ */
+
+export function useUsersMySports<TData = Awaited<ReturnType<typeof usersMySports>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersMySports>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getUsersMySportsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type usersSaveMySportsResponse400 = {
+  data: ProblemDetail
+  status: 400
+}
+
+;
+export type usersSaveMySportsResponseError = (usersSaveMySportsResponse400) & {
+  headers: Headers;
+};
+
+export type usersSaveMySportsResponse = (usersSaveMySportsResponseError)
+
+export const getUsersSaveMySportsUrl = () => {
+
+
+
+
+  return `/api/users/me/sports`
+}
+
+/**
+ * Вид из справочника — sportId, свой — sportName (создаётся, если его нет). Чего нет в списке — убирается; пустой список очищает. По ним строится лента «Для меня» (forMe).
+ * @summary Сохранить мои виды спорта целиком
+ */
+export const usersSaveMySports = async (saveUserSportsRequest: SaveUserSportsRequest, options?: Parameters<typeof authMutator>[1]): Promise<usersSaveMySportsResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return authMutator<usersSaveMySportsResponse>(getUsersSaveMySportsUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(saveUserSportsRequest)
+  }
+);}
+
+
+
+
+
+export const getUsersSaveMySportsMutationKey = () => ['usersSaveMySports'] as const;
+
+export const getUsersSaveMySportsMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersSaveMySports>>, TError,UsersSaveMySportsMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof usersSaveMySports>>, TError,UsersSaveMySportsMutationVariables, TContext> => {
+
+const mutationKey = getUsersSaveMySportsMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersSaveMySports>>, UsersSaveMySportsMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  usersSaveMySports(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UsersSaveMySportsMutationResult = NonNullable<Awaited<ReturnType<typeof usersSaveMySports>>>
+    export type UsersSaveMySportsMutationBody = SaveUserSportsRequest
+    export type UsersSaveMySportsMutationError = ErrorType<ProblemDetail>
+    export type UsersSaveMySportsMutationVariables = {data: SaveUserSportsRequest}
+
+    /**
+ * @summary Сохранить мои виды спорта целиком
+ */
+export const useUsersSaveMySports = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersSaveMySports>>, TError,UsersSaveMySportsMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof usersSaveMySports>>,
+        TError,
+        UsersSaveMySportsMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUsersSaveMySportsMutationOptions(options), queryClient);
+    }
+    export type usersUploadAvatarResponse400 = {
   data: ProblemDetail
   status: 400
 }
@@ -228,17 +548,24 @@ export const useUsersDeleteAvatar = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getUsersDeleteAvatarMutationOptions(options), queryClient);
     }
-    export type usersGetResponse404 = {
+    export type usersGetResponse200 = {
+  data: PublicUserResponse
+  status: 200
+}
+
+export type usersGetResponse404 = {
   data: ProblemDetail
   status: 404
 }
 
-;
+export type usersGetResponseSuccess = (usersGetResponse200) & {
+  headers: Headers;
+};
 export type usersGetResponseError = (usersGetResponse404) & {
   headers: Headers;
 };
 
-export type usersGetResponse = (usersGetResponseError)
+export type usersGetResponse = (usersGetResponseSuccess | usersGetResponseError)
 
 export const getUsersGetUrl = (id: string,) => {
 
@@ -330,6 +657,252 @@ export function useUsersGet<TData = Awaited<ReturnType<typeof usersGet>>, TError
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getUsersGetQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type usersHistoryResponse200 = {
+  data: PageResponseAttendedOccurrenceResponse
+  status: 200
+}
+
+export type usersHistoryResponse400 = {
+  data: ProblemDetail
+  status: 400
+}
+
+export type usersHistoryResponseSuccess = (usersHistoryResponse200) & {
+  headers: Headers;
+};
+export type usersHistoryResponseError = (usersHistoryResponse400) & {
+  headers: Headers;
+};
+
+export type usersHistoryResponse = (usersHistoryResponseSuccess | usersHistoryResponseError)
+
+export const getUsersHistoryUrl = (params?: UsersHistoryParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/users/me/history?${stringifiedParams}` : `/api/users/me/history`
+}
+
+/**
+ * Прошедшие занятия, на которые я собирался: разовое — подтверждённая запись, серия — отметка на занятие. Отменённые занятия и снятые мероприятия не считаются. Свежие сверху, page с нуля.
+ * @summary История посещений
+ */
+export const usersHistory = async (params?: UsersHistoryParams, options?: Parameters<typeof authMutator>[1]): Promise<usersHistoryResponse> => {
+
+  return authMutator<usersHistoryResponse>(getUsersHistoryUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getUsersHistoryQueryKey = (params?: UsersHistoryParams,) => {
+    return [
+    `/api/users/me/history`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getUsersHistoryQueryOptions = <TData = Awaited<ReturnType<typeof usersHistory>>, TError = ErrorType<ProblemDetail>>(params?: UsersHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersHistory>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getUsersHistoryQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof usersHistory>>> = ({ signal }) => usersHistory(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof usersHistory>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type UsersHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof usersHistory>>>
+export type UsersHistoryQueryError = ErrorType<ProblemDetail>
+
+
+export function useUsersHistory<TData = Awaited<ReturnType<typeof usersHistory>>, TError = ErrorType<ProblemDetail>>(
+ params: undefined |  UsersHistoryParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersHistory>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersHistory>>,
+          TError,
+          Awaited<ReturnType<typeof usersHistory>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUsersHistory<TData = Awaited<ReturnType<typeof usersHistory>>, TError = ErrorType<ProblemDetail>>(
+ params?: UsersHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersHistory>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersHistory>>,
+          TError,
+          Awaited<ReturnType<typeof usersHistory>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUsersHistory<TData = Awaited<ReturnType<typeof usersHistory>>, TError = ErrorType<ProblemDetail>>(
+ params?: UsersHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersHistory>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary История посещений
+ */
+
+export function useUsersHistory<TData = Awaited<ReturnType<typeof usersHistory>>, TError = ErrorType<ProblemDetail>>(
+ params?: UsersHistoryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersHistory>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getUsersHistoryQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type usersHistorySummaryResponse200 = {
+  data: AttendanceSummaryResponse
+  status: 200
+}
+
+export type usersHistorySummaryResponseSuccess = (usersHistorySummaryResponse200) & {
+  headers: Headers;
+};
+;
+
+export type usersHistorySummaryResponse = (usersHistorySummaryResponseSuccess)
+
+export const getUsersHistorySummaryUrl = (params?: UsersHistorySummaryParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/users/me/history/summary?${stringifiedParams}` : `/api/users/me/history/summary`
+}
+
+/**
+ * @summary Сводка истории посещений: всего и по видам спорта
+ */
+export const usersHistorySummary = async (params?: UsersHistorySummaryParams, options?: Parameters<typeof authMutator>[1]): Promise<usersHistorySummaryResponse> => {
+
+  return authMutator<usersHistorySummaryResponse>(getUsersHistorySummaryUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getUsersHistorySummaryQueryKey = (params?: UsersHistorySummaryParams,) => {
+    return [
+    `/api/users/me/history/summary`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getUsersHistorySummaryQueryOptions = <TData = Awaited<ReturnType<typeof usersHistorySummary>>, TError = ErrorType<unknown>>(params?: UsersHistorySummaryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersHistorySummary>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getUsersHistorySummaryQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof usersHistorySummary>>> = ({ signal }) => usersHistorySummary(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof usersHistorySummary>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type UsersHistorySummaryQueryResult = NonNullable<Awaited<ReturnType<typeof usersHistorySummary>>>
+export type UsersHistorySummaryQueryError = ErrorType<unknown>
+
+
+export function useUsersHistorySummary<TData = Awaited<ReturnType<typeof usersHistorySummary>>, TError = ErrorType<unknown>>(
+ params: undefined |  UsersHistorySummaryParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersHistorySummary>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersHistorySummary>>,
+          TError,
+          Awaited<ReturnType<typeof usersHistorySummary>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUsersHistorySummary<TData = Awaited<ReturnType<typeof usersHistorySummary>>, TError = ErrorType<unknown>>(
+ params?: UsersHistorySummaryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersHistorySummary>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersHistorySummary>>,
+          TError,
+          Awaited<ReturnType<typeof usersHistorySummary>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUsersHistorySummary<TData = Awaited<ReturnType<typeof usersHistorySummary>>, TError = ErrorType<unknown>>(
+ params?: UsersHistorySummaryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersHistorySummary>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Сводка истории посещений: всего и по видам спорта
+ */
+
+export function useUsersHistorySummary<TData = Awaited<ReturnType<typeof usersHistorySummary>>, TError = ErrorType<unknown>>(
+ params?: UsersHistorySummaryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersHistorySummary>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getUsersHistorySummaryQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

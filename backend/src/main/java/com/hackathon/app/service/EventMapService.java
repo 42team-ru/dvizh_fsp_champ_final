@@ -55,7 +55,7 @@ public class EventMapService {
 
 		var ids = mapRepository.findIdsInArea(filter.minLon(), filter.minLat(), filter.maxLon(), filter.maxLat(),
 				from, to, Strings.blankToNull(filter.searchText()), filter.sportId(), filter.level(),
-				filter.joinMode(), LIMIT + 1);
+				filter.joinMode(), Boolean.TRUE.equals(filter.forMe()) ? userId : null, LIMIT + 1);
 		var truncated = ids.size() > LIMIT;
 		var shownIds = truncated ? ids.subList(0, LIMIT) : ids;
 

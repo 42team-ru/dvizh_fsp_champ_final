@@ -2,6 +2,7 @@ package com.hackathon.app.repository;
 
 import java.util.ArrayList;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 
 import com.hackathon.app.domain.entity.Event;
@@ -20,9 +21,12 @@ import org.springframework.data.jpa.domain.Specification;
 @UtilityClass
 public class EventSpecifications {
 
-	/** Только опубликованные; null-фильтры не применяются. Событие уровня ANY подходит под любой level. */
+	/**
+	 * Только опубликованные; null-фильтры не применяются. Событие уровня ANY подходит под любой level.
+	 * mySports — лента «Для меня»: вид спорта → уровень пользователя (null — любой); пустая карта ничего не пропускает.
+	 */
 	public Specification<Event> feed(String searchText, UUID sportId, EventLevel level, JoinMode joinMode,
-			EventFormat format, UUID organizationId) {
+			EventFormat format, UUID organizationId, Map<UUID, EventLevel> mySports) {
 		return (root, query, criteria) -> {
 			var conditions = new ArrayList<Predicate>();
 			conditions.add(criteria.equal(root.get("status"), EventStatus.PUBLISHED));
@@ -45,6 +49,14 @@ public class EventSpecifications {
 			}
 			if (format != null) {
 				conditions.add(criteria.equal(root.get("format"), format));
+			}
+			if (mySports != null) {
+				var matches = new ArrayList<Predicate>();
+				mySports.forEach((mySportId, myLevel) -> matches.add(myLevel == null
+						? criteria.equal(root.get("sportId"), mySportId)
+						: criteria.and(criteria.equal(root.get("sportId"), mySportId),
+								root.get("level").in(myLevel, EventLevel.ANY))));
+				conditions.add(matches.isEmpty() ? criteria.disjunction() : criteria.or(matches.toArray(Predicate[]::new)));
 			}
 			return criteria.and(conditions.toArray(Predicate[]::new));
 		};

@@ -11,9 +11,15 @@ import com.hackathon.app.domain.enums.RegistrationStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
-public interface RegistrationRepository extends JpaRepository<Registration, UUID> {
+public interface RegistrationRepository extends JpaRepository<Registration, UUID>, org.springframework.data.jpa.repository.JpaSpecificationExecutor<Registration> {
 
-	/** Для дашборда админа. */
+	@Query("""
+            select r.userId as userId, count(r) as count from Registration r
+            where r.userId in :userIds and r.status = com.hackathon.app.domain.enums.RegistrationStatus.CONFIRMED
+            group by r.userId""")
+    List<UserCount> countConfirmedByUsers(Collection<UUID> userIds);
+
+    /** Для дашборда админа. */
 	long countByStatus(RegistrationStatus status);
 
 	/** Сколько записей с нужным статусом у каждого мероприятия из списка. */

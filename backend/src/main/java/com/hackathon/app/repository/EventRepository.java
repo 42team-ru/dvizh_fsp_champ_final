@@ -34,7 +34,10 @@ public interface EventRepository extends JpaRepository<Event, UUID>, JpaSpecific
 			  and lower(e.title) like :q""")
 	Page<Event> search(EventStatus status, String q, Pageable pageable);
 
-	/** Где я автор или соорганизатор. */
+	@Query("select e.authorId as userId, count(e) as count from Event e where e.authorId in :userIds group by e.authorId")
+    List<UserCount> countAuthoredByUsers(java.util.Collection<UUID> userIds);
+
+    /** Где я автор или соорганизатор. */
 	@Query("""
 			select e from Event e
 			where e.authorId = :userId or e.id in (select o.eventId from EventOrganizer o where o.userId = :userId)

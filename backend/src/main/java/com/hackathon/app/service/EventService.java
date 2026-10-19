@@ -4,18 +4,23 @@ import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import com.hackathon.app.domain.dto.EventFilter;
 import com.hackathon.app.domain.dto.EventRequest;
 import com.hackathon.app.domain.dto.EventResponse;
 import com.hackathon.app.domain.dto.EventSummaryResponse;
 import com.hackathon.app.domain.dto.FileUpload;
+import com.hackathon.app.domain.dto.PageResponse;
 import com.hackathon.app.domain.entity.AppUser;
 import com.hackathon.app.domain.entity.Event;
 import com.hackathon.app.domain.enums.EventFormat;
+import com.hackathon.app.domain.enums.EventStatus;
 import com.hackathon.app.domain.enums.FileKind;
 import com.hackathon.app.domain.enums.RegistrationStatus;
 import com.hackathon.app.domain.enums.SystemRole;
+import com.hackathon.app.domain.enums.TimeScope;
 import com.hackathon.app.domain.exception.BadRequestException;
 import com.hackathon.app.domain.exception.ConflictException;
 import com.hackathon.app.domain.exception.ForbiddenException;
@@ -26,10 +31,13 @@ import com.hackathon.app.repository.DbTimeRepository;
 import com.hackathon.app.repository.EventFeedRepository;
 import com.hackathon.app.repository.EventRepository;
 import com.hackathon.app.repository.EventSpecifications;
+import com.hackathon.app.repository.MineSpecifications;
 import com.hackathon.app.repository.RegistrationRepository;
 import com.hackathon.app.repository.StoredFileRepository;
 import com.hackathon.app.util.Strings;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -56,6 +64,7 @@ public class EventService {
     private final EventFeedRepository feed;
     private final OccurrenceService occurrenceService;
     private final ScheduleExpander expander;
+    private final UserSportService userSports;
 
     /**
      * Лента: только опубликованные, у которых есть занятие в периоде (без from — ещё не начавшееся), ближайшие первыми.
@@ -65,7 +74,8 @@ public class EventService {
     public List<EventSummaryResponse> list(EventFilter filter, UUID userId) {
         var startFrom = filter.from() != null ? filter.from() : dbTime.now();
         var feedSpec = EventSpecifications.feed(Strings.blankToNull(filter.searchText()), filter.sportId(),
-                filter.level(), filter.joinMode(), filter.format(), filter.organizationId());
+                filter.level(), filter.joinMode(), filter.format(), filter.organizationId(),
+                Boolean.TRUE.equals(filter.forMe()) ? userSports.preferences(userId) : null);
         var ids = feed.findIds(feedSpec, startFrom, filter.to(), FEED_LIMIT);
         return summaries(EventListLookups.sortedLike(events.findAllById(ids), ids), userId, startFrom, filter.to());
     }
@@ -74,8 +84,13 @@ public class EventService {
      * Мои мероприятия как организатора, во всех статусах.
      */
     @Transactional(readOnly = true)
-    public List<EventSummaryResponse> mine(UUID userId) {
-        return summaries(events.findOrganizedBy(userId), userId);
+    public PageResponse<EventSummaryResponse> mine(UUID userId, EventStatus status, TimeScope when,
+            String searchText, int page, int size) {
+        var result = events.findAll(MineSpecifications.events(userId, status, when, searchText, dbTime.now()),
+                PageRequest.of(Math.max(0, page), Math.clamp(size, 1, 100), Sort.by(Sort.Direction.DESC, "createdAt", "id")));
+        var byId = summaries(result.getContent(), userId).stream()
+                .collect(Collectors.toMap(EventSummaryResponse::id, Function.identity()));
+        return PageResponse.of(result, event -> byId.get(event.getId()));
     }
 
     /**

@@ -29,10 +29,11 @@ public class EventMapRepository {
 	 * id опубликованных очных мероприятий, у которых точка внутри области и хоть одно занятие (SCHEDULED) начинается
 	 * в [from, to]; серия — одна точка. Ближайшие (по подходящему занятию) первыми.
 	 * minLon больше maxLon — область пересекает 180-й меридиан, ищем в двух прямоугольниках.
-	 * Null-фильтры не применяются.
+	 * Null-фильтры не применяются. forUserId — лента «Для меня»: виды спорта из профиля этого пользователя
+	 * и уровень мероприятия «Любой» или как у него (уровень не указан — любой).
 	 */
 	public List<UUID> findIdsInArea(double minLon, double minLat, double maxLon, double maxLat, Instant from,
-			Instant to, String searchText, UUID sportId, EventLevel level, JoinMode joinMode, int limit) {
+			Instant to, String searchText, UUID sportId, EventLevel level, JoinMode joinMode, UUID forUserId, int limit) {
 		var sql = new StringBuilder("""
 				select e.id from events e
 				join event_occurrences o on o.event_id = e.id
@@ -58,6 +59,11 @@ public class EventMapRepository {
 		if (joinMode != null) {
 			sql.append(" and e.join_mode = :joinMode");
 		}
+		if (forUserId != null) {
+			sql.append("""
+					 and exists (select 1 from user_sports us where us.user_id = :forUserId and us.sport_id = e.sport_id
+					   and (us.level is null or e.level = 'ANY' or e.level = us.level))""");
+		}
 		sql.append(" group by e.id order by min(o.start_at), e.id limit :limit");
 
 		var statement = jdbc.sql(sql.toString())
@@ -80,6 +86,9 @@ public class EventMapRepository {
 		}
 		if (joinMode != null) {
 			statement = statement.param("joinMode", joinMode.name());
+		}
+		if (forUserId != null) {
+			statement = statement.param("forUserId", forUserId);
 		}
 		return statement.query(UUID.class).list();
 	}

@@ -5,10 +5,12 @@ import java.util.UUID;
 
 import com.hackathon.app.domain.dto.EventRegistrationResponse;
 import com.hackathon.app.domain.dto.MyRegistrationResponse;
+import com.hackathon.app.domain.dto.PageResponse;
 import com.hackathon.app.domain.dto.RegistrationRequest;
 import com.hackathon.app.domain.dto.RegistrationResponse;
 import com.hackathon.app.domain.dto.RejectRegistrationRequest;
 import com.hackathon.app.domain.enums.RegistrationStatus;
+import com.hackathon.app.domain.enums.TimeScope;
 import com.hackathon.app.service.RegistrationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -75,7 +77,7 @@ class RegistrationController {
     @ApiResponse(responseCode = "403", description = "Не организатор", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "404", description = "Мероприятия нет", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     List<EventRegistrationResponse> listForEvent(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,
-                                                 @RequestParam(required = false) RegistrationStatus status) {
+                                                @RequestParam(required = false) RegistrationStatus status) {
         log.info("Endpoint called: GET /api/events/{}/registrations, userId={}, status={}", id, jwt.getSubject(), status);
         var response = registrations.listForEvent(id, userId(jwt), status);
         log.info("Endpoint response: GET /api/events/{}/registrations, count={}, response={}", id, response.size(), response);
@@ -111,11 +113,13 @@ class RegistrationController {
 
     @GetMapping("/registrations/mine")
     @Operation(operationId = "registrations_mine", summary = "Мои записи",
-            description = "Со статусом записи и мероприятия: снятое с публикации тоже видно.")
-    List<MyRegistrationResponse> mine(@AuthenticationPrincipal Jwt jwt) {
+            description = "Со статусом записи и мероприятия: снятое с публикации тоже видно. Новые сверху; page с нуля, size до 100. UPCOMING — есть будущее занятие SCHEDULED, PAST — будущих занятий нет.")
+    PageResponse<MyRegistrationResponse> mine(@AuthenticationPrincipal Jwt jwt,
+            @RequestParam(required = false) RegistrationStatus status, @RequestParam(required = false) TimeScope when,
+            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
         log.info("Endpoint called: GET /api/registrations/mine, userId={}", jwt.getSubject());
-        var response = registrations.mine(userId(jwt));
-        log.info("Endpoint response: GET /api/registrations/mine, count={}", response.size());
+        var response = registrations.mine(userId(jwt), status, when, page, size);
+        log.info("Endpoint response: GET /api/registrations/mine, count={}", response.totalElements());
         return response;
     }
 

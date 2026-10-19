@@ -1,5 +1,11 @@
 package com.hackathon.app.e2e.support;
 
+import com.hackathon.app.domain.dto.AttendanceSummaryResponse;
+
+import com.hackathon.app.domain.dto.AttendedOccurrenceResponse;
+
+import com.hackathon.app.domain.dto.AdminUserResponse;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -25,6 +31,10 @@ import com.hackathon.app.domain.dto.EventRegistrationResponse;
 import com.hackathon.app.domain.dto.EventResponse;
 import com.hackathon.app.domain.dto.EventSummaryResponse;
 import com.hackathon.app.domain.dto.MeResponse;
+import com.hackathon.app.domain.dto.PublicUserResponse;
+import com.hackathon.app.domain.dto.SaveUserSportsRequest;
+import com.hackathon.app.domain.dto.UpdateProfileRequest;
+import com.hackathon.app.domain.dto.UserSportResponse;
 import com.hackathon.app.domain.dto.MyRegistrationResponse;
 import com.hackathon.app.domain.dto.OrganizationResponse;
 import com.hackathon.app.domain.dto.OrganizerResponse;
@@ -78,6 +88,26 @@ public class Actor {
 
 	public MeResponse me() {
 		return send("GET /api/auth/me", get("/api/auth/me"), null, type(MeResponse.class));
+	}
+
+	/** Сохранить имя, фамилию, город и рассказ о себе целиком. */
+	public MeResponse updateProfile(UpdateProfileRequest form) {
+		return send("PUT /api/users/me", put("/api/users/me"), form, type(MeResponse.class));
+	}
+
+	/** Открыть публичную карточку другого пользователя. */
+	public PublicUserResponse openUser(UUID userId) {
+		return send("GET /api/users/" + userId, get("/api/users/{id}", userId), null, type(PublicUserResponse.class));
+	}
+
+	/** Прочитать свои виды спорта и уровни. */
+	public List<UserSportResponse> mySports() {
+		return send("GET /api/users/me/sports", get("/api/users/me/sports"), null, listOf(UserSportResponse.class));
+	}
+
+	/** Полностью заменить свои виды спорта; пустой список очищает интересы. */
+	public List<UserSportResponse> saveMySports(SaveUserSportsRequest form) {
+		return send("PUT /api/users/me/sports", put("/api/users/me/sports"), form, listOf(UserSportResponse.class));
 	}
 
 	/** Проверить, что публичный API доступен без входа. */
@@ -162,7 +192,7 @@ public class Actor {
 
 	/** Мои события как организатора (автор или соорганизатор). */
 	public List<EventSummaryResponse> myEvents() {
-		return send("GET /api/events/mine", get("/api/events/mine"), null, listOf(EventSummaryResponse.class));
+		return myEventsPage(Map.of("size", "100")).items();
 	}
 
 	public List<OrganizerResponse> addOrganizer(UUID eventId, String login) {
@@ -307,8 +337,7 @@ public class Actor {
 	}
 
 	public List<MyRegistrationResponse> myRegistrations() {
-		return send("GET /api/registrations/mine", get("/api/registrations/mine"), null,
-				listOf(MyRegistrationResponse.class));
+		return myRegistrationsPage(Map.of("size", "100")).items();
 	}
 
 	/** Моя запись на конкретное событие; падает, если её нет. */
@@ -409,6 +438,36 @@ public class Actor {
 	public AdminEventResponse deleteEvent(UUID eventId, Map<String, String> body) {
 		return send("DELETE /api/admin/events/" + eventId, delete("/api/admin/events/{id}", eventId).contentType(APPLICATION_JSON), body, type(AdminEventResponse.class));
 	}
+
+    public PageResponse<EventSummaryResponse> myEventsPage(Map<String, String> params) {
+        var request = get("/api/events/mine");
+        params.forEach(request::param);
+        return send("GET /api/events/mine", request, null, api.generic(PageResponse.class, EventSummaryResponse.class));
+    }
+
+    public PageResponse<MyRegistrationResponse> myRegistrationsPage(Map<String, String> params) {
+        var request = get("/api/registrations/mine");
+        params.forEach(request::param);
+        return send("GET /api/registrations/mine", request, null, api.generic(PageResponse.class, MyRegistrationResponse.class));
+    }
+
+    public PageResponse<AttendedOccurrenceResponse> history(Map<String, String> params) {
+        var request = get("/api/users/me/history");
+        params.forEach(request::param);
+        return send("GET /api/users/me/history", request, null, api.generic(PageResponse.class, AttendedOccurrenceResponse.class));
+    }
+
+    public AttendanceSummaryResponse historySummary(Map<String, String> params) {
+        var request = get("/api/users/me/history/summary");
+        params.forEach(request::param);
+        return send("GET /api/users/me/history/summary", request, null, type(AttendanceSummaryResponse.class));
+    }
+
+    public PageResponse<AdminUserResponse> adminUsers(Map<String, String> params) {
+        var request = get("/api/admin/users");
+        params.forEach(request::param);
+        return send("GET /api/admin/users", request, null, api.generic(PageResponse.class, AdminUserResponse.class));
+    }
 
 	// ---------- запасной выход ----------
 

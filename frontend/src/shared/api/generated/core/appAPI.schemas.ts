@@ -6,6 +6,87 @@
  * OpenAPI spec version: v1
  */
 /**
+ * Профиль целиком: имя, фамилия, город, о себе
+ */
+export interface UpdateProfileRequest {
+  /**
+     * Имя
+     * @minLength 2
+     * @maxLength 100
+     */
+  firstName: string;
+  /**
+     * Фамилия
+     * @minLength 2
+     * @maxLength 100
+     */
+  lastName: string;
+  /**
+     * Город
+     * @minLength 0
+     * @maxLength 100
+     */
+  city?: string;
+  /**
+     * О себе
+     * @minLength 0
+     * @maxLength 1000
+     */
+  bio?: string;
+}
+
+export type ProblemDetailProperties = {[key: string]: unknown};
+
+export interface ProblemDetail {
+  type?: string;
+  title?: string;
+  status?: number;
+  detail?: string;
+  instance?: string;
+  properties?: ProblemDetailProperties;
+}
+
+/**
+ * Уровень; не указан — подходят мероприятия любого уровня
+ */
+export type UserSportRequestLevel = typeof UserSportRequestLevel[keyof typeof UserSportRequestLevel];
+
+
+export const UserSportRequestLevel = {
+  BEGINNER: 'BEGINNER',
+  AMATEUR: 'AMATEUR',
+  ADVANCED: 'ADVANCED',
+  PRO: 'PRO',
+} as const;
+
+/**
+ * Вид спорта в профиле: sportId из справочника или sportName — свой вид
+ */
+export interface UserSportRequest {
+  /** Вид спорта из справочника */
+  sportId?: string;
+  /**
+     * Свой вид, если его нет в справочнике; создаётся автоматически
+     * @minLength 0
+     * @maxLength 100
+     */
+  sportName?: string;
+  /** Уровень; не указан — подходят мероприятия любого уровня */
+  level?: UserSportRequestLevel;
+}
+
+/**
+ * Виды спорта профиля целиком; пустой список очищает
+ */
+export interface SaveUserSportsRequest {
+  /**
+     * @minItems 0
+     * @maxItems 30
+     */
+  sports: UserSportRequest[];
+}
+
+/**
  * Код слота → код вещи. Чтобы снять вещь, не передавайте слот (null тоже снимает)
  */
 export type PetRequestOutfit = {[key: string]: string};
@@ -20,17 +101,6 @@ export interface PetRequest {
   activity: string;
   /** Код слота → код вещи. Чтобы снять вещь, не передавайте слот (null тоже снимает) */
   outfit: PetRequestOutfit;
-}
-
-export type ProblemDetailProperties = {[key: string]: unknown};
-
-export interface ProblemDetail {
-  type?: string;
-  title?: string;
-  status?: number;
-  detail?: string;
-  instance?: string;
-  properties?: ProblemDetailProperties;
 }
 
 /**
@@ -1019,23 +1089,6 @@ export interface ModerateEventRequest {
 }
 
 /**
- * Надетое: код слота → код вещи. Пустой слот отсутствует в объекте
- */
-export type PetResponseOutfit = {[key: string]: string};
-
-/**
- * Образ бобра: коды вещей из каталога. Без сохранённых настроек — {mood: idle, activity: none, outfit: {}}
- */
-export interface PetResponse {
-  /** Настроение */
-  mood: string;
-  /** Инвентарь; none — без инвентаря */
-  activity: string;
-  /** Надетое: код слота → код вещи. Пустой слот отсутствует в объекте */
-  outfit: PetResponseOutfit;
-}
-
-/**
  * Очно или онлайн
  */
 export type EventSummaryResponseFormat = typeof EventSummaryResponseFormat[keyof typeof EventSummaryResponseFormat];
@@ -1179,6 +1232,110 @@ export interface EventSummaryResponse {
 }
 
 /**
+ * Уровень; null — не указан
+ */
+export type UserSportResponseLevel = typeof UserSportResponseLevel[keyof typeof UserSportResponseLevel];
+
+
+export const UserSportResponseLevel = {
+  BEGINNER: 'BEGINNER',
+  AMATEUR: 'AMATEUR',
+  ADVANCED: 'ADVANCED',
+  PRO: 'PRO',
+} as const;
+
+/**
+ * Вид спорта в профиле и уровень в нём
+ */
+export interface UserSportResponse {
+  sport: SportResponse;
+  /** Уровень; null — не указан */
+  level?: UserSportResponseLevel;
+}
+
+/**
+ * Публичный профиль организатора-человека и его ближайшие мероприятия
+ */
+export interface PublicUserResponse {
+  id: string;
+  /** Логин */
+  username: string;
+  /** Имя */
+  firstName: string;
+  /** Фамилия */
+  lastName: string;
+  /** Ссылка на аватар */
+  avatarUrl?: string;
+  /** Город */
+  city?: string;
+  /** О себе */
+  bio?: string;
+  /** Виды спорта и уровень в каждом */
+  sports: UserSportResponse[];
+  /** Сколько встреч посетил */
+  attendedCount: number;
+  /** Опубликованные и ещё не начавшиеся мероприятия, где человек автор; ближайшие первыми */
+  events: EventSummaryResponse[];
+}
+
+/**
+ * Надетое: код слота → код вещи. Пустой слот отсутствует в объекте
+ */
+export type PetResponseOutfit = {[key: string]: string};
+
+/**
+ * Образ бобра: коды вещей из каталога. Без сохранённых настроек — {mood: idle, activity: none, outfit: {}}
+ */
+export interface PetResponse {
+  /** Настроение */
+  mood: string;
+  /** Инвентарь; none — без инвентаря */
+  activity: string;
+  /** Надетое: код слота → код вещи. Пустой слот отсутствует в объекте */
+  outfit: PetResponseOutfit;
+}
+
+/**
+ * Прошедшее занятие, на котором человек был записан или отмечен
+ */
+export interface AttendedOccurrenceResponse {
+  occurrenceId: string;
+  /** Начало занятия */
+  startAt: string;
+  /** Окончание занятия */
+  endAt?: string;
+  /** Мероприятие; время в нём — ближайшего будущего занятия, для истории берите startAt выше */
+  event: EventSummaryResponse;
+}
+
+export interface PageResponseAttendedOccurrenceResponse {
+  items?: AttendedOccurrenceResponse[];
+  page?: number;
+  size?: number;
+  totalElements?: number;
+  totalPages?: number;
+}
+
+/**
+ * Сколько посещений в виде спорта
+ */
+export interface SportAttendanceResponse {
+  sport: SportResponse;
+  /** Посещений */
+  count: number;
+}
+
+/**
+ * Сводка истории посещений: всего и по видам спорта
+ */
+export interface AttendanceSummaryResponse {
+  /** Всего посещений */
+  total: number;
+  /** По видам спорта, самые частые первыми */
+  bySport: SportAttendanceResponse[];
+}
+
+/**
  * Статус записи
  */
 export type MyRegistrationResponseStatus = typeof MyRegistrationResponseStatus[keyof typeof MyRegistrationResponseStatus];
@@ -1211,6 +1368,14 @@ export interface MyRegistrationResponse {
   myNextOccurrence?: OccurrenceShortResponse;
 }
 
+export interface PageResponseMyRegistrationResponse {
+  items?: MyRegistrationResponse[];
+  page?: number;
+  size?: number;
+  totalElements?: number;
+  totalPages?: number;
+}
+
 export interface PingResponse {
   status?: string;
   time?: string;
@@ -1233,6 +1398,14 @@ export interface PublicOrganizationResponse {
   contacts?: PublicOrganizationResponseContacts;
   logoUrl?: string;
   documents?: FileResponse[];
+}
+
+export interface PageResponseEventSummaryResponse {
+  items?: EventSummaryResponse[];
+  page?: number;
+  size?: number;
+  totalElements?: number;
+  totalPages?: number;
 }
 
 export type EventMapFeatureType = typeof EventMapFeatureType[keyof typeof EventMapFeatureType];
@@ -1419,6 +1592,43 @@ export interface MeResponse {
   pet?: PetResponse;
 }
 
+export type AdminUserResponseSystemRole = typeof AdminUserResponseSystemRole[keyof typeof AdminUserResponseSystemRole];
+
+
+export const AdminUserResponseSystemRole = {
+  USER: 'USER',
+  ORG: 'ORG',
+  ADMIN: 'ADMIN',
+} as const;
+
+/**
+ * Пользователь для администратора
+ */
+export interface AdminUserResponse {
+  id: string;
+  username: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  systemRole: AdminUserResponseSystemRole;
+  active: boolean;
+  /** Город */
+  city?: string;
+  createdAt: string;
+  /** Число мероприятий, созданных пользователем */
+  eventsCount: number;
+  /** Число подтверждённых записей */
+  registrationsCount: number;
+}
+
+export interface PageResponseAdminUserResponse {
+  items?: AdminUserResponse[];
+  page?: number;
+  size?: number;
+  totalElements?: number;
+  totalPages?: number;
+}
+
 /**
  * Значение за день
  */
@@ -1559,6 +1769,10 @@ format?: EventsListFormat;
  * Только мероприятия этой организации — для её публичной страницы
  */
 organizationId?: string;
+/**
+ * «Для меня»: только виды спорта из моего профиля и подходящие моему уровню в них (уровень мероприятия «Любой» или как у меня; уровень не указан — любой)
+ */
+forMe?: boolean;
 };
 
 export type EventsListLevel = typeof EventsListLevel[keyof typeof EventsListLevel];
@@ -1641,12 +1855,84 @@ export type AdminCreatePetItemBody = {
   file: Blob | File;
 };
 
+export type UsersHistoryParams = {
+/**
+ * Вид спорта
+ */
+sportId?: string;
+/**
+ * Занятия не раньше
+ */
+from?: string;
+/**
+ * Занятия раньше этого момента; по умолчанию и не позже чем сейчас
+ */
+to?: string;
+page?: number;
+size?: number;
+};
+
+export type UsersHistorySummaryParams = {
+from?: string;
+to?: string;
+};
+
 export type SportsSearchParams = {
 /**
  * Часть названия
  */
 query?: string;
 };
+
+export type RegistrationsMineParams = {
+status?: RegistrationsMineStatus;
+when?: RegistrationsMineWhen;
+page?: number;
+size?: number;
+};
+
+export type RegistrationsMineStatus = typeof RegistrationsMineStatus[keyof typeof RegistrationsMineStatus];
+
+
+export const RegistrationsMineStatus = {
+  CONFIRMED: 'CONFIRMED',
+  PENDING: 'PENDING',
+  REJECTED: 'REJECTED',
+  CANCELLED: 'CANCELLED',
+} as const;
+
+export type RegistrationsMineWhen = typeof RegistrationsMineWhen[keyof typeof RegistrationsMineWhen];
+
+
+export const RegistrationsMineWhen = {
+  UPCOMING: 'UPCOMING',
+  PAST: 'PAST',
+} as const;
+
+export type EventsMineParams = {
+status?: EventsMineStatus;
+when?: EventsMineWhen;
+searchText?: string;
+page?: number;
+size?: number;
+};
+
+export type EventsMineStatus = typeof EventsMineStatus[keyof typeof EventsMineStatus];
+
+
+export const EventsMineStatus = {
+  PUBLISHED: 'PUBLISHED',
+  UNPUBLISHED: 'UNPUBLISHED',
+  DELETED: 'DELETED',
+} as const;
+
+export type EventsMineWhen = typeof EventsMineWhen[keyof typeof EventsMineWhen];
+
+
+export const EventsMineWhen = {
+  UPCOMING: 'UPCOMING',
+  PAST: 'PAST',
+} as const;
 
 export type EventsMapParams = {
 /**
@@ -1697,6 +1983,10 @@ level?: EventsMapLevel;
  * Режим записи
  */
 joinMode?: EventsMapJoinMode;
+/**
+ * «Для меня»: только виды спорта из моего профиля и подходящие моему уровню, как в ленте
+ */
+forMe?: boolean;
 };
 
 export type EventsMapLevel = typeof EventsMapLevel[keyof typeof EventsMapLevel];
@@ -1725,6 +2015,22 @@ username: string;
 export type AuthCheckEmailParams = {
 email: string;
 };
+
+export type AdminListUsersParams = {
+searchText?: string;
+role?: AdminListUsersRole;
+page?: number;
+size?: number;
+};
+
+export type AdminListUsersRole = typeof AdminListUsersRole[keyof typeof AdminListUsersRole];
+
+
+export const AdminListUsersRole = {
+  USER: 'USER',
+  ORG: 'ORG',
+  ADMIN: 'ADMIN',
+} as const;
 
 export type AdminStatsParams = {
 /**

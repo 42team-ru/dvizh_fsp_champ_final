@@ -38,5 +38,7 @@ public record EventMapFilter(
 		@Schema(description = "Уровень; мероприятия «Любой уровень» подходят под любой")
 		EventLevel level,
 		@Schema(description = "Режим записи")
-		JoinMode joinMode) {
+		JoinMode joinMode,
+		@Schema(description = "«Для меня»: только виды спорта из моего профиля и подходящие моему уровню, как в ленте")
+		Boolean forMe) {
 }

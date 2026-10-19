@@ -6,6 +6,7 @@ import java.util.UUID;
 import com.hackathon.app.domain.dto.FileUpload;
 import com.hackathon.app.domain.dto.MeResponse;
 import com.hackathon.app.domain.dto.PublicUserResponse;
+import com.hackathon.app.domain.dto.UpdateProfileRequest;
 import com.hackathon.app.domain.entity.AppUser;
 import com.hackathon.app.domain.enums.FileKind;
 import com.hackathon.app.domain.mapper.FileMapper;
@@ -21,7 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Профиль пользователя: публичная страница и аватар. Ссылка на аватар хранится в users.avatar_url.
+ * Профиль пользователя: публичная страница, правка профиля и аватар. Ссылка на аватар хранится в users.avatar_url.
  */
 @Service
 @RequiredArgsConstructor
@@ -37,6 +38,8 @@ public class UserProfileService {
     private final EventService eventService;
     private final DbTimeRepository dbTime;
     private final EventFeedRepository feed;
+    private final UserSportService userSports;
+    private final AttendanceHistoryService history;
 
     /**
      * Сколько ближайших мероприятий показываем в профиле.
@@ -53,7 +56,16 @@ public class UserProfileService {
         var now = dbTime.now();
         var ids = feed.findIds(EventSpecifications.publishedByAuthor(id), now, null, UPCOMING_LIMIT);
         var upcoming = EventListLookups.sortedLike(events.findAllById(ids), ids);
-        return userMapper.toPublic(user, eventService.summaries(upcoming, viewerId));
+        return userMapper.toPublic(user, userSports.of(id), history.total(id), eventService.summaries(upcoming, viewerId));
+    }
+
+    /** Правка своего профиля: имя, фамилия, город, о себе. */
+    @Transactional
+    public MeResponse update(UUID userId, UpdateProfileRequest request) {
+        var user = find(userId);
+        userMapper.updateProfile(user, request);
+        users.saveAndFlush(user);
+        return MeResponse.of(user, pets.get(userId));
     }
 
     /**

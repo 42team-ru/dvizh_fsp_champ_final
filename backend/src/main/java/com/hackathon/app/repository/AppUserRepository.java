@@ -11,7 +11,15 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface AppUserRepository extends JpaRepository<AppUser, UUID> {
 
-	boolean existsByUsernameIgnoreCase(String username);
+	@Query("""
+            select u from AppUser u where (:role is null or u.systemRole = :role)
+              and (lower(u.username) like :pattern or lower(u.email) like :pattern
+                or lower(u.firstName) like :pattern or lower(u.lastName) like :pattern)
+            """)
+    org.springframework.data.domain.Page<AppUser> search(String pattern,
+            com.hackathon.app.domain.enums.SystemRole role, org.springframework.data.domain.Pageable pageable);
+
+    boolean existsByUsernameIgnoreCase(String username);
 
 	boolean existsByEmailIgnoreCase(String email);
 
