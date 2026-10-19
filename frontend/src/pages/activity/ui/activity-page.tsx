@@ -13,6 +13,7 @@ import { Icon } from "@/shared/components/ui/icon";
 import { Progress } from "@/shared/components/ui/progress";
 import { cn } from "cn";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
+import { QrCode } from "@/shared/components/ui/qr-code";
 
 const XS = "h-9 px-4 text-[13px] leading-[18px]";
 const MONTHS = ["ЯНВ", "ФЕВ", "МАР", "АПР", "МАЙ", "ИЮН", "ИЮЛ", "АВГ", "СЕН", "ОКТ", "НОЯ", "ДЕК"];
@@ -166,7 +167,7 @@ function Tickets({ m }: { m: ActivityModel }) {
                 </div>
               </div>
               <div className="relative w-[104px] shrink-0 overflow-hidden border-l-2 border-dashed border-ink bg-secondary">
-                <img src="/event/qr.svg" alt="" className="absolute top-[8px] left-[26px] size-[52px] rounded-md border-2 border-ink bg-card p-[3px]" />
+                <QrCode path={`/events/${reg.event.id}`} label="QR-код: страница встречи" className="absolute top-[8px] left-[26px] size-[52px]" />
                 {reg.event.cancelledByOrganizer || reg.event.status !== "PUBLISHED" ? (
                   <CancelledStamp className="bottom-[6px] left-[10px] h-[28px] w-[84px] rotate-[7deg]" />
                 ) : (

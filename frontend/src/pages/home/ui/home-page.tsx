@@ -16,6 +16,7 @@ import {
   useRecommendationPreview,
 } from "@/entity/event/model/use-recommendation-preview";
 import type { RecommendedEventResponse } from "@/shared/api/generated/core/appAPI.schemas";
+import { QrCode } from "@/shared/components/ui/qr-code";
 
 /** Обложки карточек подборки, если у события нет своего фото. */
 const COVERS = [
@@ -143,7 +144,7 @@ function Hero() {
           <div className="absolute top-3 left-[252px] h-[98px] w-[2px] border-l-2 border-dashed border-ink" />
           <span className="absolute top-[-11px] left-[241px] box-border size-[22px] rounded-[11px] border-2 border-ink bg-card" />
           <div className="flex w-[104px] items-center justify-center">
-            <img src="/home/memphis2.svg" alt="" className="size-[76px]" />
+            <QrCode path="/feed" label="QR-код: лента встреч" className="size-[76px]" />
           </div>
         </div>
       </article>

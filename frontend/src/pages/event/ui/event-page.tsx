@@ -13,9 +13,10 @@ import { Eyebrow } from "@/shared/components/ui/eyebrow";
 import { Icon } from "@/shared/components/ui/icon";
 import { Progress } from "@/shared/components/ui/progress";
 import { RoughBorder } from "@/shared/components/ui/rough-border";
-import { toast } from "@/shared/lib/toast";
 import { cn } from "cn";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
+import { QrCode } from "@/shared/components/ui/qr-code";
+import { EventShare } from "./event-share";
 
 type EventModel = ReturnType<typeof useEvent>;
 
@@ -60,15 +61,9 @@ function Img({ src, className }: { src: string; className?: string }) {
   return <img src={`/event/${src}`} alt="" className={cn("absolute max-w-none", className)} />;
 }
 
-function TopBar() {
-  const share = async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      toast.success("Ссылка скопирована");
-    } catch {
-      toast.info(window.location.href);
-    }
-  };
+function TopBar({ m }: { m: EventModel }) {
+  const [shareOpen, setShareOpen] = useState(false);
+  const e = m.event;
   return (
     <div className="flex h-10 w-[1216px] shrink-0 items-center justify-between">
       <Button asChild variant="soft" className="h-10 px-[18px] text-sm leading-[19px]">
@@ -77,11 +72,12 @@ function TopBar() {
         </Link>
       </Button>
       <div className="flex h-10 w-[148px] items-start">
-        <Button variant="soft" className="h-10 shrink-0 px-[18px] text-sm leading-[19px]" onClick={() => void share()}>
+        <Button variant="soft" className="h-10 shrink-0 px-[18px] text-sm leading-[19px]" disabled={!e} onClick={() => setShareOpen(true)}>
           <Icon name="event/icon-share" className="size-[18px]" />
           Поделиться
         </Button>
       </div>
+      <EventShare m={m} open={shareOpen} onOpenChange={setShareOpen} />
     </div>
   );
 }
@@ -174,6 +170,7 @@ function TicketHero({ m }: { m: EventModel }) {
         <span className="absolute top-[14px] right-[26px] text-[10px] font-extrabold tracking-[1px] text-foreground">
           № {e.id.slice(0, 4).toUpperCase()}
         </span>
+        <QrCode path={`/events/${e.id}`} label="QR-код: страница встречи" className="absolute top-[46px] right-[26px] z-10 size-[68px]" />
         {/* штамп организатора: только пока моя запись подтверждена — после «Отменить» пропадает */}
         {(e.status !== "PUBLISHED" || e.singleOccurrence?.status === "CANCELLED") && (
           <CancelledStamp big className="top-[220px] left-[34px] h-[66px] w-[178px] rotate-[9deg]" />
@@ -495,7 +492,7 @@ export default function EventPage() {
       <MemphisBackground seed="event" />
       <AppHeader current="feed" />
       <main className="mx-auto flex w-full max-w-[1280px] flex-col items-center gap-7 px-8 pt-8 pb-12">
-        <TopBar />
+        <TopBar m={m} />
         {m.query.isPending && <p className="w-[1216px] text-lg font-semibold text-muted-foreground">Загружаем событие…</p>}
         {m.query.isError && (
           <p role="alert" className="w-[1216px] text-lg font-semibold text-destructive">

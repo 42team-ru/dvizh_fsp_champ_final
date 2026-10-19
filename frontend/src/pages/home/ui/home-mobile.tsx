@@ -18,6 +18,7 @@ import {
   formatDistance,
   useRecommendationPreview,
 } from "@/entity/event/model/use-recommendation-preview";
+import { QrCode } from "@/shared/components/ui/qr-code";
 
 const dir = "m-home";
 
@@ -121,7 +122,7 @@ function NextTicket() {
             </div>
           </div>
           <div className="flex flex-col items-center gap-1">
-            <img src={`/${dir}/qr.svg`} alt="" className="size-[63px]" />
+            <QrCode path="/feed" label="QR-код: лента встреч" className="size-[63px]" />
             <span className="text-[10px] leading-[normal] font-extrabold tracking-[1px] whitespace-nowrap text-muted-foreground">
               № 0119
             </span>
