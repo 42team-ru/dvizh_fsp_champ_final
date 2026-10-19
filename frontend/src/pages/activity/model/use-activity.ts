@@ -5,7 +5,7 @@ import {
   useNotificationsReadAll,
 } from "@/shared/api/generated/core/notifications/notifications";
 import {
-  ACHIEVEMENT_TYPES, ACTIVITY_TYPES, REMINDER_TYPES, REPLY_TYPES, useUnreadNotifications,
+  ACHIEVEMENT_TYPES, ACTIVITY_TYPES, REMINDER_TYPES, REPLY_TYPES, TEAM_TYPES, useUnreadNotifications,
 } from "@/entity/notification/model/use-unread-notifications";
 import { useRegistrationsMine } from "@/shared/api/generated/core/registrations/registrations";
 import type { NotificationResponse, NotificationsListTypesItem, RegistrationsMineStatus } from "@/shared/api/generated/core/appAPI.schemas";
@@ -65,8 +65,9 @@ export function useActivity() {
   const [tab, setTabState] = useState<ActivityTab>("all");
   const [size, setSize] = useState(STEP);
   const [plansTab, setPlansTab] = useState<PlansTab>("going");
-  // у клуба «Все» и «Ответы» — одно и то же: вопросы и ответы в обсуждениях
-  const types = participant ? ACTIVITY_TABS.find((t) => t.key === tab)?.types : REPLY_TYPES;
+  // у клуба «Все» — вопросы и ответы в обсуждениях и приглашения в команду организаторов
+  const types = participant ? ACTIVITY_TABS.find((t) => t.key === tab)?.types
+    : tab === "replies" ? REPLY_TYPES : [...REPLY_TYPES, ...TEAM_TYPES];
 
   const unread = useUnreadNotifications();
   const list = useNotificationsList({ types, size }, {

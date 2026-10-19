@@ -22,6 +22,7 @@ import { cn } from "cn";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 import { QrCode } from "@/shared/components/ui/qr-code";
 import { EventShare } from "./event-share";
+import { InviteActions } from "@/features/organizer-invite/ui/invite-actions";
 
 type EventModel = ReturnType<typeof useEvent>;
 
@@ -317,7 +318,7 @@ function Organizer({ m }: { m: EventModel }) {
       <div className="grid grid-cols-2 gap-2">
         {[
           { v: String(m.going), l: "записались", tone: "bg-lime-soft" },
-          { v: String(e.organizers.length), l: "организаторов", tone: "bg-background" },
+          { v: String(e.organizers.filter((o) => !o.invited).length), l: "организаторов", tone: "bg-background" },
         ].map((s) => (
           <div
             key={s.l}
@@ -536,6 +537,17 @@ export default function EventPage() {
           <div role="alert" className="w-[1216px] rounded-[22px] border-2 border-ink bg-destructive px-6 py-4 text-destructive-foreground">
             <p className="font-display text-lg font-bold">{m.moderated.title}</p>
             {m.moderated.reason && <p className="mt-1 text-base font-semibold">Причина: {m.moderated.reason}</p>}
+          </div>
+        )}
+        {m.event?.viewer.organizerInvite && (
+          <div role="status" className="flex w-[1216px] items-center gap-5 rounded-[22px] border-2 border-ink bg-lime-soft px-6 py-4 shadow-hard-sm">
+            <div className="min-w-0 flex-1">
+              <p className="font-display text-lg font-bold text-foreground">Вас зовут в организаторы</p>
+              <p className="mt-1 text-base font-semibold text-muted-foreground">
+                {fullName(m.event.author)} приглашает вести встречу вместе: править карточку и решать заявки.
+              </p>
+            </div>
+            <InviteActions eventId={m.event.id} />
           </div>
         )}
         {m.event && (

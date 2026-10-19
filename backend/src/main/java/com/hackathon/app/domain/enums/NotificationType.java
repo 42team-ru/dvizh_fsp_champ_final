@@ -34,6 +34,10 @@ public enum NotificationType {
     ORGANIZER_ADDED,
     /** Соорганизатор удалён или вышел. */
     ORGANIZER_REMOVED,
+    /** Приглашение в соорганизаторы — приглашённому: принять или отказаться. */
+    ORGANIZER_INVITED,
+    /** Приглашённый отказался быть соорганизатором — автору. */
+    ORGANIZER_INVITE_DECLINED,
     /** Кворум набран. */
     QUORUM_REACHED,
     /** Кворума пока не хватает. */

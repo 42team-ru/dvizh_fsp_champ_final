@@ -62,6 +62,29 @@ export function viewOf(n: NotificationResponse): NotificationView {
         ),
       };
     }
+    case "ORGANIZER_INVITED":
+      return {
+        actor: n.actor, icon: "icon-bell", tone: "bg-lime-soft", action: "Открыть", href: n.targetPath,
+        text: (
+          <>
+            <span className={b}>{n.actor ? fullName(n.actor) : "Автор"}</span> зовёт вас в организаторы
+            {" "}<span className={b}>«{first}»</span>{time(n.createdAt)}
+          </>
+        ),
+      };
+    case "ORGANIZER_ADDED":
+    case "ORGANIZER_INVITE_DECLINED":
+      return {
+        actor: n.actor, icon: "icon-bell", tone: "bg-card", action: "Открыть", href: n.targetPath,
+        text: (
+          <>
+            {n.actor && <span className={b}>{fullName(n.actor)}</span>}
+            {n.type === "ORGANIZER_INVITE_DECLINED" ? " отказался(ась) быть организатором"
+              : n.title === "Вы добавлены в организаторы" ? " добавил(а) вас в организаторы" : " теперь в команде организаторов"}
+            {" "}<span className={b}>«{first}»</span>{time(n.createdAt)}
+          </>
+        ),
+      };
     case "REMINDER":
       return {
         icon: "icon-clock", tone: "bg-lavender-soft", action: "Открыть", href: n.targetPath,

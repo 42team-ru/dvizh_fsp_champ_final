@@ -26,6 +26,7 @@ public class NotificationChanges {
     private final EventOccurrenceRepository occurrences;
     private final EventScheduleRuleRepository rules;
     private final EventOrganizerRepository organizers;
+    private final OrganizerInvitationRepository invitations;
     private final RegistrationRepository registrations;
     private final OccurrenceAttendanceRepository attendances;
     private final StoredFileRepository files;
@@ -62,6 +63,7 @@ public class NotificationChanges {
     }
 
     private record RegistrationState(UUID userId, RegistrationStatus status, String reason, Instant eligibleAt) {}
+    private record InviteState(OrganizerInviteStatus status, UUID invitedById, Instant changedAt) {}
     private record Slot(UUID id, Instant start, Instant end, OccurrenceStatus status, String reason,
                         Instant confirmedAt, Map<UUID, Instant> attendees, QuorumStatus quorum) {}
     private record RuleContent(LocalDateTime firstStart, int durationMinutes, String rrule) {}
@@ -73,7 +75,7 @@ public class NotificationChanges {
     private record Snapshot(UUID id, UUID authorId, String title, String zone, boolean recurring,
                             EventStatus status, String reason, CardContent content,
                             Map<UUID, RegistrationState> registrations, Map<UUID, Instant> organizers,
-                            Map<UUID, Slot> slots) {}
+                            Map<UUID, InviteState> invites, Map<UUID, Slot> slots) {}
 
     private Snapshot snapshot(UUID eventId) {
         var event = events.findById(eventId).orElseThrow();
@@ -84,6 +86,9 @@ public class NotificationChanges {
         var organizerStates = new HashMap<UUID, Instant>();
         organizerStates.put(event.getAuthorId(), event.getCreatedAt());
         organizers.findByEventIdOrderByCreatedAt(eventId).forEach(o -> organizerStates.put(o.getUserId(), o.getCreatedAt()));
+        var inviteStates = new HashMap<UUID, InviteState>();
+        invitations.findByEventIdOrderByCreatedAt(eventId).forEach(i -> inviteStates.put(i.getUserId(),
+                new InviteState(i.getStatus(), i.getInvitedById(), i.getUpdatedAt())));
         var attendanceBySlot = event.isRecurring() ? attendances.findByEventId(eventId).stream()
                 .collect(Collectors.groupingBy(OccurrenceAttendance::getOccurrenceId)) : Map.<UUID, List<OccurrenceAttendance>>of();
         var slots = new LinkedHashMap<UUID, Slot>();
@@ -109,7 +114,7 @@ public class NotificationChanges {
                         .map(StoredFile::getId).toList());
         return new Snapshot(eventId, event.getAuthorId(), event.getTitle(), event.getTimeZone(), event.isRecurring(),
                 event.getStatus(), event.getModerationReason(), content,
-                Map.copyOf(registrationStates), Map.copyOf(organizerStates), Collections.unmodifiableMap(slots));
+                Map.copyOf(registrationStates), Map.copyOf(organizerStates), Map.copyOf(inviteStates), Collections.unmodifiableMap(slots));
     }
 
     private List<NotificationFact> diff(Snapshot before, Snapshot after, UUID actorId) {
@@ -184,9 +189,25 @@ public class NotificationChanges {
                                 : old != null && old.status() == RegistrationStatus.WAITLISTED ? "Освободилось место — вы записаны"
                                 : "Ваша запись подтверждена", registration.reason());
         }
-        for (var id : after.organizers().keySet()) if (!before.organizers().containsKey(id))
-            add(result, command, after, actorId, NotificationType.ORGANIZER_ADDED, NotificationCategory.ORGANIZERS,
-                    Set.of(id), null, "Вы добавлены в организаторы", null);
+        for (var id : after.organizers().keySet()) if (!before.organizers().containsKey(id)) {
+            // принял приглашение сам — узнаёт автор; добавлен кем-то — узнаёт он
+            boolean accepted = id.equals(actorId);
+            add(result, command + ":" + id, after, actorId, NotificationType.ORGANIZER_ADDED, NotificationCategory.ORGANIZERS,
+                    accepted ? Set.of(after.authorId()) : Set.of(id), null,
+                    accepted ? "Приглашение в организаторы принято" : "Вы добавлены в организаторы", null);
+        }
+        for (var invite : after.invites().entrySet()) {
+            var old = before.invites().get(invite.getKey());
+            var state = invite.getValue();
+            if (old != null && old.status() == state.status() && Objects.equals(old.changedAt(), state.changedAt())) continue;
+            if (state.status() == OrganizerInviteStatus.PENDING)
+                add(result, command + ":" + invite.getKey(), after, actorId, NotificationType.ORGANIZER_INVITED,
+                        NotificationCategory.ORGANIZERS, Set.of(invite.getKey()), null, "Вас зовут в организаторы",
+                        "Примите или откажитесь в «Активности» или на странице мероприятия.");
+            else if (state.status() == OrganizerInviteStatus.DECLINED)
+                add(result, command + ":" + invite.getKey(), after, actorId, NotificationType.ORGANIZER_INVITE_DECLINED,
+                        NotificationCategory.ORGANIZERS, Set.of(state.invitedById()), null, "Приглашение в организаторы отклонено", null);
+        }
         for (var id : before.organizers().keySet()) if (!after.organizers().containsKey(id))
             add(result, command, after, actorId, NotificationType.ORGANIZER_REMOVED, NotificationCategory.ORGANIZERS,
                     id.equals(actorId) ? Set.of(after.authorId()) : Set.of(id), null, "Изменился состав организаторов", null);

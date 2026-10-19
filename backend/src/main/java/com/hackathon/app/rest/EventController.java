@@ -13,6 +13,7 @@ import com.hackathon.app.domain.dto.EventMapResponse;
 import com.hackathon.app.domain.dto.EventRequest;
 import com.hackathon.app.domain.dto.EventResponse;
 import com.hackathon.app.domain.dto.EventSummaryResponse;
+import com.hackathon.app.domain.dto.OrganizerInvitationResponse;
 import com.hackathon.app.domain.dto.OrganizerResponse;
 import com.hackathon.app.domain.dto.PageResponse;
 import com.hackathon.app.domain.enums.EventStatus;
@@ -101,6 +102,16 @@ class EventController {
         log.info("Endpoint called: GET /api/events/mine, userId={}", jwt.getSubject());
         var response = events.mine(userId(jwt), status, when, searchText, page, size);
         log.info("Endpoint response: GET /api/events/mine, count={}", response.totalElements());
+        return response;
+    }
+
+    @GetMapping("/organizer-invitations")
+    @Operation(operationId = "events_organizerInvitations", summary = "Мои приглашения в соорганизаторы",
+            description = "Приглашения, которые ждут моего ответа: новые сверху, без удалённых мероприятий.")
+    List<OrganizerInvitationResponse> organizerInvitations(@AuthenticationPrincipal Jwt jwt) {
+        log.info("Endpoint called: GET /api/events/organizer-invitations, userId={}", jwt.getSubject());
+        var response = organizers.myInvitations(userId(jwt));
+        log.info("Endpoint response: GET /api/events/organizer-invitations, count={}", response.size());
         return response;
     }
 
@@ -213,12 +224,13 @@ class EventController {
     }
 
     @PostMapping("/{id}/organizers")
-    @Operation(operationId = "events_addOrganizer", summary = "Добавить соорганизатора",
-            description = "Только автор. Соорганизатор правит мероприятие и решает заявки наравне с автором. Возвращает новый состав.")
+    @Operation(operationId = "events_addOrganizer", summary = "Пригласить соорганизатора",
+            description = "Только автор. Человек получает уведомление и сам принимает или отказывается; до ответа он в составе с invited = true. "
+                    + "Соорганизатор правит мероприятие и решает заявки наравне с автором. Возвращает новый состав.")
     @ApiResponse(responseCode = "200", description = "OK")
     @ApiResponse(responseCode = "403", description = "Не автор", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "404", description = "Мероприятия или пользователя нет", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
-    @ApiResponse(responseCode = "409", description = "Уже организатор, администратор, записан участником или мероприятие удалено",
+    @ApiResponse(responseCode = "409", description = "Уже организатор или приглашён, администратор, записан участником или мероприятие удалено",
             content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     List<OrganizerResponse> addOrganizer(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,
                                          @Valid @RequestBody AddOrganizerRequest request) {
@@ -228,9 +240,34 @@ class EventController {
         return response;
     }
 
+    @PostMapping("/{id}/organizers/invitation/accept")
+    @Operation(operationId = "events_acceptOrganizerInvite", summary = "Принять приглашение в соорганизаторы",
+            description = "Становлюсь соорганизатором: правлю мероприятие и решаю заявки. Автору приходит уведомление. Возвращает оставшиеся приглашения.")
+    @ApiResponse(responseCode = "200", description = "OK")
+    @ApiResponse(responseCode = "404", description = "Мероприятия нет или приглашение отозвано", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    @ApiResponse(responseCode = "409", description = "Записан участником или мероприятие удалено", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    List<OrganizerInvitationResponse> acceptOrganizerInvite(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+        log.info("Endpoint called: POST /api/events/{}/organizers/invitation/accept, userId={}", id, jwt.getSubject());
+        var response = organizers.accept(id, userId(jwt));
+        log.info("Endpoint response: POST /api/events/{}/organizers/invitation/accept, count={}", id, response.size());
+        return response;
+    }
+
+    @PostMapping("/{id}/organizers/invitation/decline")
+    @Operation(operationId = "events_declineOrganizerInvite", summary = "Отказаться от приглашения в соорганизаторы",
+            description = "Автору приходит уведомление. Возвращает оставшиеся приглашения.")
+    @ApiResponse(responseCode = "200", description = "OK")
+    @ApiResponse(responseCode = "404", description = "Мероприятия нет или приглашение отозвано", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    List<OrganizerInvitationResponse> declineOrganizerInvite(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+        log.info("Endpoint called: POST /api/events/{}/organizers/invitation/decline, userId={}", id, jwt.getSubject());
+        var response = organizers.decline(id, userId(jwt));
+        log.info("Endpoint response: POST /api/events/{}/organizers/invitation/decline, count={}", id, response.size());
+        return response;
+    }
+
     @DeleteMapping("/{id}/organizers/{userId}")
     @Operation(operationId = "events_removeOrganizer", summary = "Убрать соорганизатора",
-            description = "Автор убирает любого соорганизатора, соорганизатор может выйти сам. Автора убрать нельзя. Возвращает новый состав.")
+            description = "Автор убирает любого соорганизатора или отзывает приглашение, соорганизатор может выйти сам. Автора убрать нельзя. Возвращает новый состав.")
     @ApiResponse(responseCode = "200", description = "OK")
     @ApiResponse(responseCode = "403", description = "Не автор и не сам соорганизатор", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "404", description = "Мероприятия нет или пользователь не организатор", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))

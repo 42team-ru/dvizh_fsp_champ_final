@@ -2638,8 +2638,8 @@
         "tags": [
           "events"
         ],
-        "summary": "Добавить соорганизатора",
-        "description": "Только автор. Соорганизатор правит мероприятие и решает заявки наравне с автором. Возвращает новый состав.",
+        "summary": "Пригласить соорганизатора",
+        "description": "Только автор. Человек получает уведомление и сам принимает или отказывается; до ответа он в составе с invited = true. Соорганизатор правит мероприятие и решает заявки наравне с автором. Возвращает новый состав.",
         "operationId": "events_addOrganizer",
         "parameters": [
           {
@@ -2697,7 +2697,109 @@
             }
           },
           "409": {
-            "description": "Уже организатор, администратор, записан участником или мероприятие удалено",
+            "description": "Уже организатор или приглашён, администратор, записан участником или мероприятие удалено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/{id}/organizers/invitation/decline": {
+      "post": {
+        "tags": [
+          "events"
+        ],
+        "summary": "Отказаться от приглашения в соорганизаторы",
+        "description": "Автору приходит уведомление. Возвращает оставшиеся приглашения.",
+        "operationId": "events_declineOrganizerInvite",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrganizerInvitationResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Мероприятия нет или приглашение отозвано",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/{id}/organizers/invitation/accept": {
+      "post": {
+        "tags": [
+          "events"
+        ],
+        "summary": "Принять приглашение в соорганизаторы",
+        "description": "Становлюсь соорганизатором: правлю мероприятие и решаю заявки. Автору приходит уведомление. Возвращает оставшиеся приглашения.",
+        "operationId": "events_acceptOrganizerInvite",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrganizerInvitationResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Мероприятия нет или приглашение отозвано",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Записан участником или мероприятие удалено",
             "content": {
               "application/json": {
                 "schema": {
@@ -5077,6 +5179,8 @@
                   "ORGANIZATION_REJECTED",
                   "ORGANIZER_ADDED",
                   "ORGANIZER_REMOVED",
+                  "ORGANIZER_INVITED",
+                  "ORGANIZER_INVITE_DECLINED",
                   "QUORUM_REACHED",
                   "QUORUM_LOST",
                   "OCCURRENCE_CONFIRMED",
@@ -5407,6 +5511,31 @@
             "description": "Файл iCalendar",
             "content": {
               "text/calendar": {}
+            }
+          }
+        }
+      }
+    },
+    "/api/events/organizer-invitations": {
+      "get": {
+        "tags": [
+          "events"
+        ],
+        "summary": "Мои приглашения в соорганизаторы",
+        "description": "Приглашения, которые ждут моего ответа: новые сверху, без удалённых мероприятий.",
+        "operationId": "events_organizerInvitations",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrganizerInvitationResponse"
+                  }
+                }
+              }
             }
           }
         }
@@ -6300,7 +6429,7 @@
           "events"
         ],
         "summary": "Убрать соорганизатора",
-        "description": "Автор убирает любого соорганизатора, соорганизатор может выйти сам. Автора убрать нельзя. Возвращает новый состав.",
+        "description": "Автор убирает любого соорганизатора или отзывает приглашение, соорганизатор может выйти сам. Автора убрать нельзя. Возвращает новый состав.",
         "operationId": "events_removeOrganizer",
         "parameters": [
           {
@@ -8127,7 +8256,7 @@
       },
       "OrganizerResponse": {
         "type": "object",
-        "description": "Организатор мероприятия: автор или соорганизатор",
+        "description": "Организатор мероприятия: автор, соорганизатор или приглашённый в соорганизаторы (invited)",
         "properties": {
           "user": {
             "$ref": "#/components/schemas/UserShortResponse",
@@ -8140,10 +8269,15 @@
           "organization": {
             "$ref": "#/components/schemas/OrganizationShortResponse",
             "description": "Организация, если это её аккаунт: показывать её название вместо контактного лица; иначе null"
+          },
+          "invited": {
+            "type": "boolean",
+            "description": "Только приглашён и ещё не ответил: прав организатора пока нет. Такие строки видят только организаторы"
           }
         },
         "required": [
           "author",
+          "invited",
           "user"
         ]
       },
@@ -8365,6 +8499,10 @@
             "type": "string",
             "description": "Причина отказа организатора, если моя заявка отклонена; иначе null",
             "example": "Группа укомплектована"
+          },
+          "organizerInvite": {
+            "type": "boolean",
+            "description": "Меня пригласили в соорганизаторы и ждут ответа: показать «Принять» и «Отказаться»"
           }
         },
         "required": [
@@ -8374,7 +8512,8 @@
           "canManageOrganizers",
           "canRegister",
           "canSeePrivateDetails",
-          "isOrganizer"
+          "isOrganizer",
+          "organizerInvite"
         ]
       },
       "OccurrenceRequest": {
@@ -8874,6 +9013,36 @@
         },
         "required": [
           "login"
+        ]
+      },
+      "OrganizerInvitationResponse": {
+        "type": "object",
+        "description": "Приглашение в соорганизаторы, которое ждёт моего ответа",
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Мероприятие"
+          },
+          "eventTitle": {
+            "type": "string",
+            "description": "Название мероприятия"
+          },
+          "invitedBy": {
+            "$ref": "#/components/schemas/UserShortResponse",
+            "description": "Кто пригласил (автор мероприятия)"
+          },
+          "invitedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Когда пригласили"
+          }
+        },
+        "required": [
+          "eventId",
+          "eventTitle",
+          "invitedAt",
+          "invitedBy"
         ]
       },
       "CancelOccurrenceRequest": {
@@ -10703,6 +10872,8 @@
               "ORGANIZATION_REJECTED",
               "ORGANIZER_ADDED",
               "ORGANIZER_REMOVED",
+              "ORGANIZER_INVITED",
+              "ORGANIZER_INVITE_DECLINED",
               "QUORUM_REACHED",
               "QUORUM_LOST",
               "OCCURRENCE_CONFIRMED",
@@ -10798,6 +10969,8 @@
               "ORGANIZATION_REJECTED",
               "ORGANIZER_ADDED",
               "ORGANIZER_REMOVED",
+              "ORGANIZER_INVITED",
+              "ORGANIZER_INVITE_DECLINED",
               "QUORUM_REACHED",
               "QUORUM_LOST",
               "OCCURRENCE_CONFIRMED",

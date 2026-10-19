@@ -16,6 +16,7 @@ import { cn } from "cn";
 import { MyEventsMap } from "@/widgets/events-map/ui/my-events-map";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 import { plural } from "@/shared/lib/plural";
+import { InviteActions, usePendingInvites } from "@/features/organizer-invite/ui/invite-actions";
 
 const XS = "h-9 px-4 text-[13px] leading-[18px]";
 
@@ -68,6 +69,7 @@ function FilterBar({ m }: { m: ActivityModel }) {
 
 /** Лента: уведомления выбранного типа по дням. */
 function Feed({ m }: { m: ActivityModel }) {
+  const invites = usePendingInvites();
   return (
     <Card className="absolute top-0 left-0 h-[626px] w-[701px] overflow-hidden">
       <div className="absolute inset-y-0 left-6 right-6 flex flex-col gap-[10px] overflow-y-auto py-6 pr-1">
@@ -89,19 +91,27 @@ function Feed({ m }: { m: ActivityModel }) {
                 <Eyebrow className="mt-1">{group.label}</Eyebrow>
                 {group.items.map((n) => {
                   const v = viewOf(n);
+                  const invite = n.type === "ORGANIZER_INVITED" && n.eventId && invites.has(n.eventId) ? n.eventId : null;
                   return (
+                    // строка целиком открывает уведомление; кнопки и кружок «прочитано» лежат поверх ссылки
                     <div key={n.id}
-                      className={cn("box-border flex min-h-[76px] w-full shrink-0 items-center gap-[14px] rounded-[18px] border-2 border-ink px-[18px] py-3",
+                      className={cn("relative box-border flex min-h-[76px] w-full shrink-0 items-center gap-[14px] rounded-[18px] border-2 border-ink px-[18px] py-3 transition-colors hover:bg-muted",
                         n.readAt ? "bg-card" : "bg-lime-soft")}>
+                      <Link to={v.href} onClick={() => m.markRead(n)} aria-label="Открыть уведомление"
+                        className="absolute inset-0 rounded-[16px] focus-visible:outline-2 focus-visible:outline-ink" />
                       {v.actor
                         ? <Disc initials={(v.actor.firstName?.[0] ?? "") + (v.actor.lastName?.[0] ?? "")} user={v.actor} tone="bg-sky"
                             className="size-11 shrink-0" textClassName="text-sm leading-[19px] tracking-[-0.5px]" />
                         : <IconSquare tone={v.tone} icon={v.icon} />}
                       <div className="min-w-0 flex-1 text-[15px] leading-[22px] font-medium text-foreground line-clamp-2">{v.text}</div>
-                      <Button asChild variant={n.type === "ACHIEVEMENT_UNLOCKED" ? "secondary" : "soft"} className={cn(XS, "shrink-0")}>
-                        <Link to={v.href} onClick={() => m.markRead(n)}>{v.action}</Link>
-                      </Button>
-                      {!n.readAt && <Dot onRead={() => m.markRead(n)} />}
+                      {invite ? (
+                        <InviteActions eventId={invite} compact className="relative z-10" />
+                      ) : (
+                        <Button asChild variant={n.type === "ACHIEVEMENT_UNLOCKED" ? "secondary" : "soft"} className={cn(XS, "relative z-10 shrink-0")}>
+                          <Link to={v.href} onClick={() => m.markRead(n)}>{v.action}</Link>
+                        </Button>
+                      )}
+                      {!n.readAt && <span className="relative z-10"><Dot onRead={() => m.markRead(n)} /></span>}
                     </div>
                   );
                 })}

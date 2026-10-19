@@ -12,6 +12,7 @@ import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 import { Link } from "react-router";
 import { PendingRow, PlansDialog, PlansSwitch, TicketRow, viewOf } from "./activity-parts";
 import { type ActivityModel } from "../model/use-activity";
+import { InviteActions, usePendingInvites } from "@/features/organizer-invite/ui/invite-actions";
 
 const dir = "m-activity";
 
@@ -31,21 +32,27 @@ function Row({
   lead,
   action,
   onRead,
+  href,
+  onOpen,
   children,
 }: {
   lead: React.ReactNode;
   action?: React.ReactNode;
   /** Есть — уведомление не прочитано: справа кружок, нажатие помечает прочитанным. */
   onRead?: () => void;
+  /** Куда ведёт вся строка: нажатие в любом месте, а не только по маленькой кнопке. */
+  href?: string;
+  onOpen?: () => void;
   children: React.ReactNode;
 }) {
   return (
     <div className="px-4">
-      <div className="box-border flex w-full items-center gap-3 rounded-[20px] border-2 border-ink bg-card p-[14px]">
+      <div className="relative box-border flex w-full items-center gap-3 rounded-[20px] border-2 border-ink bg-card p-[14px]">
+        {href && <Link to={href} onClick={onOpen} aria-label="Открыть уведомление" className="absolute inset-0 rounded-[18px]" />}
         {lead}
         <div className="min-w-0 flex-1 text-sm leading-5 font-medium text-foreground">{children}</div>
-        {action}
-        {onRead ? <Unread onRead={onRead} /> : null}
+        {action && <div className="relative z-10 shrink-0">{action}</div>}
+        {onRead ? <span className="relative z-10"><Unread onRead={onRead} /></span> : null}
       </div>
     </div>
   );
@@ -73,6 +80,7 @@ function Label({ children }: { children: string }) {
 }
 
 export function ActivityMobile({ m }: { m: ActivityModel }) {
+  const invites = usePendingInvites();
   const totals = { going: m.goingTotal, requests: m.pendingTotal };
   return (
     <div className="relative isolate flex min-h-dvh overflow-clip flex-col gap-4 bg-background pb-[110px] lg:hidden">
@@ -135,17 +143,18 @@ export function ActivityMobile({ m }: { m: ActivityModel }) {
               <Label>{group.label}</Label>
               {group.items.map((n) => {
                 const v = viewOf(n);
+                const invite = n.type === "ORGANIZER_INVITED" && n.eventId && invites.has(n.eventId) ? n.eventId : null;
                 return (
-                  <Row key={n.id} onRead={n.readAt ? undefined : () => m.markRead(n)}
+                  <Row key={n.id} onRead={n.readAt ? undefined : () => m.markRead(n)} href={v.href} onOpen={() => m.markRead(n)}
                     lead={v.actor
                       ? <Disc initials={(v.actor.firstName?.[0] ?? "") + (v.actor.lastName?.[0] ?? "")} user={v.actor} tone="bg-sky"
                           className="size-11 shrink-0" textClassName="text-[13px] leading-[normal]" />
                       : <IconBox tone={v.tone} icon={v.icon} />}
-                    action={
+                    action={invite ? <InviteActions eventId={invite} compact /> : (
                       <Button asChild variant="soft" className="h-10 shrink-0 px-4 text-xs">
                         <Link to={v.href} onClick={() => m.markRead(n)}>{v.action}</Link>
                       </Button>
-                    }>
+                    )}>
                     {v.text}
                   </Row>
                 );

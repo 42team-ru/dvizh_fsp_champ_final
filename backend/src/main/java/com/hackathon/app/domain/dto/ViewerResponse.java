@@ -37,5 +37,7 @@ public record ViewerResponse(
 		@Schema(description = "Моё место в листе ожидания (1 — следующий); null — я не в листе ожидания", example = "1")
 		Integer waitlistPosition,
 		@Schema(description = "Причина отказа организатора, если моя заявка отклонена; иначе null", example = "Группа укомплектована")
-		String decisionReason) {
+		String decisionReason,
+		@Schema(description = "Меня пригласили в соорганизаторы и ждут ответа: показать «Принять» и «Отказаться»", requiredMode = REQUIRED)
+		boolean organizerInvite) {
 }

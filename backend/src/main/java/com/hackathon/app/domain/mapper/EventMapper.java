@@ -162,5 +162,5 @@ public interface EventMapper {
 	@Mapping(target = "canRegister", expression = "java(registerBlockedReason == null)")
 	ViewerResponse toViewer(RegistrationStatus registrationStatus, String registerBlockedReason, boolean isOrganizer,
 			boolean canManage, boolean canManageOrganizers, boolean canCancel, boolean canSeePrivateDetails,
-			boolean canComment, RegistrationStatus joinAs, Integer waitlistPosition, String decisionReason);
+			boolean canComment, RegistrationStatus joinAs, Integer waitlistPosition, String decisionReason, boolean organizerInvite);
 }

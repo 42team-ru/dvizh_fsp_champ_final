@@ -329,6 +329,7 @@ class DemoBulkSeeder {
             var candidate = run.pick(locals);
             if (!candidate.id().equals(author.id()) && candidate.signedUpAt().isBefore(createdAt)) {
                 organizerService.add(eventId, author.id(), candidate.username());
+                organizerService.accept(eventId, candidate.id());
                 coOrganizerId = candidate.id();
                 coOrganizerAt = createdAt.plus(Duration.ofHours(1));
             }
