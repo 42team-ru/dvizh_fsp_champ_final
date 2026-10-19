@@ -4,8 +4,8 @@ import java.util.EnumMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import com.hackathon.app.entity.Organization.ContactType;
-import com.hackathon.app.exception.BadRequestException;
+import com.hackathon.app.domain.enums.ContactType;
+import com.hackathon.app.domain.exception.BadRequestException;
 
 /** Проверка и нормализация контактов анкеты: пробелы обрезаются, пустые значения отбрасываются. */
 final class OrganizationContacts {

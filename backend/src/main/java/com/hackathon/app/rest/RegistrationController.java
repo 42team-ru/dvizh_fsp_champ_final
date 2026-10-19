@@ -3,12 +3,12 @@ package com.hackathon.app.rest;
 import java.util.List;
 import java.util.UUID;
 
-import com.hackathon.app.dto.EventRegistrationResponse;
-import com.hackathon.app.dto.MyRegistrationResponse;
-import com.hackathon.app.dto.RegistrationRequest;
-import com.hackathon.app.dto.RegistrationResponse;
-import com.hackathon.app.dto.RejectRegistrationRequest;
-import com.hackathon.app.entity.Registration;
+import com.hackathon.app.domain.dto.EventRegistrationResponse;
+import com.hackathon.app.domain.dto.MyRegistrationResponse;
+import com.hackathon.app.domain.dto.RegistrationRequest;
+import com.hackathon.app.domain.dto.RegistrationResponse;
+import com.hackathon.app.domain.dto.RejectRegistrationRequest;
+import com.hackathon.app.domain.enums.RegistrationStatus;
 import com.hackathon.app.service.RegistrationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -75,7 +75,7 @@ class RegistrationController {
     @ApiResponse(responseCode = "403", description = "Не организатор", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(responseCode = "404", description = "Мероприятия нет", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     List<EventRegistrationResponse> listForEvent(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,
-                                                 @RequestParam(required = false) Registration.Status status) {
+                                                 @RequestParam(required = false) RegistrationStatus status) {
         log.info("Endpoint called: GET /api/events/{}/registrations, userId={}, status={}", id, jwt.getSubject(), status);
         var response = registrations.listForEvent(id, userId(jwt), status);
         log.info("Endpoint response: GET /api/events/{}/registrations, count={}, response={}", id, response.size(), response);

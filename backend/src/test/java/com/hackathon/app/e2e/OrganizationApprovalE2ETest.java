@@ -11,7 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.Map;
 
-import com.hackathon.app.dto.RegisterRequest.AccountType;
+import com.hackathon.app.domain.enums.AccountType;
 import com.hackathon.app.e2e.support.E2eSupport;
 import com.hackathon.app.repository.AppUserRepository;
 import jakarta.servlet.http.Cookie;

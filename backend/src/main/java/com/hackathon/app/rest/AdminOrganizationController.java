@@ -2,10 +2,10 @@ package com.hackathon.app.rest;
 
 import java.util.UUID;
 
-import com.hackathon.app.dto.AdminOrganizationResponse;
-import com.hackathon.app.dto.PageResponse;
-import com.hackathon.app.dto.RejectOrganizationRequest;
-import com.hackathon.app.entity.Organization;
+import com.hackathon.app.domain.dto.AdminOrganizationResponse;
+import com.hackathon.app.domain.dto.PageResponse;
+import com.hackathon.app.domain.dto.RejectOrganizationRequest;
+import com.hackathon.app.domain.enums.OrganizationStatus;
 import com.hackathon.app.service.AdminOrganizationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,7 +33,7 @@ class AdminOrganizationController {
 
 	@GetMapping
 	@Operation(operationId = "admin_listOrganizations", summary = "Заявки и организации: фильтр по статусу и поиск по названию")
-	PageResponse<AdminOrganizationResponse> list(@RequestParam(required = false) Organization.Status status,
+	PageResponse<AdminOrganizationResponse> list(@RequestParam(required = false) OrganizationStatus status,
 			@RequestParam(required = false) String searchText, @RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "20") int size) {
 		return admin.list(status, searchText, page, size);

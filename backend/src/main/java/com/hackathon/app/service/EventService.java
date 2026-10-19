@@ -7,19 +7,22 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.hackathon.app.dto.EventFilter;
-import com.hackathon.app.dto.EventRequest;
-import com.hackathon.app.dto.EventResponse;
-import com.hackathon.app.dto.EventSummaryResponse;
-import com.hackathon.app.entity.AppUser;
-import com.hackathon.app.entity.Event;
-import com.hackathon.app.entity.Registration;
-import com.hackathon.app.entity.Sport;
-import com.hackathon.app.exception.BadRequestException;
-import com.hackathon.app.exception.ConflictException;
-import com.hackathon.app.exception.ForbiddenException;
-import com.hackathon.app.exception.UnauthorizedException;
-import com.hackathon.app.mapper.EventMapper;
+import com.hackathon.app.domain.dto.EventFilter;
+import com.hackathon.app.domain.dto.EventRequest;
+import com.hackathon.app.domain.dto.EventResponse;
+import com.hackathon.app.domain.dto.EventSummaryResponse;
+import com.hackathon.app.domain.entity.AppUser;
+import com.hackathon.app.domain.entity.Event;
+import com.hackathon.app.domain.entity.Registration;
+import com.hackathon.app.domain.entity.Sport;
+import com.hackathon.app.domain.enums.EventFormat;
+import com.hackathon.app.domain.enums.RegistrationStatus;
+import com.hackathon.app.domain.enums.SystemRole;
+import com.hackathon.app.domain.exception.BadRequestException;
+import com.hackathon.app.domain.exception.ConflictException;
+import com.hackathon.app.domain.exception.ForbiddenException;
+import com.hackathon.app.domain.exception.UnauthorizedException;
+import com.hackathon.app.domain.mapper.EventMapper;
 import com.hackathon.app.repository.AppUserRepository;
 import com.hackathon.app.repository.DbTimeRepository;
 import com.hackathon.app.repository.EventRepository;
@@ -79,7 +82,7 @@ public class EventService {
         var event = events.findById(eventId).orElseThrow(() -> new NoSuchElementException(NOT_FOUND));
         var sport = sportService.get(event.getSportId());
         var author = users.findById(event.getAuthorId()).orElseThrow();
-        var participants = registrations.findUsers(eventId, Registration.Status.CONFIRMED);
+        var participants = registrations.findUsers(eventId, RegistrationStatus.CONFIRMED);
         var myRegistration = registrations.findByEventIdAndUserId(eventId, userId).orElse(null);
         var now = dbTime.now();
         boolean canSeePrivateDetails = policy.canSeePrivateDetails(event, userId, myRegistration);
@@ -105,7 +108,7 @@ public class EventService {
     public EventResponse create(UUID userId, EventRequest request) {
         var user = users.findById(userId).filter(AppUser::isActive)
                 .orElseThrow(() -> new UnauthorizedException("Сессия недействительна, войдите заново"));
-        var organization = user.getSystemRole() == AppUser.SystemRole.ORG ? organizations.forAccount(userId) : null;
+        var organization = user.getSystemRole() == SystemRole.ORG ? organizations.forAccount(userId) : null;
         var blocked = policy.createBlockedReason(user, organization);
         if (blocked != null) {
             throw new ForbiddenException(blocked);
@@ -131,7 +134,7 @@ public class EventService {
             throw new ConflictException("Мероприятие удалено, редактировать нельзя");
         }
         validate(request);
-        var confirmedCount = registrations.countByEventIdAndStatus(eventId, Registration.Status.CONFIRMED);
+        var confirmedCount = registrations.countByEventIdAndStatus(eventId, RegistrationStatus.CONFIRMED);
         if (request.capacity() != null && request.capacity() < confirmedCount) {
             throw new ConflictException("Уже записано " + confirmedCount + ", лимит мест не может быть меньше");
         }
@@ -152,7 +155,7 @@ public class EventService {
         var eventIds = eventList.stream().map(Event::getId).toList();
         Map<UUID, Sport> sportsById = sports.findAllById(eventList.stream().map(Event::getSportId).distinct().toList())
                 .stream().collect(Collectors.toMap(Sport::getId, Function.identity()));
-        var confirmedByEventId = registrations.countByEventIds(eventIds, Registration.Status.CONFIRMED).stream()
+        var confirmedByEventId = registrations.countByEventIds(eventIds, RegistrationStatus.CONFIRMED).stream()
                 .collect(Collectors.toMap(RegistrationRepository.EventCount::getEventId,
                         RegistrationRepository.EventCount::getCount));
         var myStatusByEventId = registrations.findByUserIdAndEventIdIn(userId, eventIds).stream()
@@ -169,7 +172,7 @@ public class EventService {
         if (request.endAt() != null && !request.endAt().isAfter(request.startAt())) {
             throw new BadRequestException("Окончание должно быть позже начала");
         }
-        if (request.format() == Event.Format.OFFLINE && Strings.blankToNull(request.address()) == null) {
+        if (request.format() == EventFormat.OFFLINE && Strings.blankToNull(request.address()) == null) {
             throw new BadRequestException("Для очного мероприятия нужен адрес");
         }
     }

@@ -7,12 +7,12 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.hackathon.app.dto.OrganizerResponse;
-import com.hackathon.app.entity.AppUser;
-import com.hackathon.app.entity.Event;
-import com.hackathon.app.exception.ConflictException;
-import com.hackathon.app.exception.ForbiddenException;
-import com.hackathon.app.mapper.OrganizerMapper;
+import com.hackathon.app.domain.dto.OrganizerResponse;
+import com.hackathon.app.domain.entity.AppUser;
+import com.hackathon.app.domain.entity.Event;
+import com.hackathon.app.domain.exception.ConflictException;
+import com.hackathon.app.domain.exception.ForbiddenException;
+import com.hackathon.app.domain.mapper.OrganizerMapper;
 import com.hackathon.app.repository.AppUserRepository;
 import com.hackathon.app.repository.EventOrganizerRepository;
 import com.hackathon.app.repository.EventRepository;

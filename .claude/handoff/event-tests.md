@@ -25,11 +25,11 @@
 - `rest/EventController.java`, `rest/RegistrationController.java`, `rest/SportController.java` — пути и коды ответов;
 - `service/EventAccessPolicy.java` — все правила «можно ли» и точные тексты отказов (`detail` в ProblemDetail);
 - `service/EventService.java`, `service/RegistrationService.java`, `service/SportService.java`;
-- `dto/EventRequest.java` (форма), `dto/EventResponse.java` + `dto/ViewerResponse.java` (карточка и блок `viewer`), `dto/EventSummaryResponse.java`, `dto/MyRegistrationResponse.java`;
+- `domain/dto/EventRequest.java` (форма), `domain/dto/EventResponse.java` + `domain/dto/ViewerResponse.java` (карточка и блок `viewer`), `domain/dto/EventSummaryResponse.java`, `domain/dto/MyRegistrationResponse.java`;
 - `resources/db/migration/V3__events.sql`; образец стиля тестов — `backend/src/test/java/com/hackathon/app/e2e/AuthFlowE2ETest.java`.
 
 **Ручки:**
-`GET /api/sports?query=` · `GET /api/events?q&sportId&from&to&level&joinMode&format` · `GET /api/events/mine` · `GET /api/events/{id}` · `POST /api/events` · `PUT /api/events/{id}` · `POST /api/events/{id}/registrations` (тело `{"message"?}` необязательно) · `DELETE /api/events/{id}/registrations/me` · `GET /api/events/{id}/registrations?status=` · `POST /api/registrations/{id}/approve` · `POST /api/registrations/{id}/reject` (тело `{"reason"?}`) · `GET /api/registrations/mine`. Всё требует входа (без cookie — 401).
+`GET /api/sports?query=` · `GET /api/events?searchText&sportId&from&to&level&joinMode&format` · `GET /api/events/mine` · `GET /api/events/{id}` · `POST /api/events` · `PUT /api/events/{id}` · `POST /api/events/{id}/registrations` (тело `{"message"?}` необязательно) · `DELETE /api/events/{id}/registrations/me` · `GET /api/events/{id}/registrations?status=` · `POST /api/registrations/{id}/approve` · `POST /api/registrations/{id}/reject` (тело `{"reason"?}`) · `GET /api/registrations/mine`. Всё требует входа (без cookie — 401).
 
 **Важно про H2 и данные:**
 - В H2 схема строится из сущностей, Flyway выключен, поэтому справочник `sports` пуст. Вид спорта в тестах создавай через API: `"sportName": "Футбол-<суффикс>"` в форме мероприятия (сервер создаст custom-вид). `sportId` бери из ответа (`sport.id`).

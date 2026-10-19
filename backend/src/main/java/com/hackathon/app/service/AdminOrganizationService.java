@@ -5,11 +5,12 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.hackathon.app.dto.AdminOrganizationResponse;
-import com.hackathon.app.dto.PageResponse;
-import com.hackathon.app.entity.AppUser;
-import com.hackathon.app.entity.Organization;
-import com.hackathon.app.mapper.OrganizationMapper;
+import com.hackathon.app.domain.dto.AdminOrganizationResponse;
+import com.hackathon.app.domain.dto.PageResponse;
+import com.hackathon.app.domain.entity.AppUser;
+import com.hackathon.app.domain.entity.Organization;
+import com.hackathon.app.domain.enums.OrganizationStatus;
+import com.hackathon.app.domain.mapper.OrganizationMapper;
 import com.hackathon.app.repository.AppUserRepository;
 import com.hackathon.app.repository.DbTimeRepository;
 import com.hackathon.app.repository.OrganizationRepository;
@@ -39,7 +40,7 @@ public class AdminOrganizationService {
 
 	/** Новые заявки сверху. q ищет по названию без учёта регистра. */
 	@Transactional(readOnly = true)
-	public PageResponse<AdminOrganizationResponse> list(Organization.Status status, String q, int page, int size) {
+	public PageResponse<AdminOrganizationResponse> list(OrganizationStatus status, String q, int page, int size) {
 		var query = Strings.blankToNull(q);
 		var pattern = query == null ? "%" : "%" + query.toLowerCase() + "%";
 		var pageable = PageRequest.of(Math.max(page, 0), Math.clamp(size, 1, MAX_PAGE_SIZE),
@@ -59,10 +60,10 @@ public class AdminOrganizationService {
 	@Transactional
 	public AdminOrganizationResponse approve(UUID id, UUID adminId) {
 		var org = find(id);
-		if (org.getStatus() == Organization.Status.APPROVED) {
+		if (org.getStatus() == OrganizationStatus.APPROVED) {
 			return toAdmin(org); // повторное нажатие
 		}
-		org.setStatus(Organization.Status.APPROVED);
+		org.setStatus(OrganizationStatus.APPROVED);
 		org.setRejectReason(null);
 		return decide(org, adminId);
 	}
@@ -71,7 +72,7 @@ public class AdminOrganizationService {
 	@Transactional
 	public AdminOrganizationResponse reject(UUID id, UUID adminId, String reason) {
 		var org = find(id);
-		org.setStatus(Organization.Status.REJECTED);
+		org.setStatus(OrganizationStatus.REJECTED);
 		org.setRejectReason(reason.trim());
 		return decide(org, adminId);
 	}

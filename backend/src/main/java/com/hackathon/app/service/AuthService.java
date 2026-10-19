@@ -1,12 +1,15 @@
 package com.hackathon.app.service;
 
 import com.hackathon.app.config.AuthProperties;
-import com.hackathon.app.dto.LoginRequest;
-import com.hackathon.app.dto.RegisterRequest;
-import com.hackathon.app.entity.AppUser;
-import com.hackathon.app.entity.RefreshToken;
-import com.hackathon.app.exception.ConflictException;
-import com.hackathon.app.exception.UnauthorizedException;
+import com.hackathon.app.domain.dto.LoginRequest;
+import com.hackathon.app.domain.dto.RegisterRequest;
+import com.hackathon.app.domain.entity.AppUser;
+import com.hackathon.app.domain.entity.RefreshToken;
+import com.hackathon.app.domain.enums.AccountType;
+import com.hackathon.app.domain.enums.AuthProvider;
+import com.hackathon.app.domain.enums.SystemRole;
+import com.hackathon.app.domain.exception.ConflictException;
+import com.hackathon.app.domain.exception.UnauthorizedException;
 import com.hackathon.app.repository.AppUserRepository;
 import com.hackathon.app.repository.DbTimeRepository;
 import com.hackathon.app.repository.RefreshTokenRepository;
@@ -63,10 +66,10 @@ public class AuthService {
 		user.setFirstName(r.firstName().trim());
 		user.setLastName(r.lastName().trim());
 		user.setActive(true);
-		user.setSystemRole(r.accountType() == RegisterRequest.AccountType.ORG
-				? AppUser.SystemRole.ORG
-				: AppUser.SystemRole.USER);
-		user.setAuthProvider(AppUser.AuthProvider.LOCAL);
+		user.setSystemRole(r.accountType() == AccountType.ORG
+				? SystemRole.ORG
+				: SystemRole.USER);
+		user.setAuthProvider(AuthProvider.LOCAL);
 		user.setCreatedAt(dbTimeRepository.now());
 		try {
 			return users.saveAndFlush(user);

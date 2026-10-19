@@ -3,12 +3,12 @@ package com.hackathon.app.rest;
 import java.util.List;
 import java.util.UUID;
 
-import com.hackathon.app.dto.AddOrganizerRequest;
-import com.hackathon.app.dto.EventFilter;
-import com.hackathon.app.dto.EventRequest;
-import com.hackathon.app.dto.EventResponse;
-import com.hackathon.app.dto.EventSummaryResponse;
-import com.hackathon.app.dto.OrganizerResponse;
+import com.hackathon.app.domain.dto.AddOrganizerRequest;
+import com.hackathon.app.domain.dto.EventFilter;
+import com.hackathon.app.domain.dto.EventRequest;
+import com.hackathon.app.domain.dto.EventResponse;
+import com.hackathon.app.domain.dto.EventSummaryResponse;
+import com.hackathon.app.domain.dto.OrganizerResponse;
 import com.hackathon.app.service.EventOrganizerService;
 import com.hackathon.app.service.EventService;
 import io.swagger.v3.oas.annotations.Operation;

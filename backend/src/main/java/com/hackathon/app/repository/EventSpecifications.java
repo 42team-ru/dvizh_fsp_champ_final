@@ -5,7 +5,11 @@ import java.util.ArrayList;
 import java.util.Locale;
 import java.util.UUID;
 
-import com.hackathon.app.entity.Event;
+import com.hackathon.app.domain.entity.Event;
+import com.hackathon.app.domain.enums.EventFormat;
+import com.hackathon.app.domain.enums.EventLevel;
+import com.hackathon.app.domain.enums.EventStatus;
+import com.hackathon.app.domain.enums.JoinMode;
 import jakarta.persistence.criteria.Predicate;
 import lombok.experimental.UtilityClass;
 import org.springframework.data.jpa.domain.Specification;
@@ -15,11 +19,11 @@ import org.springframework.data.jpa.domain.Specification;
 public class EventSpecifications {
 
 	/** Только опубликованные; null-фильтры не применяются. Событие уровня ANY подходит под любой level. */
-	public Specification<Event> feed(String searchText, UUID sportId, Instant from, Instant to, Event.Level level,
-			Event.JoinMode joinMode, Event.Format format) {
+	public Specification<Event> feed(String searchText, UUID sportId, Instant from, Instant to, EventLevel level,
+			JoinMode joinMode, EventFormat format) {
 		return (root, query, criteria) -> {
 			var conditions = new ArrayList<Predicate>();
-			conditions.add(criteria.equal(root.get("status"), Event.Status.PUBLISHED));
+			conditions.add(criteria.equal(root.get("status"), EventStatus.PUBLISHED));
 			if (searchText != null) {
 				var pattern = "%" + searchText.toLowerCase(Locale.ROOT) + "%";
 				conditions.add(criteria.or(criteria.like(criteria.lower(root.get("title")), pattern),
@@ -35,7 +39,7 @@ public class EventSpecifications {
 				conditions.add(criteria.lessThanOrEqualTo(root.get("startAt"), to));
 			}
 			if (level != null) {
-				conditions.add(root.get("level").in(level, Event.Level.ANY));
+				conditions.add(root.get("level").in(level, EventLevel.ANY));
 			}
 			if (joinMode != null) {
 				conditions.add(criteria.equal(root.get("joinMode"), joinMode));

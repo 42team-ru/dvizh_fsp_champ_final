@@ -2,9 +2,9 @@ package com.hackathon.app.rest;
 
 import java.util.UUID;
 
-import com.hackathon.app.dto.OrganizationResponse;
-import com.hackathon.app.dto.PublicOrganizationResponse;
-import com.hackathon.app.dto.SaveOrganizationRequest;
+import com.hackathon.app.domain.dto.OrganizationResponse;
+import com.hackathon.app.domain.dto.PublicOrganizationResponse;
+import com.hackathon.app.domain.dto.SaveOrganizationRequest;
 import com.hackathon.app.service.OrganizationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

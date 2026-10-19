@@ -3,14 +3,15 @@ package com.hackathon.app.service;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
-import com.hackathon.app.dto.OrganizationResponse;
-import com.hackathon.app.dto.PublicOrganizationResponse;
-import com.hackathon.app.dto.SaveOrganizationRequest;
-import com.hackathon.app.entity.AppUser;
-import com.hackathon.app.entity.Organization;
-import com.hackathon.app.exception.ConflictException;
-import com.hackathon.app.exception.ForbiddenException;
-import com.hackathon.app.mapper.OrganizationMapper;
+import com.hackathon.app.domain.dto.OrganizationResponse;
+import com.hackathon.app.domain.dto.PublicOrganizationResponse;
+import com.hackathon.app.domain.dto.SaveOrganizationRequest;
+import com.hackathon.app.domain.entity.Organization;
+import com.hackathon.app.domain.enums.OrganizationStatus;
+import com.hackathon.app.domain.enums.SystemRole;
+import com.hackathon.app.domain.exception.ConflictException;
+import com.hackathon.app.domain.exception.ForbiddenException;
+import com.hackathon.app.domain.mapper.OrganizationMapper;
 import com.hackathon.app.repository.AppUserRepository;
 import com.hackathon.app.repository.DbTimeRepository;
 import com.hackathon.app.repository.OrganizationRepository;
@@ -56,13 +57,13 @@ public class OrganizationService {
 		var now = dbTime.now();
 		if (org == null) {
 			org = mapper.toEntity(r, userId);
-			org.setStatus(Organization.Status.PENDING);
+			org.setStatus(OrganizationStatus.PENDING);
 			org.setSubmittedAt(now);
 		}
 		else {
 			mapper.update(org, r);
-			if (org.getStatus() == Organization.Status.REJECTED) {
-				org.setStatus(Organization.Status.PENDING);
+			if (org.getStatus() == OrganizationStatus.REJECTED) {
+				org.setStatus(OrganizationStatus.PENDING);
 				org.setSubmittedAt(now);
 			}
 		}
@@ -82,7 +83,7 @@ public class OrganizationService {
 	/** Страница доступна только одобренной организации; остальные для посторонних «не существуют». */
 	@Transactional(readOnly = true)
 	public PublicOrganizationResponse getPublic(UUID id) {
-		return organizations.findByIdAndStatus(id, Organization.Status.APPROVED)
+		return organizations.findByIdAndStatus(id, OrganizationStatus.APPROVED)
 				.map(mapper::toPublic)
 				.orElseThrow(() -> new NoSuchElementException(NOT_FOUND));
 	}
@@ -98,7 +99,7 @@ public class OrganizationService {
 
 	private void requireOrgAccount(UUID userId) {
 		var user = users.findById(userId).orElseThrow(() -> new NoSuchElementException("Пользователь не найден"));
-		if (user.getSystemRole() != AppUser.SystemRole.ORG) {
+		if (user.getSystemRole() != SystemRole.ORG) {
 			throw new ForbiddenException("Раздел доступен только аккаунту организации");
 		}
 	}

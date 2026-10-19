@@ -46,7 +46,7 @@ cd backend && ./gradlew postgresTest  # смоук миграций на нас�
 
 Стиль новых сущностей (образец: `Event`, `Registration`, `Sport`; `AppUser` и `RefreshToken` из шаблона остаются как есть):
 - первичный ключ `UUID`, генерирует Hibernate: `@GeneratedValue(strategy = GenerationType.UUID)`;
-- `createdAt`/`updatedAt` — в базовом `entity.AuditEntity` (`@MappedSuperclass`, `@CreationTimestamp`/`@UpdateTimestamp`), сущность от него наследуется; время — `Instant`;
+- `createdAt`/`updatedAt` — в базовом `domain.entity.AuditEntity` (`@MappedSuperclass`, `@CreationTimestamp`/`@UpdateTimestamp`), сущность от него наследуется; время — `Instant`;
 - текущее время для бизнес-проверок («уже началось», `decidedAt`) — у базы: `DbTimeRepository.now()`, а не `Clock`;
 - `@Table` только с `name`; уникальность и индексы — в миграциях;
 - над каждым полем и значением enum — однострочный Javadoc, что это;
@@ -154,7 +154,7 @@ cd backend && ./gradlew postgresTest  # смоук миграций на нас�
 
 ## Демо-данные
 
-Создаются в `DemoService.seed()` при старте, только при `DEMO_MODE=true`. Сид идемпотентный: существующее не трогаем, недостающее создаём. Аккаунты `admin`, `ivan`, `maria` из шаблона заменяются на проектные. Даты событий задаются от `clock.instant()` («послезавтра в 19:00»), чтобы демо не устаревало. Полный сброс: `docker compose down -v`.
+Создаются в `DemoSeeder.seed()` при старте, только при `DEMO_MODE=true` (кнопки входа отдаёт `DemoService`). Сид идемпотентный: аккаунт ищется по логину, мероприятие — по автору и названию; существующее не трогаем, недостающее создаём. Аккаунты: `admin`, `anna`, `petr`, `olga` (кнопками на входе) и массовка `dmitry`, `elena`, `sergey`, `nikolai`. Даты событий задаются от `clock.instant()` («послезавтра в 19:00»), чтобы демо не устаревало. Полный сброс: `docker compose down -v`.
 
 - Пользователи: Анна (новичок), Пётр (любитель, автор события «по заявке»), Ольга (пенсионерка, любит зарядку), ещё 3–5 человек для заполненных списков участников.
 - Организации: шахматный клуб «Ладья» — APPROVED, с событиями; беговое сообщество «Енисей» — PENDING, для проверки одобрения; «Йога на Татышеве» — REJECTED, с причиной.
@@ -180,7 +180,8 @@ cd backend && ./gradlew postgresTest  # смоук миграций на нас�
 
 ## Структура бэкенда
 
-Пакеты по слоям в `com.hackathon.app`: `rest`, `service`, `repository`, `entity`, `dto`, `mapper`, `util`, `config`, `exception` (подробно в `docs/architecture.md`).
+Пакеты по слоям в `com.hackathon.app`: `rest`, `service`, `repository`, `domain` (внутри `entity`, `enums`, `dto`, `mapper`, `exception`), `util`, `config` (подробно в `docs/architecture.md`).
+- Enum-ы модели — отдельные файлы в `domain.enums`, а не вложенные в сущность или DTO; если имя общее — с префиксом сущности (`EventStatus`, `RegistrationStatus`, `OrganizationStatus`).
 - **Заполнение полей — только в `mapper`** (MapStruct, `@Mapper(config = MappingConfig.class)`): сервис решает (статус, время, права) и передаёт значения в маппер, сеттеров в сервисах нет. Поля без источника пропускаются без `ignore = true`, каждая строка проходит через `util.Strings.blankToNull`.
 - `util` — статические утилиты (`@UtilityClass`, методы помечать `static` явно, иначе MapStruct внедряет класс как бин).
 - Логи в контроллерах на английском: `Endpoint called: <METHOD> <путь>, userId=..., request=...` и `Endpoint response: <METHOD> <путь>, response=...`.
@@ -218,7 +219,7 @@ cd backend && ./gradlew postgresTest  # смоук миграций на нас�
 | Кто | Бэкенд | Фронт |
 |---|---|---|
 | Вася | `Event*`, `Registration*`, `Sport*`, `EventAccessPolicy` | лента, карточка события, создание, мои записи, управление заявками |
-| Максим | `Organization*`, `Admin*`, `Comment*`, `users`/auth, `DemoService` | регистрация с типом аккаунта, кабинет и страница организации, админка, обсуждение, шапка |
+| Максим | `Organization*`, `Admin*`, `Comment*`, `users`/auth, `DemoService`, `DemoSeeder` (организации и комментарии) | регистрация с типом аккаунта, кабинет и страница организации, админка, обсуждение, шапка |
 
 Общие файлы меняем коротким PR или договорившись голосом:
 - `AppUser` и `SystemRole`, `SecurityConfig`, `ApiExceptionHandler`;
@@ -260,7 +261,7 @@ cd backend && ./gradlew postgresTest  # смоук миграций на нас�
 **Баланс: не слишком мало, но и не слишком много.** Каждый тест стоит времени на каждом запуске и в CI.
 - На фичу: один сквозной сценарий «счастливого пути» + один на ошибки и границы + при необходимости 1–2 теста на неочевидные ветки (безопасность, права, гонки). Ориентир 2–4 теста на фичу.
 - Сценарий покрывает флоу целиком (регистрация → вход → me → refresh → logout), а не «по тесту на метод». Если тест можно удалить, и ни один сценарий не потеряет покрытия, — удалить.
-- Не писать тесты на геттеры, простые маппинги, конфиги и «contextLoads». **Демо-режим (`DemoService`, `DemoController`, кнопки быстрого входа) тестами не покрываем.**
+- Не писать тесты на геттеры, простые маппинги, конфиги и «contextLoads». **Демо-режим (`DemoService`, `DemoSeeder`, `DemoController`, кнопки быстрого входа) тестами не покрываем.**
 - Если фича вообще не имеет ветвлений и риска (прокидывание данных), теста может не быть.
 
 **Комментарий перед каждым тестом обязателен, подробный.** Javadoc-блок на русском с четырьмя частями:

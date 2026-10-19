@@ -18,12 +18,13 @@ docker-compose.dev.yml  только БД для разработки
 | `rest` | Контроллеры: только HTTP (разобрать запрос, вызвать сервис, вернуть DTO), cookie |
 | `service` | Бизнес-логика и транзакции, не знает про HTTP |
 | `repository` | Spring Data интерфейсы доступа к БД |
-| `entity` | JPA-сущности (наружу не отдаём, только через `dto`) |
-| `dto` | Запросы и ответы API (records, валидация) |
-| `mapper` | MapStruct: entity ↔ dto, **всё заполнение полей сущностей только здесь** (сервис — чистая бизнес-логика). Общий `@Mapper(config = MappingConfig.class)`: поля без источника пропускаются без `ignore = true`, строки идут через `util.Strings.blankToNull` (обрезка, пустые → `null`) |
+| `domain.entity` | JPA-сущности (наружу не отдаём, только через `dto`) |
+| `domain.enums` | Enum-ы модели (`EventStatus`, `RegistrationStatus`, `OrganizationStatus`, `SystemRole`…): общие для сущностей, DTO и запросов |
+| `domain.dto` | Запросы и ответы API (records, валидация) |
+| `domain.mapper` | MapStruct: entity ↔ dto, **всё заполнение полей сущностей только здесь** (сервис — чистая бизнес-логика). Общий `@Mapper(config = MappingConfig.class)`: поля без источника пропускаются без `ignore = true`, строки идут через `util.Strings.blankToNull` (обрезка, пустые → `null`) |
 | `util` | Статические утилиты без состояния (`Strings`) |
 | `config` | Security, OpenAPI, `@ConfigurationProperties` |
-| `exception` | Свои исключения и единый `ApiExceptionHandler` (RFC 9457) |
+| `domain.exception` | Свои исключения и единый `ApiExceptionHandler` (RFC 9457) |
 
 Зависимости идут только вниз: `rest → service → repository → entity`. Миграции БД: `backend/src/main/resources/db/migration` (Flyway, только вперёд; применённые миграции не править, добавлять новые `V5__...`).
 Пример готового флоу: регистрация и вход (`AuthController`, `AuthService`).
@@ -37,7 +38,7 @@ docker-compose.dev.yml  только БД для разработки
 | Ручка | operationId | Кто / что |
 |---|---|---|
 | `GET /api/sports?query=` | `sports_search` | справочник, поиск без учёта регистра и ё/е |
-| `GET /api/events?q&sportId&from&to&level&joinMode&format` | `events_list` | лента: только PUBLISHED, по умолчанию с текущего момента; уровень ANY подходит под любой фильтр |
+| `GET /api/events?searchText&sportId&from&to&level&joinMode&format` | `events_list` | лента: только PUBLISHED, по умолчанию с текущего момента; уровень ANY подходит под любой фильтр |
 | `GET /api/events/mine` | `events_mine` | где я автор или соорганизатор, все статусы |
 | `POST /api/events/{id}/organizers` `{"login"}` | `events_addOrganizer` | только автор; по логину или email; нельзя админа, уже организатора, записанного участника |
 | `DELETE /api/events/{id}/organizers/{userId}` | `events_removeOrganizer` | автор убирает любого, соорганизатор может выйти сам; автора убрать нельзя |
@@ -57,7 +58,7 @@ docker-compose.dev.yml  только БД для разработки
   Админ заявки не решает и события не создаёт (403). Сам отклонённый повторно подать не может — исправляет организатор через approve.
 - Запись и одобрение — под блокировкой строки мероприятия (`EventRepository.findByIdForUpdate`), лимит мест не превысить параллельно.
   Счётчики участников для списков — одним запросом (`RegistrationRepository.countByEventIds`).
-- id генерирует Hibernate (UUID). `createdAt`/`updatedAt` — в базовом `entity.AuditEntity`. Время для проверок («уже началось», `decidedAt`) — у базы: `DbTimeRepository.now()`.
+- id генерирует Hibernate (UUID). `createdAt`/`updatedAt` — в базовом `domain.entity.AuditEntity`. Время для проверок («уже началось», `decidedAt`) — у базы: `DbTimeRepository.now()`.
 - Фильтры ленты — Criteria API (`EventSpecifications`), переносимо на H2.
 - Контроллеры логируют на английском `Endpoint called: <METHOD> <путь>, userId=..., request=...` и `Endpoint response: ...`. Если сервис бросил исключение (4xx), строки `Endpoint response` не будет.
 - Ещё не сделано: события от организации (`organization_id` есть в схеме; ждёт `Organization`), модерация админом (поля есть), комментарии.

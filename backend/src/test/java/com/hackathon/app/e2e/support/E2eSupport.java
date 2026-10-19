@@ -11,8 +11,10 @@ import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.UUID;
 
-import com.hackathon.app.dto.RegisterRequest.AccountType;
-import com.hackathon.app.entity.AppUser;
+import com.hackathon.app.domain.entity.AppUser;
+import com.hackathon.app.domain.enums.AccountType;
+import com.hackathon.app.domain.enums.AuthProvider;
+import com.hackathon.app.domain.enums.SystemRole;
 import com.hackathon.app.repository.AppUserRepository;
 import jakarta.servlet.http.Cookie;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -62,8 +64,8 @@ public class E2eSupport {
 		admin.setFirstName("Анна");
 		admin.setLastName("Администратор");
 		admin.setActive(true);
-		admin.setSystemRole(AppUser.SystemRole.ADMIN);
-		admin.setAuthProvider(AppUser.AuthProvider.LOCAL);
+		admin.setSystemRole(SystemRole.ADMIN);
+		admin.setAuthProvider(AuthProvider.LOCAL);
 		admin.setCreatedAt(Instant.now());
 		users.saveAndFlush(admin);
 		return login(admin.getUsername());
