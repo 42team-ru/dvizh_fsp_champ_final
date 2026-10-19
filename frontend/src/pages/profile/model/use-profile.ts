@@ -2,6 +2,7 @@ import { useUser } from "@/entity/user/model/use-user";
 import { useEventsMine } from "@/shared/api/generated/core/events/events";
 import { useUsersHistory, useUsersHistorySummary, useUsersMySports } from "@/shared/api/generated/core/users/users";
 import type { UserSportResponse } from "@/shared/api/generated/core/appAPI.schemas";
+import { usePublicProfile } from "./public-profile";
 
 const MONTHS = ["ЯНВАРЬ", "ФЕВРАЛЬ", "МАРТ", "АПРЕЛЬ", "МАЙ", "ИЮНЬ", "ИЮЛЬ", "АВГУСТ", "СЕНТЯБРЬ", "ОКТЯБРЬ", "НОЯБРЬ", "ДЕКАБРЬ"];
 
@@ -25,22 +26,31 @@ const latin = (text: string) =>
 
 /**
  * Всё для экрана профиля из API: кто я, мои виды спорта, посещения (всего и по дням текущего месяца),
- * сколько мероприятий я организую.
+ * сколько мероприятий я организую. В чужом профиле (`PublicProfileProvider`) — то же из публичного
+ * профиля: «мои» запросы выключены, `readOnly` прячет правку.
  */
 export function useProfile() {
-  const { user } = useUser();
-  const sportsQuery = useUsersMySports();
-  const summaryQuery = useUsersHistorySummary({});
+  const owner = usePublicProfile();
+  const mine = { query: { enabled: !owner } };
+  const { user: me } = useUser();
+  const sportsQuery = useUsersMySports(mine);
+  const summaryQuery = useUsersHistorySummary({}, mine);
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const historyQuery = useUsersHistory({ from: monthStart.toISOString(), size: 100 });
-  const organizedQuery = useEventsMine({ size: 1 });
+  const historyQuery = useUsersHistory({ from: monthStart.toISOString(), size: 100 }, mine);
+  const organizedQuery = useEventsMine({ size: 1 }, mine);
 
-  const sports: UserSportResponse[] = sportsQuery.data?.status === 200 ? sportsQuery.data.data : [];
+  const user = owner ? owner.user : me;
+  const sports: UserSportResponse[] = owner
+    ? owner.user.sports
+    : sportsQuery.data?.status === 200 ? sportsQuery.data.data : [];
   const summary = summaryQuery.data?.status === 200 ? summaryQuery.data.data : undefined;
-  const history = historyQuery.data?.status === 200 ? historyQuery.data.data.items ?? [] : [];
-  const organized = organizedQuery.data?.status === 200 ? organizedQuery.data.data.totalElements ?? 0 : 0;
-  const attended = summary?.total ?? 0;
+  const history = !owner && historyQuery.data?.status === 200 ? historyQuery.data.data.items ?? [] : [];
+  // у чужого профиля известны только ближайшие события, которые он ведёт
+  const organized = owner
+    ? owner.user.events.length
+    : organizedQuery.data?.status === 200 ? organizedQuery.data.data.totalElements ?? 0 : 0;
+  const attended = owner ? owner.user.attendedCount : summary?.total ?? 0;
 
   // Посещения по дням текущего месяца, до сегодняшнего дня включительно.
   const days = Array.from({ length: now.getDate() }, () => 0);
@@ -55,6 +65,7 @@ export function useProfile() {
 
   return {
     user,
+    readOnly: Boolean(owner),
     isLoading: !user,
     firstName,
     lastName,
@@ -67,7 +78,12 @@ export function useProfile() {
     stats: [
       { value: String(attended), label: plural(attended, ["посещение", "посещения", "посещений"]) },
       { value: String(sports.length), label: plural(sports.length, ["вид спорта", "вида спорта", "видов спорта"]) },
-      { value: String(organized), label: plural(organized, ["событие веду", "события веду", "событий веду"]) },
+      {
+        value: String(organized),
+        label: owner
+          ? plural(organized, ["событие ведёт", "события ведёт", "событий ведёт"])
+          : plural(organized, ["событие веду", "события веду", "событий веду"]),
+      },
     ],
     month: MONTHS[now.getMonth()],
     days,

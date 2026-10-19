@@ -4,7 +4,8 @@ import { useUsersHistorySummary } from "@/shared/api/generated/core/users/users"
 import { Card } from "@/shared/components/ui/card";
 import { cn } from "cn";
 import { visitsWord } from "./use-attendance";
-import { whenLabel } from "./passport-utils";
+import { SPORT_LEVEL_LABEL, whenLabel } from "./passport-utils";
+import { usePublicProfile, type PublicProfile } from "../model/public-profile";
 
 /** Цвета полос по видам спорта: чаще всего — синий, дальше по кругу. */
 const BARS = ["bg-primary", "bg-green", "bg-accent", "bg-ink"];
@@ -14,8 +15,88 @@ const REG_TONES = {
   CONFIRMED: { box: "bg-sky-soft", badge: "border-primary text-primary", text: "ПОДТВЕРЖДЕНО" },
 } as const;
 
-/** История посещений: всего, по видам спорта и ближайшие записи. */
+const CARD = "absolute top-[573px] left-0 h-[626px] w-[495px] gap-[18px] overflow-hidden rounded-[24px] p-[26px]";
+
+/** История посещений: всего, по видам спорта и ближайшие записи. В чужом профиле — его данные без записей. */
 export function HistoryCard() {
+  const owner = usePublicProfile();
+  return owner ? <PublicHistory owner={owner} /> : <MyHistory />;
+}
+
+function Head({ total }: { total: number }) {
+  return (
+    <>
+      <div className="flex items-center justify-between font-bold whitespace-nowrap">
+        <h2 className="font-display text-[22px] text-foreground">История</h2>
+        <span className="text-[13px] text-muted-foreground">за всё время</span>
+      </div>
+
+      <div className="flex items-end gap-[10px] whitespace-nowrap">
+        <span className="font-display text-[56px] leading-[normal] font-extrabold text-foreground">{total}</span>
+        <span className="pb-2 text-base font-bold text-muted-foreground">{visitsWord(total)}</span>
+      </div>
+    </>
+  );
+}
+
+/** Чужая история: число посещений, виды спорта с уровнем и события, которые человек ведёт. */
+function PublicHistory({ owner }: { owner: PublicProfile }) {
+  const { user } = owner;
+  const events = user.events.slice(0, 3);
+  return (
+    <Card className={CARD}>
+      <Head total={user.attendedCount} />
+
+      <ul className="flex flex-col gap-3" aria-label="Виды спорта">
+        {user.sports.length === 0 ? (
+          <li className="text-sm font-semibold text-muted-foreground">Виды спорта пока не выбраны.</li>
+        ) : (
+          user.sports.slice(0, 4).map((s, i) => (
+            <li key={s.sport.id} className="flex items-center gap-3">
+              <span className={cn("size-[14px] shrink-0 rounded-full border-[1.5px] border-ink", BARS[i % BARS.length])} />
+              <span className="min-w-0 truncate text-sm font-extrabold text-foreground">{s.sport.name}</span>
+              {s.level && (
+                <span className="ml-auto text-sm font-bold whitespace-nowrap text-muted-foreground">
+                  {SPORT_LEVEL_LABEL[s.level]}
+                </span>
+              )}
+            </li>
+          ))
+        )}
+      </ul>
+
+      <div className="h-[2px] w-full shrink-0 bg-track" />
+
+      <p className="text-[10px] font-extrabold tracking-[1.2px] whitespace-nowrap text-muted-foreground">
+        СКОРО · ВЕДЁТ СОБЫТИЯ
+      </p>
+
+      {events.length === 0 ? (
+        <p className="text-sm font-semibold text-muted-foreground">Ближайших событий нет.</p>
+      ) : (
+        events.map((e) => (
+          <Link
+            key={e.id}
+            to={`/events/${e.id}`}
+            className="flex flex-col gap-[6px] rounded-2xl border-[1.5px] border-ink bg-sky-soft px-[14px] py-3"
+          >
+            <span className="flex items-center justify-between gap-2">
+              <span className="truncate text-sm font-extrabold text-foreground">{e.title}</span>
+              <span className="shrink-0 rounded-pill border-[1.5px] border-primary bg-card px-2 py-[3px] text-[9px] font-extrabold tracking-[1px] whitespace-nowrap text-primary">
+                {e.sport.name.toUpperCase()}
+              </span>
+            </span>
+            <span className="truncate text-xs font-medium text-muted-foreground">
+              {[whenLabel(e.startAt), e.address ?? e.locationNote].filter(Boolean).join(" · ")}
+            </span>
+          </Link>
+        ))
+      )}
+    </Card>
+  );
+}
+
+function MyHistory() {
   const summary = useUsersHistorySummary({});
   const mine = useRegistrationsMine();
 
@@ -36,16 +117,8 @@ export function HistoryCard() {
     .slice(0, 2);
 
   return (
-    <Card className="absolute top-[573px] left-0 h-[626px] w-[495px] gap-[18px] overflow-hidden rounded-[24px] p-[26px]">
-      <div className="flex items-center justify-between font-bold whitespace-nowrap">
-        <h2 className="font-display text-[22px] text-foreground">История</h2>
-        <span className="text-[13px] text-muted-foreground">за всё время</span>
-      </div>
-
-      <div className="flex items-end gap-[10px] whitespace-nowrap">
-        <span className="font-display text-[56px] leading-[normal] font-extrabold text-foreground">{total}</span>
-        <span className="pb-2 text-base font-bold text-muted-foreground">{visitsWord(total)}</span>
-      </div>
+    <Card className={CARD}>
+      <Head total={total} />
 
       <ul className="flex flex-col gap-3" aria-label="Посещения по видам спорта">
         {sports.length === 0 ? (

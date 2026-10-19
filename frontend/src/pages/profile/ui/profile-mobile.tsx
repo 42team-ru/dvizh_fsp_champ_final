@@ -1,17 +1,17 @@
 import { WardrobeDialog } from "@/features/pet-wardrobe/ui/wardrobe-dialog";
-import { PetNameEditor } from "@/features/rename-pet/ui/pet-name-editor";
 import { BrandPlate } from "@/shared/components/ui/brand-plate";
 import { UserAvatar } from "@/shared/components/ui/user-avatar";
 import { useState } from "react";
 import { useAttendance } from "./use-attendance";
 import { useProfile } from "../model/use-profile";
 import { useWardrobe } from "../model/use-wardrobe";
+import { usePublicProfile } from "../model/public-profile";
+import { ProfileBeaverPet, ProfilePetName } from "./profile-pet";
 import { EditProfileDialog } from "@/features/edit-profile/ui/edit-profile-dialog";
 import { Link, useNavigate } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuthLogout } from "@/shared/api/generated/core/auth/auth";
 import { USER_QUERY_KEY } from "@/entity/user/model/use-user";
-import { MyBeaverPet } from "@/widgets/beaver-pet/ui/my-beaver-pet";
 import { ProfileGallery } from "@/widgets/profile-gallery/ui/profile-gallery";
 import { AchievementsStrip } from "./achievements";
 import { MobileTabBar } from "@/widgets/mobile-shell/ui/mobile-tab-bar";
@@ -46,7 +46,7 @@ const small =
   "text-[10px] leading-[normal] font-extrabold tracking-[1.2px] whitespace-nowrap";
 
 function AppBar() {
-  const { user } = useProfile();
+  const { user, readOnly } = useProfile();
   return (
     <div className="flex h-16 shrink-0 items-center justify-between px-4">
       <BrandPlate>
@@ -55,15 +55,25 @@ function AppBar() {
           Профиль
         </span>
       </BrandPlate>
-      <EditProfileDialog user={user}>
-        <button
-          type="button"
-          aria-label="Редактировать профиль"
+      {readOnly ? (
+        <Link
+          to="/feed"
+          aria-label="Назад к ленте"
           className="box-border flex size-11 items-center justify-center rounded-[22px] border-2 border-ink bg-card"
         >
-          <Icon name={`${dir}/icon-settings`} className="size-5" />
-        </button>
-      </EditProfileDialog>
+          <Icon name={`${dir}/icon-chev`} className="size-5 rotate-180" />
+        </Link>
+      ) : (
+        <EditProfileDialog user={user}>
+          <button
+            type="button"
+            aria-label="Редактировать профиль"
+            className="box-border flex size-11 items-center justify-center rounded-[22px] border-2 border-ink bg-card"
+          >
+            <Icon name={`${dir}/icon-settings`} className="size-5" />
+          </button>
+        </EditProfileDialog>
+      )}
     </div>
   );
 }
@@ -132,6 +142,7 @@ function Passport() {
 }
 
 function Pet() {
+  const owner = usePublicProfile();
   const [speechContainer, setSpeechContainer] = useState<HTMLDivElement | null>(
     null,
   );
@@ -139,15 +150,15 @@ function Pet() {
     <div className="px-4">
       <div className="box-border flex w-full flex-col gap-3 rounded-[26px] border-2 border-ink bg-sky p-[18px] shadow-[4px_4px_0_var(--ink)]">
         <div className="flex flex-wrap items-center gap-3">
-          <MyBeaverPet
+          <ProfileBeaverPet
             speechContainer={speechContainer}
             className="size-28 shrink-0 [&_.beaver-pet]:h-full [&_svg]:h-full"
           />
           <div className="flex min-w-[180px] flex-1 flex-col items-start gap-1">
             <Eyebrow className={cn(small, "text-foreground")}>
-              ТВОЙ ПИТОМЕЦ
+              {owner ? "ПИТОМЕЦ" : "ТВОЙ ПИТОМЕЦ"}
             </Eyebrow>
-            <PetNameEditor />
+            <ProfilePetName />
           </div>
         </div>
         <div ref={setSpeechContainer} className="relative h-[72.5px] w-full" />
@@ -203,6 +214,7 @@ function Head({
 }
 
 function Wardrobe() {
+  const owner = usePublicProfile();
   const { worn } = useWardrobe();
   const cards =
     worn.length > 0
@@ -230,11 +242,13 @@ function Wardrobe() {
             <span className="line-clamp-1 text-center text-xs leading-[normal] font-bold text-muted-foreground">
               {w.slot}
             </span>
-            <WardrobeDialog>
-              <Button variant="soft" className="h-10 w-full px-5 text-xs">
-                Сменить
-              </Button>
-            </WardrobeDialog>
+            {!owner && (
+              <WardrobeDialog>
+                <Button variant="soft" className="h-10 w-full px-5 text-xs">
+                  Сменить
+                </Button>
+              </WardrobeDialog>
+            )}
           </div>
         ))}
       </div>
@@ -281,28 +295,30 @@ function Settings() {
 }
 
 function Gallery() {
-  const { user } = useProfile();
+  const { user, readOnly } = useProfile();
   if (!user?.id) return null;
+  const photos = readOnly && "photos" in user ? user.photos : undefined;
   return (
     <div className="px-4">
-      <ProfileGallery owner={{ ...user, id: user.id }} mine />
+      <ProfileGallery owner={{ ...user, id: user.id }} mine={!readOnly} aboutPhotos={photos} />
     </div>
   );
 }
 
 export function ProfileMobile() {
+  const owner = usePublicProfile();
   return (
     <div className="relative isolate flex min-h-dvh overflow-clip flex-col gap-4 bg-background pb-[110px] lg:hidden">
-      <MemphisBackground variant="mobile" seed="profile" />
+      <MemphisBackground variant="mobile" seed={owner ? "user" : "profile"} />
       <AppBar />
       <Passport />
       <Gallery />
       <Pet />
       <Attendance />
-      <AchievementsStrip />
+      {!owner && <AchievementsStrip />}
       <Wardrobe />
-      <Settings />
-      <MobileTabBar current="profile" />
+      {!owner && <Settings />}
+      <MobileTabBar current={owner ? "feed" : "profile"} />
     </div>
   );
 }

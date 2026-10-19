@@ -3,9 +3,7 @@ import { Pencil } from "lucide-react";
 import { useUser } from "@/entity/user/model/use-user";
 import { UserAvatar } from "@/shared/components/ui/user-avatar";
 import { EditProfileDialog } from "@/features/edit-profile/ui/edit-profile-dialog";
-import { PetNameEditor } from "@/features/rename-pet/ui/pet-name-editor";
 import { WardrobeDialog } from "@/features/pet-wardrobe/ui/wardrobe-dialog";
-import { MyBeaverPet } from "@/widgets/beaver-pet/ui/my-beaver-pet";
 import { Button } from "@/shared/components/ui/button";
 import { useRegistrationsMine } from "@/shared/api/generated/core/registrations/registrations";
 import {
@@ -20,6 +18,8 @@ import type {
 } from "@/shared/api/generated/core/appAPI.schemas";
 import { cn } from "cn";
 import { useWardrobe } from "../model/use-wardrobe";
+import { usePublicProfile } from "../model/public-profile";
+import { ProfileBeaverPet, ProfilePetName } from "./profile-pet";
 import {
   KIND_LABEL,
   LEVEL_PIPS,
@@ -115,14 +115,14 @@ function SportChip({
 
 /** Левая страница (стр. 2): питомец-сопровождающий. */
 function PetPage() {
+  const owner = usePublicProfile();
   const { user } = useUser();
   const { worn } = useWardrobe();
   const [speechContainer, setSpeechContainer] = useState<HTMLDivElement | null>(
     null,
   );
-  const mood = user?.pet
-    ? (MOOD_LABEL[user.pet.mood] ?? user.pet.mood)
-    : undefined;
+  const pet = owner ? owner.pet : user?.pet;
+  const mood = pet ? (MOOD_LABEL[pet.mood] ?? pet.mood) : undefined;
   const outfit =
     worn.length > 0 ? worn.map((w) => w.item).join(" + ") : "без образа";
 
@@ -150,24 +150,26 @@ function PetPage() {
 
       <div className="relative flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <PetNameEditor nameClassName="font-display text-[32px] leading-10">
+          <ProfilePetName nameClassName="font-display text-[32px] leading-10">
             {mood ? (
               <span className="mt-1 inline-flex rounded-pill border-[1.5px] border-ink bg-lavender-soft px-[10px] py-1 text-[11px] font-bold whitespace-nowrap text-foreground">
                 настроение: {mood}
               </span>
             ) : null}
-          </PetNameEditor>
+          </ProfilePetName>
         </div>
-        <WardrobeDialog>
-          <Button
-            variant="soft"
-            aria-label="Изменить имя и образ питомца"
-            className="mt-1 h-10 shrink-0 px-4 text-[13px]"
-          >
-            <Pencil className="size-3.5" />
-            Изменить
-          </Button>
-        </WardrobeDialog>
+        {!owner && (
+          <WardrobeDialog>
+            <Button
+              variant="soft"
+              aria-label="Изменить имя и образ питомца"
+              className="mt-1 h-10 shrink-0 px-4 text-[13px]"
+            >
+              <Pencil className="size-3.5" />
+              Изменить
+            </Button>
+          </WardrobeDialog>
+        )}
       </div>
 
       <div className="relative min-h-0 flex-1 overflow-hidden rounded-[18px] border-2 border-ink bg-sky">
@@ -176,7 +178,7 @@ function PetPage() {
           alt=""
           className="pointer-events-none absolute bottom-0 left-1/2 size-[440px] max-w-none -translate-x-1/2"
         />
-        <MyBeaverPet
+        <ProfileBeaverPet
           speechContainer={speechContainer}
           className="absolute top-[24px] left-1/2 h-[420px] w-[420px] -translate-x-1/2 [&_.beaver-pet]:h-full [&_svg]:h-full"
         />
@@ -351,14 +353,25 @@ function Stamp({
   );
 }
 
+/** Виза в паспорте: запись на будущее событие или, в чужом профиле, событие, которое человек ведёт. */
+type VisaItem = { id: string; title: string; startAt: string; status: string; pending?: boolean };
+
+const regVisa = (reg: MyRegistrationResponse): VisaItem => ({
+  id: reg.id,
+  title: reg.event.title,
+  startAt: reg.myNextOccurrence?.startAt ?? reg.event.startAt,
+  pending: reg.status === "PENDING",
+  status: reg.status === "PENDING" ? "ОЖИДАЕТ" : "ОДОБРЕНО",
+});
+
 function Visa({
   slot,
-  reg,
+  visa,
 }: {
   slot: (typeof VISA_SLOTS)[number];
-  reg: MyRegistrationResponse;
+  visa: VisaItem;
 }) {
-  const pending = reg.status === "PENDING";
+  const pending = visa.pending;
   return (
     <div
       className={cn(
@@ -373,15 +386,13 @@ function Visa({
     >
       <div className="flex items-center justify-between text-[9px] font-extrabold whitespace-nowrap">
         <span className="tracking-[2px]">ВИЗА</span>
-        <span className="tracking-[1.2px]">
-          {pending ? "ОЖИДАЕТ" : "ОДОБРЕНО"}
-        </span>
+        <span className="tracking-[1.2px]">{visa.status}</span>
       </div>
       <p className="line-clamp-2 font-display text-xs leading-4 font-bold">
-        {reg.event.title}
+        {visa.title}
       </p>
       <p className="text-[11px] font-extrabold whitespace-nowrap">
-        {whenLabel(reg.myNextOccurrence?.startAt ?? reg.event.startAt)}
+        {whenLabel(visa.startAt)}
       </p>
     </div>
   );
@@ -389,6 +400,23 @@ function Visa({
 
 /** Печати за посещённые занятия и визы на будущие. */
 function Stamps() {
+  const owner = usePublicProfile();
+  return owner ? (
+    // посещения чужого человека не публичны: только общее число и события, которые он ведёт
+    <StampsView
+      total={owner.user.attendedCount}
+      attended={[]}
+      visas={owner.user.events.slice(0, VISA_SLOTS.length).map((e) => ({
+        id: e.id, title: e.title, startAt: e.startAt, status: "ВЕДЁТ",
+      }))}
+      hint="Виза — ближайшее событие, которое ведёт"
+    />
+  ) : (
+    <MyStamps />
+  );
+}
+
+function MyStamps() {
   const history = useUsersHistory({ page: 0, size: STAMP_SLOTS.length });
   const summary = useUsersHistorySummary({});
   const mine = useRegistrationsMine();
@@ -416,6 +444,31 @@ function Stamps() {
     )
     .slice(0, VISA_SLOTS.length);
 
+  return (
+    <StampsView
+      total={total}
+      attended={attended}
+      visas={upcoming.map(regVisa)}
+      hint="Печать ставится после занятия · виза — будущая запись"
+      nextStamp
+    />
+  );
+}
+
+function StampsView({
+  total,
+  attended,
+  visas,
+  hint,
+  nextStamp,
+}: {
+  total: number;
+  attended: AttendedOccurrenceResponse[];
+  visas: VisaItem[];
+  hint: string;
+  /** Пустая печать «следующая» — подсказка владельцу. */
+  nextStamp?: boolean;
+}) {
   // пустая печать «следующая»: на первом свободном месте, а когда все заняты — во втором ряду
   const emptyAt =
     attended.length < STAMP_SLOTS.length
@@ -432,7 +485,7 @@ function Stamps() {
           ВСЕГО {total}
         </span>
         <span className="min-w-0 truncate text-[10px] font-semibold text-muted-foreground">
-          Печать ставится после занятия · виза — будущая запись
+          {hint}
         </span>
       </div>
 
@@ -452,18 +505,20 @@ function Stamps() {
             <Stamp key={item.occurrenceId} slot={STAMP_SLOTS[i]} item={item} />
           ))}
 
-          {upcoming.map((reg, i) => (
-            <Visa key={reg.id} slot={VISA_SLOTS[i]} reg={reg} />
+          {visas.map((visa, i) => (
+            <Visa key={visa.id} slot={VISA_SLOTS[i]} visa={visa} />
           ))}
 
-          <div
-            className="absolute flex size-[116px] flex-col items-center justify-center rounded-full border-[2.5px] border-dashed border-track font-bold text-muted-foreground"
-            style={{ left: emptyAt.cx - 58, top: emptyAt.cy - 58 }}
-          >
-            <span className="font-display text-[22px]">+</span>
-            <span className="text-[10px]">следующая</span>
-            <span className="text-[10px]">печать</span>
-          </div>
+          {nextStamp && (
+            <div
+              className="absolute flex size-[116px] flex-col items-center justify-center rounded-full border-[2.5px] border-dashed border-track font-bold text-muted-foreground"
+              style={{ left: emptyAt.cx - 58, top: emptyAt.cy - 58 }}
+            >
+              <span className="font-display text-[22px]">+</span>
+              <span className="text-[10px]">следующая</span>
+              <span className="text-[10px]">печать</span>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -472,11 +527,16 @@ function Stamps() {
 
 /** Правая страница (стр. 3): данные владельца и отметки о посещении. */
 function DataPage() {
-  const { user } = useUser();
-  const sports = useUsersMySports();
-  const list = sports.data?.status === 200 ? sports.data.data : [];
+  const owner = usePublicProfile();
+  const { user: me } = useUser();
+  const sports = useUsersMySports({ query: { enabled: !owner } });
+  const user = owner ? owner.user : me;
+  const list = owner
+    ? owner.user.sports
+    : sports.data?.status === 200 ? sports.data.data : [];
   const number = passportNumber(user?.id);
-  const issued = dateShort(user?.createdAt);
+  // дата регистрации и роль в публичный профиль не входят
+  const issued = owner ? undefined : dateShort(me?.createdAt);
 
   return (
     <section
@@ -525,14 +585,22 @@ function DataPage() {
             <Field label="ГОРОД" value={user?.city ?? "—"} />
           </div>
           <div className="flex gap-4">
-            <Field label="ДАТА ВЫДАЧИ" value={dateFull(user?.createdAt)} />
+            {owner ? (
+              <Field label="ПОСЕЩЕНИЙ" value={String(owner.user.attendedCount)} />
+            ) : (
+              <Field label="ДАТА ВЫДАЧИ" value={dateFull(me?.createdAt)} />
+            )}
             <Field label="ОРГАН ВЫДАЧИ" value="Движ" />
           </div>
           <div className="flex gap-4">
-            <Field
-              label="СТАТУС"
-              value={user?.systemRole ? ROLE_LABEL[user.systemRole] : "—"}
-            />
+            {owner ? (
+              <Field label="ВЕДЁТ СОБЫТИЙ" value={String(owner.user.events.length)} />
+            ) : (
+              <Field
+                label="СТАТУС"
+                value={me?.systemRole ? ROLE_LABEL[me.systemRole] : "—"}
+              />
+            )}
             <Field label="№ ПАСПОРТА" value={number} />
           </div>
         </div>
@@ -552,9 +620,11 @@ function DataPage() {
           <p className="absolute inset-x-0 top-[35px] text-center font-display text-[11.2px] font-extrabold">
             ГОДЕН
           </p>
-          <p className="absolute inset-x-0 top-[51px] text-center text-[7.2px] font-extrabold">
-            с {issued}
-          </p>
+          {issued && (
+            <p className="absolute inset-x-0 top-[51px] text-center text-[7.2px] font-extrabold">
+              с {issued}
+            </p>
+          )}
         </div>
       </div>
 
@@ -563,11 +633,13 @@ function DataPage() {
           <p className="text-[9px] font-extrabold tracking-[1.2px] whitespace-nowrap text-muted-foreground">
             ВИДЫ СПОРТА И РАЗРЯД
           </p>
-          <EditProfileDialog user={user}>
-            <Button variant="soft" className="h-8 px-4 text-xs leading-[17px]">
-              Править
-            </Button>
-          </EditProfileDialog>
+          {!owner && (
+            <EditProfileDialog user={me}>
+              <Button variant="soft" className="h-8 px-4 text-xs leading-[17px]">
+                Править
+              </Button>
+            </EditProfileDialog>
+          )}
         </div>
         <div className="flex max-h-[72px] flex-wrap gap-2 overflow-hidden">
           {list.length > 0 ? (

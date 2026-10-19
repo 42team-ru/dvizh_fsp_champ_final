@@ -1,4 +1,5 @@
 import { useUsersHistorySummary } from "@/shared/api/generated/core/users/users";
+import { usePublicProfile } from "../model/public-profile";
 
 const FORMS = ["посещение", "посещения", "посещений"] as const;
 
@@ -11,9 +12,21 @@ export function visitsWord(n: number) {
   return FORMS[2];
 }
 
-/** Сводка посещений из истории (users_historySummary): всего и любимый вид спорта. */
+/**
+ * Сводка посещений из истории (users_historySummary): всего и любимый вид спорта.
+ * У чужого профиля — только общее число из публичного профиля.
+ */
 export function useAttendance() {
-  const query = useUsersHistorySummary({});
+  const owner = usePublicProfile();
+  const query = useUsersHistorySummary({}, { query: { enabled: !owner } });
+  if (owner) {
+    const total = owner.user.attendedCount;
+    const sports = owner.user.sports.map((s) => s.sport.name.toLowerCase());
+    const text = total === 0
+      ? "Пока нет посещённых занятий."
+      : sports.length > 0 ? `Занимается: ${sports.join(", ")}.` : "";
+    return { total, text, word: visitsWord(total) };
+  }
   const data = query.data?.status === 200 ? query.data.data : undefined;
   const total = data?.total ?? 0;
   const top = data?.bySport[0];
