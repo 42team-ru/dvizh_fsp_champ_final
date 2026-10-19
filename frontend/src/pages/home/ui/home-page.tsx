@@ -1,3 +1,4 @@
+import { usePetName } from "@/entity/user/model/use-pet-name";
 import { Compass } from "lucide-react";
 import { EmptyState } from "@/shared/components/ui/empty-state";
 import { MyBeaverBadge } from "@/widgets/beaver-pet/ui/my-beaver-badge";
@@ -176,6 +177,7 @@ function Hero() {
 
 /** Запасная подсказка Бублика, когда «когда выходить» нечего сказать: календарь и маршрут, без встречи — куда пойти дальше. */
 function Tip() {
+  const petName = usePetName();
   const { user, next, isLoading } = useNextTicket();
   if (isLoading || user?.systemRole === "ADMIN") return null;
   const e = next?.event;
@@ -186,9 +188,9 @@ function Tip() {
       : "Расскажи, чем любишь заниматься, — подберу встречи рядом";
   return (
     <Card className="relative min-h-[104px] flex-row items-center gap-5 bg-mint-soft py-4 pr-[26px] pl-[152px]">
-      <MyBeaverBadge className="absolute top-[-22px] left-[14px] h-[118px] w-[132px]" />
+      <MyBeaverBadge className="absolute top-1/2 left-[10px] h-[118px] w-[132px] -translate-y-1/2" />
       <div className="min-w-0 flex-1">
-        <Eyebrow>БУБЛИК ПОДСКАЗЫВАЕТ</Eyebrow>
+        <Eyebrow>{petName.toUpperCase()} ПОДСКАЗЫВАЕТ</Eyebrow>
         <p className="mt-[6px] truncate font-display text-[18px] leading-[23.5px] font-bold text-foreground">{text}</p>
       </div>
       {e ? (
@@ -270,6 +272,7 @@ function EventCard({ item, index, onDismiss }: { item: RecommendedEventResponse;
 }
 
 function Recommendations() {
+  const petName = usePetName();
   const { items, isPending, isError } = useRecommendationPreview(3);
   const { dismiss } = useDismissRecommendation();
   if (isPending) {
@@ -283,7 +286,7 @@ function Recommendations() {
       <EmptyState
         icon={Compass}
         tone="bg-mint"
-        title="Бублик ещё подбирает встречи"
+        title={`${petName} ещё подбирает встречи`}
         text="Отметь любимые виды спорта в профиле — и здесь появятся встречи для тебя. А пока загляни в ленту."
         action={
           <Button asChild>

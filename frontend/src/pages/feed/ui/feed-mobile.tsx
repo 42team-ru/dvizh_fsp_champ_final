@@ -1,3 +1,4 @@
+import { usePetName } from "@/entity/user/model/use-pet-name";
 import { SearchX } from "lucide-react";
 import { useNavAccess } from "@/entity/user/model/use-nav-access";
 import { EmptyState } from "@/shared/components/ui/empty-state";
@@ -178,6 +179,7 @@ function SmallRow({ items, reasonOf, onDismiss }: {
 }
 
 function Promo() {
+  const petName = usePetName();
   return (
     <div className="px-4">
       <div className="box-border flex w-full flex-col gap-3 rounded-[24px] border-2 border-ink bg-secondary p-5 shadow-[4px_4px_0_var(--ink)]">
@@ -185,7 +187,7 @@ function Promo() {
           <div className="flex min-w-0 flex-1 flex-col gap-[6px] font-bold text-foreground">
             <p className="font-display text-[17px] leading-[23px]">Не нашёл свою тусовку?</p>
             <p className="text-[13px] leading-[18px]">
-              Создай событие — Бублик расскажет о нём соседям с теми же интересами.
+              Создай событие — {petName} расскажет о нём соседям с теми же интересами.
             </p>
           </div>
           <img src={`/${dir}/img.png`} alt="" className="size-24 shrink-0 object-contain" />

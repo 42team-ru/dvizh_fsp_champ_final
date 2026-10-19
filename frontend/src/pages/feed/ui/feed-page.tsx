@@ -1,3 +1,4 @@
+import { usePetName } from "@/entity/user/model/use-pet-name";
 import { SearchX } from "lucide-react";
 import { useNavAccess } from "@/entity/user/model/use-nav-access";
 import { EmptyState } from "@/shared/components/ui/empty-state";
@@ -124,6 +125,7 @@ function BikeCard({ event, className, onDismiss }: { event: EventSummaryResponse
 }
 
 function CtaCard({ className }: { className?: string }) {
+  const petName = usePetName();
   return (
     <Card className={cn("relative min-h-[330px] justify-between overflow-hidden bg-secondary p-[26px]", className)}>
       <img
@@ -145,7 +147,7 @@ function CtaCard({ className }: { className?: string }) {
           </h2>
         </div>
         <p className="mt-[13px] w-[193px] text-[15px] leading-[22px] font-semibold text-foreground">
-          Создай событие — Бублик расскажет о нём соседям с теми же интересами.
+          Создай событие — {petName} расскажет о нём соседям с теми же интересами.
         </p>
       </div>
       <div className="relative">

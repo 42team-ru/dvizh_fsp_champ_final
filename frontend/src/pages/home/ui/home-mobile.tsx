@@ -1,3 +1,4 @@
+import { usePetName } from "@/entity/user/model/use-pet-name";
 import { Compass } from "lucide-react";
 import { EmptyState } from "@/shared/components/ui/empty-state";
 import { MyBeaverBadge } from "@/widgets/beaver-pet/ui/my-beaver-badge";
@@ -176,6 +177,7 @@ function NextTicket() {
 
 /** Подсказка по ближайшей встрече: календарь и маршрут — настоящие ссылки. */
 function Tip() {
+  const petName = usePetName();
   const { user, next, isLoading } = useNextTicket();
   const e = next?.event;
   if (isLoading || !e || user?.systemRole === "ADMIN") return null;
@@ -186,7 +188,7 @@ function Tip() {
           <MyBeaverBadge className="size-16 shrink-0" />
           <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
             <span className="text-[10px] leading-[normal] font-extrabold tracking-[1.2px] whitespace-nowrap text-primary">
-              БУБЛИК ПОДСКАЗЫВАЕТ
+              {petName.toUpperCase()} ПОДСКАЗЫВАЕТ
             </span>
             <span className="text-sm leading-[19px] font-bold text-foreground">
               Добавь встречу в календарь, чтобы не забыть
@@ -210,6 +212,7 @@ function Tip() {
 
 /** Карусель «Подобрали для тебя»: первые рекомендации, под названием — главная причина. */
 function EventScroller() {
+  const petName = usePetName();
   const { items, isPending, isError } = useRecommendationPreview(5);
   const { dismiss } = useDismissRecommendation();
   if (isPending) return <p className="px-4 text-base font-semibold text-muted-foreground">Подбираем встречи…</p>;
@@ -220,8 +223,8 @@ function EventScroller() {
         <EmptyState
           icon={Compass}
           tone="bg-mint"
-          title="Бублик ещё подбирает встречи"
-          text="Отметь любимые виды спорта в профиле — и Бублик подберёт встречи."
+          title={`${petName} ещё подбирает встречи`}
+          text={`Отметь любимые виды спорта в профиле — и ${petName} подберёт встречи.`}
           action={
             <Button asChild>
               <Link to="/feed">Открыть ленту</Link>

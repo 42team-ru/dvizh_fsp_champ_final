@@ -1,3 +1,4 @@
+import { usePetName } from "@/entity/user/model/use-pet-name";
 import { useState } from "react";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
@@ -83,12 +84,13 @@ function Bubble({ children, className }: { children: React.ReactNode; className?
 /* ---------- 1. Знакомство ---------- */
 
 export function StepWelcome() {
+  const petName = usePetName();
   return (
     <div className="absolute top-[131px] left-[90px] flex items-center gap-20">
       <div className="flex w-[560px] flex-col items-start gap-5">
         <Pill>ДОБРО ПОЖАЛОВАТЬ</Pill>
         <h1 className="w-full font-display text-[52px] leading-[60px] font-extrabold tracking-[-1px] text-foreground">
-          Привет, я Бублик!
+          Привет, я {petName}!
         </h1>
         <p className="w-full text-lg leading-7 font-medium text-muted-foreground">
           Буду твоим помощником: найду события рядом, напомню о тренировке и порадуюсь вместе с
@@ -515,6 +517,7 @@ export function StepDone({
   onFind: () => void;
   onHome: () => void;
 }) {
+  const petName = usePetName();
   return (
     <>
       <Img src="confetti.svg" className="top-0 left-0 h-[820px] w-[1280px]" />
@@ -524,7 +527,7 @@ export function StepDone({
           Паспорт готов!
         </h1>
         <p className="w-full text-lg leading-7 font-medium text-muted-foreground">
-          Бублик уже подобрал для тебя три события рядом. Загляни — вдруг там твоя команда.
+          {petName} уже подобрал для тебя три события рядом. Загляни — вдруг там твоя команда.
         </p>
         <div className="flex gap-3">
           <Button onClick={onFind} className="h-[54px] w-[290px] px-6">

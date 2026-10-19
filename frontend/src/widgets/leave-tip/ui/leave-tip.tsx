@@ -1,3 +1,4 @@
+import { usePetName } from "@/entity/user/model/use-pet-name";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { Bus, Car, Footprints, type LucideIcon } from "lucide-react";
@@ -109,15 +110,16 @@ function Actions({ m, state, className, buttonClassName }: {
 
 /** «Бублик подсказывает» на главной, компьютер; `fallback` — когда о дороге сказать нечего (клуб, нет встречи, «Не надо»). */
 export function LeaveTip({ fallback }: { fallback?: ReactNode }) {
+  const petName = usePetName();
   const m = useLeaveTip();
   const v = view(m);
   if (m.loading) return null;
   if (!v) return fallback ?? null;
   return (
     <Card className="relative min-h-[104px] flex-row items-center gap-5 bg-mint-soft py-4 pr-[26px] pl-[152px]">
-      <MyBeaverBadge className="absolute top-[-22px] left-[14px] h-[118px] w-[132px]" />
+      <MyBeaverBadge className="absolute top-1/2 left-[10px] h-[118px] w-[132px] -translate-y-1/2" />
       <div className="flex min-w-0 flex-1 flex-col gap-[6px]">
-        <Eyebrow>БУБЛИК ПОДСКАЗЫВАЕТ</Eyebrow>
+        <Eyebrow>{petName.toUpperCase()} ПОДСКАЗЫВАЕТ</Eyebrow>
         <p className="font-display text-[18px] leading-[23.5px] font-bold text-foreground">{v.headline}</p>
         {v.state === "offer" && <Modes m={m} className="mt-1" />}
         {v.state === "offer" && <Note m={m} />}
@@ -129,6 +131,7 @@ export function LeaveTip({ fallback }: { fallback?: ReactNode }) {
 
 /** «Бублик подсказывает» на главной, телефон. */
 export function LeaveTipMobile({ fallback }: { fallback?: ReactNode }) {
+  const petName = usePetName();
   const m = useLeaveTip();
   const v = view(m);
   if (m.loading) return null;
@@ -140,7 +143,7 @@ export function LeaveTipMobile({ fallback }: { fallback?: ReactNode }) {
           <MyBeaverBadge className="size-16 shrink-0" />
           <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
             <span className="text-[10px] leading-[normal] font-extrabold tracking-[1.2px] whitespace-nowrap text-primary">
-              БУБЛИК ПОДСКАЗЫВАЕТ
+              {petName.toUpperCase()} ПОДСКАЗЫВАЕТ
             </span>
             <span className="text-sm leading-[19px] font-bold text-foreground">{v.headline}</span>
           </div>

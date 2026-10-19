@@ -1,3 +1,4 @@
+import { usePetName } from "@/entity/user/model/use-pet-name";
 import { useState } from "react";
 import { Link } from "react-router";
 import { Badge } from "@/shared/components/ui/badge";
@@ -103,6 +104,7 @@ function TopBar({
 }
 
 function Welcome() {
+  const petName = usePetName();
   return (
     <>
       <div className="px-4">
@@ -125,7 +127,7 @@ function Welcome() {
         </div>
       </div>
       <Heading
-        title="Привет, я Бублик!"
+        title={`Привет, я ${petName}!`}
         hint="Буду твоим помощником: найду события рядом, напомню о тренировке и порадуюсь вместе с тобой."
       />
       <div className="flex flex-wrap gap-2 px-4">
@@ -482,6 +484,7 @@ function Pet({ data, update }: Pick<Props, "data" | "update">) {
 }
 
 function Done() {
+  const petName = usePetName();
   return (
     <>
       <div className="flex flex-col items-start gap-2 px-4 pt-1">
@@ -492,7 +495,7 @@ function Done() {
           Паспорт готов!
         </h1>
         <p className="w-full text-[15px] leading-[22px] font-medium text-muted-foreground">
-          Бублик уже подобрал для тебя три события рядом. Загляни — вдруг там твоя команда.
+          {petName} уже подобрал для тебя три события рядом. Загляни — вдруг там твоя команда.
         </p>
       </div>
       <img src={`${dir}/hero.png`} alt="" className="mx-auto size-[200px] object-contain" />
