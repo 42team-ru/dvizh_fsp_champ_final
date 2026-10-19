@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { keepPreviousData } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
 import { useEventsMap } from "@/shared/api/generated/core/events/events";
+import { useUsersMyPreferences } from "@/shared/api/generated/core/users/users";
 import type { EventMapFeature, EventMapProperties, EventsMapParams } from "@/shared/api/generated/core/appAPI.schemas";
 import { Button } from "@/shared/components/ui/button";
 import { REGISTRATION_STATUS } from "@/shared/lib/statuses";
@@ -81,9 +82,11 @@ function Row({ p, now, at, selected, onPick }: { p: EventMapProperties; now: num
  * и лента справа. Док выбирает момент («что идёт в 15:30») или диапазон; подходящие события — цветные метки,
  * остальные из окна дока — серые точки.
  */
-export function EventsMap({ filters = {}, className, mapClassName }: {
+export function EventsMap({ filters = {}, className, mapClassName, withHome = false }: {
   filters?: MapFilters;
   className?: string;
+  /** Показать дом из предпочтений и открыть карту на нём (лента). */
+  withHome?: boolean;
   /** Высота самой карты; док времени — под ней, лента — сбоку на компьютере и снизу на телефоне. */
   mapClassName?: string;
 }) {
@@ -101,13 +104,20 @@ export function EventsMap({ filters = {}, className, mapClassName }: {
   const [chosen, setChosen] = useState<Selection>({ mode: "moment", at: now, live: true });
   const selection: Selection = chosen.mode === "moment" && chosen.live ? { ...chosen, at: now } : chosen;
 
+  const preferences = useUsersMyPreferences({ query: { enabled: withHome } });
+  const homePoint = preferences.data?.status === 200 ? preferences.data.data.home : undefined;
+  const home = useMemo<[number, number] | null>(() => homePoint ? [homePoint.lon, homePoint.lat] : null, [homePoint?.lon, homePoint?.lat]);
+  /** Ждём предпочтения, чтобы сразу открыть карту на доме, а не перелетать к нему. Ошибка — открываем как обычно. */
+  const homeReady = !withHome || !preferences.isLoading;
+
   useEffect(() => {
-    if (!hasMapKey() || !container.current) return;
+    if (!hasMapKey() || !container.current || !homeReady) return;
     let cancelled = false;
     let unsubscribe: (() => void) | undefined;
-    createEventsMap(container.current).then((map) => {
+    createEventsMap(container.current, home ?? undefined, home ? 13 : 12).then((map) => {
       if (cancelled) return map.destroy();
       provider.current = map;
+      map.setHome(home);
       map.onPointClick((point) => {
         setSelected(point.data);
         map.focus(point);
@@ -128,7 +138,10 @@ export function EventsMap({ filters = {}, className, mapClassName }: {
       provider.current?.destroy();
       provider.current = null;
     };
-  }, []);
+    // Карта создаётся один раз, когда стало известно, где дом; смена дома — эффект ниже.
+  }, [homeReady]);
+
+  useEffect(() => { provider.current?.setHome(home); }, [home]);
 
   // Окно дока: с начала сегодняшнего дня (бэк сам не отдаёт прошлое) на 1/3/7 дней — серые метки и гистограмма.
   const windowStart = startOfDay(now);
