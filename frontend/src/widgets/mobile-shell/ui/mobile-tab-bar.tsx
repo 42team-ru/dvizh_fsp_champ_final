@@ -1,14 +1,14 @@
 import { Link } from "react-router";
-import { BriefcaseBusiness } from "lucide-react";
+import { BriefcaseBusiness, ShieldCheck, type LucideIcon } from "lucide-react";
 import { Icon } from "@/shared/components/ui/icon";
 import { cn } from "cn";
 import { motion } from "motion/react";
 import { useNavAccess } from "@/entity/user/model/use-nav-access";
 import { useCabinetAccess } from "@/entity/user/model/use-cabinet-access";
 
-export type MobileTab = "home" | "feed" | "activity" | "profile";
+export type MobileTab = "home" | "feed" | "activity" | "profile" | "admin";
 
-type Tab = { key: string; to: string; label: string; icon?: string; count?: number };
+type Tab = { key: string; to: string; label: string; icon?: string; lucide?: LucideIcon; count?: number };
 
 /**
  * Нижняя навигация мобильной версии. Иконки активного и неактивного состояния лежат
@@ -16,7 +16,8 @@ type Tab = { key: string; to: string; label: string; icon?: string; count?: numb
  * Набор вкладок зависит от роли: клубу вместо «Профиля» — «Кабинет», админу — только главная и лента.
  */
 export function MobileTabBar({ current }: { current: MobileTab }) {
-  const dir = `m-${current}`;
+  // У админки своей папки иконок нет: в папке «Профиля» (этой вкладки у админа нет) остальные иконки неактивные.
+  const dir = `m-${current === "admin" ? "profile" : current}`;
   const nav = useNavAccess();
   const cabinet = useCabinetAccess();
 
@@ -29,6 +30,7 @@ export function MobileTabBar({ current }: { current: MobileTab }) {
     ...(nav.showProfile
       ? [{ key: "profile", to: "/profile", label: "Профиль", icon: "icon-user" }]
       : cabinet.isOrg ? [{ key: "profile", to: "/my/events", label: "Кабинет" }] : []),
+    ...(nav.isAdmin ? [{ key: "admin", to: "/admin", label: "Админка", lucide: ShieldCheck }] : []),
   ];
 
   const tab = (t: Tab) => {
@@ -50,7 +52,7 @@ export function MobileTabBar({ current }: { current: MobileTab }) {
             active && "border-2 border-ink bg-secondary"
           )}
         >
-          {t.icon ? <Icon name={`${dir}/${t.icon}`} className="size-5" /> : <BriefcaseBusiness className="size-5" strokeWidth={2.2} />}
+          {t.icon ? <Icon name={`${dir}/${t.icon}`} className="size-5" /> : t.lucide ? <t.lucide className="size-5" strokeWidth={2.2} /> : <BriefcaseBusiness className="size-5" strokeWidth={2.2} />}
           {t.count ? (
             <span className="absolute top-[-4px] left-8 box-border flex h-[18px] min-w-[18px] items-center justify-center rounded-[9px] border-[1.5px] border-ink bg-accent px-0.5 text-[10px] leading-[normal] font-extrabold text-white">
               {t.count > 99 ? "99+" : t.count}

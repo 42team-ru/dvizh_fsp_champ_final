@@ -6,7 +6,7 @@ import { Icon } from "@/shared/components/ui/icon";
 import { AccountMenu } from "@/features/auth/sign-out/ui/account-menu";
 import { useCabinetAccess } from "@/entity/user/model/use-cabinet-access";
 import { useNavAccess } from "@/entity/user/model/use-nav-access";
-import { BriefcaseBusiness } from "lucide-react";
+import { BriefcaseBusiness, ShieldCheck } from "lucide-react";
 import { SearchPalette } from "@/widgets/search-palette/ui/search-palette";
 
 const NAV = [
@@ -16,15 +16,15 @@ const NAV = [
   { key: "profile", to: "/profile", label: "Профиль", icon: "icon-user", w: "w-[126.5px]" },
 ] as const;
 
-/** Папка иконки: в папке страницы активная иконка белая; в кабинете ни одна из четырёх не активна. */
+/** Папка иконки: в папке страницы активная иконка белая; в кабинете и админке ни одна из четырёх не активна. */
 const iconFolder = (current: string, key: string) =>
-  current !== "cabinet" ? current : key === "home" ? "feed" : "home";
+  current !== "cabinet" && current !== "admin" ? current : key === "home" ? "feed" : "home";
 
 /**
  * Шапка одна и та же на всех страницах: ширина контейнера не зависит от страницы, шапка прилипает к верху —
  * при переходах ничего не прыгает. Вкладка «Кабинет» — только организаторам.
  */
-export function AppHeader({ current = "home" }: { current?: "home" | "feed" | "profile" | "activity" | "cabinet" }) {
+export function AppHeader({ current = "home" }: { current?: "home" | "feed" | "profile" | "activity" | "cabinet" | "admin" }) {
   const cabinet = useCabinetAccess();
   const nav = useNavAccess();
   const items = NAV.filter((item) =>
@@ -65,6 +65,14 @@ export function AppHeader({ current = "home" }: { current?: "home" | "feed" | "p
               </Link>
             </Button>
           ))}
+          {nav.isAdmin && (
+            <Button asChild variant="nav" size="nav" className="justify-start font-bold">
+              <Link to="/admin" aria-current={current === "admin" ? "page" : undefined}>
+                <ShieldCheck className="size-[19px]" strokeWidth={2.2} />
+                Админка
+              </Link>
+            </Button>
+          )}
           {cabinet.allowed && (
             <Button asChild variant="nav" size="nav" className="justify-start font-bold">
               <Link to="/my/events" aria-current={current === "cabinet" ? "page" : undefined}>

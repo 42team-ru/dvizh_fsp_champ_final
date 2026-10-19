@@ -1,3 +1,6 @@
+import { OrganizerHome } from "./organizer-home";
+import { AdminHome } from "./admin-home";
+import { MobileTabBar } from "@/widgets/mobile-shell/ui/mobile-tab-bar";
 import { usePetName } from "@/entity/user/model/use-pet-name";
 import { Compass } from "lucide-react";
 import { EmptyState } from "@/shared/components/ui/empty-state";
@@ -305,8 +308,26 @@ function Recommendations() {
   );
 }
 
+/** Главная клуба и админа: свой экран, один на телефон и компьютер. */
+function RoleHome({ role }: { role: "ORG" | "ADMIN" }) {
+  return (
+    <div className="relative isolate min-h-dvh overflow-hidden bg-background pb-24 lg:pb-0">
+      <div className="hidden lg:block">
+        <AppHeader current="home" />
+      </div>
+      <main className="mx-auto flex w-full max-w-[1280px] flex-col px-4 pt-5 pb-12 lg:px-8 lg:pt-8">
+        {role === "ORG" ? <OrganizerHome /> : <AdminHome />}
+      </main>
+      <div className="lg:hidden">
+        <MobileTabBar current="home" />
+      </div>
+    </div>
+  );
+}
+
 export default function HomePage() {
   const { user } = useUser();
+  if (user?.systemRole === "ORG" || user?.systemRole === "ADMIN") return <RoleHome role={user.systemRole} />;
   return (
     <>
     <HomeMobile />
