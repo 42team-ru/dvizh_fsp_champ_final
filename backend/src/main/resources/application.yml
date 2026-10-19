@@ -42,6 +42,6 @@ app:
     refresh-ttl: 14d
   demo:
     # DEMO_MODE=true: тестовые аккаунты и мероприятия (DemoSeeder) и быстрый вход без пароля. Только для демо/жюри!
-    enabled: ${DEMO_MODE:false}
+    enabled: ${DEMO_MODE:true}
     password: ${DEMO_PASSWORD:demo-password-1}
   cors-allowed-origins: ${CORS_ORIGINS:http://localhost:5173}

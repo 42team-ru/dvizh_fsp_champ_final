@@ -1,0 +1,3725 @@
+{
+  "info": {
+    "name": "Спорт вместе: приёмка",
+    "description": "Проверка сценариев приёмки через API. Подробно: docs/postman.md.\n\nЗапускать всю коллекцию целиком и по порядку (Run collection или newman): папки зависят от данных, созданных выше.\nКаждый прогон создаёт новых пользователей с уникальным суффиксом, поэтому коллекцию можно гонять повторно на той же базе.\nНужен DEMO_MODE=true: вход админа берётся из демо-данных.\nАвторизация — cookie access_token: Postman и newman хранят её сами, каждый «Вход» переключает пользователя.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "password",
+      "value": "Postman#Pass1"
+    },
+    {
+      "key": "adminUsername",
+      "value": "admin"
+    },
+    {
+      "key": "demoPassword",
+      "value": "demo-password-1"
+    },
+    {
+      "key": "suffix",
+      "value": ""
+    },
+    {
+      "key": "startAt",
+      "value": ""
+    },
+    {
+      "key": "endAt",
+      "value": ""
+    }
+  ],
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "    // Для любого запроса: сервер не должен падать с 5xx.",
+          "    pm.test(\"Нет ошибки сервера (5xx)\", () => pm.expect(pm.response.code).to.be.below(500));"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Подготовка",
+      "description": "Уникальные логины и даты на этот прогон, проверка, что бэк и демо-режим живы.",
+      "item": [
+        {
+          "name": "Бэкенд отвечает",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/ping",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ping"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      // Новый суффикс на каждый прогон: пользователи и мероприятия не пересекаются с прошлыми.",
+                  "      const suffix = Date.now().toString(36);",
+                  "      pm.collectionVariables.set(\"suffix\", suffix);",
+                  "      for (const role of [\"author\", \"userB\", \"userC\", \"org\"]) {",
+                  "          pm.collectionVariables.set(role, `pm_${role.toLowerCase()}_${suffix}`);",
+                  "      }",
+                  "      // Мероприятие послезавтра в 19:00 UTC, два часа.",
+                  "      const start = new Date();",
+                  "      start.setUTCDate(start.getUTCDate() + 2);",
+                  "      start.setUTCHours(19, 0, 0, 0);",
+                  "      pm.collectionVariables.set(\"startAt\", start.toISOString());",
+                  "      pm.collectionVariables.set(\"endAt\", new Date(start.getTime() + 2 * 3600 * 1000).toISOString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Демо-аккаунты есть",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/demo/accounts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "demo",
+                "accounts"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      const accounts = pm.response.json();",
+                  "      pm.test(\"Демо-режим включён и есть админ (иначе папки 2 и 6 не пройдут)\", () => {",
+                  "          pm.expect(accounts.map(a => a.systemRole)).to.include(\"ADMIN\");",
+                  "      });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Выйти, если остались cookie прошлого прогона",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "logout"
+              ]
+            }
+          },
+          "event": []
+        },
+        {
+          "name": "Без входа — 401",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"401\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1. Создание события пользователем",
+      "description": "Сценарий 1: пользователь создаёт событие (в том числе с новым видом спорта), другой находит и открывает его.",
+      "item": [
+        {
+          "name": "Регистрация: Автор",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{author}}\",\n  \"email\": \"{{author}}@example.com\",\n  \"firstName\": \"Автор\",\n  \"lastName\": \"Постманов\",\n  \"password\": \"{{password}}\",\n  \"accountType\": \"USER\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Регистрация Автор: 201\", () => pm.response.to.have.status(201));",
+                  "const user = pm.response.json();",
+                  "pm.test(\"Роль USER\", () => pm.expect(user.systemRole).to.eql(\"USER\"));",
+                  "pm.collectionVariables.set(\"authorId\", user.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Регистрация: Борис",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{userB}}\",\n  \"email\": \"{{userB}}@example.com\",\n  \"firstName\": \"Борис\",\n  \"lastName\": \"Постманов\",\n  \"password\": \"{{password}}\",\n  \"accountType\": \"USER\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Регистрация Борис: 201\", () => pm.response.to.have.status(201));",
+                  "const user = pm.response.json();",
+                  "pm.test(\"Роль USER\", () => pm.expect(user.systemRole).to.eql(\"USER\"));",
+                  "pm.collectionVariables.set(\"userBId\", user.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Регистрация: Вера",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{userC}}\",\n  \"email\": \"{{userC}}@example.com\",\n  \"firstName\": \"Вера\",\n  \"lastName\": \"Постманов\",\n  \"password\": \"{{password}}\",\n  \"accountType\": \"USER\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Регистрация Вера: 201\", () => pm.response.to.have.status(201));",
+                  "const user = pm.response.json();",
+                  "pm.test(\"Роль USER\", () => pm.expect(user.systemRole).to.eql(\"USER\"));",
+                  "pm.collectionVariables.set(\"userCId\", user.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Вход: Автор",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{author}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Вход Автор: 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Справочник: найти «Футбол»",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/sports?query=фут",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sports"
+              ],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "фут"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      const sports = pm.response.json();",
+                  "      const football = sports.find(s => s.name === \"Футбол\");",
+                  "      pm.test(\"Футбол есть в справочнике\", () => pm.expect(football).to.exist);",
+                  "      pm.collectionVariables.set(\"footballId\", football.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Создать: свободная запись, 1 место",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Футбол Postman {{suffix}}\",\n  \"description\": \"Создано Postman-проверкой\",\n  \"sportId\": \"{{footballId}}\",\n  \"startAt\": \"{{startAt}}\",\n  \"endAt\": \"{{endAt}}\",\n  \"format\": \"OFFLINE\",\n  \"address\": \"Красноярск, остров Татышев\",\n  \"locationNote\": \"У главного входа\",\n  \"level\": \"AMATEUR\",\n  \"kind\": \"GAME\",\n  \"requirements\": \"Хорошее настроение\",\n  \"equipment\": \"Форма, вода\",\n  \"capacity\": 1,\n  \"joinMode\": \"FREE\",\n  \"privateDetails\": \"Чат: https://t.me/postman_check\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      pm.test(\"201\", () => pm.response.to.have.status(201));",
+                  "      const event = pm.response.json();",
+                  "      pm.collectionVariables.set(\"freeEventId\", event.id);",
+                  "      pm.test(\"Опубликовано сразу\", () => pm.expect(event.status).to.eql(\"PUBLISHED\"));",
+                  "      pm.test(\"Автор — организатор и управляет\", () => {",
+                  "          pm.expect(event.viewer.isOrganizer).to.be.true;",
+                  "          pm.expect(event.viewer.canManage).to.be.true;",
+                  "          pm.expect(event.viewer.canRegister).to.be.false;",
+                  "      });",
+                  "      pm.test(\"Организатор видит приватные детали\", () => pm.expect(event.privateDetails).to.include(\"t.me\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Создать: свой вид спорта, по заявке",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Сапсёрфинг Postman {{suffix}}\",\n  \"description\": \"Создано Postman-проверкой\",\n  \"sportName\": \"  Сапсёрфинг   {{suffix}} \",\n  \"startAt\": \"{{startAt}}\",\n  \"endAt\": \"{{endAt}}\",\n  \"format\": \"OFFLINE\",\n  \"address\": \"Красноярск, остров Татышев\",\n  \"locationNote\": \"У главного входа\",\n  \"level\": \"AMATEUR\",\n  \"kind\": \"GAME\",\n  \"requirements\": \"Хорошее настроение\",\n  \"equipment\": \"Форма, вода\",\n  \"capacity\": 10,\n  \"joinMode\": \"REQUEST\",\n  \"privateDetails\": \"Чат: https://t.me/postman_check\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      pm.test(\"201\", () => pm.response.to.have.status(201));",
+                  "      const event = pm.response.json();",
+                  "      pm.collectionVariables.set(\"requestEventId\", event.id);",
+                  "      pm.test(\"Новый вид спорта создан как custom, пробелы схлопнуты\", () => {",
+                  "          pm.expect(event.sport.custom).to.be.true;",
+                  "          pm.expect(event.sport.name).to.eql(\"Сапсёрфинг \" + pm.collectionVariables.get(\"suffix\"));",
+                  "      });",
+                  "      pm.test(\"Режим «по заявке»\", () => pm.expect(event.joinMode).to.eql(\"REQUEST\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ошибка: без адреса для очного — 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Без адреса\",\n  \"sportId\": \"{{footballId}}\",\n  \"startAt\": \"{{startAt}}\",\n  \"format\": \"OFFLINE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400: Для очного мероприятия нужен адрес\", () => {",
+                  "    pm.response.to.have.status(400);",
+                  "    pm.expect(pm.response.json().detail).to.eql(\"Для очного мероприятия нужен адрес\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Мои мероприятия: оба на месте",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/mine",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "mine"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      const ids = pm.response.json().map(e => e.id);",
+                  "      pm.test(\"Оба созданных в «моих»\", () => {",
+                  "          pm.expect(ids).to.include(pm.collectionVariables.get(\"freeEventId\"));",
+                  "          pm.expect(ids).to.include(pm.collectionVariables.get(\"requestEventId\"));",
+                  "      });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Вход: Борис",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{userB}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Вход Борис: 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Лента: Борис находит по названию",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/events?searchText=postman {{suffix}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events"
+              ],
+              "query": [
+                {
+                  "key": "searchText",
+                  "value": "postman {{suffix}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      const ids = pm.response.json().map(e => e.id);",
+                  "      pm.test(\"Оба мероприятия в ленте\", () => {",
+                  "          pm.expect(ids).to.include(pm.collectionVariables.get(\"freeEventId\"));",
+                  "          pm.expect(ids).to.include(pm.collectionVariables.get(\"requestEventId\"));",
+                  "      });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Лента: фильтр по режиму записи",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/events?searchText=postman {{suffix}}&joinMode=REQUEST",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events"
+              ],
+              "query": [
+                {
+                  "key": "searchText",
+                  "value": "postman {{suffix}}"
+                },
+                {
+                  "key": "joinMode",
+                  "value": "REQUEST"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      const ids = pm.response.json().map(e => e.id);",
+                  "      pm.test(\"Только событие по заявке\", () => pm.expect(ids).to.eql([pm.collectionVariables.get(\"requestEventId\")]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Карточка глазами Бориса",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{freeEventId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{freeEventId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      pm.test(\"200\", () => pm.response.to.have.status(200));",
+                  "      const event = pm.response.json();",
+                  "      pm.test(\"Можно записаться\", () => pm.expect(event.viewer.canRegister).to.be.true);",
+                  "      pm.test(\"Не организатор\", () => pm.expect(event.viewer.isOrganizer).to.be.false);",
+                  "      pm.test(\"Приватные детали скрыты до записи\", () => pm.expect(event.privateDetails).to.be.null);",
+                  "      pm.test(\"Автор виден\", () => pm.expect(event.author.id).to.eql(pm.collectionVariables.get(\"authorId\")));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Допуск организации",
+      "description": "Сценарий 2: организация подаёт анкету, админ отклоняет, затем после правки одобряет; одобренная публикует событие без модерации, пользователь видит её страницу.",
+      "item": [
+        {
+          "name": "Регистрация: Клуб",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{org}}\",\n  \"email\": \"{{org}}@example.com\",\n  \"firstName\": \"Клуб\",\n  \"lastName\": \"Постманов\",\n  \"password\": \"{{password}}\",\n  \"accountType\": \"ORG\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Регистрация Клуб: 201\", () => pm.response.to.have.status(201));",
+                  "const user = pm.response.json();",
+                  "pm.test(\"Роль ORG\", () => pm.expect(user.systemRole).to.eql(\"ORG\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Вход: Клуб",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{org}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Вход Клуб: 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Анкеты ещё нет — 404",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/organizations/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "organizations",
+                "me"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"404: Анкета организации ещё не заполнена\", () => {",
+                  "    pm.response.to.have.status(404);",
+                  "    pm.expect(pm.response.json().detail).to.eql(\"Анкета организации ещё не заполнена\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "До одобрения публиковать нельзя — 403",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Рано {{suffix}}\",\n  \"description\": \"Создано Postman-проверкой\",\n  \"sportId\": \"{{footballId}}\",\n  \"startAt\": \"{{startAt}}\",\n  \"endAt\": \"{{endAt}}\",\n  \"format\": \"OFFLINE\",\n  \"address\": \"Красноярск, остров Татышев\",\n  \"locationNote\": \"У главного входа\",\n  \"level\": \"AMATEUR\",\n  \"kind\": \"GAME\",\n  \"requirements\": \"Хорошее настроение\",\n  \"equipment\": \"Форма, вода\",\n  \"capacity\": 10,\n  \"joinMode\": \"FREE\",\n  \"privateDetails\": \"Чат: https://t.me/postman_check\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"403: Публиковать мероприятия от организации можно только после одобрения заявки\", () => {",
+                  "    pm.response.to.have.status(403);",
+                  "    pm.expect(pm.response.json().detail).to.eql(\"Публиковать мероприятия от организации можно только после одобрения заявки\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Подать анкету",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/organizations/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "organizations",
+                "me"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Клуб Postman {{suffix}}\",\n  \"description\": \"Любительский клуб для проверки допуска\",\n  \"city\": \"Красноярск\",\n  \"contacts\": { \"TELEGRAM\": \"@postman_club\", \"PHONE\": \"+7 900 000-00-00\" }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      pm.test(\"200\", () => pm.response.to.have.status(200));",
+                  "      const org = pm.response.json();",
+                  "      pm.test(\"Ушла на проверку (PENDING)\", () => pm.expect(org.status).to.eql(\"PENDING\"));",
+                  "      pm.collectionVariables.set(\"orgId\", org.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Публичной страницы пока нет — 404",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/organizations/{{orgId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "organizations",
+                "{{orgId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"404\", () => {",
+                  "    pm.response.to.have.status(404);",
+                  "    ",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Вход: Борис (не админ)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{userB}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Вход Борис (не админ): 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Не админ в админке — 403",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/organizations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "organizations"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"403\", () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Вход: Админ",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{adminUsername}}\",\n  \"password\": \"{{demoPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Вход Админ: 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Админ видит заявку в PENDING",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/organizations?status=PENDING&searchText=Postman {{suffix}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "organizations"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "PENDING"
+                },
+                {
+                  "key": "searchText",
+                  "value": "Postman {{suffix}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      const page = pm.response.json();",
+                  "      const ids = page.items.map(o => o.id);",
+                  "      pm.test(\"Заявка в списке\", () => pm.expect(ids).to.include(pm.collectionVariables.get(\"orgId\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Админ не создаёт мероприятия — 403",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Админ {{suffix}}\",\n  \"description\": \"Создано Postman-проверкой\",\n  \"sportId\": \"{{footballId}}\",\n  \"startAt\": \"{{startAt}}\",\n  \"endAt\": \"{{endAt}}\",\n  \"format\": \"OFFLINE\",\n  \"address\": \"Красноярск, остров Татышев\",\n  \"locationNote\": \"У главного входа\",\n  \"level\": \"AMATEUR\",\n  \"kind\": \"GAME\",\n  \"requirements\": \"Хорошее настроение\",\n  \"equipment\": \"Форма, вода\",\n  \"capacity\": 10,\n  \"joinMode\": \"FREE\",\n  \"privateDetails\": \"Чат: https://t.me/postman_check\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"403: Администратор не создаёт мероприятия\", () => {",
+                  "    pm.response.to.have.status(403);",
+                  "    pm.expect(pm.response.json().detail).to.eql(\"Администратор не создаёт мероприятия\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Отклонить с причиной",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/organizations/{{orgId}}/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "organizations",
+                "{{orgId}}",
+                "reject"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Укажите сайт или группу клуба\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      pm.test(\"200\", () => pm.response.to.have.status(200));",
+                  "      pm.test(\"REJECTED\", () => pm.expect(pm.response.json().status).to.eql(\"REJECTED\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Вход: Клуб",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{org}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Вход Клуб: 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Клуб видит отказ и причину",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/organizations/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "organizations",
+                "me"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      const org = pm.response.json();",
+                  "      pm.test(\"REJECTED\", () => pm.expect(org.status).to.eql(\"REJECTED\"));",
+                  "      pm.test(\"Причина видна\", () => pm.expect(org.rejectReason).to.eql(\"Укажите сайт или группу клуба\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Исправить анкету — снова на проверку",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/organizations/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "organizations",
+                "me"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Клуб Postman {{suffix}}\",\n  \"description\": \"Любительский клуб для проверки допуска\",\n  \"city\": \"Красноярск\",\n  \"contacts\": { \"TELEGRAM\": \"@postman_club\", \"WEBSITE\": \"https://example.com\" }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"PENDING\", () => pm.expect(pm.response.json().status).to.eql(\"PENDING\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Вход: Админ",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{adminUsername}}\",\n  \"password\": \"{{demoPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Вход Админ: 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Одобрить",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/organizations/{{orgId}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "organizations",
+                "{{orgId}}",
+                "approve"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      pm.test(\"200\", () => pm.response.to.have.status(200));",
+                  "      pm.test(\"APPROVED\", () => pm.expect(pm.response.json().status).to.eql(\"APPROVED\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Вход: Клуб",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{org}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Вход Клуб: 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Клуб видит одобрение",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/organizations/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "organizations",
+                "me"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"APPROVED\", () => pm.expect(pm.response.json().status).to.eql(\"APPROVED\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Публикует событие без модерации",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Турнир клуба Postman {{suffix}}\",\n  \"description\": \"Создано Postman-проверкой\",\n  \"sportId\": \"{{footballId}}\",\n  \"startAt\": \"{{startAt}}\",\n  \"endAt\": \"{{endAt}}\",\n  \"format\": \"OFFLINE\",\n  \"address\": \"Красноярск, остров Татышев\",\n  \"locationNote\": \"У главного входа\",\n  \"level\": \"AMATEUR\",\n  \"kind\": \"GAME\",\n  \"requirements\": \"Хорошее настроение\",\n  \"equipment\": \"Форма, вода\",\n  \"capacity\": 20,\n  \"joinMode\": \"FREE\",\n  \"privateDetails\": \"Чат: https://t.me/postman_check\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      pm.test(\"201\", () => pm.response.to.have.status(201));",
+                  "      const event = pm.response.json();",
+                  "      pm.collectionVariables.set(\"orgEventId\", event.id);",
+                  "      pm.test(\"Опубликовано сразу\", () => pm.expect(event.status).to.eql(\"PUBLISHED\"));",
+                  "      pm.test(\"От имени организации\", () => pm.expect(event.organizationId).to.eql(pm.collectionVariables.get(\"orgId\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Вход: Борис",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{userB}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Вход Борис: 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Пользователь видит страницу организации",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/organizations/{{orgId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "organizations",
+                "{{orgId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      pm.test(\"200\", () => pm.response.to.have.status(200));",
+                  "      pm.test(\"Название\", () => pm.expect(pm.response.json().name).to.include(\"Клуб Postman\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Пользователь видит событие организации в ленте",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/events?searchText=Турнир клуба Postman {{suffix}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events"
+              ],
+              "query": [
+                {
+                  "key": "searchText",
+                  "value": "Турнир клуба Postman {{suffix}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      const event = pm.response.json().find(e => e.id === pm.collectionVariables.get(\"orgEventId\"));",
+                  "      pm.test(\"Событие в ленте\", () => pm.expect(event).to.exist);",
+                  "      pm.test(\"С привязкой к организации\", () => pm.expect(event.organizationId).to.eql(pm.collectionVariables.get(\"orgId\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Страница организации: её события",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/events?organizationId={{orgId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events"
+              ],
+              "query": [
+                {
+                  "key": "organizationId",
+                  "value": "{{orgId}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      const list = pm.response.json();",
+                  "      pm.test(\"Событие клуба на его странице\", () => pm.expect(list.map(e => e.id)).to.include(pm.collectionVariables.get(\"orgEventId\")));",
+                  "      pm.test(\"Только события этой организации\", () => list.forEach(e => pm.expect(e.organizationId).to.eql(pm.collectionVariables.get(\"orgId\"))));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Карточка: организация со ссылкой на страницу",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{orgEventId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{orgEventId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      const event = pm.response.json();",
+                  "      pm.test(\"Организация в карточке\", () => {",
+                  "          pm.expect(event.organization.id).to.eql(pm.collectionVariables.get(\"orgId\"));",
+                  "          pm.expect(event.organization.name).to.include(\"Клуб Postman\");",
+                  "      });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Свободная запись",
+      "description": "Сценарий 3: запись сразу подтверждена, организатор видит участника. Плюс границы: повтор, «мест нет», отмена и повторная запись.",
+      "item": [
+        {
+          "name": "Борис записывается",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{freeEventId}}/registrations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{freeEventId}}",
+                "registrations"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      pm.test(\"201\", () => pm.response.to.have.status(201));",
+                  "      pm.test(\"Сразу CONFIRMED\", () => pm.expect(pm.response.json().status).to.eql(\"CONFIRMED\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Карточка: «Вы записаны»",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{freeEventId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{freeEventId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      const event = pm.response.json();",
+                  "      pm.test(\"Статус моей записи CONFIRMED\", () => pm.expect(event.viewer.registrationStatus).to.eql(\"CONFIRMED\"));",
+                  "      pm.test(\"Можно отменить\", () => pm.expect(event.viewer.canCancel).to.be.true);",
+                  "      pm.test(\"Приватные детали открылись\", () => pm.expect(event.privateDetails).to.include(\"t.me\"));",
+                  "      pm.test(\"Счётчик 1\", () => pm.expect(event.participantsCount).to.eql(1));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Повторная запись — 409",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{freeEventId}}/registrations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{freeEventId}}",
+                "registrations"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"409: Вы уже записаны на это мероприятие\", () => {",
+                  "    pm.response.to.have.status(409);",
+                  "    pm.expect(pm.response.json().detail).to.eql(\"Вы уже записаны на это мероприятие\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Вход: Вера",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{userC}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Вход Вера: 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Вера: мест нет — 409",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{freeEventId}}/registrations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{freeEventId}}",
+                "registrations"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"409: Мест нет\", () => {",
+                  "    pm.response.to.have.status(409);",
+                  "    pm.expect(pm.response.json().detail).to.eql(\"Мест нет\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Вход: Автор",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{author}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Вход Автор: 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Организатор видит Бориса в участниках",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{freeEventId}}/registrations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{freeEventId}}",
+                "registrations"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      const list = pm.response.json();",
+                  "      const boris = list.find(r => r.participant.id === pm.collectionVariables.get(\"userBId\"));",
+                  "      pm.test(\"Борис в списке со статусом CONFIRMED\", () => pm.expect(boris && boris.status).to.eql(\"CONFIRMED\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Организатор сам не записывается — 409",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{freeEventId}}/registrations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{freeEventId}}",
+                "registrations"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"409: Организатор не может записаться на своё мероприятие\", () => {",
+                  "    pm.response.to.have.status(409);",
+                  "    pm.expect(pm.response.json().detail).to.eql(\"Организатор не может записаться на своё мероприятие\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Вход: Борис",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{userB}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Вход Борис: 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Борис отменяет запись",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{freeEventId}}/registrations/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{freeEventId}}",
+                "registrations",
+                "me"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      pm.test(\"200\", () => pm.response.to.have.status(200));",
+                  "      pm.test(\"CANCELLED\", () => pm.expect(pm.response.json().status).to.eql(\"CANCELLED\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Борис записывается снова (та же строка)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{freeEventId}}/registrations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{freeEventId}}",
+                "registrations"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      pm.test(\"201\", () => pm.response.to.have.status(201));",
+                  "      pm.test(\"Снова CONFIRMED\", () => pm.expect(pm.response.json().status).to.eql(\"CONFIRMED\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Запись по заявке",
+      "description": "Сценарий 4: заявка ждёт решения, организатор принимает одну и отклоняет другую, статусы видны обоим.",
+      "item": [
+        {
+          "name": "Борис подаёт заявку",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{requestEventId}}/registrations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{requestEventId}}",
+                "registrations"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Катаюсь второй сезон, доска своя\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      pm.test(\"201\", () => pm.response.to.have.status(201));",
+                  "      pm.test(\"PENDING\", () => pm.expect(pm.response.json().status).to.eql(\"PENDING\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Карточка: «Ожидает решения»",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{requestEventId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{requestEventId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      const event = pm.response.json();",
+                  "      pm.test(\"Моя заявка PENDING\", () => pm.expect(event.viewer.registrationStatus).to.eql(\"PENDING\"));",
+                  "      pm.test(\"Приватные детали ещё скрыты\", () => pm.expect(event.privateDetails).to.be.null);",
+                  "      pm.test(\"Повторно подать нельзя\", () => {",
+                  "          pm.expect(event.viewer.canRegister).to.be.false;",
+                  "          pm.expect(event.viewer.registerBlockedReason).to.eql(\"Заявка уже отправлена и ждёт решения организатора\");",
+                  "      });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Вход: Вера",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{userC}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Вход Вера: 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Вера подаёт заявку",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{requestEventId}}/registrations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{requestEventId}}",
+                "registrations"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"PENDING\", () => pm.expect(pm.response.json().status).to.eql(\"PENDING\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Вера не может решать заявки — 403",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{requestEventId}}/registrations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{requestEventId}}",
+                "registrations"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"403: Заявки видит только организатор\", () => {",
+                  "    pm.response.to.have.status(403);",
+                  "    pm.expect(pm.response.json().detail).to.eql(\"Заявки видит только организатор\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Вход: Автор",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{author}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Вход Автор: 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Организатор видит две заявки",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{requestEventId}}/registrations?status=PENDING",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{requestEventId}}",
+                "registrations"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "PENDING"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      const list = pm.response.json();",
+                  "      const byUser = id => list.find(r => r.participant.id === pm.collectionVariables.get(id));",
+                  "      pm.test(\"Обе заявки PENDING\", () => {",
+                  "          pm.expect(byUser(\"userBId\")).to.exist;",
+                  "          pm.expect(byUser(\"userCId\")).to.exist;",
+                  "      });",
+                  "      pm.test(\"Сообщение к заявке видно\", () => pm.expect(byUser(\"userBId\").message).to.include(\"доска своя\"));",
+                  "      pm.collectionVariables.set(\"regBId\", byUser(\"userBId\").id);",
+                  "      pm.collectionVariables.set(\"regCId\", byUser(\"userCId\").id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Принять заявку Бориса",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/registrations/{{regBId}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "registrations",
+                "{{regBId}}",
+                "approve"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      pm.test(\"200\", () => pm.response.to.have.status(200));",
+                  "      pm.test(\"CONFIRMED\", () => pm.expect(pm.response.json().status).to.eql(\"CONFIRMED\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Отклонить заявку Веры с причиной",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/registrations/{{regCId}}/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "registrations",
+                "{{regCId}}",
+                "reject"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Группа уже набрана\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      pm.test(\"200\", () => pm.response.to.have.status(200));",
+                  "      const r = pm.response.json();",
+                  "      pm.test(\"REJECTED с причиной\", () => {",
+                  "          pm.expect(r.status).to.eql(\"REJECTED\");",
+                  "          pm.expect(r.decisionReason).to.eql(\"Группа уже набрана\");",
+                  "      });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Вход: Борис",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{userB}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Вход Борис: 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Мои записи Бориса: принят",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/registrations/mine",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "registrations",
+                "mine"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      const mine = pm.response.json().find(r => r.event.id === pm.collectionVariables.get(\"requestEventId\"));",
+                  "      pm.test(\"CONFIRMED\", () => pm.expect(mine.status).to.eql(\"CONFIRMED\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Карточка: Борис участник, детали открылись",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{requestEventId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{requestEventId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      const event = pm.response.json();",
+                  "      pm.test(\"CONFIRMED\", () => pm.expect(event.viewer.registrationStatus).to.eql(\"CONFIRMED\"));",
+                  "      pm.test(\"Приватные детали видны\", () => pm.expect(event.privateDetails).to.include(\"t.me\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Вход: Вера",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{userC}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Вход Вера: 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Мои записи Веры: отклонено с причиной",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/registrations/mine",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "registrations",
+                "mine"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      const mine = pm.response.json().find(r => r.event.id === pm.collectionVariables.get(\"requestEventId\"));",
+                  "      pm.test(\"REJECTED\", () => pm.expect(mine.status).to.eql(\"REJECTED\"));",
+                  "      pm.test(\"Причина видна участнику\", () => pm.expect(mine.decisionReason).to.eql(\"Группа уже набрана\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Вера не может подать заново — 409",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{requestEventId}}/registrations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{requestEventId}}",
+                "registrations"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"409: Организатор отклонил вашу заявку. Если это ошибка, свяжитесь с организатором\", () => {",
+                  "    pm.response.to.have.status(409);",
+                  "    pm.expect(pm.response.json().detail).to.eql(\"Организатор отклонил вашу заявку. Если это ошибка, свяжитесь с организатором\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. Уточнение условий",
+      "description": "Сценарий 5: пользователь спрашивает в обсуждении, организатор отвечает, авторство и метка «Организатор» видны.",
+      "item": [
+        {
+          "name": "Вера (не записана) задаёт вопрос",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{freeEventId}}/comments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{freeEventId}}",
+                "comments"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Можно прийти без своих шиповок?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      pm.test(\"201\", () => pm.response.to.have.status(201));",
+                  "      const comment = pm.response.json();",
+                  "      pm.test(\"Автор — Вера, не организатор\", () => {",
+                  "          pm.expect(comment.author.id).to.eql(pm.collectionVariables.get(\"userCId\"));",
+                  "          pm.expect(comment.isOrganizer).to.be.false;",
+                  "      });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Пустой комментарий — 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{freeEventId}}/comments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{freeEventId}}",
+                "comments"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"   \"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Вход: Автор",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{author}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Вход Автор: 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Организатор отвечает",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{freeEventId}}/comments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{freeEventId}}",
+                "comments"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Можно, на поле искусственный газон: подойдут обычные кроссовки.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      pm.test(\"201\", () => pm.response.to.have.status(201));",
+                  "      pm.test(\"Метка «Организатор»\", () => pm.expect(pm.response.json().isOrganizer).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Вход: Борис",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{userB}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Вход Борис: 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Обсуждение глазами участника",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{freeEventId}}/comments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{freeEventId}}",
+                "comments"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      const list = pm.response.json();",
+                  "      pm.test(\"Вопрос и ответ по порядку\", () => {",
+                  "          pm.expect(list).to.have.length(2);",
+                  "          pm.expect(list[0].author.id).to.eql(pm.collectionVariables.get(\"userCId\"));",
+                  "          pm.expect(list[1].author.id).to.eql(pm.collectionVariables.get(\"authorId\"));",
+                  "      });",
+                  "      pm.test(\"Ответ помечен «Организатор», вопрос — нет\", () => {",
+                  "          pm.expect(list[0].isOrganizer).to.be.false;",
+                  "          pm.expect(list[1].isOrganizer).to.be.true;",
+                  "      });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Карточка: можно писать в обсуждение",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{freeEventId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{freeEventId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"viewer.canComment\", () => pm.expect(pm.response.json().viewer.canComment).to.be.true);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6. Снятие с публикации",
+      "description": "Сценарий 6: админ снимает одно событие и удаляет другое с причиной. Оно пропадает из ленты, записаться нельзя даже по прямой ссылке, записавшиеся видят статус и причину.",
+      "item": [
+        {
+          "name": "Вход: Админ",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{adminUsername}}\",\n  \"password\": \"{{demoPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Вход Админ: 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Дашборд: счётчики",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "stats"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      const stats = pm.response.json();",
+                  "      pm.test(\"200\", () => pm.response.to.have.status(200));",
+                  "      pm.test(\"Есть опубликованные события и комментарии\", () => {",
+                  "          pm.expect(stats.eventsPublished).to.be.above(0);",
+                  "          pm.expect(stats.comments).to.be.above(0);",
+                  "      });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Админ находит событие",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/events?searchText=Футбол Postman {{suffix}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "events"
+              ],
+              "query": [
+                {
+                  "key": "searchText",
+                  "value": "Футбол Postman {{suffix}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      const page = pm.response.json();",
+                  "      const event = page.items.find(e => e.id === pm.collectionVariables.get(\"freeEventId\"));",
+                  "      pm.test(\"Найдено, опубликовано\", () => pm.expect(event.status).to.eql(\"PUBLISHED\"));",
+                  "      pm.test(\"Видно автора и участников\", () => {",
+                  "          pm.expect(event.author.id).to.eql(pm.collectionVariables.get(\"authorId\"));",
+                  "          pm.expect(event.participantsCount).to.eql(1);",
+                  "      });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Снять без причины — 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/events/{{freeEventId}}/unpublish",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "events",
+                "{{freeEventId}}",
+                "unpublish"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Снять с публикации с причиной",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/events/{{freeEventId}}/unpublish",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "events",
+                "{{freeEventId}}",
+                "unpublish"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Площадка закрыта на ремонт\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      pm.test(\"200\", () => pm.response.to.have.status(200));",
+                  "      const event = pm.response.json();",
+                  "      pm.test(\"UNPUBLISHED с причиной\", () => {",
+                  "          pm.expect(event.status).to.eql(\"UNPUBLISHED\");",
+                  "          pm.expect(event.moderationReason).to.eql(\"Площадка закрыта на ремонт\");",
+                  "      });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Удалить другое с причиной",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/events/{{requestEventId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "events",
+                "{{requestEventId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Дубликат мероприятия\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      pm.test(\"200\", () => pm.response.to.have.status(200));",
+                  "      pm.test(\"DELETED\", () => pm.expect(pm.response.json().status).to.eql(\"DELETED\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Удалённое снять нельзя — 409",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/events/{{requestEventId}}/unpublish",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "events",
+                "{{requestEventId}}",
+                "unpublish"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Ещё раз\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"409: Мероприятие удалено, снимать нечего\", () => {",
+                  "    pm.response.to.have.status(409);",
+                  "    pm.expect(pm.response.json().detail).to.eql(\"Мероприятие удалено, снимать нечего\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Фильтр админки по статусу",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/events?status=UNPUBLISHED&searchText=Postman {{suffix}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "events"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "UNPUBLISHED"
+                },
+                {
+                  "key": "searchText",
+                  "value": "Postman {{suffix}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      const ids = pm.response.json().items.map(e => e.id);",
+                  "      pm.test(\"Только снятое\", () => pm.expect(ids).to.eql([pm.collectionVariables.get(\"freeEventId\")]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Вход: Борис (записан на оба)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{userB}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Вход Борис (записан на оба): 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Снятого и удалённого нет в ленте",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/events?searchText=Postman {{suffix}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events"
+              ],
+              "query": [
+                {
+                  "key": "searchText",
+                  "value": "Postman {{suffix}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      const ids = pm.response.json().map(e => e.id);",
+                  "      pm.test(\"Оба пропали\", () => {",
+                  "          pm.expect(ids).to.not.include(pm.collectionVariables.get(\"freeEventId\"));",
+                  "          pm.expect(ids).to.not.include(pm.collectionVariables.get(\"requestEventId\"));",
+                  "      });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Снятое по прямой ссылке: причина, записи нет",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{freeEventId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{freeEventId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      pm.test(\"200\", () => pm.response.to.have.status(200));",
+                  "      const event = pm.response.json();",
+                  "      pm.test(\"UNPUBLISHED с причиной\", () => {",
+                  "          pm.expect(event.status).to.eql(\"UNPUBLISHED\");",
+                  "          pm.expect(event.moderationReason).to.eql(\"Площадка закрыта на ремонт\");",
+                  "      });",
+                  "      pm.test(\"Записаться нельзя\", () => {",
+                  "          pm.expect(event.viewer.canRegister).to.be.false;",
+                  "          pm.expect(event.viewer.registerBlockedReason).to.eql(\"Запись закрыта: мероприятие снято с публикации\");",
+                  "      });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Запись на снятое через API — 409",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{freeEventId}}/registrations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{freeEventId}}",
+                "registrations"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"409: Запись закрыта: мероприятие снято с публикации\", () => {",
+                  "    pm.response.to.have.status(409);",
+                  "    pm.expect(pm.response.json().detail).to.eql(\"Запись закрыта: мероприятие снято с публикации\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Удалённое по прямой ссылке: «Удалено», обсуждение закрыто",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{requestEventId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{requestEventId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      const event = pm.response.json();",
+                  "      pm.test(\"DELETED с причиной\", () => {",
+                  "          pm.expect(event.status).to.eql(\"DELETED\");",
+                  "          pm.expect(event.moderationReason).to.eql(\"Дубликат мероприятия\");",
+                  "      });",
+                  "      pm.test(\"Записи нет\", () => pm.expect(event.viewer.registerBlockedReason).to.eql(\"Запись закрыта: мероприятие удалено\"));",
+                  "      pm.test(\"Писать нельзя\", () => pm.expect(event.viewer.canComment).to.be.false);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Комментарий к удалённому — 409",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/{{requestEventId}}/comments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "events",
+                "{{requestEventId}}",
+                "comments"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Что случилось?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"409: Мероприятие удалено, обсуждение закрыто\", () => {",
+                  "    pm.response.to.have.status(409);",
+                  "    pm.expect(pm.response.json().detail).to.eql(\"Мероприятие удалено, обсуждение закрыто\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Мои записи: статусы событий видны",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/registrations/mine",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "registrations",
+                "mine"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "      const mine = pm.response.json();",
+                  "      const byEvent = id => mine.find(r => r.event.id === pm.collectionVariables.get(id));",
+                  "      pm.test(\"Запись на снятое осталась, видно «снято»\", () => pm.expect(byEvent(\"freeEventId\").event.status).to.eql(\"UNPUBLISHED\"));",
+                  "      pm.test(\"Запись на удалённое осталась, видно «удалено»\", () => pm.expect(byEvent(\"requestEventId\").event.status).to.eql(\"DELETED\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "7. Сессия",
+      "description": "me → refresh → logout: после выхода API снова отвечает 401.",
+      "item": [
+        {
+          "name": "Кто я",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Это Борис\", () => pm.expect(pm.response.json().id).to.eql(pm.collectionVariables.get(\"userBId\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Обновить токен",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "refresh"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Выйти",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "logout"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "После выхода — 401",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"401\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -13,6 +13,9 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface RegistrationRepository extends JpaRepository<Registration, UUID> {
 
+	/** Для дашборда админа. */
+	long countByStatus(RegistrationStatus status);
+
 	/** Сколько записей с нужным статусом у каждого мероприятия из списка. */
 	interface EventCount {
 

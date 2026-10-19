@@ -20,7 +20,7 @@ public class EventSpecifications {
 
 	/** Только опубликованные; null-фильтры не применяются. Событие уровня ANY подходит под любой level. */
 	public Specification<Event> feed(String searchText, UUID sportId, Instant from, Instant to, EventLevel level,
-			JoinMode joinMode, EventFormat format) {
+			JoinMode joinMode, EventFormat format, UUID organizationId) {
 		return (root, query, criteria) -> {
 			var conditions = new ArrayList<Predicate>();
 			conditions.add(criteria.equal(root.get("status"), EventStatus.PUBLISHED));
@@ -43,6 +43,9 @@ public class EventSpecifications {
 			}
 			if (joinMode != null) {
 				conditions.add(criteria.equal(root.get("joinMode"), joinMode));
+			}
+			if (organizationId != null) {
+				conditions.add(criteria.equal(root.get("organizationId"), organizationId));
 			}
 			if (format != null) {
 				conditions.add(criteria.equal(root.get("format"), format));

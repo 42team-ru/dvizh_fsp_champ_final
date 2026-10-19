@@ -5,6 +5,7 @@ import java.util.UUID;
 import com.hackathon.app.domain.dto.AdminOrganizationResponse;
 import com.hackathon.app.domain.dto.OrganizationAccountResponse;
 import com.hackathon.app.domain.dto.OrganizationResponse;
+import com.hackathon.app.domain.dto.OrganizationShortResponse;
 import com.hackathon.app.domain.dto.PublicOrganizationResponse;
 import com.hackathon.app.domain.dto.SaveOrganizationRequest;
 import com.hackathon.app.domain.entity.AppUser;
@@ -26,6 +27,8 @@ public interface OrganizationMapper {
 	OrganizationResponse toResponse(Organization organization);
 
 	PublicOrganizationResponse toPublic(Organization organization);
+
+	OrganizationShortResponse toShort(Organization organization);
 
 	@Mapping(target = "id", source = "organization.id")
 	@Mapping(target = "city", source = "organization.city")

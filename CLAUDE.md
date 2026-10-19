@@ -108,7 +108,7 @@ cd backend && ./gradlew postgresTest  # смоук миграций на нас�
 | Тег | Эндпоинты (operationId) |
 |---|---|
 | `sports` | `GET /api/sports?query=` (`sports_search`) |
-| `events` | `GET /api/events` с фильтрами `searchText, sportId, from, to, level, joinMode, format` (`events_list`) · `GET /api/events/{id}` с блоком `viewer` (`events_get`) · `POST /api/events` (`events_create`) · `PUT /api/events/{id}` (`events_update`) · `GET /api/events/mine` — где я автор или соорганизатор (`events_mine`) · `POST /api/events/{id}/organizers` (`events_addOrganizer`) · `DELETE /api/events/{id}/organizers/{userId}` (`events_removeOrganizer`) |
+| `events` | `GET /api/events` с фильтрами `searchText, sportId, from, to, level, joinMode, format, organizationId` (последний — для страницы организации) (`events_list`) · `GET /api/events/{id}` с блоком `viewer` (`events_get`) · `POST /api/events` (`events_create`) · `PUT /api/events/{id}` (`events_update`) · `GET /api/events/mine` — где я автор или соорганизатор (`events_mine`) · `POST /api/events/{id}/organizers` (`events_addOrganizer`) · `DELETE /api/events/{id}/organizers/{userId}` (`events_removeOrganizer`) |
 | `registrations` | `POST /api/events/{id}/registrations` (`registrations_create`) · `DELETE /api/events/{id}/registrations/me` (`registrations_cancel`) · `GET /api/events/{id}/registrations` — участники и заявки для организатора (`registrations_listForEvent`) · `POST /api/registrations/{id}/approve` (`registrations_approve`) · `POST /api/registrations/{id}/reject` (`registrations_reject`) · `GET /api/registrations/mine` (`registrations_mine`) |
 | `comments` | `GET /api/events/{id}/comments` (`comments_list`) · `POST /api/events/{id}/comments` (`comments_create`) |
 | `organizations` | `GET /api/organizations/me` (`organizations_me`) · `PUT /api/organizations/me` — анкета (`organizations_saveMine`) · `GET /api/organizations/{id}` — публичная, только APPROVED (`organizations_get`) |
@@ -154,7 +154,7 @@ cd backend && ./gradlew postgresTest  # смоук миграций на нас�
 
 ## Демо-данные
 
-Создаются в `DemoSeeder.seed()` при старте, только при `DEMO_MODE=true` (кнопки входа отдаёт `DemoService`). Сид идемпотентный: аккаунт ищется по логину, мероприятие — по автору и названию; существующее не трогаем, недостающее создаём. Аккаунты: `admin`, `anna`, `petr`, `olga` (кнопками на входе) и массовка `dmitry`, `elena`, `sergey`, `nikolai`. Даты событий задаются от `clock.instant()` («послезавтра в 19:00»), чтобы демо не устаревало. Полный сброс: `docker compose down -v`.
+Создаются в `DemoSeeder.seed()` при старте, только при `DEMO_MODE=true` (кнопки входа отдаёт `DemoService`). Сид идемпотентный: аккаунт ищется по логину, мероприятие — по автору и названию; существующее не трогаем, недостающее создаём. Аккаунты: `admin`, `anna`, `petr`, `olga`, `ladya` и `enisey` (кнопками на входе), массовка `dmitry`, `elena`, `sergey`, `nikolai` и `yoga`. Организации создаются через `OrganizationService` и решения `AdminOrganizationService`, как у живых пользователей. Даты событий задаются от `clock.instant()` («послезавтра в 19:00»), чтобы демо не устаревало. Полный сброс: `docker compose down -v`.
 
 - Пользователи: Анна (новичок), Пётр (любитель, автор события «по заявке»), Ольга (пенсионерка, любит зарядку), ещё 3–5 человек для заполненных списков участников.
 - Организации: шахматный клуб «Ладья» — APPROVED, с событиями; беговое сообщество «Енисей» — PENDING, для проверки одобрения; «Йога на Татышеве» — REJECTED, с причиной.
