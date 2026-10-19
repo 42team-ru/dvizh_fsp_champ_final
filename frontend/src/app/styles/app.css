@@ -23,6 +23,7 @@
   --lilac: #d6d1ff;
   --track: #dcd8ee;
   --photo-lime: #ddefa8;
+  --sun: #f7e27a;
   --photo-mint: #c5ebdd;
   --photo-lilac: #d9d4fa;
   --photo-map: #e9ecfb;
@@ -152,6 +153,7 @@
   --color-peach-soft: var(--peach-soft);
   --color-orange-ink: var(--orange-ink);
   --color-photo-lime: var(--photo-lime);
+  --color-sun: var(--sun);
   --color-photo-mint: var(--photo-mint);
   --color-photo-lilac: var(--photo-lilac);
   --color-photo-map: var(--photo-map);

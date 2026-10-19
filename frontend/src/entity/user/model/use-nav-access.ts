@@ -16,6 +16,7 @@ export function useNavAccess() {
     showActivity,
     showProfile: role === "USER",
     canCreate: role === "USER" || role === "ORG",
+    isAdmin: role === "ADMIN",
     unread,
   };
 }
