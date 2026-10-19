@@ -295,11 +295,13 @@ function About({ m }: { m: EventModel }) {
 
 function Organizer({ m }: { m: EventModel }) {
   const e = m.event!;
+  /** Событие организации ведёт на её страницу, личное — на профиль автора. */
+  const organizerHref = e.organization ? `/orgs/${e.organization.id}` : `/users/${e.author.id}`;
   return (
     // Обычный поток с отступами: при крупном шрифте браузера блоки раздвигаются, а не наезжают друг на друга.
     <Card className="relative min-h-[286.5px] shrink-0 gap-[17px] overflow-hidden bg-sky-soft p-[22px]">
       <div className="flex min-h-14 items-center gap-[14px]">
-        <Link to={`/users/${e.author.id}`} aria-label={fullName(e.author)} className="shrink-0">
+        <Link to={organizerHref} aria-label={m.organizerName} className="shrink-0">
           <Disc
             initials={e.organization ? e.organization.name.slice(0, 2).toUpperCase() : initials(e.author)}
             user={e.organization ? undefined : e.author}
@@ -309,7 +311,7 @@ function Organizer({ m }: { m: EventModel }) {
           />
         </Link>
         <div className="min-w-0">
-          <p className="truncate text-[17px] leading-[23px] font-extrabold text-foreground">{m.organizerName}</p>
+          <Link to={organizerHref} className="block truncate text-[17px] leading-[23px] font-extrabold text-foreground hover:underline">{m.organizerName}</Link>
           <p className="truncate text-[13px] leading-[18px] font-medium text-muted-foreground">
             {e.organization ? `Организация · ведёт ${fullName(e.author)}` : `Организатор${e.author.city ? ` · ${e.author.city}` : ""}`}
           </p>
