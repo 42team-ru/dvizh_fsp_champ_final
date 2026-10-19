@@ -6,6 +6,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Slider } from "@/shared/components/ui/slider";
 import { Switch } from "@/shared/components/ui/switch";
 import { cn } from "cn";
+import { HomeLocationField } from "@/features/home-location/ui/home-location-field";
 import {
   DAYS,
   DAYTIMES,
@@ -19,7 +20,7 @@ import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 
 const dir = "/m-onb";
 const shapes = "/onboarding";
-const STEPS = 5;
+const STEPS = 6;
 const PIPS = [10, 16, 22];
 /** В мобильной рамке подпись уровня «Любитель» короче, чем на десктопе. */
 const HINTS: Record<string, string> = { amateur: "Бегаю и играю для души" };
@@ -96,7 +97,7 @@ function TopBar({
         </button>
       ) : (
         <span className="shrink-0 text-[13px] leading-[normal] font-extrabold text-muted-foreground">
-          5 из 5
+          {STEPS} из {STEPS}
         </span>
       )}
     </div>
@@ -394,6 +395,17 @@ function Level({ data, update }: Pick<Props, "data" | "update">) {
   );
 }
 
+function Home({ data, update }: Pick<Props, "data" | "update">) {
+  return (
+    <>
+      <Heading title="Где ты живёшь?" hint="Подберём встречи рядом с домом. Можно пропустить." />
+      <div className="px-4">
+        <HomeLocationField value={data.home} onChange={(home) => update({ home })} mapClassName="h-[300px] w-full" />
+      </div>
+    </>
+  );
+}
+
 function Pet({ data, update }: Pick<Props, "data" | "update">) {
   return (
     <>
@@ -517,8 +529,9 @@ export function OnboardingMobile({ step, setStep, data, update, canNext, finish 
       {step === 1 && <Welcome />}
       {step === 2 && <Sports data={data} update={update} />}
       {step === 3 && <Level data={data} update={update} />}
-      {step === 4 && <Pet data={data} update={update} />}
-      {step === 5 && <Done />}
+      {step === 4 && <Home data={data} update={update} />}
+      {step === 5 && <Pet data={data} update={update} />}
+      {step === 6 && <Done />}
 
       <div className="sticky bottom-0 mt-auto flex flex-col gap-2 bg-background px-4 pt-3 pb-[26px]">
         {step < STEPS ? (

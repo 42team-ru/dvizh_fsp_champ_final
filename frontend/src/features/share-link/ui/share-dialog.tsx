@@ -77,7 +77,7 @@ export function ShareTicket({ path, number, sport, title, rows }: {
   rows: { label: string; value: string }[];
 }) {
   return (
-    <div className="relative mr-[3px] mb-[3px] flex w-full overflow-hidden rounded-[22px] border-2 border-ink bg-lavender shadow-hard-sm">
+    <div className="relative mr-[3px] mb-[3px] flex w-full overflow-hidden rounded-[22px] border-2 border-ink bg-primary shadow-hard-sm">
       <div className="flex min-w-0 flex-1 flex-col gap-3 p-4">
         <span className="truncate text-[10px] font-extrabold tracking-[1.5px] text-muted-foreground">ПОСАДОЧНЫЙ ТАЛОН · № {number}</span>
         <span className="w-fit max-w-full truncate rounded-pill border-[1.5px] border-ink bg-card px-[10px] py-[3px] text-[11px] font-extrabold text-foreground">
@@ -107,22 +107,22 @@ export function SharePassport({ path, name, handle }: { path: string; name: stri
   return (
     <div className="relative mx-auto flex w-[264px] overflow-hidden rounded-[8px_22px_22px_8px] border-2 border-ink bg-lavender shadow-hard-sm">
       {/* корешок */}
-      <div className="w-[14px] shrink-0 border-r-2 border-ink bg-track" />
+      <div className="w-[14px] shrink-0 border-r-2 border-ink bg-ink" />
       <div className="relative flex min-w-0 flex-1 flex-col items-center gap-3 px-5 pt-5 pb-4 text-center">
-        <img src="/profile/guilloche.svg" alt="" className="pointer-events-none absolute inset-0 size-full max-w-none object-cover opacity-50" />
+        <img src="/profile/guilloche.svg" alt="" className="pointer-events-none absolute inset-0 size-full max-w-none object-cover opacity-20 mix-blend-screen" />
         <div className="relative flex flex-col items-center gap-1">
-          <img src="/profile/ring-logo.svg" alt="" className="size-7" />
-          <span className="text-[11px] font-extrabold tracking-[2px] text-foreground">ПАСПОРТ СПОРТСМЕНА</span>
-          <span className="text-[9px] font-extrabold tracking-[2px] text-muted-foreground">SPORT PASSPORT</span>
+          <span className="flex size-9 items-center justify-center rounded-full border-2 border-ink bg-card"><img src="/profile/ring-logo.svg" alt="" className="size-6" /></span>
+          <span className="text-[11px] font-extrabold tracking-[2px] text-secondary">ПАСПОРТ СПОРТСМЕНА</span>
+          <span className="text-[9px] font-extrabold tracking-[2px] text-white/70">SPORT PASSPORT</span>
         </div>
         <div className="relative rounded-xl border-2 border-ink bg-card p-2">
           <QrCode path={path} label="QR-код: профиль спортсмена" className="size-[112px] border-0" />
         </div>
         <div className="relative flex w-full min-w-0 flex-col gap-px">
-          <p className="truncate font-display text-lg leading-6 font-bold text-foreground">{name}</p>
-          {handle && <p className="truncate text-xs font-semibold text-muted-foreground">{handle}</p>}
+          <p className="truncate font-display text-lg leading-6 font-bold text-white">{name}</p>
+          {handle && <p className="truncate text-xs font-semibold text-white/75">{handle}</p>}
         </div>
-        <span className="relative text-[10px] font-extrabold tracking-[1.5px] text-muted-foreground">ОРГАН ВЫДАЧИ · ДВИЖ</span>
+        <span className="relative text-[10px] font-extrabold tracking-[1.5px] text-secondary">ОРГАН ВЫДАЧИ · ДВИЖ</span>
       </div>
     </div>
   );

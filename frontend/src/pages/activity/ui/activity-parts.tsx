@@ -214,17 +214,19 @@ export function PlansDialog({ initialTab, totals, compact, children }: {
   return (
     <Dialog open={open} onOpenChange={(next) => { if (next) setTab(initialTab); setOpen(next); }}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-xl">
+      {/* Окно не прокручивается целиком: заголовок и вкладки на месте, листается только список,
+          а полоса прокрутки идёт в своём жёлобе и не наезжает на билеты. */}
+      <DialogContent className="flex max-h-[85dvh] flex-col overflow-hidden sm:max-w-[680px]">
         <DialogTitle>Мои записи</DialogTitle>
         <DialogDescription>Ближайшие встречи, куда вы идёте, и заявки, которые ждут решения организатора.</DialogDescription>
-        <Tabs value={tab} onValueChange={(v) => setTab(v as PlansTab)}>
-          <TabsList>
+        <Tabs value={tab} onValueChange={(v) => setTab(v as PlansTab)} className="flex min-h-0 flex-1 flex-col">
+          <TabsList className="shrink-0">
             {PLANS_TABS.map((t) => (
               <TabsTrigger key={t.key} value={t.key} className="text-sm">{t.label} · {totals[t.key]}</TabsTrigger>
             ))}
           </TabsList>
           {PLANS_TABS.map((t) => (
-            <TabsContent key={t.key} value={t.key}>
+            <TabsContent key={t.key} value={t.key} className="-mr-3 min-h-0 flex-1 overflow-y-auto pr-3 [scrollbar-gutter:stable]">
               {open && <PlansPage tab={t.key} compact={compact} />}
             </TabsContent>
           ))}

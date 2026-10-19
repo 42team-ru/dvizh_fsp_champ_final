@@ -170,7 +170,7 @@ function PetPage() {
     <section
       aria-label="Паспорт спортсмена: питомец"
       style={{ height: PAGE_H }}
-      className="absolute top-[12px] left-[12px] flex w-[594px] flex-col gap-[14px] overflow-hidden rounded-tl-[20px] rounded-tr-[4px] rounded-br-[4px] rounded-bl-[20px] border-2 border-ink bg-card px-[26px] pt-6 pb-[22px]"
+      className="absolute top-[12px] left-[606px] flex w-[594px] flex-col gap-[14px] overflow-hidden rounded-tl-[4px] rounded-tr-[20px] rounded-br-[20px] rounded-bl-[4px] border-2 border-ink bg-card px-[26px] pt-6 pb-[22px]"
     >
       <img
         src={`${IMG}/guilloche.svg`}
@@ -580,7 +580,7 @@ function DataPage() {
     <section
       aria-label="Паспорт спортсмена: данные и отметки"
       style={{ height: PAGE_H }}
-      className="absolute top-[12px] left-[606px] flex w-[594px] flex-col gap-3 overflow-hidden rounded-tl-[4px] rounded-tr-[20px] rounded-br-[20px] rounded-bl-[4px] border-2 border-ink bg-card px-[26px] pt-6 pb-[22px]"
+      className="absolute top-[12px] left-[12px] flex w-[594px] flex-col gap-3 overflow-hidden rounded-tl-[20px] rounded-tr-[4px] rounded-br-[4px] rounded-bl-[20px] border-2 border-ink bg-card px-[26px] pt-6 pb-[22px]"
     >
       <img
         src={`${IMG}/guilloche.svg`}
@@ -699,7 +699,7 @@ export const SPREAD_SCALE = 0.76;
 export const SPREAD_W = Math.round(1216 * SPREAD_SCALE);
 export const SPREAD_H = Math.round((PAGE_H + 28) * SPREAD_SCALE);
 
-/** Разворот паспорта спортсмена: питомец слева, данные и отметки справа. */
+/** Разворот паспорта спортсмена: данные и отметки слева, питомец справа. */
 export function PassportSpread() {
   return (
     <div
@@ -714,8 +714,8 @@ export function PassportSpread() {
           transform: `scale(${SPREAD_SCALE})`,
         }}
       >
-        <PetPage />
         <DataPage />
+        <PetPage />
         <div
           aria-hidden="true"
           className="absolute top-[12px] left-[605px] w-[2px] bg-ink"

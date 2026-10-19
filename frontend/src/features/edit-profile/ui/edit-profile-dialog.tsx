@@ -4,8 +4,8 @@ import { UserAvatar } from "@/shared/components/ui/user-avatar";
 import { useQueryClient } from "@tanstack/react-query";
 import { USER_QUERY_KEY } from "@/entity/user/model/use-user";
 import {
-  getUsersMySportsQueryKey, useUsersDeleteAvatar, useUsersMySports, useUsersSaveMySports, useUsersUpdateMe,
-  useUsersUploadAvatar,
+  getUsersMyPreferencesQueryKey, getUsersMySportsQueryKey, useUsersDeleteAvatar, useUsersMyPreferences, useUsersMySports,
+  useUsersSaveMyPreferences, useUsersSaveMySports, useUsersUpdateMe, useUsersUploadAvatar,
 } from "@/shared/api/generated/core/users/users";
 import type { UserResponse, UserSportRequestLevel } from "@/shared/api/generated/core/appAPI.schemas";
 import { Button } from "@/shared/components/ui/button";
@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } 
 import { SPORT_LEVEL_LABEL } from "@/shared/lib/statuses";
 import { toast } from "@/shared/lib/toast";
 import { SportPicker } from "@/features/sport-picker/ui/sport-picker";
+import { HomeLocationField } from "@/features/home-location/ui/home-location-field";
 
 type SportRow = { sportId?: string; name: string; level?: UserSportRequestLevel };
 
@@ -24,7 +25,10 @@ const select =
   "h-11 min-w-0 rounded-[12px] border-2 border-ink bg-card px-2 text-sm font-bold outline-none focus:border-primary";
 const TONES = ["bg-sky-soft", "bg-lime-soft", "bg-peach", "bg-lavender-soft"];
 
-/** Правка профиля: имя, город, о себе, аватар и виды спорта с уровнем. Сохраняет users_updateMe и users_saveMySports. */
+/**
+ * Правка профиля: имя, город, о себе, аватар, домашняя точка и виды спорта с уровнем.
+ * Сохраняет users_updateMe, users_saveMySports и, если дом меняли, users_saveMyPreferences.
+ */
 export function EditProfileDialog({ user, children }: { user: UserResponse | undefined; children: ReactNode }) {
   const [open, setOpen] = useState(false);
   return (
@@ -35,7 +39,7 @@ export function EditProfileDialog({ user, children }: { user: UserResponse | und
         className="flex max-h-[92dvh] flex-col gap-0 overflow-hidden rounded-[24px] border-[2.5px] border-ink p-0 shadow-[8px_8px_0_var(--ink)] ring-0 sm:max-w-[620px]"
       >
         <DialogTitle className="sr-only">Профиль</DialogTitle>
-        <DialogDescription className="sr-only">Имя, город, о себе, фото и виды спорта</DialogDescription>
+        <DialogDescription className="sr-only">Имя, город, о себе, фото, дом и виды спорта</DialogDescription>
         {open && user && <EditProfileForm user={user} onDone={() => setOpen(false)} />}
       </DialogContent>
     </Dialog>
@@ -44,7 +48,7 @@ export function EditProfileDialog({ user, children }: { user: UserResponse | und
 
 function EditProfileForm({ user, onDone }: { user: UserResponse; onDone(): void }) {
   const queryClient = useQueryClient();
-  const ids = { first: useId(), last: useId(), city: useId(), bio: useId() };
+  const ids = { first: useId(), last: useId(), city: useId(), bio: useId(), home: useId() };
   const mySports = useUsersMySports();
   const loaded = mySports.data?.status === 200 ? mySports.data.data : undefined;
   const [form, setForm] = useState({
@@ -52,19 +56,31 @@ function EditProfileForm({ user, onDone }: { user: UserResponse; onDone(): void 
   });
   const [sports, setSports] = useState<SportRow[] | null>(null);
   const rows = sports ?? loaded?.map((s) => ({ sportId: s.sport.id, name: s.sport.name, level: s.level })) ?? [];
+  const myPreferences = useUsersMyPreferences();
+  const preferences = myPreferences.data?.status === 200 ? myPreferences.data.data : undefined;
+  /** undefined — дом не трогали, PUT предпочтений не нужен. */
+  const [home, setHome] = useState<[number, number] | null | undefined>(undefined);
+  const savedHome: [number, number] | null = preferences?.home ? [preferences.home.lon, preferences.home.lat] : null;
 
   const updateMe = useUsersUpdateMe();
   const saveSports = useUsersSaveMySports();
+  const savePreferences = useUsersSaveMyPreferences();
   const uploadAvatar = useUsersUploadAvatar({ mutation: { onSuccess: () => queryClient.invalidateQueries({ queryKey: USER_QUERY_KEY }) } });
   const deleteAvatar = useUsersDeleteAvatar({ mutation: { onSuccess: () => queryClient.invalidateQueries({ queryKey: USER_QUERY_KEY }) } });
-  const busy = updateMe.isPending || saveSports.isPending;
-  const error = updateMe.error?.detail ?? saveSports.error?.detail ?? uploadAvatar.error?.detail;
+  const busy = updateMe.isPending || saveSports.isPending || savePreferences.isPending;
+  const error = updateMe.error?.detail ?? saveSports.error?.detail ?? savePreferences.error?.detail ?? uploadAvatar.error?.detail;
 
   const submit = async () => {
     try {
       await updateMe.mutateAsync({ data: form });
       await saveSports.mutateAsync({ data: { sports: rows.map((r) => r.sportId
         ? { sportId: r.sportId, level: r.level } : { sportName: r.name, level: r.level }) } });
+      // PUT заменяет предпочтения целиком: остальные поля берём из загруженных, меняем только дом.
+      if (preferences && home !== undefined) {
+        const { home: _, ...rest } = preferences;
+        await savePreferences.mutateAsync({ data: { ...rest, home: home ? { lon: home[0], lat: home[1] } : undefined } });
+        await queryClient.invalidateQueries({ queryKey: getUsersMyPreferencesQueryKey() });
+      }
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: USER_QUERY_KEY }),
         queryClient.invalidateQueries({ queryKey: getUsersMySportsQueryKey() }),
@@ -150,6 +166,13 @@ function EditProfileForm({ user, onDone }: { user: UserResponse; onDone(): void 
               onChange={(e) => setForm({ ...form, bio: e.target.value })} />
           </div>
         </section>
+
+        {preferences && (
+          <section aria-labelledby={ids.home} className="flex flex-col gap-2">
+            <span id={ids.home} className={label}>ДОМ — ДЛЯ ПОДБОРА ВСТРЕЧ РЯДОМ</span>
+            <HomeLocationField value={home === undefined ? savedHome : home} onChange={setHome} />
+          </section>
+        )}
 
         <fieldset className="flex flex-col gap-3">
           <legend className={`${label} mb-1`}>ВИДЫ СПОРТА И УРОВЕНЬ</legend>

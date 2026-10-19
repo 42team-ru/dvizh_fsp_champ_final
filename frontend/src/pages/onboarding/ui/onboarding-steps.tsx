@@ -7,6 +7,7 @@ import { Icon } from "@/shared/components/ui/icon";
 import { Slider } from "@/shared/components/ui/slider";
 import { Switch } from "@/shared/components/ui/switch";
 import { cn } from "cn";
+import { HomeLocationField } from "@/features/home-location/ui/home-location-field";
 
 export type OnboardingData = {
   sports: string[];
@@ -15,6 +16,8 @@ export type OnboardingData = {
   days: string[];
   daytime: "morning" | "day" | "evening";
   radius: number;
+  /** Домашняя точка [lon, lat]; необязательна. */
+  home: [number, number] | null;
   petName: string;
   outfit: "none" | "cap";
   helpers: { reminders: boolean; nearby: boolean; cheer: boolean };
@@ -27,6 +30,7 @@ export const INITIAL_DATA: OnboardingData = {
   days: ["Вт", "Чт", "Сб"],
   daytime: "evening",
   radius: 5,
+  home: null,
   petName: "Бублик",
   outfit: "none",
   helpers: { reminders: true, nearby: true, cheer: false },
@@ -409,7 +413,25 @@ export function StepLevel({ data, update }: StepProps) {
   );
 }
 
-/* ---------- 4. Питомец ---------- */
+/* ---------- 4. Дом ---------- */
+
+export function StepHome({ data, update }: StepProps) {
+  return (
+    <div className="absolute top-[110px] left-24 flex items-start gap-12">
+      <div className="flex w-[700px] flex-col gap-6">
+        <Heading title="Где ты живёшь?" hint="Подберём встречи рядом с домом. Можно пропустить." />
+        <HomeLocationField value={data.home} onChange={(home) => update({ home })} mapClassName="h-[320px] w-full" />
+      </div>
+      <div className="flex w-[300px] flex-col items-center pt-10">
+        <Bubble className="relative mb-[-2px] w-[260px]">Отметь дом — и я найду, куда дойти пешком!</Bubble>
+        <img src={`${dir}/tail1.svg`} alt="" className="mb-[-2px] h-[18px] w-6" />
+        <img src={`${dir}/1.png`} alt="" className="size-[240px] object-contain" />
+      </div>
+    </div>
+  );
+}
+
+/* ---------- 5. Питомец ---------- */
 
 export const OUTFITS = [
   { id: "none", name: "Без наряда", hint: null },
@@ -508,7 +530,7 @@ export function StepPet({ data, update }: StepProps) {
   );
 }
 
-/* ---------- 5. Готово ---------- */
+/* ---------- 6. Готово ---------- */
 
 export function StepDone({
   onFind,
