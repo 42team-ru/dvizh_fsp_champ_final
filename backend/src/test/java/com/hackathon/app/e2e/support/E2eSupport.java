@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
+import java.util.LinkedHashMap;
 import java.util.UUID;
 
 import com.hackathon.app.domain.entity.AppUser;
@@ -81,13 +82,38 @@ public class E2eSupport {
 		return result.getResponse().getCookie("access_token");
 	}
 
+	/** Изменяемая валидная форма: тест переопределяет только существенные для сценария поля. */
+	public Map<String, Object> eventForm() {
+		var form = new LinkedHashMap<String, Object>();
+		form.put("title", uniqueName("Тренировка "));
+		form.put("description", "Совместная тренировка клуба");
+		form.put("sportName", "Бег");
+		form.put("startAt", Instant.now().plus(2, ChronoUnit.DAYS).toString());
+		form.put("format", "OFFLINE");
+		form.put("address", "Красноярск, спортивная площадка");
+		form.put("joinMode", "FREE");
+		return form;
+	}
+
 	/** Валидное событие; статус проверяет вызывающий тест, включая запрет публикации. */
 	public ResultActions createEvent(Cookie access) throws Exception {
+		return createEvent(access, eventForm());
+	}
+
+	public ResultActions createEvent(Cookie access, Map<String, Object> form) throws Exception {
 		return mvc.perform(post("/api/events").cookie(access).contentType(APPLICATION_JSON)
-				.content(json.writeValueAsString(Map.of(
-						"title", uniqueName("Тренировка "), "description", "Совместная тренировка клуба",
-						"sportName", "Бег", "startAt", Instant.now().plus(2, ChronoUnit.DAYS).toString(),
-						"format", "OFFLINE", "address", "Красноярск, спортивная площадка",
-						"joinMode", "FREE"))));
+				.content(json.writeValueAsString(form)));
+	}
+
+	public String createdEventId(Cookie access, Map<String, Object> form) throws Exception {
+		return responseId(createEvent(access, form).andExpect(status().isCreated()));
+	}
+
+	public String responseId(ResultActions response) throws Exception {
+		return json.readTree(response.andReturn().getResponse().getContentAsString()).get("id").asText();
+	}
+
+	public ResultActions registerForEvent(Cookie access, String eventId) throws Exception {
+		return mvc.perform(post("/api/events/{id}/registrations", eventId).cookie(access));
 	}
 }
