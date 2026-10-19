@@ -1,10 +1,13 @@
 package com.hackathon.app.domain.mapper;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
 import com.hackathon.app.domain.dto.AdminOrganizationResponse;
+import com.hackathon.app.domain.dto.AwardBadgeResponse;
+import com.hackathon.app.domain.dto.FeaturedOrganizationResponse;
 import com.hackathon.app.domain.dto.FileResponse;
 import com.hackathon.app.domain.dto.OrganizationAccountResponse;
 import com.hackathon.app.domain.dto.OrganizationResponse;
@@ -43,7 +46,15 @@ public interface OrganizationMapper {
 	OrganizationResponse toResponse(Organization organization, List<FileResponse> documents);
 
 	@Mapping(target = "logoUrl", source = "organization.logoFileId", qualifiedByName = "fileUrl")
-	PublicOrganizationResponse toPublic(Organization organization, List<FileResponse> documents);
+	PublicOrganizationResponse toPublic(Organization organization, List<FileResponse> documents,
+			List<AwardBadgeResponse> awards);
+
+	/** Организация месяца для ленты. */
+	@Mapping(target = "logoUrl", source = "organization.logoFileId", qualifiedByName = "fileUrl")
+	FeaturedOrganizationResponse toFeatured(Organization organization, LocalDate period);
+
+	/** Служебный код особой организации; через API не задаётся. */
+	void assignCode(@MappingTarget Organization organization, String code);
 
 	OrganizationShortResponse toShort(Organization organization);
 

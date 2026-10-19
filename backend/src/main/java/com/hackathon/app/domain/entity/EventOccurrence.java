@@ -56,4 +56,6 @@ public class EventOccurrence extends AuditEntity {
 	private Instant confirmedAt;
 	/** Кто подтвердил (id пользователя). */
 	private UUID confirmedById;
+	/** Когда занятие обработано начислением наград; null — ещё нет. */
+	private Instant rewardProcessedAt;
 }

@@ -25,9 +25,11 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AdminAwardsResponse,
   AdminCreatePetItemBody,
   AdminCreatePetItemParams,
   AdminEventResponse,
+  AdminListAwardsParams,
   AdminListEventsParams,
   AdminListOrganizationsParams,
   AdminListUsersParams,
@@ -37,6 +39,7 @@ import type {
   AdminStatsParams,
   AdminStatsResponse,
   ModerateEventRequest,
+  OrganizationAwardResponse,
   PageResponseAdminEventResponse,
   PageResponseAdminOrganizationResponse,
   PageResponseAdminUserResponse,
@@ -807,6 +810,91 @@ export const useAdminUnpublishEvent = <TError = ErrorType<ProblemDetail>,
       > => {
       return useMutation(getAdminUnpublishEventMutationOptions(options), queryClient);
     }
+    export type adminConfirmAwardResponse200 = {
+  data: OrganizationAwardResponse
+  status: 200
+}
+
+export type adminConfirmAwardResponseSuccess = (adminConfirmAwardResponse200) & {
+  headers: Headers;
+};
+;
+
+export type adminConfirmAwardResponse = (adminConfirmAwardResponseSuccess)
+
+export const getAdminConfirmAwardUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/awards/${id}/confirm`
+}
+
+/**
+ * @summary Подтвердить «Организацию месяца»
+ */
+export const adminConfirmAward = async (id: string, options?: Parameters<typeof authMutator>[1]): Promise<adminConfirmAwardResponse> => {
+
+  return authMutator<adminConfirmAwardResponse>(getAdminConfirmAwardUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getAdminConfirmAwardMutationKey = () => ['adminConfirmAward'] as const;
+
+export const getAdminConfirmAwardMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminConfirmAward>>, TError,AdminConfirmAwardMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminConfirmAward>>, TError,AdminConfirmAwardMutationVariables, TContext> => {
+
+const mutationKey = getAdminConfirmAwardMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminConfirmAward>>, AdminConfirmAwardMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  adminConfirmAward(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminConfirmAwardMutationResult = NonNullable<Awaited<ReturnType<typeof adminConfirmAward>>>
+
+    export type AdminConfirmAwardMutationError = ErrorType<unknown>
+    export type AdminConfirmAwardMutationVariables = {id: string}
+
+    /**
+ * @summary Подтвердить «Организацию месяца»
+ */
+export const useAdminConfirmAward = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminConfirmAward>>, TError,AdminConfirmAwardMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adminConfirmAward>>,
+        TError,
+        AdminConfirmAwardMutationVariables,
+        TContext
+      > => {
+      return useMutation(getAdminConfirmAwardMutationOptions(options), queryClient);
+    }
     export type adminListUsersResponse200 = {
   data: PageResponseAdminUserResponse
   status: 200
@@ -1386,6 +1474,126 @@ export function useAdminListEvents<TData = Awaited<ReturnType<typeof adminListEv
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getAdminListEventsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type adminListAwardsResponse200 = {
+  data: AdminAwardsResponse
+  status: 200
+}
+
+export type adminListAwardsResponseSuccess = (adminListAwardsResponse200) & {
+  headers: Headers;
+};
+;
+
+export type adminListAwardsResponse = (adminListAwardsResponseSuccess)
+
+export const getAdminListAwardsUrl = (params?: AdminListAwardsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/awards?${stringifiedParams}` : `/api/admin/awards`
+}
+
+/**
+ * Без месяца — самое свежее предложение, ожидающее подтверждения, иначе прошлый месяц.
+ * @summary Предложение «Организации месяца» и счета лучших кандидатов
+ */
+export const adminListAwards = async (params?: AdminListAwardsParams, options?: Parameters<typeof authMutator>[1]): Promise<adminListAwardsResponse> => {
+
+  return authMutator<adminListAwardsResponse>(getAdminListAwardsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getAdminListAwardsQueryKey = (params?: AdminListAwardsParams,) => {
+    return [
+    `/api/admin/awards`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getAdminListAwardsQueryOptions = <TData = Awaited<ReturnType<typeof adminListAwards>>, TError = ErrorType<unknown>>(params?: AdminListAwardsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListAwards>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getAdminListAwardsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof adminListAwards>>> = ({ signal }) => adminListAwards(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof adminListAwards>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type AdminListAwardsQueryResult = NonNullable<Awaited<ReturnType<typeof adminListAwards>>>
+export type AdminListAwardsQueryError = ErrorType<unknown>
+
+
+export function useAdminListAwards<TData = Awaited<ReturnType<typeof adminListAwards>>, TError = ErrorType<unknown>>(
+ params: undefined |  AdminListAwardsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListAwards>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminListAwards>>,
+          TError,
+          Awaited<ReturnType<typeof adminListAwards>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useAdminListAwards<TData = Awaited<ReturnType<typeof adminListAwards>>, TError = ErrorType<unknown>>(
+ params?: AdminListAwardsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListAwards>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminListAwards>>,
+          TError,
+          Awaited<ReturnType<typeof adminListAwards>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useAdminListAwards<TData = Awaited<ReturnType<typeof adminListAwards>>, TError = ErrorType<unknown>>(
+ params?: AdminListAwardsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListAwards>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Предложение «Организации месяца» и счета лучших кандидатов
+ */
+
+export function useAdminListAwards<TData = Awaited<ReturnType<typeof adminListAwards>>, TError = ErrorType<unknown>>(
+ params?: AdminListAwardsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListAwards>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getAdminListAwardsQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

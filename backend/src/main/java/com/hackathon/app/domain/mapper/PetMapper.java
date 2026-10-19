@@ -10,6 +10,7 @@ import com.hackathon.app.domain.entity.AppUser;
 import com.hackathon.app.domain.entity.PetItem;
 import com.hackathon.app.domain.entity.PetSlot;
 import com.hackathon.app.domain.entity.UserPetEquipment;
+import com.hackathon.app.domain.enums.PetItemKind;
 import com.hackathon.app.domain.enums.PetBodyPart;
 import com.hackathon.app.domain.enums.PetSlotKind;
 import org.mapstruct.Mapper;
@@ -26,7 +27,11 @@ public interface PetMapper {
 
 	PetItem toItem(UUID slotId, String code, String label, boolean builtIn, int position);
 
-	/** Своя вещь админа: рисунок и посадка уже проверены сервисом. */
+	/** Цена, вид и подсказка вещи; вызывается и для уже существующих вещей при старте. */
+	void economy(@MappingTarget PetItem item, int price, PetItemKind kind, String unlockHint);
+	/** Своя вещь админа: рисунок и посадка уже проверены сервисом. Продаётся в магазине по цене по умолчанию. */
+	@Mapping(target = "kind", constant = "SHOP")
+	@Mapping(target = "price", constant = "100")
 	PetItem toCustomItem(UUID slotId, String code, String label, int position, PetBodyPart bodyPart, String svg,
 			Double fitX, Double fitY, Double fitScale);
 

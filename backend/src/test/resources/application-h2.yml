@@ -14,5 +14,7 @@ spring:
 app:
   storage:
     type: memory   # файлы в памяти: тестам не нужен MinIO
+  economy:
+    scheduler-enabled: false   # фоновые начисления тестам не нужны
   demo:
     enabled: false   # демо-сид (сотни строк) тестам не нужен и не покрывается тестами

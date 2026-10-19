@@ -20,5 +20,7 @@ public record PublicUserResponse(
 		@Schema(description = "Виды спорта и уровень в каждом", requiredMode = REQUIRED) List<UserSportResponse> sports,
 		@Schema(description = "Сколько встреч посетил", example = "14", requiredMode = REQUIRED) long attendedCount,
 		@Schema(description = "Опубликованные и ещё не начавшиеся мероприятия, где человек автор; ближайшие первыми",
-				requiredMode = REQUIRED) List<EventSummaryResponse> events) {
+				requiredMode = REQUIRED) List<EventSummaryResponse> events,
+        @Schema(description = "Фото личной галереи в порядке загрузки, до 6; отдельно от аватара", requiredMode = REQUIRED)
+        List<FileResponse> photos) {
 }

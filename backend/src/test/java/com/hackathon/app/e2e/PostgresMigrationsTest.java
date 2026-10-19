@@ -6,9 +6,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.Instant;
+import java.time.DayOfWeek;
 import java.util.List;
 import java.util.Map;
 
+import com.hackathon.app.domain.dto.SaveUserPreferencesRequest;
+import com.hackathon.app.domain.dto.HelpersPreferences;
+import com.hackathon.app.domain.enums.SportLevel;
+import com.hackathon.app.domain.enums.Daytime;
 import com.hackathon.app.TestcontainersConfiguration;
 import com.hackathon.app.e2e.support.EventForm;
 import com.hackathon.app.e2e.support.TestApi;
@@ -30,7 +35,7 @@ import tools.jackson.databind.ObjectMapper;
  * Остальные тесты идут на H2 и быстрее.
  */
 @Tag("postgres")
-@SpringBootTest
+@SpringBootTest(properties = {"app.storage.type=memory", "app.demo.enabled=false", "app.economy.scheduler-enabled=false"})
 @AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
 class PostgresMigrationsTest {
@@ -44,8 +49,9 @@ class PostgresMigrationsTest {
 	 *   1. Старт контекста: Flyway применяет V1/V2, Hibernate (ddl-auto=validate) сверяет схему с сущностями.
 	 *   2. Регистрация pg-user (201).
 	 *   3. Повтор с именем PG-USER -> 409 (срабатывает уникальный индекс по lower(username), а не только проверка в коде).
-	 *   4. Вход pg-user (200).
-	 * ПРОВЕРЯЕМ: миграции совпадают с сущностями, уникальные индексы и типы колонок работают в Postgres.
+	 *   4. Вход pg-user (200), сохранение и замена предпочтений через API на мигрированной схеме.
+	 * ПРОВЕРЯЕМ: миграции совпадают с сущностями, уникальные индексы и типы колонок работают в Postgres;
+	 * коллекция дней сохраняется и заменяется без остатков.
 	 * ПОЧЕМУ ВАЖНО: H2 не ловит расхождений с Postgres; без этого теста приложение может не стартовать только в проде.
 	 */
 	@Test
@@ -62,6 +68,20 @@ class PostgresMigrationsTest {
 				.content("""
 						{"username":"pg-user","password":"SecureP@ss1"}
 						""")).andExpect(status().isOk());
+        var api = new TestApi(mvc, json, users, passwords);
+        var user = api.login("pg-user");
+        var initial = user.saveMyPreferences(new SaveUserPreferencesRequest(
+                SportLevel.AMATEUR,
+                List.of(DayOfWeek.SUNDAY, DayOfWeek.MONDAY),
+                Daytime.EVENING, 5,
+                new HelpersPreferences(true, true, false)));
+        assertThat(user.myPreferences()).isEqualTo(initial);
+        var replaced = user.saveMyPreferences(new SaveUserPreferencesRequest(
+                SportLevel.PRO, List.of(DayOfWeek.FRIDAY),
+                Daytime.MORNING, 20,
+                new HelpersPreferences(false, false, false)));
+        assertThat(user.myPreferences()).isEqualTo(replaced);
+        assertThat(replaced.days()).containsExactly(DayOfWeek.FRIDAY);
 	}
     /**
      * ФЛОУ: история посещений выполняется на Postgres с необязательным UUID-фильтром.

@@ -1,46 +1,29 @@
 import { PetNameEditor } from "@/features/rename-pet/ui/pet-name-editor";
 import { useState } from "react";
 import { useAttendance } from "./use-attendance";
+import { useProfile } from "../model/use-profile";
+import { useWardrobe } from "../model/use-wardrobe";
+import { EditProfileDialog } from "@/features/edit-profile/ui/edit-profile-dialog";
+import { Link, useNavigate } from "react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAuthLogout } from "@/shared/api/generated/core/auth/auth";
+import { USER_QUERY_KEY } from "@/entity/user/model/use-user";
 import { MyBeaverPet } from "@/widgets/beaver-pet/ui/my-beaver-pet";
+import { ProfileGallery } from "./profile-gallery";
 import { MobileTabBar } from "@/widgets/mobile-shell/ui/mobile-tab-bar";
-import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
 import { Eyebrow } from "@/shared/components/ui/eyebrow";
 import { Icon } from "@/shared/components/ui/icon";
-import { Progress } from "@/shared/components/ui/progress";
 import { RoughBorder } from "@/shared/components/ui/rough-border";
 import { cn } from "cn";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 
 const dir = "m-profile";
 
-const SPORTS = [
-  { label: "Бег", tone: "bg-sky-soft" },
-  { label: "Йога", tone: "bg-lime-soft" },
-  { label: "Вело", tone: "bg-peach" },
-];
-
-const STATS = [
-  { v: "48", l: "тренировок", tone: "bg-lavender-soft" },
-  { v: "312", l: "километров", tone: "bg-lime-soft" },
-  { v: "12", l: "дней подряд", tone: "bg-peach" },
-];
-
-const BADGES = [
-  { title: "Первые 100 км", icon: "icon-trophy", tone: "bg-secondary" },
-  { title: "Серия 7 дней", icon: "icon-flame", tone: "bg-peach" },
-  { title: "Ранняя пташка", icon: "icon-sun", tone: "bg-sky-soft" },
-  { title: "Организатор", icon: "icon-star", tone: "bg-rose" },
-];
-
-const WARDROBE = [
-  { name: "Кепка", hint: "Надета", tone: "bg-peach", action: "worn" },
-  { name: "Шарф", hint: "Куплено", tone: "bg-lime-soft", action: "own" },
-  { name: "Кроссовки", hint: "90", tone: "bg-sky-soft", action: "buy" },
-  { name: "Очки", hint: "50", tone: "bg-lavender-soft", action: "buy" },
-  { name: "Худи", hint: "120", tone: "bg-rose", action: "buy" },
-] as const;
+const SPORT_TONES = ["bg-sky-soft", "bg-lime-soft", "bg-peach"];
+const STAT_TONES = ["bg-lavender-soft", "bg-lime-soft", "bg-peach"];
+const WARDROBE_TONES = ["bg-peach", "bg-lime-soft", "bg-sky-soft", "bg-lavender-soft", "bg-rose"];
 
 const SETTINGS = [
   { icon: "icon-bell-set", label: "Уведомления" },
@@ -52,6 +35,7 @@ const SETTINGS = [
 const small = "text-[10px] leading-[normal] font-extrabold tracking-[1.2px] whitespace-nowrap";
 
 function AppBar() {
+  const { user } = useProfile();
   return (
     <div className="flex h-16 shrink-0 items-center justify-between px-4">
       <div className="flex items-center gap-2">
@@ -60,67 +44,69 @@ function AppBar() {
           Профиль
         </span>
       </div>
-      <button
-        type="button"
-        aria-label="Настройки"
-        className="box-border flex size-11 items-center justify-center rounded-[22px] border-2 border-ink bg-card"
-      >
-        <Icon name={`${dir}/icon-settings`} className="size-5" />
-      </button>
+      <EditProfileDialog user={user}>
+        <button
+          type="button"
+          aria-label="Редактировать профиль"
+          className="box-border flex size-11 items-center justify-center rounded-[22px] border-2 border-ink bg-card"
+        >
+          <Icon name={`${dir}/icon-settings`} className="size-5" />
+        </button>
+      </EditProfileDialog>
     </div>
   );
 }
 
 function Passport() {
+  const p = useProfile();
   return (
     <div className="px-4">
       <div className="box-border w-full overflow-hidden rounded-[26px] border-2 border-ink bg-card shadow-[4px_4px_0_var(--primary)]">
         <div className="flex h-10 items-center justify-between bg-secondary px-[18px] text-[10px] leading-[normal] font-extrabold tracking-[1px] whitespace-nowrap text-foreground">
           <span>ЦИФРОВОЙ ПАСПОРТ · СПОРТ РЯДОМ</span>
-          <span>№ SR-0048</span>
+          <span>{p.passportNumber}</span>
         </div>
         <div className="flex flex-col gap-[14px] p-[18px]">
           <div className="flex items-center gap-[14px]">
-            <span className="box-border flex size-[72px] shrink-0 items-center justify-center rounded-[36px] border-2 border-ink bg-sky text-[15px] leading-[normal] font-extrabold text-foreground">
-              АС
-            </span>
+            {p.user?.avatarUrl
+              ? <img src={p.user.avatarUrl} alt="" className="box-border size-[72px] shrink-0 rounded-[36px] border-2 border-ink object-cover" />
+              : <span className="box-border flex size-[72px] shrink-0 items-center justify-center rounded-[36px] border-2 border-ink bg-sky text-[15px] leading-[normal] font-extrabold text-foreground">
+                  {p.initials}
+                </span>}
             <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
               <Eyebrow className={small}>ИМЯ</Eyebrow>
               <p className="w-[190px] font-display text-[19px] leading-6 font-bold text-foreground">
-                Аня Соколова
+                {p.fullName}
               </p>
               <p className="text-[13px] leading-[normal] font-medium whitespace-nowrap text-muted-foreground">
-                @anya.runs · Красноярск
+                {p.handle}
               </p>
             </div>
-            <span className="shrink-0 rounded-pill bg-primary px-[10px] py-1 text-[11px] leading-[normal] font-extrabold tracking-[1px] whitespace-nowrap text-white">
-              УР. 7
-            </span>
           </div>
           <div className="flex gap-2">
-            {SPORTS.map((s) => (
+            {p.sports.slice(0, 3).map((s, i) => (
               <span
-                key={s.label}
+                key={s.sport.id}
                 className={cn(
                   "rounded-pill border-[1.5px] border-ink px-[14px] py-[6px] text-[13px] leading-[normal] font-extrabold whitespace-nowrap text-foreground",
-                  s.tone
+                  SPORT_TONES[i]
                 )}
               >
-                {s.label}
+                {s.sport.name}
               </span>
             ))}
           </div>
           <div className="flex gap-2 leading-[normal] font-bold whitespace-nowrap">
-            {STATS.map((s) => (
+            {p.stats.map((s, i) => (
               <div
-                key={s.l}
+                key={s.label}
                 className={cn(
                   "relative box-border flex min-w-0 flex-1 flex-col gap-[2px] rounded-[14px] border-[1.5px] border-transparent p-[10px]",
-                  s.tone
+                  STAT_TONES[i]
                 )}
               >
-                <span className="font-display text-lg text-foreground">{s.v}</span>
-                <span className="text-[11px] text-muted-foreground">{s.l}</span>
+                <span className="font-display text-lg text-foreground">{s.value}</span>
+                <span className="text-[11px] text-muted-foreground">{s.label}</span>
                 <RoughBorder radius={14} strokeWidth={1.5} roughness={0.8} />
               </div>
             ))}
@@ -141,10 +127,6 @@ function Pet() {
           <div className="flex min-w-[180px] flex-1 flex-col items-start gap-1">
             <Eyebrow className={cn(small, "text-foreground")}>ТВОЙ ПИТОМЕЦ</Eyebrow>
             <PetNameEditor />
-            <span className="box-border flex items-center gap-[6px] rounded-pill border-[1.5px] border-ink bg-card py-1 pr-3 pl-[6px]">
-              <span className="box-border size-[18px] rounded-[9px] border-[1.5px] border-ink bg-secondary" />
-              <span className="text-[13px] leading-[normal] font-extrabold text-foreground">150</span>
-            </span>
           </div>
         </div>
         <div ref={setSpeechContainer} className="relative h-[72.5px] w-full" />
@@ -181,11 +163,14 @@ function Head({ title, hint, small: hintSmall }: { title: string; hint: string; 
 }
 
 function Achievements() {
+  const { achievements } = useProfile();
+  const unlocked = achievements.filter((a) => a.unlocked);
+  const next = achievements.find((a) => !a.unlocked);
   return (
     <>
-      <Head title="Достижения" hint="12 из 30" />
+      <Head title="Достижения" hint={`${unlocked.length} из ${achievements.length}`} />
       <div className="no-scrollbar flex gap-3 overflow-x-auto px-4">
-        {BADGES.map((b) => (
+        {unlocked.map((b) => (
           <div
             key={b.title}
             className="box-border flex w-[130px] shrink-0 flex-col gap-[10px] rounded-[20px] border-2 border-ink bg-card p-[14px]"
@@ -203,48 +188,44 @@ function Achievements() {
             </span>
           </div>
         ))}
-        <div className="box-border flex w-[130px] shrink-0 flex-col gap-[10px] rounded-[20px] border-2 border-dashed border-muted-foreground bg-card p-[14px]">
+        {next && <div className="box-border flex w-[130px] shrink-0 flex-col gap-[10px] rounded-[20px] border-2 border-dashed border-muted-foreground bg-card p-[14px]">
           <span className="box-border flex size-12 items-center justify-center rounded-[14px] border-2 border-dashed border-muted-foreground">
             <Icon name={`${dir}/icon-lock`} className="size-6" />
           </span>
           <span className="text-[13px] leading-[17px] font-extrabold text-muted-foreground">
-            Марафон
+            {next.title}
           </span>
-        </div>
+        </div>}
       </div>
     </>
   );
 }
 
 function Wardrobe() {
+  const { worn } = useWardrobe();
+  const cards = worn.length > 0 ? worn : [{ slot: "Пока ничего не надето", item: "Гардероб" }];
   return (
     <>
-      <Head title="Гардероб" hint="Монеты — за тренировки" small />
+      <Head title="Гардероб" hint="Что надето на бобре" small />
       <div className="no-scrollbar flex gap-3 overflow-x-auto px-4">
-        {WARDROBE.map((w) => (
+        {cards.map((w, i) => (
           <div
-            key={w.name}
+            key={w.slot}
             className={cn(
               "box-border flex w-[132px] shrink-0 flex-col items-center gap-[6px] rounded-[20px] border-2 border-ink px-3 py-[14px]",
-              w.tone
+              WARDROBE_TONES[i % WARDROBE_TONES.length]
             )}
           >
             <span className="box-border size-14 rounded-[28px] border-2 border-ink bg-card" />
-            <span className="text-sm leading-[normal] font-extrabold whitespace-nowrap text-foreground">
-              {w.name}
+            <span className="line-clamp-1 text-center text-sm leading-[normal] font-extrabold text-foreground" title={w.item}>
+              {w.item}
             </span>
-            <span className="text-xs leading-[normal] font-bold whitespace-nowrap text-muted-foreground">
-              {w.hint}
+            <span className="line-clamp-1 text-center text-xs leading-[normal] font-bold text-muted-foreground">
+              {w.slot}
             </span>
-            {w.action === "worn" ? (
-              <Button variant="ink" className="h-10 w-full border-ink px-5 text-xs shadow-none">
-                Снять
-              </Button>
-            ) : (
-              <Button variant="soft" className="h-10 w-full px-5 text-xs">
-                {w.action === "own" ? "Надеть" : "Купить"}
-              </Button>
-            )}
+            <Button asChild variant="soft" className="h-10 w-full px-5 text-xs">
+              <Link to="/pet">Сменить</Link>
+            </Button>
           </div>
         ))}
       </div>
@@ -253,6 +234,14 @@ function Wardrobe() {
 }
 
 function Settings() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const logout = useAuthLogout();
+  const signOut = async () => {
+    await logout.mutateAsync().catch(() => undefined);
+    queryClient.removeQueries({ queryKey: USER_QUERY_KEY });
+    navigate("/auth/login");
+  };
   return (
     <div className="px-4">
       <Card className="overflow-hidden rounded-[22px]">
@@ -261,6 +250,7 @@ function Settings() {
             {i > 0 ? <div className="h-px bg-track" /> : null}
             <button
               type="button"
+              onClick={"danger" in s ? () => void signOut() : undefined}
               className="flex h-14 w-full items-center gap-3 px-[18px] text-left"
             >
               <Icon name={`${dir}/${s.icon}`} className="size-[22px]" />
@@ -287,6 +277,7 @@ export function ProfileMobile() {
       <MemphisBackground variant="mobile" seed="profile" />
       <AppBar />
       <Passport />
+      <div className="px-4"><ProfileGallery /></div>
       <Pet />
       <Attendance />
       <Achievements />

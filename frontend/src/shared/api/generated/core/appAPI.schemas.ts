@@ -100,6 +100,8 @@ export const PetStatusResponseReason = {
   REGISTERED_EVENT_MODERATED: 'REGISTERED_EVENT_MODERATED',
   REGISTRATION_REJECTED: 'REGISTRATION_REJECTED',
   REGISTRATION_APPROVED: 'REGISTRATION_APPROVED',
+  COINS_EARNED: 'COINS_EARNED',
+  ACHIEVEMENT_EARNED: 'ACHIEVEMENT_EARNED',
   EVENT_SOON: 'EVENT_SOON',
   NEW_REQUESTS: 'NEW_REQUESTS',
   AWAITING_APPROVAL: 'AWAITING_APPROVAL',
@@ -218,6 +220,108 @@ export interface UserSportResponse {
   sport: SportResponse;
   /** Уровень; null — не указан */
   level?: UserSportResponseLevel;
+}
+
+export interface HelpersPreferences {
+  /** Напоминать о тренировках */
+  reminders: boolean;
+  /** Подсказывать события рядом */
+  nearby: boolean;
+  /** Радоваться достижениям */
+  cheer: boolean;
+}
+
+export type SaveUserPreferencesRequestLevel = typeof SaveUserPreferencesRequestLevel[keyof typeof SaveUserPreferencesRequestLevel];
+
+
+export const SaveUserPreferencesRequestLevel = {
+  BEGINNER: 'BEGINNER',
+  AMATEUR: 'AMATEUR',
+  ADVANCED: 'ADVANCED',
+  PRO: 'PRO',
+} as const;
+
+export type SaveUserPreferencesRequestDaysItem = typeof SaveUserPreferencesRequestDaysItem[keyof typeof SaveUserPreferencesRequestDaysItem];
+
+
+export const SaveUserPreferencesRequestDaysItem = {
+  MONDAY: 'MONDAY',
+  TUESDAY: 'TUESDAY',
+  WEDNESDAY: 'WEDNESDAY',
+  THURSDAY: 'THURSDAY',
+  FRIDAY: 'FRIDAY',
+  SATURDAY: 'SATURDAY',
+  SUNDAY: 'SUNDAY',
+} as const;
+
+export type SaveUserPreferencesRequestDaytime = typeof SaveUserPreferencesRequestDaytime[keyof typeof SaveUserPreferencesRequestDaytime];
+
+
+export const SaveUserPreferencesRequestDaytime = {
+  MORNING: 'MORNING',
+  DAY: 'DAY',
+  EVENING: 'EVENING',
+} as const;
+
+export interface SaveUserPreferencesRequest {
+  level: SaveUserPreferencesRequestLevel;
+  /**
+     * Удобные дни недели; хотя бы один
+     * @minItems 1
+     */
+  days: SaveUserPreferencesRequestDaysItem[];
+  daytime: SaveUserPreferencesRequestDaytime;
+  /**
+     * Радиус поиска в километрах
+     * @minimum 1
+     * @maximum 20
+     */
+  radiusKm: number;
+  helpers: HelpersPreferences;
+}
+
+export type UserPreferencesResponseLevel = typeof UserPreferencesResponseLevel[keyof typeof UserPreferencesResponseLevel];
+
+
+export const UserPreferencesResponseLevel = {
+  BEGINNER: 'BEGINNER',
+  AMATEUR: 'AMATEUR',
+  ADVANCED: 'ADVANCED',
+  PRO: 'PRO',
+} as const;
+
+export type UserPreferencesResponseDaysItem = typeof UserPreferencesResponseDaysItem[keyof typeof UserPreferencesResponseDaysItem];
+
+
+export const UserPreferencesResponseDaysItem = {
+  MONDAY: 'MONDAY',
+  TUESDAY: 'TUESDAY',
+  WEDNESDAY: 'WEDNESDAY',
+  THURSDAY: 'THURSDAY',
+  FRIDAY: 'FRIDAY',
+  SATURDAY: 'SATURDAY',
+  SUNDAY: 'SUNDAY',
+} as const;
+
+export type UserPreferencesResponseDaytime = typeof UserPreferencesResponseDaytime[keyof typeof UserPreferencesResponseDaytime];
+
+
+export const UserPreferencesResponseDaytime = {
+  MORNING: 'MORNING',
+  DAY: 'DAY',
+  EVENING: 'EVENING',
+} as const;
+
+export interface UserPreferencesResponse {
+  level: UserPreferencesResponseLevel;
+  days: UserPreferencesResponseDaysItem[];
+  daytime: UserPreferencesResponseDaytime;
+  /**
+     * @minimum 1
+     * @maximum 20
+     */
+  radiusKm: number;
+  helpers: HelpersPreferences;
 }
 
 /**
@@ -1027,6 +1131,40 @@ export interface RegistrationResponse {
 }
 
 /**
+ * Базовая, магазин или эксклюзив
+ */
+export type ShopItemResponseKind = typeof ShopItemResponseKind[keyof typeof ShopItemResponseKind];
+
+
+export const ShopItemResponseKind = {
+  BASE: 'BASE',
+  SHOP: 'SHOP',
+  EXCLUSIVE: 'EXCLUSIVE',
+} as const;
+
+/**
+ * Вещь бобра в магазине с ценой и признаком «моя»
+ */
+export interface ShopItemResponse {
+  /** Идентификатор для покупки: слот:код */
+  id: string;
+  /** Код слота для pets_equip */
+  slot: string;
+  /** Код вещи для pets_equip */
+  code: string;
+  /** Подпись */
+  label: string;
+  /** Цена в монетах; 0 у базовых и эксклюзивов */
+  price: number;
+  /** Базовая, магазин или эксклюзив */
+  kind: ShopItemResponseKind;
+  /** Вещь уже у пользователя и её можно надеть */
+  owned: boolean;
+  /** У эксклюзива — за что дают, например «Дают за 10 встреч»; иначе null */
+  hint?: string;
+}
+
+/**
  * Запись на мероприятие; тело можно не передавать
  */
 export interface RegistrationRequest {
@@ -1264,6 +1402,36 @@ export interface AdminEventResponse {
 }
 
 /**
+ * Предложена или подтверждена
+ */
+export type OrganizationAwardResponseStatus = typeof OrganizationAwardResponseStatus[keyof typeof OrganizationAwardResponseStatus];
+
+
+export const OrganizationAwardResponseStatus = {
+  PROPOSED: 'PROPOSED',
+  CONFIRMED: 'CONFIRMED',
+} as const;
+
+/**
+ * Награда «Организация месяца»
+ */
+export interface OrganizationAwardResponse {
+  id: string;
+  /** Организация-победитель */
+  organizationId: string;
+  /** Название организации */
+  organizationName: string;
+  /** Первый день месяца, за который награда */
+  period: string;
+  /** Счёт */
+  score: number;
+  /** Предложена или подтверждена */
+  status: OrganizationAwardResponseStatus;
+  /** Когда подтверждена; null — ещё нет */
+  confirmedAt?: string;
+}
+
+/**
  * Очно или онлайн
  */
 export type EventSummaryResponseFormat = typeof EventSummaryResponseFormat[keyof typeof EventSummaryResponseFormat];
@@ -1428,6 +1596,61 @@ export interface PublicUserResponse {
   attendedCount: number;
   /** Опубликованные и ещё не начавшиеся мероприятия, где человек автор; ближайшие первыми */
   events: EventSummaryResponse[];
+  /** Фото личной галереи в порядке загрузки, до 6; отдельно от аватара */
+  photos: FileResponse[];
+}
+
+/**
+ * За что
+ */
+export type WalletEntryResponseKind = typeof WalletEntryResponseKind[keyof typeof WalletEntryResponseKind];
+
+
+export const WalletEntryResponseKind = {
+  MEETING: 'MEETING',
+  FIRST_MEETING: 'FIRST_MEETING',
+  ORGANIZER_MEETING: 'ORGANIZER_MEETING',
+  FIRST_ORGANIZED: 'FIRST_ORGANIZED',
+  ACHIEVEMENT: 'ACHIEVEMENT',
+  PURCHASE: 'PURCHASE',
+  ADJUSTMENT: 'ADJUSTMENT',
+} as const;
+
+/**
+ * Операция в журнале монет
+ */
+export interface WalletEntryResponse {
+  id: string;
+  /** Монеты: плюс — начисление, минус — трата */
+  amount: number;
+  /** За что */
+  kind: WalletEntryResponseKind;
+  /** Подпись для человека */
+  note: string;
+  /** Мероприятие, за которое начислено; null — не про встречу */
+  eventId?: string;
+  /** Название мероприятия; null — не про встречу */
+  eventTitle?: string;
+  /** Когда произошло */
+  occurredAt: string;
+}
+
+/**
+ * Кошелёк и прогресс бобра
+ */
+export interface WalletResponse {
+  /** Баланс монет */
+  coins: number;
+  /** Уровень: 1 плюс одна ступень за каждые 5 засчитанных встреч (проведённая считается за две) */
+  level: number;
+  /** Засчитанных встреч всего с учётом двойного веса проведённых */
+  countedMeetings: number;
+  /** Энергия: засчитанные встречи за последние 7 дней */
+  energy: number;
+  /** Максимум энергии */
+  energyMax: number;
+  /** Последние 20 операций, свежие сверху */
+  entries: WalletEntryResponse[];
 }
 
 /**
@@ -1468,6 +1691,41 @@ export interface AttendanceSummaryResponse {
   total: number;
   /** По видам спорта, самые частые первыми */
   bySport: SportAttendanceResponse[];
+}
+
+export type AchievementResponseCode = typeof AchievementResponseCode[keyof typeof AchievementResponseCode];
+
+
+export const AchievementResponseCode = {
+  FIRST_STEP: 'FIRST_STEP',
+  VERSATILE: 'VERSATILE',
+  REGULAR: 'REGULAR',
+  TEAM_BUILDER: 'TEAM_BUILDER',
+  SOUL_OF_COMPANY: 'SOUL_OF_COMPANY',
+  OWN_BEAVER: 'OWN_BEAVER',
+} as const;
+
+/**
+ * Достижение с прогрессом
+ */
+export interface AchievementResponse {
+  code: AchievementResponseCode;
+  /** Название */
+  title: string;
+  /** Условие */
+  description: string;
+  /** Текущий прогресс, не больше цели */
+  progress: number;
+  /** Цель */
+  goal: number;
+  /** Единица прогресса: «2 из 3 видов спорта» */
+  unit: string;
+  /** Награда словами */
+  reward: string;
+  /** Когда получено; null — ещё нет */
+  earnedAt?: string;
+  /** Иллюстрация достижения */
+  imageUrl: string;
 }
 
 /**
@@ -1550,6 +1808,39 @@ export interface PetCatalogResponse {
   slots: PetSlotResponse[];
 }
 
+export type AwardBadgeResponseKind = typeof AwardBadgeResponseKind[keyof typeof AwardBadgeResponseKind];
+
+
+export const AwardBadgeResponseKind = {
+  FIRST_MEETING: 'FIRST_MEETING',
+  PARTICIPANTS_100: 'PARTICIPANTS_100',
+  RETURNING_20: 'RETURNING_20',
+  ORG_OF_MONTH: 'ORG_OF_MONTH',
+} as const;
+
+/**
+ * Награда на публичной странице организации: полученная с датой или веха с прогрессом
+ */
+export interface AwardBadgeResponse {
+  kind: AwardBadgeResponseKind;
+  /** Название */
+  title: string;
+  /** Условие */
+  description: string;
+  /** Получена ли */
+  earned: boolean;
+  /** Когда получена; null — ещё нет */
+  earnedAt?: string;
+  /** Месяц награды «Организация месяца» (первый день); у вех null */
+  period?: string;
+  /** Прогресс вехи, не больше цели; у «Организации месяца» 0 */
+  progress: number;
+  /** Цель вехи; у «Организации месяца» 0 */
+  goal: number;
+  /** Иллюстрация награды */
+  imageUrl: string;
+}
+
 export type PublicOrganizationResponseContacts = {[key: string]: string};
 
 export interface PublicOrganizationResponse {
@@ -1560,6 +1851,21 @@ export interface PublicOrganizationResponse {
   contacts?: PublicOrganizationResponseContacts;
   logoUrl?: string;
   documents?: FileResponse[];
+  awards?: AwardBadgeResponse[];
+}
+
+/**
+ * Организация месяца для блока в ленте
+ */
+export interface FeaturedOrganizationResponse {
+  id: string;
+  name: string;
+  /** Город */
+  city?: string;
+  /** Адрес логотипа; null — без логотипа */
+  logoUrl?: string;
+  /** Первый день месяца награды */
+  period: string;
 }
 
 /**
@@ -1840,6 +2146,36 @@ export interface PageResponseAdminEventResponse {
   totalPages?: number;
 }
 
+/**
+ * Кандидат на «Организацию месяца» со счётом
+ */
+export interface AwardCandidateResponse {
+  organizationId: string;
+  organizationName: string;
+  /** Встреч за месяц */
+  meetings: number;
+  /** Уникальных пришедших участников */
+  participants: number;
+  /** Из них вернувшихся (были у организации и раньше) */
+  returning: number;
+  /** Событий, снятых или удалённых админом за месяц */
+  moderated: number;
+  /** Счёт: пришедшие ×3 + вернувшиеся ×5 − 30 за снятое событие */
+  score: number;
+}
+
+/**
+ * Предложение «Организации месяца» за месяц и лучшие кандидаты
+ */
+export interface AdminAwardsResponse {
+  /** Первый день месяца */
+  period: string;
+  /** Награда за месяц (предложенная или подтверждённая); null — ещё нет */
+  award?: OrganizationAwardResponse;
+  /** Лучшие кандидаты по убыванию счёта, до 5 */
+  candidates: AwardCandidateResponse[];
+}
+
 export type UsersUploadAvatarBody = {
   /** Изображение */
   file: Blob | File;
@@ -1847,6 +2183,11 @@ export type UsersUploadAvatarBody = {
 
 export type OrganizationsUploadLogoBody = {
   /** Изображение */
+  file: Blob | File;
+};
+
+export type UsersAddPhotoBody = {
+  /** Фото */
   file: Blob | File;
 };
 
@@ -2228,4 +2569,11 @@ export const AdminListEventsStatus = {
   UNPUBLISHED: 'UNPUBLISHED',
   DELETED: 'DELETED',
 } as const;
+
+export type AdminListAwardsParams = {
+/**
+ * Месяц в виде 2026-09
+ */
+month?: string;
+};
 

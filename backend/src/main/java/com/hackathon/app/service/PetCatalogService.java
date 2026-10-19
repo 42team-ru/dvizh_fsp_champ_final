@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import com.hackathon.app.domain.dto.PetCatalogResponse;
 import com.hackathon.app.domain.entity.PetItem;
 import com.hackathon.app.domain.entity.PetSlot;
+import com.hackathon.app.domain.enums.PetItemKind;
 import com.hackathon.app.domain.enums.PetSlotKind;
 import com.hackathon.app.domain.mapper.PetMapper;
 import com.hackathon.app.repository.PetItemRepository;
@@ -74,13 +75,61 @@ public class PetCatalogService {
 			new BuiltInSlot("hat", "Головной убор", PetSlotKind.OUTFIT, List.of(
 					item("cap", "Кепка"), item("headband", "Повязка"), item("beanie", "Вязаная шапка"),
 					item("swimcap", "Шапочка для плавания"), item("helmet", "Хоккейный шлем"),
-					item("headphones", "Игровые наушники с микрофоном"))),
+					item("headphones", "Игровые наушники с микрофоном"), item("crown", "Корона организатора"))),
 			new BuiltInSlot("eyewear", "Очки", PetSlotKind.OUTFIT, List.of(
 					item("sunglasses", "Солнцезащитные"), item("goggles", "Для плавания"))),
 			new BuiltInSlot("neck", "На шее", PetSlotKind.OUTFIT, List.of(
 					item("medal", "Медаль"), item("whistle", "Свисток"))),
 			new BuiltInSlot("bottom", "Низ и экипировка", PetSlotKind.OUTFIT, List.of(
 					item("swimshorts", "Плавки с жёлтой отделкой"), item("hockeypants", "Хоккейные шорты и коньки"))));
+
+	/** Цена, вид и подсказка вещи: ключ «слот:код». Вещи, которых тут нет, — магазин за 100 монет. */
+	private record Economy(int price, PetItemKind kind, String hint) {
+	}
+
+	private static final Economy DEFAULT_ECONOMY = new Economy(100, PetItemKind.SHOP, null);
+
+	private static final Map<String, Economy> ECONOMY = economy();
+
+	private static Map<String, Economy> economy() {
+		var m = new java.util.HashMap<String, Economy>();
+		// Базовые: есть у всех сразу.
+		for (var key : List.of("activity:none", "shirt:training", "hat:headband")) {
+			m.put(key, new Economy(0, PetItemKind.BASE, null));
+		}
+		// Эксклюзивы: только за достижения.
+		m.put("neck:medal", new Economy(0, PetItemKind.EXCLUSIVE, "за 10 встреч"));
+		m.put("hat:crown", new Economy(0, PetItemKind.EXCLUSIVE, "за 5 проведённых встреч"));
+		m.put("shirt:beavers", new Economy(0, PetItemKind.EXCLUSIVE, "за встречу ССК ВГУ «Хищные бобры»"));
+		// 50–80: мелочь.
+		price(m, 60, "hat:cap", "hat:swimcap", "eyewear:goggles");
+		price(m, 70, "hat:beanie", "eyewear:sunglasses");
+		price(m, 50, "neck:whistle");
+		price(m, 80, "bottom:swimshorts");
+		// 100–150: спортивная экипировка и инвентарь.
+		price(m, 100, "shirt:running", "activity:juggle", "activity:dribble", "activity:hockey");
+		price(m, 120, "shirt:football", "shirt:programming", "hat:helmet", "activity:lift", "activity:chess");
+		price(m, 130, "hat:headphones");
+		price(m, 150, "activity:ski");
+		// 200–250: форма, кимоно, ноутбуки.
+		price(m, 250, "shirt:judo", "activity:programming");
+		price(m, 220, "shirt:hockey", "bottom:hockeypants", "activity:esports");
+		for (var club : List.of("hc-cska", "hc-metallurg", "hc-lokomotiv", "hc-severstal", "hc-torpedo", "hc-barys",
+				"hc-spartak", "hc-neftekhimik", "hc-sokol")) {
+			price(m, 220, "shirt:" + club);
+		}
+		for (var club : List.of("zenit", "cska", "fakel", "yenisey", "krasnodar", "lokomotiv", "spartak", "rostov",
+				"dynamo", "akron")) {
+			price(m, 200, "shirt:" + club);
+		}
+		return m;
+	}
+
+	private static void price(Map<String, Economy> m, int price, String... keys) {
+		for (var key : keys) {
+			m.put(key, new Economy(price, PetItemKind.SHOP, null));
+		}
+	}
 
 	private final PetSlotRepository slots;
 	private final PetItemRepository items;
@@ -120,11 +169,15 @@ public class PetCatalogService {
 					mapper.toSlot(builtIn.code(), builtIn.label(), builtIn.kind(), position, true)));
 			for (int itemPosition = 0; itemPosition < builtIn.items().size(); itemPosition++) {
 				var builtInItem = builtIn.items().get(itemPosition);
-				if (!items.existsBySlotIdAndCode(slot.getId(), builtInItem.code())) {
-					items.save(mapper.toItem(slot.getId(), builtInItem.code(), builtInItem.label(), true,
-							itemPosition));
+				var economy = ECONOMY.getOrDefault(builtIn.code() + ":" + builtInItem.code(), DEFAULT_ECONOMY);
+				var existing = items.findBySlotIdAndCode(slot.getId(), builtInItem.code()).orElse(null);
+				if (existing == null) {
+					existing = mapper.toItem(slot.getId(), builtInItem.code(), builtInItem.label(), true, itemPosition);
 					created++;
 				}
+				// Цена, вид и подсказка живут в коде: при старте приводим к ним и уже созданные вещи.
+				mapper.economy(existing, economy.price(), economy.kind(), economy.hint());
+				items.save(existing);
 			}
 		}
 		if (created > 0) {

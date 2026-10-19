@@ -40,6 +40,10 @@ public interface RegistrationRepository extends JpaRepository<Registration, UUID
 
 	List<Registration> findByEventIdAndStatusOrderByCreatedAt(UUID eventId, RegistrationStatus status);
 
+	/** Подтверждённые участники мероприятия. */
+	@Query("select r.userId from Registration r where r.eventId = :eventId and r.status = com.hackathon.app.domain.enums.RegistrationStatus.CONFIRMED")
+	List<UUID> findConfirmedUserIds(UUID eventId);
+
 	long countByEventIdAndStatus(UUID eventId, RegistrationStatus status);
 
 	/** Счётчик «записались N из M» для списка одним запросом, а не по запросу на мероприятие. */

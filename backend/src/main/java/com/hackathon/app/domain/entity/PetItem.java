@@ -2,6 +2,7 @@ package com.hackathon.app.domain.entity;
 
 import java.util.UUID;
 
+import com.hackathon.app.domain.enums.PetItemKind;
 import com.hackathon.app.domain.enums.PetBodyPart;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -51,6 +52,19 @@ public class PetItem extends AuditEntity {
      * Порядок в слоте.
      */
     private int position;
+    /**
+     * Цена в монетах; 0 у базовых и эксклюзивных.
+     */
+    private int price;
+    /**
+     * Как получить: базовая, магазин или эксклюзив.
+     */
+    @Enumerated(EnumType.STRING)
+    private PetItemKind kind = PetItemKind.SHOP;
+    /**
+     * Продолжение фразы «Дают …» у эксклюзива, например «за 10 встреч»; у остальных null.
+     */
+    private String unlockHint;
     /**
      * Часть тела своей вещи; у встроенных null.
      */

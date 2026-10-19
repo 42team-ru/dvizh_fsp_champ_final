@@ -30,7 +30,7 @@ import tools.jackson.databind.ObjectMapper;
 
 /** Сквозные проверки карты на настоящем PostGIS: вычисляемая точка и пространственный поиск. */
 @Tag("postgres")
-@SpringBootTest
+@SpringBootTest(properties = {"app.storage.type=memory", "app.demo.enabled=false", "app.economy.scheduler-enabled=false"})
 @AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
 class EventMapE2ETest {

@@ -17,6 +17,36 @@ public interface EventOccurrenceRepository extends JpaRepository<EventOccurrence
 
 	List<EventOccurrence> findByEventIdOrderByStartAt(UUID eventId);
 
+	/** Начавшиеся занятия, по которым ещё не начислены награды: порядок по началу, конец проверяет сервис. */
+	@Query("""
+			select o from EventOccurrence o
+			where o.rewardProcessedAt is null and o.status = com.hackathon.app.domain.enums.OccurrenceStatus.SCHEDULED
+			  and o.startAt <= :now
+			order by o.startAt, o.id""")
+	List<EventOccurrence> findPendingReward(Instant now);
+
+	/** Все начавшиеся необработанные занятия считаем обработанными (старт демо-экономики: задним числом не платим). */
+	@org.springframework.data.jpa.repository.Modifying(flushAutomatically = true, clearAutomatically = true)
+	@Query("update EventOccurrence o set o.rewardProcessedAt = :now where o.rewardProcessedAt is null and o.startAt <= :now")
+	int markStartedProcessed(Instant now);
+
+	/** Состоявшиеся и начавшиеся занятия опубликованных мероприятий одной организации. */
+	@Query("""
+			select o from EventOccurrence o join Event e on e.id = o.eventId
+			where e.organizationId = :organizationId and e.status = com.hackathon.app.domain.enums.EventStatus.PUBLISHED
+			  and o.status = com.hackathon.app.domain.enums.OccurrenceStatus.SCHEDULED and o.startAt <= :now
+			order by o.startAt""")
+	List<EventOccurrence> findOrganizationStarted(UUID organizationId, Instant now);
+
+	/** Занятия мероприятий организаций в [from, to) — для «Организации месяца». */
+	@Query("""
+			select o from EventOccurrence o join Event e on e.id = o.eventId
+			where e.organizationId is not null and e.status = com.hackathon.app.domain.enums.EventStatus.PUBLISHED
+			  and o.status = com.hackathon.app.domain.enums.OccurrenceStatus.SCHEDULED
+			  and o.startAt >= :from and o.startAt < :to
+			order by o.startAt""")
+	List<EventOccurrence> findOrganizationOccurrences(Instant from, Instant to);
+
 	Optional<EventOccurrence> findByIdAndEventId(UUID id, UUID eventId);
 
 	/** Занятия мероприятия в периоде [from, to], по порядку. */

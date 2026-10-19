@@ -3,6 +3,7 @@ import { Card } from "@/shared/components/ui/card";
 import { Icon } from "@/shared/components/ui/icon";
 import { Participants } from "@/shared/components/ui/participants";
 import { cn } from "cn";
+import { Link } from "react-router";
 
 export type EventCover = {
   /** Токен фона, например `bg-orange`. */
@@ -93,6 +94,7 @@ export function EventCard({
   size = "md",
   titleLines = 1,
   className,
+  href,
 }: {
   event: EventCardData;
   coverHeight: number;
@@ -100,11 +102,14 @@ export function EventCard({
   size?: "md" | "lg";
   titleLines?: 1 | 2;
   className?: string;
+  /** Ссылка на карточку мероприятия: вся карточка кликабельна. */
+  href?: string;
 }) {
   const large = size === "lg";
   const titleBox = large ? 31 : titleLines === 2 ? 43 : 21.5;
   return (
     <Card className={cn("absolute overflow-hidden p-0", className)}>
+      {href && <Link to={href} aria-label={event.title} className="absolute inset-0 z-10" />}
       <div
         className="relative w-full shrink-0 overflow-hidden border-b-2 border-ink"
         style={{ height: coverHeight }}

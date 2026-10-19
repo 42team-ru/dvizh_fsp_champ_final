@@ -1,4 +1,6 @@
 import { useUser } from "@/entity/user/model/use-user";
+import { EditProfileDialog } from "@/features/edit-profile/ui/edit-profile-dialog";
+import { Button } from "@/shared/components/ui/button";
 import { useRegistrationsMine } from "@/shared/api/generated/core/registrations/registrations";
 import { useUsersHistory, useUsersHistorySummary, useUsersMySports } from "@/shared/api/generated/core/users/users";
 import type {
@@ -149,9 +151,16 @@ function DataPage() {
       </div>
 
       <div className="relative flex flex-col gap-2">
-        <p className="text-[9px] font-extrabold tracking-[1.2px] whitespace-nowrap text-muted-foreground">
-          ВИДЫ СПОРТА И РАЗРЯД
-        </p>
+        <div className="flex items-center justify-between">
+          <p className="text-[9px] font-extrabold tracking-[1.2px] whitespace-nowrap text-muted-foreground">
+            ВИДЫ СПОРТА И РАЗРЯД
+          </p>
+          <EditProfileDialog user={user}>
+            <Button variant="soft" className="h-8 px-4 text-xs leading-[17px]">
+              Править
+            </Button>
+          </EditProfileDialog>
+        </div>
         <div className="flex flex-wrap gap-2">
           {list.length > 0 ? (
             list.map((s, i) => <SportChip key={s.sport.id} sport={s} index={i} />)

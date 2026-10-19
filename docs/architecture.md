@@ -24,9 +24,10 @@ docker-compose.dev.yml  только БД для разработки
 | `domain.mapper` | MapStruct: entity ↔ dto, **всё заполнение полей сущностей только здесь** (сервис — чистая бизнес-логика). Общий `@Mapper(config = MappingConfig.class)`: поля без источника пропускаются без `ignore = true`, строки идут через `util.Strings.blankToNull` (обрезка, пустые → `null`) |
 | `util` | Статические утилиты без состояния (`Strings`) |
 | `config` | Security, OpenAPI, `@ConfigurationProperties` |
+| `demo` | Демо-данные (только при `DEMO_MODE=true`): сидеры, `/api/demo/accounts`, перенос дат в прошлое. Работает как клиент сервисов |
 | `domain.exception` | Свои исключения и единый `ApiExceptionHandler` (RFC 9457) |
 
-Зависимости идут только вниз: `rest → service → repository → entity`. Миграции БД: `backend/src/main/resources/db/migration` (Flyway, только вперёд; применённые миграции не править, добавлять новые `V5__...`).
+Зависимости идут только вниз: `rest → service → repository → entity`. Исключение — пакет `demo` (демо-данные): он вызывает сервисы как клиент, и ничто вне него от `demo` не зависит. Миграции БД: `backend/src/main/resources/db/migration` (Flyway, только вперёд; применённые миграции не править, добавлять новые `V5__...`).
 Пример готового флоу: регистрация и вход (`AuthController`, `AuthService`).
 
 ## Мероприятия, записи, виды спорта (`EventController`, `RegistrationController`, `SportController`; миграции `V3__events.sql`, `V4__organizers_and_profile.sql`)

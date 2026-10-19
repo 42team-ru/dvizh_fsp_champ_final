@@ -60,13 +60,13 @@ export function MobileTabBar({ current }: { current: MobileTab }) {
         {tab(TABS[0])}
         {tab(TABS[1])}
         <div className="relative">
-          <button
-            type="button"
+          <Link
+            to="/events/new"
             aria-label="Создать событие"
             className="absolute top-[-28px] left-1/2 box-border flex size-[58px] -translate-x-1/2 items-center justify-center rounded-[29px] border-2 border-ink bg-primary shadow-hard-sm"
           >
             <Icon name={`${dir}/icon-plus`} className="size-[26px]" />
-          </button>
+          </Link>
         </div>
         {tab(TABS[2])}
         {tab(TABS[3])}

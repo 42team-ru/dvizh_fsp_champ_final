@@ -30,7 +30,8 @@ import type {
   PetRenameRequest,
   PetRequest,
   PetResponse,
-  ProblemDetail
+  ProblemDetail,
+  ShopItemResponse
 } from '../appAPI.schemas';
 
 import { authMutator } from '../../../mutators/authMutator';
@@ -290,10 +291,15 @@ export type petsEquipResponse404 = {
   status: 404
 }
 
+export type petsEquipResponse409 = {
+  data: ProblemDetail
+  status: 409
+}
+
 export type petsEquipResponseSuccess = (petsEquipResponse200) & {
   headers: Headers;
 };
-export type petsEquipResponseError = (petsEquipResponse400 | petsEquipResponse404) & {
+export type petsEquipResponseError = (petsEquipResponse400 | petsEquipResponse404 | petsEquipResponse409) & {
   headers: Headers;
 };
 
@@ -494,6 +500,104 @@ export const usePetsRename = <TError = ErrorType<ProblemDetail>,
       > => {
       return useMutation(getPetsRenameMutationOptions(options), queryClient);
     }
+    export type petsBuyResponse200 = {
+  data: ShopItemResponse
+  status: 200
+}
+
+export type petsBuyResponse404 = {
+  data: ProblemDetail
+  status: 404
+}
+
+export type petsBuyResponse409 = {
+  data: ProblemDetail
+  status: 409
+}
+
+export type petsBuyResponseSuccess = (petsBuyResponse200) & {
+  headers: Headers;
+};
+export type petsBuyResponseError = (petsBuyResponse404 | petsBuyResponse409) & {
+  headers: Headers;
+};
+
+export type petsBuyResponse = (petsBuyResponseSuccess | petsBuyResponseError)
+
+export const getPetsBuyUrl = (item: string,) => {
+
+
+
+
+  return `/api/pets/shop/${item}/buy`
+}
+
+/**
+ * item — id вещи из магазина в виде слот:код, например hat:cap.
+ * @summary Купить вещь
+ */
+export const petsBuy = async (item: string, options?: Parameters<typeof authMutator>[1]): Promise<petsBuyResponse> => {
+
+  return authMutator<petsBuyResponse>(getPetsBuyUrl(item),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getPetsBuyMutationKey = () => ['petsBuy'] as const;
+
+export const getPetsBuyMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof petsBuy>>, TError,PetsBuyMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof petsBuy>>, TError,PetsBuyMutationVariables, TContext> => {
+
+const mutationKey = getPetsBuyMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof petsBuy>>, PetsBuyMutationVariables> = (props) => {
+          const {item} = props ?? {};
+
+          return  petsBuy(item,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PetsBuyMutationResult = NonNullable<Awaited<ReturnType<typeof petsBuy>>>
+
+    export type PetsBuyMutationError = ErrorType<ProblemDetail>
+    export type PetsBuyMutationVariables = {item: string}
+
+    /**
+ * @summary Купить вещь
+ */
+export const usePetsBuy = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof petsBuy>>, TError,PetsBuyMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof petsBuy>>,
+        TError,
+        PetsBuyMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPetsBuyMutationOptions(options), queryClient);
+    }
     export type petsGetUserResponse200 = {
   data: PetResponse
   status: 200
@@ -603,6 +707,119 @@ export function usePetsGetUser<TData = Awaited<ReturnType<typeof petsGetUser>>, 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getPetsGetUserQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type petsShopResponse200 = {
+  data: ShopItemResponse[]
+  status: 200
+}
+
+export type petsShopResponseSuccess = (petsShopResponse200) & {
+  headers: Headers;
+};
+;
+
+export type petsShopResponse = (petsShopResponseSuccess)
+
+export const getPetsShopUrl = () => {
+
+
+
+
+  return `/api/pets/shop`
+}
+
+/**
+ * Базовые вещи есть у всех, магазинные покупаются за монеты, эксклюзивы дают за достижения (поле hint).
+ * @summary Магазин: все вещи с ценой, видом и признаком «моя»
+ */
+export const petsShop = async ( options?: Parameters<typeof authMutator>[1]): Promise<petsShopResponse> => {
+
+  return authMutator<petsShopResponse>(getPetsShopUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getPetsShopQueryKey = () => {
+    return [
+    `/api/pets/shop`
+    ] as const;
+    }
+
+
+export const getPetsShopQueryOptions = <TData = Awaited<ReturnType<typeof petsShop>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof petsShop>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getPetsShopQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof petsShop>>> = ({ signal }) => petsShop({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof petsShop>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type PetsShopQueryResult = NonNullable<Awaited<ReturnType<typeof petsShop>>>
+export type PetsShopQueryError = ErrorType<unknown>
+
+
+export function usePetsShop<TData = Awaited<ReturnType<typeof petsShop>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof petsShop>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof petsShop>>,
+          TError,
+          Awaited<ReturnType<typeof petsShop>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePetsShop<TData = Awaited<ReturnType<typeof petsShop>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof petsShop>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof petsShop>>,
+          TError,
+          Awaited<ReturnType<typeof petsShop>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePetsShop<TData = Awaited<ReturnType<typeof petsShop>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof petsShop>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Магазин: все вещи с ценой, видом и признаком «моя»
+ */
+
+export function usePetsShop<TData = Awaited<ReturnType<typeof petsShop>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof petsShop>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getPetsShopQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

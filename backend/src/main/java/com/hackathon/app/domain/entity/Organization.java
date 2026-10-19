@@ -58,4 +58,6 @@ public class Organization extends AuditEntity {
 	private UUID reviewedById;
 	/** Логотип (файл в S3); null — без логотипа. */
 	private UUID logoFileId;
+	/** Служебный код особой организации (например, predatory-beavers); null у обычных, через API не задаётся. */
+	private String code;
 }

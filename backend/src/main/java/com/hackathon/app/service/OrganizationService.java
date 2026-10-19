@@ -42,6 +42,7 @@ public class OrganizationService {
 	private final DbTimeRepository dbTime;
 	private final OrganizationMapper mapper;
 	private final FileService files;
+	private final OrganizationAwardService awards;
 	private final StoredFileRepository storedFiles;
 
 	@Transactional(readOnly = true)
@@ -137,7 +138,7 @@ public class OrganizationService {
 	@Transactional(readOnly = true)
 	public PublicOrganizationResponse getPublic(UUID id) {
 		return organizations.findByIdAndStatus(id, OrganizationStatus.APPROVED)
-				.map(org -> mapper.toPublic(org, files.organizationDocuments(org.getId())))
+				.map(org -> mapper.toPublic(org, files.organizationDocuments(org.getId()), awards.badges(org.getId())))
 				.orElseThrow(() -> new NoSuchElementException(NOT_FOUND));
 	}
 

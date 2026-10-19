@@ -9,5 +9,7 @@ import java.util.UUID;
 
 /** Публичная страница одобренной организации. */
 public record PublicOrganizationResponse(UUID id, String name, String description, String city,
-		Map<ContactType, String> contacts, String logoUrl, List<FileResponse> documents) {
+		Map<ContactType, String> contacts, String logoUrl, List<FileResponse> documents,
+		/** Подтверждённые награды «Организация месяца», свежие первыми. */
+		List<AwardBadgeResponse> awards) {
 }

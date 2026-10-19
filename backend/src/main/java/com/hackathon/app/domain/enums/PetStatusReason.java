@@ -10,6 +10,10 @@ public enum PetStatusReason {
     REGISTRATION_REJECTED,
     /** Недавнее одобрение. */
     REGISTRATION_APPROVED,
+    /** Монеты за недавнюю встречу. */
+    COINS_EARNED,
+    /** Новое достижение. */
+    ACHIEVEMENT_EARNED,
     /** Скоро встреча. */
     EVENT_SOON,
     /** Организатор ждёт решения заявок. */

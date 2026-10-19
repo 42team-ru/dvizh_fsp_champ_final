@@ -114,7 +114,7 @@ class PetMoodE2ETest {
         var author = api.newUser("petBoundaryAuthor");
         var user = api.newUser("petBoundaryUser");
         var admin = api.newAdmin();
-        var outfit = new PetRequest("hockey", Map.of("shirt", "hc-sokol", "hat", "helmet"));
+        var outfit = new PetRequest("none", Map.of("shirt", "training", "hat", "headband"));
         assertThat(user.savePet(outfit).outfit()).isEqualTo(outfit.outfit());
         assertThat(user.petCatalog().slots()).extracting(s -> s.id()).doesNotContain("mood", "gloves", "back");
         assertThatApi(() -> user.savePet(new PetRequest("hockey", Map.of("hat", "missing"))))

@@ -14,6 +14,7 @@ public interface PetItemRepository extends JpaRepository<PetItem, UUID> {
 
 	boolean existsBySlotIdAndCode(UUID slotId, String code);
 
+	Optional<PetItem> findBySlotIdAndCode(UUID slotId, String code);
 	/** Вещь от админа по коду: коды custom-* уникальны во всём каталоге. */
 	Optional<PetItem> findByCodeAndBuiltInFalse(String code);
 

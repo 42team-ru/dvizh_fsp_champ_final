@@ -2,7 +2,8 @@ import { Link } from "react-router";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Icon } from "@/shared/components/ui/icon";
-import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar";
+import { useUser } from "@/entity/user/model/use-user";
 import { SearchPalette } from "@/widgets/search-palette/ui/search-palette";
 
 const NAV = [
@@ -13,6 +14,7 @@ const NAV = [
 ];
 
 export function AppHeader({ current = "home" }: { current?: "home" | "feed" | "profile" | "activity" }) {
+  const { user } = useUser();
   return (
     <header className="box-border h-[76px] border-b-2 border-ink bg-background">
       <div className="mx-auto flex h-full w-full max-w-[1280px] items-center px-8">
@@ -51,16 +53,21 @@ export function AppHeader({ current = "home" }: { current?: "home" | "feed" | "p
         <div className="ml-auto flex shrink-0 items-center gap-3">
           <SearchPalette />
 
-          <Button className="shrink-0">
-            <Icon name="icon-plus" className="size-[18px]" />
-            Создать
+          <Button asChild className="shrink-0">
+            <Link to="/events/new">
+              <Icon name="icon-plus" className="size-[18px]" />
+              Создать
+            </Link>
           </Button>
 
-          <Avatar className="size-[42px] shrink-0 after:hidden">
-            <AvatarFallback className="border-2 border-ink bg-sky text-sm leading-[19px] font-extrabold text-foreground">
-              АС
-            </AvatarFallback>
-          </Avatar>
+          <Link to="/profile" aria-label="Профиль" className="shrink-0">
+            <Avatar className="size-[42px] after:hidden">
+              {user?.avatarUrl && <AvatarImage src={user.avatarUrl} alt="" className="border-2 border-ink object-cover" />}
+              <AvatarFallback className="border-2 border-ink bg-sky text-sm leading-[19px] font-extrabold text-foreground">
+                {((user?.firstName?.[0] ?? "") + (user?.lastName?.[0] ?? "")).toUpperCase() || user?.username?.[0]?.toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+          </Link>
         </div>
       </div>
     </header>

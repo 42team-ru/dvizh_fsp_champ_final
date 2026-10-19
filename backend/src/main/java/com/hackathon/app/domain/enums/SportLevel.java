@@ -6,8 +6,6 @@ public enum SportLevel {
 	BEGINNER,
 	/** Любитель. */
 	AMATEUR,
-	/** Опытный. */
-	ADVANCED,
 	/** Профи. */
 	PRO;
 

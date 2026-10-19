@@ -8,93 +8,28 @@ import { Icon } from "@/shared/components/ui/icon";
 import { Progress } from "@/shared/components/ui/progress";
 import { cn } from "cn";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
+import { useEffect, useState } from "react";
+import { Link } from "react-router";
+import { useEventsList } from "@/shared/api/generated/core/events/events";
+import type { EventSummaryResponse } from "@/shared/api/generated/core/appAPI.schemas";
+import { formatWhen } from "@/entity/event/lib/event-format";
+import { FEED_CHIPS, useFeedFilters } from "@/entity/event/model/use-feed-filters";
+import { EventsMap } from "@/widgets/events-map/ui/events-map";
 
 const dir = "m-feed";
-const CHIPS = ["Все", "Рядом", "Сегодня", "Бег", "Футбол", "Йога", "Вело"];
 const PEOPLE_TONES = ["bg-sky", "bg-mint", "bg-peach"];
 
-type Big = {
-  sport: string;
-  when: string;
-  dist: string;
-  title: string;
-  place: string;
-  people: string[];
-  going: number;
-  total?: number;
-  warn?: boolean;
-  photo: string;
-  decor: string;
-  height: number;
-  distTop: number;
-};
-
-const BIG: Record<string, Big> = {
-  football: {
-    sport: "ФУТБОЛ",
-    when: "Сегодня 19:30",
-    dist: "3,2 км",
-    title: "Вечерний футбол 6×6",
-    place: "Стадион «Локомотив» · любители",
-    people: ["ИВ", "АР", "ОТ"],
-    going: 11,
-    total: 14,
-    photo: "bg-photo-lime",
-    decor: "photo-decor.svg",
-    height: 150,
-    distTop: 111,
-  },
-  yoga: {
-    sport: "ЙОГА",
-    when: "Сегодня 20:30",
-    dist: "2,1 км",
-    title: "Вечерняя йога в зале",
-    place: "Студия «Тихо» · любой уровень",
-    people: ["ЛП", "ТС", "ОК"],
-    going: 10,
-    total: 12,
-    warn: true,
-    photo: "bg-photo-mint",
-    decor: "photo-decor1.svg",
-    height: 130,
-    distTop: 91,
-  },
-  bike: {
-    sport: "ВЕЛО",
-    when: "Вс 11:00",
-    dist: "4,1 км",
-    title: "Вело до Удачного и обратно",
-    place: "34 км, средний темп, остановка на кофе",
-    people: ["ДК", "ТС", "РМ"],
-    going: 12,
-    photo: "bg-photo-lime",
-    decor: "photo-decor2.svg",
-    height: 120,
-    distTop: 81,
-  },
-  tennis: {
-    sport: "ТЕННИС",
-    when: "Сб 14:00",
-    dist: "5,0 км",
-    title: "Теннис на кортах",
-    place: "Корты «Академия» · опытным",
-    people: ["ТС", "РМ"],
-    going: 3,
-    total: 4,
-    warn: true,
-    photo: "bg-photo-lilac",
-    decor: "photo-decor2.svg",
-    height: 120,
-    distTop: 81,
-  },
-};
-
-const SMALL = [
-  { sport: "ШАХМАТЫ", when: "Сегодня 18:00", title: "Шахматы в парке", dist: "0,9 км", left: "осталось 3", pct: 70, tone: "bg-photo-lilac" },
-  { sport: "БЕГ", when: "Сегодня 20:00", title: "Лёгкая пробежка у моста", dist: "1,4 км", left: "без лимита", pct: 25, tone: "bg-peach" },
-  { sport: "ИГРЫ", when: "Сб 16:00", title: "Стритбол во дворе", dist: "2,6 км", left: "осталось 2", pct: 80, tone: "bg-peach" },
-  { sport: "ПЛАВАНИЕ", when: "Вс 12:00", title: "Свободное плавание", dist: "3,8 км", left: "без лимита", pct: 25, tone: "bg-sky" },
+/** Оформление крупных карточек по порядку: фон и узор, высота обложки. */
+const BIG_STYLES = [
+  { photo: "bg-photo-lime", decor: "photo-decor.svg", height: 150, distTop: 111 },
+  { photo: "bg-photo-mint", decor: "photo-decor1.svg", height: 130, distTop: 91 },
+  { photo: "bg-photo-lilac", decor: "photo-decor2.svg", height: 120, distTop: 81 },
 ];
+const SMALL_TONES = ["bg-photo-lilac", "bg-peach", "bg-sky", "bg-photo-mint"];
+
+/** Сколько идут: у серии — отметки на ближайшее занятие, у разового — подтверждённые записи. */
+const goingOf = (e: EventSummaryResponse) => e.occurrenceAttendeesCount ?? e.participantsCount;
+const placeOf = (e: EventSummaryResponse) => (e.format === "ONLINE" ? "Онлайн" : e.address ?? "");
 
 const NEAR = [
   { i: "МС", tone: "bg-mint", name: "Макс Сидоров", meta: "Бег, вело · 1,1 км" },
@@ -104,59 +39,53 @@ const NEAR = [
 const tag =
   "h-auto border-[1.5px] px-[10px] py-1 text-[10px] leading-[normal] font-extrabold tracking-[1px]";
 
-function BigCard({ e }: { e: Big }) {
+function BigCard({ e, index }: { e: EventSummaryResponse; index: number }) {
+  const style = BIG_STYLES[index % BIG_STYLES.length];
+  const going = goingOf(e);
+  const total = e.capacity ?? undefined;
+  const warn = total != null && going / total >= 0.8;
   return (
     <div className="px-4">
-      <Card className="overflow-hidden rounded-[22px]">
-        <div className={cn("relative shrink-0 overflow-hidden", e.photo)} style={{ height: e.height }}>
+      <Card className="relative overflow-hidden rounded-[22px]">
+        <Link to={`/events/${e.id}`} aria-label={e.title} className="absolute inset-0 z-10" />
+        <div className={cn("relative shrink-0 overflow-hidden", style.photo)} style={{ height: style.height }}>
           <img
-            src={`/${dir}/${e.decor}`}
+            src={e.coverUrl ?? `/${dir}/${style.decor}`}
             alt=""
             className="absolute top-0 left-0 size-full max-w-none object-cover"
           />
           <Badge variant="outline" className={cn(tag, "absolute top-3 left-3 bg-card")}>
-            {e.sport}
+            {e.sport.name.toUpperCase()}
           </Badge>
           <span className="absolute top-3 right-3 rounded-pill bg-ink px-[10px] py-1 text-[11px] leading-[normal] font-extrabold tracking-[1px] whitespace-nowrap text-secondary">
-            {e.when}
+            {formatWhen(e.startAt)}
           </span>
           <span
-            className="absolute left-3 box-border flex items-center gap-1 rounded-pill border-[1.5px] border-ink bg-card py-1 pr-[10px] pl-2"
-            style={{ top: e.distTop }}
+            className="absolute left-3 box-border flex max-w-[calc(100%-24px)] items-center gap-1 rounded-pill border-[1.5px] border-ink bg-card py-1 pr-[10px] pl-2"
+            style={{ top: style.distTop }}
           >
             <Icon name={`${dir}/icon-pin`} className="size-[13px]" />
-            <span className="text-xs leading-[normal] font-bold text-foreground">{e.dist}</span>
+            <span className="truncate text-xs leading-[normal] font-bold text-foreground">{placeOf(e)}</span>
           </span>
         </div>
         <div className="flex flex-col gap-2 p-[14px]">
           <p className="font-display text-base leading-[21px] font-bold text-foreground">{e.title}</p>
-          <p className="text-[13px] leading-[18px] font-medium text-muted-foreground">{e.place}</p>
+          {e.scheduleDescription && <p className="text-[13px] leading-[18px] font-medium text-muted-foreground">{e.scheduleDescription}</p>}
           <div className="flex items-center gap-2 whitespace-nowrap">
-            <span className="flex items-center">
-              {e.people.map((p, i) => (
-                <Disc
-                  key={p}
-                  initials={p}
-                  tone={PEOPLE_TONES[i]}
-                  className={cn("size-7", i < e.people.length - 1 && "mr-[-8px]")}
-                  textClassName="text-xs leading-[normal]"
-                />
-              ))}
-            </span>
             <span className="text-[13px] leading-[normal] font-bold text-foreground">
-              {e.total ? `Идут ${e.going} из ${e.total}` : `Идут ${e.going}`}
+              {total ? `Идут ${going} из ${total}` : `Идут ${going}`}
             </span>
             <span
               className={cn(
                 "ml-auto text-xs leading-[normal] font-extrabold",
-                e.warn ? "text-accent" : "text-muted-foreground"
+                warn ? "text-accent" : "text-muted-foreground"
               )}
             >
-              {e.total ? `осталось ${e.total - e.going}` : "без лимита"}
+              {total ? `осталось ${Math.max(0, total - going)}` : "без лимита"}
             </span>
           </div>
           <Progress
-            value={e.total ? (e.going / e.total) * 100 : 60}
+            value={total ? (going / total) * 100 : 60}
             className="bg-card"
           />
         </div>
@@ -165,11 +94,20 @@ function BigCard({ e }: { e: Big }) {
   );
 }
 
-function SmallRow({ items }: { items: (typeof SMALL)[number][] }) {
+function SmallRow({ items }: { items: EventSummaryResponse[] }) {
   return (
     <div className="grid grid-cols-2 gap-4 px-4">
-      {items.map((s) => (
-        <Card key={s.title} className="overflow-hidden rounded-[20px]">
+      {items.map((e, i) => {
+        const going = goingOf(e);
+        const s = {
+          sport: e.sport.name.toUpperCase(), when: formatWhen(e.startAt), title: e.title, dist: placeOf(e),
+          pct: e.capacity ? (going / e.capacity) * 100 : 25,
+          left: e.capacity ? `осталось ${Math.max(0, e.capacity - going)}` : "без лимита",
+          tone: SMALL_TONES[i % SMALL_TONES.length],
+        };
+        return (
+        <Card key={e.id} className="relative overflow-hidden rounded-[20px]">
+          <Link to={`/events/${e.id}`} aria-label={e.title} className="absolute inset-0 z-10" />
           <div className={cn("relative h-[84px] shrink-0 overflow-hidden", s.tone)}>
             <img
               src={`/${dir}/decor.svg`}
@@ -190,7 +128,7 @@ function SmallRow({ items }: { items: (typeof SMALL)[number][] }) {
             <p className="font-display text-[13px] leading-[17px] font-bold text-foreground">
               {s.title}
             </p>
-            <p className="text-xs leading-[normal] font-medium whitespace-nowrap text-muted-foreground">
+            <p className="truncate text-xs leading-[normal] font-medium text-muted-foreground">
               {s.dist}
             </p>
             <Progress value={s.pct} className="bg-card" />
@@ -199,7 +137,8 @@ function SmallRow({ items }: { items: (typeof SMALL)[number][] }) {
             </p>
           </div>
         </Card>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -247,9 +186,11 @@ function Promo() {
           </div>
           <img src={`/${dir}/img.png`} alt="" className="size-24 shrink-0 object-contain" />
         </div>
-        <Button variant="ink" className="h-[52px] w-full px-5">
-          <Icon name={`${dir}/icon-plus`} className="size-[18px]" />
-          Создать событие
+        <Button asChild variant="ink" className="h-[52px] w-full px-5">
+          <Link to="/events/new">
+            <Icon name={`${dir}/icon-plus`} className="size-[18px]" />
+            Создать событие
+          </Link>
         </Button>
       </div>
     </div>
@@ -257,6 +198,20 @@ function Promo() {
 }
 
 export function FeedMobile() {
+  const filters = useFeedFilters();
+  const [search, setSearch] = useState("");
+  const [searchText, setSearchText] = useState("");
+  useEffect(() => {
+    const timer = window.setTimeout(() => setSearchText(search.trim()), 300);
+    return () => window.clearTimeout(timer);
+  }, [search]);
+  const [view, setView] = useState<"list" | "map">("list");
+  const params = searchText ? { ...filters.params, searchText } : filters.params;
+  const list = useEventsList(params, { query: { enabled: filters.ready } });
+  const events = list.data?.status === 200 ? list.data.data : [];
+  // Узор ленты: крупная карточка, затем пара мелких — и так по кругу.
+  const groups: EventSummaryResponse[][] = [];
+  for (let i = 0; i < events.length; i += 3) groups.push(events.slice(i, i + 3));
   return (
     <div className="relative isolate flex min-h-dvh overflow-clip flex-col gap-4 bg-background pb-[110px] lg:hidden">
       <MemphisBackground variant="mobile" seed="feed" />
@@ -266,7 +221,10 @@ export function FeedMobile() {
         <label className="box-border flex h-[52px] min-w-0 flex-1 items-center gap-[10px] rounded-2xl border-2 border-ink bg-card px-4">
           <Icon name={`${dir}/icon-search`} className="size-5" />
           <input
-            placeholder="Найти события и людей"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            aria-label="Поиск событий"
+            placeholder="Найти события"
             className="min-w-0 flex-1 bg-transparent text-[15px] font-medium text-foreground outline-none placeholder:text-muted-foreground"
           />
         </label>
@@ -280,10 +238,12 @@ export function FeedMobile() {
       </div>
 
       <div className="no-scrollbar flex gap-2 overflow-x-auto px-4">
-        {CHIPS.map((c, i) => (
+        {FEED_CHIPS.map((c) => (
           <Button
             key={c}
-            variant={i === 0 ? "ink" : "soft"}
+            variant={c === filters.chip ? "ink" : "soft"}
+            aria-pressed={c === filters.chip}
+            onClick={() => filters.setChip(c)}
             rough={false}
             className="h-11 shrink-0 px-[18px] text-sm shadow-none"
           >
@@ -297,33 +257,45 @@ export function FeedMobile() {
           role="tablist"
           className="box-border flex h-12 w-full items-center gap-1 rounded-pill border-2 border-ink bg-card p-1"
         >
-          <button
-            type="button"
-            role="tab"
-            aria-selected
-            className="box-border h-[38px] min-w-0 flex-1 rounded-pill border-2 border-ink bg-secondary text-sm font-extrabold text-foreground"
-          >
-            Список
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={false}
-            className="h-[38px] min-w-0 flex-1 rounded-pill text-sm font-extrabold text-foreground"
-          >
-            Карта
-          </button>
+          {(["list", "map"] as const).map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              role="tab"
+              aria-selected={view === tab}
+              onClick={() => setView(tab)}
+              className={cn(
+                "box-border h-[38px] min-w-0 flex-1 rounded-pill text-sm font-extrabold text-foreground",
+                view === tab && "border-2 border-ink bg-secondary"
+              )}
+            >
+              {tab === "list" ? "Список" : "Карта"}
+            </button>
+          ))}
         </div>
       </div>
 
-      <BigCard e={BIG.football} />
-      <SmallRow items={SMALL.slice(0, 2)} />
-      <NearbyPeople />
-      <BigCard e={BIG.yoga} />
-      <SmallRow items={SMALL.slice(2)} />
-      <Promo />
-      <BigCard e={BIG.bike} />
-      <BigCard e={BIG.tennis} />
+      {view === "map" ? (
+        <div className="px-4">
+          <EventsMap filters={params} className="w-full" mapClassName="h-[55dvh]" />
+        </div>
+      ) : (
+        <>
+          {list.isPending && <p className="px-4 text-base font-semibold text-muted-foreground">Загружаем события…</p>}
+          {list.isError && <p role="alert" className="px-4 text-base font-semibold text-destructive">Не удалось загрузить ленту.</p>}
+          {!list.isPending && events.length === 0 && (
+            <p className="px-4 text-base font-semibold text-muted-foreground">Ничего не нашлось — попробуйте другой фильтр.</p>
+          )}
+          {groups.map((group, i) => (
+            <div key={group[0].id} className="flex flex-col gap-4">
+              <BigCard e={group[0]} index={i} />
+              {group.length > 1 && <SmallRow items={group.slice(1)} />}
+              {i === 0 && <NearbyPeople />}
+            </div>
+          ))}
+          <Promo />
+        </>
+      )}
       <MobileTabBar current="feed" />
     </div>
   );

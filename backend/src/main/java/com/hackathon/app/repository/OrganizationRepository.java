@@ -21,6 +21,10 @@ public interface OrganizationRepository extends JpaRepository<Organization, UUID
 	@Query("select o from Organization o where o.accountId = :accountId")
 	Optional<Organization> findByAccountIdForUpdate(UUID accountId);
 
+	Optional<Organization> findByCode(String code);
+
+	java.util.List<Organization> findByStatus(OrganizationStatus status);
+
 	Optional<Organization> findByIdAndStatus(UUID id, OrganizationStatus status);
 
 	/** Для дашборда админа. */
