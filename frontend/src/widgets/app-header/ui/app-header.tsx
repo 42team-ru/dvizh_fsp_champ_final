@@ -56,7 +56,8 @@ export function AppHeader({ current = "home" }: { current?: "home" | "feed" | "p
                 {item.key === "activity" && nav.unread > 0 ? (
                   <Badge
                     variant="accent"
-                    className="absolute top-[10px] left-[140.5px] h-[22px] min-w-[22px] justify-center rounded-[11px] px-1 text-xs leading-[17px] font-extrabold text-white"
+                    aria-label={`${nav.unread} непрочитанных`}
+                    className="absolute top-1/2 left-[140.5px] h-[22px] -translate-y-1/2 min-w-[22px] justify-center rounded-[11px] px-1 text-xs leading-[17px] font-extrabold text-white"
                   >
                     {nav.unread > 99 ? "99+" : nav.unread}
                   </Badge>

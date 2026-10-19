@@ -23,6 +23,12 @@ public interface NotificationMapper {
     void read(@MappingTarget Notification notification, Instant readAt);
     NotificationSettings settings(UUID userId, Set<NotificationChannel> channels, Set<NotificationCategory> categories);
     void settings(@MappingTarget NotificationSettings settings, Set<NotificationChannel> channels, Set<NotificationCategory> categories);
+    default void email(@MappingTarget NotificationSettings settings, String email) {
+        settings.setEmail(email);
+    }
+    default void maxPhone(@MappingTarget NotificationSettings settings, String maxPhone) {
+        settings.setMaxPhone(maxPhone);
+    }
     @Mapping(target = "status", constant = "PENDING")
     NotificationDelivery delivery(UUID notificationId, UUID userId, NotificationChannel channel, UUID bindingId,
             Long chatId, String text, String dedupKey, Instant nextAttemptAt, Instant expiresAt);

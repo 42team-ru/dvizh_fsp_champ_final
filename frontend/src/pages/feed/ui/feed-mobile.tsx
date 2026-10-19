@@ -1,3 +1,4 @@
+import { usePetName } from "@/entity/user/model/use-pet-name";
 import { SearchX } from "lucide-react";
 import { useNavAccess } from "@/entity/user/model/use-nav-access";
 import { EmptyState } from "@/shared/components/ui/empty-state";
@@ -39,7 +40,23 @@ const placeOf = (e: EventSummaryResponse) => (e.format === "ONLINE" ? "Онла�
 const tag =
   "h-auto border-[1.5px] px-[10px] py-1 text-[10px] leading-[normal] font-extrabold tracking-[1px]";
 
-function BigCard({ e, index, onDismiss }: { e: EventSummaryResponse; index: number; onDismiss?: (id: string) => void }) {
+/** Причина лучшей рекомендации: фиолетовым и со звёздочками, как на главной. */
+function TopReason({ text, className }: { text: string; className?: string }) {
+  return (
+    <p className={cn("flex items-center gap-1 font-semibold text-primary", className)}>
+      <Sparkles className="size-4 shrink-0" aria-hidden />
+      <span className="truncate">{text}</span>
+    </p>
+  );
+}
+
+function BigCard({ e, index, reason, onDismiss }: {
+  e: EventSummaryResponse;
+  index: number;
+  /** Только у лучших рекомендаций «Для вас». */
+  reason?: string;
+  onDismiss?: (id: string) => void;
+}) {
   const style = BIG_STYLES[index % BIG_STYLES.length];
   const going = goingOf(e);
   const total = e.capacity ?? undefined;
@@ -55,8 +72,9 @@ function BigCard({ e, index, onDismiss }: { e: EventSummaryResponse; index: numb
             alt=""
             className="absolute top-0 left-0 size-full max-w-none object-cover"
           />
-          <Badge variant="outline" className={cn(tag, "absolute top-3 left-3 bg-card")}>
-            {e.sport.name.toUpperCase()}
+          {/* Справа время: длинный вид спорта обрезаем многоточием. */}
+          <Badge variant="outline" title={e.sport.name} className={cn(tag, "absolute top-3 left-3 max-w-[calc(100%-150px)] bg-card")}>
+            <span className="truncate">{e.sport.name.toUpperCase()}</span>
           </Badge>
           <span className="absolute top-3 right-3 rounded-pill bg-ink px-[10px] py-1 text-[11px] leading-[normal] font-extrabold tracking-[1px] whitespace-nowrap text-secondary">
             {formatWhen(e.startAt)}
@@ -71,6 +89,7 @@ function BigCard({ e, index, onDismiss }: { e: EventSummaryResponse; index: numb
         </div>
         <div className="flex flex-col gap-2 p-[14px]">
           <p className="font-display text-base leading-[21px] font-bold text-foreground">{e.title}</p>
+          {reason && <TopReason text={reason} className="text-[13px] leading-[18px]" />}
           {e.scheduleDescription && <p className="text-[13px] leading-[18px] font-medium text-muted-foreground">{e.scheduleDescription}</p>}
           <div className="flex items-center gap-2 whitespace-nowrap">
             <span className="text-[13px] leading-[normal] font-bold text-foreground">
@@ -95,7 +114,12 @@ function BigCard({ e, index, onDismiss }: { e: EventSummaryResponse; index: numb
   );
 }
 
-function SmallRow({ items, onDismiss }: { items: EventSummaryResponse[]; onDismiss?: (id: string) => void }) {
+function SmallRow({ items, reasonOf, onDismiss }: {
+  items: EventSummaryResponse[];
+  /** Причина лучшей рекомендации вместо места. */
+  reasonOf?: (id: string) => string | undefined;
+  onDismiss?: (id: string) => void;
+}) {
   return (
     <div className="grid grid-cols-2 gap-4 px-4">
       {items.map((e, i) => {
@@ -122,9 +146,10 @@ function SmallRow({ items, onDismiss }: { items: EventSummaryResponse[]; onDismi
             />
             <Badge
               variant="outline"
-              className={cn(tag, "absolute top-[10px] left-[10px] bg-card text-[9px]")}
+              title={e.sport.name}
+              className={cn(tag, "absolute top-[10px] left-[10px] max-w-[calc(100%-20px)] bg-card text-[9px]")}
             >
-              {s.sport}
+              <span className="truncate">{s.sport}</span>
             </Badge>
             <span className="absolute top-[52px] left-[10px] rounded-pill bg-ink px-[10px] py-1 text-[10px] leading-[normal] font-extrabold tracking-[1px] whitespace-nowrap text-secondary">
               {s.when}
@@ -134,9 +159,13 @@ function SmallRow({ items, onDismiss }: { items: EventSummaryResponse[]; onDismi
             <p className="font-display text-[13px] leading-[17px] font-bold text-foreground">
               {s.title}
             </p>
-            <p className="truncate text-xs leading-[normal] font-medium text-muted-foreground">
-              {s.dist}
-            </p>
+            {reasonOf?.(e.id) ? (
+              <TopReason text={reasonOf(e.id)!} className="text-xs leading-[normal] [&_svg]:size-[14px]" />
+            ) : (
+              <p className="truncate text-xs leading-[normal] font-medium text-muted-foreground">
+                {s.dist}
+              </p>
+            )}
             <Progress value={s.pct} className="bg-card" />
             <p className="text-[11px] leading-[normal] font-extrabold whitespace-nowrap text-muted-foreground">
               {s.left}
@@ -150,6 +179,7 @@ function SmallRow({ items, onDismiss }: { items: EventSummaryResponse[]; onDismi
 }
 
 function Promo() {
+  const petName = usePetName();
   return (
     <div className="px-4">
       <div className="box-border flex w-full flex-col gap-3 rounded-[24px] border-2 border-ink bg-secondary p-5 shadow-[4px_4px_0_var(--ink)]">
@@ -157,7 +187,7 @@ function Promo() {
           <div className="flex min-w-0 flex-1 flex-col gap-[6px] font-bold text-foreground">
             <p className="font-display text-[17px] leading-[23px]">Не нашёл свою тусовку?</p>
             <p className="text-[13px] leading-[18px]">
-              Создай событие — Бублик расскажет о нём соседям с теми же интересами.
+              Создай событие — {petName} расскажет о нём соседям с теми же интересами.
             </p>
           </div>
           <img src={`/${dir}/img.png`} alt="" className="size-24 shrink-0 object-contain" />
@@ -278,8 +308,8 @@ export function FeedMobile() {
           {!list.isPending && events.length === 0 && <FeedEmpty />}
           {groups.map((group, i) => (
             <div key={group[0].id} className="flex flex-col gap-4">
-              <BigCard e={group[0]} index={i} onDismiss={onDismiss} />
-              {group.length > 1 && <SmallRow items={group.slice(1)} onDismiss={onDismiss} />}
+              <BigCard e={group[0]} index={i} reason={list.topReasonOf(group[0].id)} onDismiss={onDismiss} />
+              {group.length > 1 && <SmallRow items={group.slice(1)} reasonOf={list.topReasonOf} onDismiss={onDismiss} />}
             </div>
           ))}
           <Promo />

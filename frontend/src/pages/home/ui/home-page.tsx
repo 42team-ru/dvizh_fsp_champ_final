@@ -1,6 +1,7 @@
 import { OrganizerHome } from "./organizer-home";
 import { AdminHome } from "./admin-home";
 import { MobileTabBar } from "@/widgets/mobile-shell/ui/mobile-tab-bar";
+import { usePetName } from "@/entity/user/model/use-pet-name";
 import { Compass } from "lucide-react";
 import { EmptyState } from "@/shared/components/ui/empty-state";
 import { MyBeaverBadge } from "@/widgets/beaver-pet/ui/my-beaver-badge";
@@ -23,6 +24,7 @@ import {
 } from "@/entity/event/model/use-recommendation-preview";
 import type { RecommendedEventResponse } from "@/shared/api/generated/core/appAPI.schemas";
 import { QrCode } from "@/shared/components/ui/qr-code";
+import { LeaveTip } from "@/widgets/leave-tip/ui/leave-tip";
 import { useUser } from "@/entity/user/model/use-user";
 import { calendarUrl, routeUrl, ticketDay, untilStart, useNextTicket } from "@/entity/event/model/use-next-ticket";
 
@@ -84,24 +86,26 @@ function Hero() {
   const name = user?.firstName ?? "";
   const e = next?.event;
   const canCreate = user?.systemRole !== "ADMIN";
+  const cover = e ? e.coverUrl ?? e.sport.imageUrl : undefined;
   return (
-    <section className="relative box-border h-[330px] overflow-hidden rounded-[28px] border-2 border-ink bg-primary">
-      <img src="/home/memphis.svg" alt="" className="absolute top-0 left-0 h-[330px] w-[1216px] max-w-none" />
+    // Поток вместо абсолютных координат: при крупном шрифте браузера блок растёт, а не обрезает кнопки.
+    <section className="relative box-border flex min-h-[330px] items-center justify-between gap-8 overflow-hidden rounded-[28px] border-2 border-ink bg-primary px-[44px] py-[32px]">
+      <img src="/home/memphis.svg" alt="" className="absolute top-0 left-0 h-full w-[1216px] max-w-none object-cover object-left-top" />
 
-      <div className="absolute top-[44px] left-[44px] w-[700px]">
+      <div className="relative w-[700px] min-w-0 shrink">
         <p className="text-[15px] leading-[21px] font-bold text-white opacity-90">
           Привет{name ? `, ${name}` : ""}! {e ? (next.role === "organizer" ? "Ты ведёшь" : "Дальше у тебя") : isLoading || user?.systemRole === "ADMIN" ? "" : "Ближайших встреч пока нет"}
         </p>
-        <h1 className="mt-[6px] line-clamp-2 font-display text-[52px] leading-[54.5px] font-extrabold tracking-[-1px] text-white">
+        <h1 className="mt-[6px] line-clamp-2 min-h-[109px] font-display text-[52px] leading-[54.5px] font-extrabold tracking-[-1px] text-white">
           {e ? e.title : isLoading ? "…" : user?.systemRole === "ADMIN" ? "Все события платформы" : "Найди компанию для спорта"}
         </h1>
         {e && next && (
           <div className="mt-[26px] flex max-w-[700px] gap-2">
-            <Badge variant="outline" className="text-[13px] leading-[18px]">
+            <Badge variant="outline" className="shrink-0 text-[13px] leading-[18px]">
               <Icon name="icon-clock" className="size-[14px]" />
               {ticketDay(next.startAt)}
             </Badge>
-            <Badge variant="outline" className="min-w-0 text-[13px] leading-[18px]">
+            <Badge variant="outline" className="min-w-0 shrink text-[13px] leading-[18px]">
               <Icon name="icon-pin" className="size-[14px]" />
               <span className="truncate">{e.format === "ONLINE" ? "Онлайн" : e.address ?? "Место уточняется"}</span>
             </Badge>
@@ -128,47 +132,55 @@ function Hero() {
         </div>
       </div>
 
-      {e && next && <article className="absolute top-[42px] left-[800px] box-border h-[244px] w-[356px] overflow-hidden rounded-[22px] border-2 border-ink bg-card p-0 shadow-hard">
-        <div className="relative h-[118px] w-[352px] shrink-0 overflow-hidden border-b-2 border-ink">
-          <div className="absolute inset-x-0 top-0 h-[116px] bg-orange">
-            <img src={e.coverUrl ?? e.sport.imageUrl} alt="" className="size-full object-cover" />
-          </div>
-          <div className="absolute inset-x-0 top-0 h-[116px] bg-gradient-to-b from-transparent from-40% to-[rgba(22,24,31,0.55)]" />
-          <Badge variant="outline" className="absolute top-3 left-[14px]">
-            {e.sport.name}
-          </Badge>
-          <p className="absolute top-[91px] left-4 text-[11px] leading-[15px] font-extrabold tracking-[1.5px] text-white">
-            БИЛЕТ № {e.id.slice(0, 4).toUpperCase()}
-          </p>
-        </div>
-        <div className="relative flex h-[122px] w-[352px] shrink-0">
-          <div className="flex w-[248px] flex-col justify-between px-4 py-[14px]">
-            <div>
-              <Eyebrow>КОГДА</Eyebrow>
-              <p className="mt-1 font-display text-[17px] leading-[21px] font-bold text-foreground">
-                {ticketDay(next.startAt)}
-              </p>
+      {e && next && (
+        <Link to={`/events/${e.id}`} aria-label={`Билет: ${e.title}`}
+          className="relative box-border h-[244px] w-[356px] shrink-0 overflow-hidden rounded-[22px] border-2 border-ink bg-card p-0 shadow-hard">
+          <div className="relative h-[118px] w-[352px] shrink-0 overflow-hidden border-b-2 border-ink">
+            <div className="absolute inset-x-0 top-0 h-[116px] bg-orange">
+              {cover ? (
+                <img src={cover} alt="" className="size-full max-w-none object-cover" />
+              ) : (
+                <img src="/home/memphis1.svg" alt="" className="absolute top-[-74px] left-0 h-[264px] w-[352px] max-w-none" />
+              )}
             </div>
-            <div className="min-w-0">
-              <Eyebrow>{e.locationNote ? "КАК НАЙТИ" : "ДО НАЧАЛА"}</Eyebrow>
-              <p className="mt-[2px] truncate text-sm leading-[19px] font-bold text-foreground">
-                {e.locationNote ?? untilStart(next.startAt)}
-              </p>
+            <div className="absolute inset-x-0 top-0 h-[116px] bg-gradient-to-b from-transparent from-40% to-[rgba(22,24,31,0.55)]" />
+            <Badge variant="outline" title={e.sport.name} className="absolute top-3 left-[14px] max-w-[calc(100%-28px)]">
+              <span className="truncate">{e.sport.name}</span>
+            </Badge>
+            <p className="absolute top-[91px] left-4 text-[11px] leading-[15px] font-extrabold tracking-[1.5px] text-white">
+              БИЛЕТ № {e.id.slice(0, 4).toUpperCase()}
+            </p>
+          </div>
+          <div className="relative flex h-[122px] w-[352px] shrink-0">
+            <div className="flex w-[248px] min-w-0 flex-col justify-between px-4 py-[14px]">
+              <div>
+                <Eyebrow>КОГДА</Eyebrow>
+                <p className="mt-1 truncate font-display text-[17px] leading-[21px] font-bold text-foreground">
+                  {ticketDay(next.startAt)}
+                </p>
+              </div>
+              <div className="min-w-0">
+                <Eyebrow>{e.locationNote ? "КАК НАЙТИ" : "ДО НАЧАЛА"}</Eyebrow>
+                <p className="mt-[2px] truncate text-[14px] leading-[19px] font-bold text-foreground">
+                  {e.locationNote ?? untilStart(next.startAt)}
+                </p>
+              </div>
+            </div>
+            <div className="absolute top-3 left-[252px] h-[98px] w-[2px] border-l-2 border-dashed border-ink" />
+            <span className="absolute top-[-11px] left-[241px] box-border size-[22px] rounded-[11px] border-2 border-ink bg-card" />
+            <div className="flex w-[104px] items-center justify-center">
+              <QrCode path={`/events/${e.id}`} label="QR-код: страница встречи" className="size-[76px]" />
             </div>
           </div>
-          <div className="absolute top-3 left-[252px] h-[98px] w-[2px] border-l-2 border-dashed border-ink" />
-          <span className="absolute top-[-11px] left-[241px] box-border size-[22px] rounded-[11px] border-2 border-ink bg-card" />
-          <div className="flex w-[104px] items-center justify-center">
-            <QrCode path={`/events/${e.id}`} label="QR-код: страница встречи" className="size-[76px]" />
-          </div>
-        </div>
-      </article>}
+        </Link>
+      )}
     </section>
   );
 }
 
-/** Подсказка Бублика по ближайшей встрече: добавить в календарь и построить маршрут. Без встречи — куда пойти дальше. */
+/** Запасная подсказка Бублика, когда «когда выходить» нечего сказать: календарь и маршрут, без встречи — куда пойти дальше. */
 function Tip() {
+  const petName = usePetName();
   const { user, next, isLoading } = useNextTicket();
   if (isLoading || user?.systemRole === "ADMIN") return null;
   const e = next?.event;
@@ -178,10 +190,10 @@ function Tip() {
       ? "Опубликуй встречу клуба — она сразу появится в ленте"
       : "Расскажи, чем любишь заниматься, — подберу встречи рядом";
   return (
-    <Card className="relative h-[104px] flex-row items-center gap-5 bg-mint-soft pr-[26px] pl-[152px]">
-      <MyBeaverBadge className="absolute top-[-22px] left-[14px] h-[118px] w-[132px]" />
+    <Card className="relative min-h-[104px] flex-row items-center gap-5 bg-mint-soft py-4 pr-[26px] pl-[152px]">
+      <MyBeaverBadge className="absolute top-1/2 left-[10px] h-[118px] w-[132px] -translate-y-1/2" />
       <div className="min-w-0 flex-1">
-        <Eyebrow>БУБЛИК ПОДСКАЗЫВАЕТ</Eyebrow>
+        <Eyebrow>{petName.toUpperCase()} ПОДСКАЗЫВАЕТ</Eyebrow>
         <p className="mt-[6px] truncate font-display text-[18px] leading-[23.5px] font-bold text-foreground">{text}</p>
       </div>
       {e ? (
@@ -234,8 +246,8 @@ function EventCard({ item, index, onDismiss }: { item: RecommendedEventResponse;
         </div>
         <div className="absolute inset-x-0 top-0 h-[178px] bg-[linear-gradient(180deg,rgba(22,24,31,0.08)_0%,rgba(22,24,31,0)_30%,rgba(22,24,31,0)_55%,rgba(22,24,31,0.62)_100%)]" />
         <div className="absolute inset-x-0 top-0 h-[178px] bg-[rgba(246,244,255,0.1)]" />
-        <div className="absolute top-[14px] right-[14px] left-[14px] flex justify-between">
-          <Badge variant="outline">{card.sport}</Badge>
+        <div className="absolute top-[14px] right-[14px] left-[14px] flex justify-between gap-2">
+          <Badge variant="outline" title={card.sport} className="min-w-0 shrink"><span className="truncate">{card.sport}</span></Badge>
           <Badge variant="secondary">
             <Icon name="icon-clock" className="size-[14px]" />
             {card.time}
@@ -263,6 +275,7 @@ function EventCard({ item, index, onDismiss }: { item: RecommendedEventResponse;
 }
 
 function Recommendations() {
+  const petName = usePetName();
   const { items, isPending, isError } = useRecommendationPreview(3);
   const { dismiss } = useDismissRecommendation();
   if (isPending) {
@@ -276,7 +289,7 @@ function Recommendations() {
       <EmptyState
         icon={Compass}
         tone="bg-mint"
-        title="Бублик ещё подбирает встречи"
+        title={`${petName} ещё подбирает встречи`}
         text="Отметь любимые виды спорта в профиле — и здесь появятся встречи для тебя. А пока загляни в ленту."
         action={
           <Button asChild>
@@ -325,7 +338,7 @@ export default function HomePage() {
       <main className="mx-auto flex w-full max-w-[1280px] flex-col gap-7 px-8 pt-8 pb-12">
         <Hero />
         <div className="mt-2">
-          <Tip />
+          <LeaveTip fallback={<Tip />} />
         </div>
         {/* подборка строится только для участников: у клуба и админа она всегда пустая */}
         {user?.systemRole === "USER" && (

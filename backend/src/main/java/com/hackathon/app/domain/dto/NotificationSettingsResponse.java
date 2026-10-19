@@ -8,5 +8,5 @@ import com.hackathon.app.domain.enums.*;
 public record NotificationSettingsResponse(@Schema(requiredMode = REQUIRED) Set<NotificationChannel> channels, @Schema(requiredMode = REQUIRED) Set<NotificationCategory> categories,
         @Schema(requiredMode = REQUIRED) boolean reminders, @Schema(requiredMode = REQUIRED) List<Channel> availableChannels) {
     /** Режим канала: REAL либо MOCK. */
-    public record Channel(@Schema(requiredMode = REQUIRED) NotificationChannel channel, @Schema(requiredMode = REQUIRED) String mode, @Schema(requiredMode = REQUIRED) boolean available, @Schema(requiredMode = REQUIRED) boolean connected) {}
+    public record Channel(@Schema(requiredMode = REQUIRED) NotificationChannel channel, @Schema(requiredMode = REQUIRED) String mode, @Schema(requiredMode = REQUIRED) boolean available, @Schema(requiredMode = REQUIRED) boolean connected, String target) {}
 }

@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import com.hackathon.app.domain.dto.ConnectNotificationEmailRequest;
 import com.hackathon.app.domain.dto.EventRequest;
 import com.hackathon.app.domain.dto.HelpersPreferences;
 import com.hackathon.app.domain.dto.HomePoint;
@@ -45,6 +46,7 @@ import com.hackathon.app.service.AuthService;
 import com.hackathon.app.service.CommentService;
 import com.hackathon.app.service.EventOrganizerService;
 import com.hackathon.app.service.EventService;
+import com.hackathon.app.service.NotificationService;
 import com.hackathon.app.service.OccurrenceService;
 import com.hackathon.app.service.OrganizationService;
 import com.hackathon.app.service.RegistrationService;
@@ -122,6 +124,7 @@ public class DemoSeeder {
 	private final DemoEconomySeeder economy;
 	private final DemoPetSeeder pets;
 	private final DemoAlbumSeeder album;
+	private final NotificationService notificationService;
 	private final AuthService authService;
 	private final UserProfileService profileService;
 	private final UserSportService userSportService;
@@ -153,6 +156,7 @@ public class DemoSeeder {
 		}
 		long started = System.currentTimeMillis();
 		var cast = seedAccounts();
+		notificationService.connectEmail(cast.id("anna"), new ConnectNotificationEmailRequest("anna@demo.ru"));
 		var adminId = cast.id("admin");
 
 		// Сценарий 2: одобренный клуб, заявка на проверке (одобрить или отклонить), отказ с причиной, клуб «Хищные бобры».

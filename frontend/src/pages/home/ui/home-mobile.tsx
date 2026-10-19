@@ -1,3 +1,4 @@
+import { usePetName } from "@/entity/user/model/use-pet-name";
 import { Compass } from "lucide-react";
 import { EmptyState } from "@/shared/components/ui/empty-state";
 import { MyBeaverBadge } from "@/widgets/beaver-pet/ui/my-beaver-badge";
@@ -25,6 +26,7 @@ import {
 } from "@/entity/event/model/use-recommendation-preview";
 import { QrCode } from "@/shared/components/ui/qr-code";
 import { calendarUrl, routeUrl, ticketDay, untilStart, useNextTicket } from "@/entity/event/model/use-next-ticket";
+import { LeaveTipMobile } from "@/widgets/leave-tip/ui/leave-tip";
 
 const dir = "m-home";
 
@@ -118,9 +120,9 @@ function NextTicket() {
     <div className="px-4">
       <div className="box-border w-full overflow-hidden rounded-[26px] border-2 border-ink bg-primary shadow-[4px_4px_0_var(--ink)]">
         <div className="flex flex-col gap-[10px] px-5 pt-5 pb-[14px]">
-          <div className="flex items-center justify-between">
-            <Badge variant="secondary" className={tag}>
-              {e.sport.name.toUpperCase()}
+          <div className="flex items-center justify-between gap-2">
+            <Badge variant="secondary" title={e.sport.name} className={cn(tag, "min-w-0 shrink")}>
+              <span className="truncate">{e.sport.name.toUpperCase()}</span>
             </Badge>
             <span className="text-[13px] leading-[normal] font-bold whitespace-nowrap text-lilac">
               {untilStart(next.startAt)}
@@ -149,7 +151,7 @@ function NextTicket() {
           <span className="absolute top-0 right-[-11px] box-border size-[22px] rounded-[11px] border-2 border-ink bg-background" />
         </div>
         <div className="flex items-center gap-3 bg-card px-5 pt-1 pb-[18px]">
-          <div className="flex min-w-0 flex-1 flex-col gap-[10px] leading-[normal] font-extrabold whitespace-nowrap">
+          <div className="flex min-w-0 flex-1 flex-col gap-[10px] leading-[normal] font-extrabold">
             <div className="flex flex-col gap-[2px]">
               <span className="text-[10px] tracking-[1px] text-muted-foreground">КОГДА</span>
               <span className="text-sm text-foreground">{ticketDay(next.startAt)}</span>
@@ -175,6 +177,7 @@ function NextTicket() {
 
 /** Подсказка по ближайшей встрече: календарь и маршрут — настоящие ссылки. */
 function Tip() {
+  const petName = usePetName();
   const { user, next, isLoading } = useNextTicket();
   const e = next?.event;
   if (isLoading || !e || user?.systemRole === "ADMIN") return null;
@@ -185,7 +188,7 @@ function Tip() {
           <MyBeaverBadge className="size-16 shrink-0" />
           <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
             <span className="text-[10px] leading-[normal] font-extrabold tracking-[1.2px] whitespace-nowrap text-primary">
-              БУБЛИК ПОДСКАЗЫВАЕТ
+              {petName.toUpperCase()} ПОДСКАЗЫВАЕТ
             </span>
             <span className="text-sm leading-[19px] font-bold text-foreground">
               Добавь встречу в календарь, чтобы не забыть
@@ -209,6 +212,7 @@ function Tip() {
 
 /** Карусель «Подобрали для тебя»: первые рекомендации, под названием — главная причина. */
 function EventScroller() {
+  const petName = usePetName();
   const { items, isPending, isError } = useRecommendationPreview(5);
   const { dismiss } = useDismissRecommendation();
   if (isPending) return <p className="px-4 text-base font-semibold text-muted-foreground">Подбираем встречи…</p>;
@@ -219,8 +223,8 @@ function EventScroller() {
         <EmptyState
           icon={Compass}
           tone="bg-mint"
-          title="Бублик ещё подбирает встречи"
-          text="Отметь любимые виды спорта в профиле — и Бублик подберёт встречи."
+          title={`${petName} ещё подбирает встречи`}
+          text={`Отметь любимые виды спорта в профиле — и ${petName} подберёт встречи.`}
           action={
             <Button asChild>
               <Link to="/feed">Открыть ленту</Link>
@@ -253,9 +257,10 @@ function EventScroller() {
               )}
               <Badge
                 variant="outline"
-                className={cn(tag, "absolute top-3 left-3 border-[1.5px] bg-card")}
+                title={e.sport.name}
+                className={cn(tag, "absolute top-3 left-3 max-w-[calc(100%-150px)] border-[1.5px] bg-card")}
               >
-                {e.sport.name.toUpperCase()}
+                <span className="truncate">{e.sport.name.toUpperCase()}</span>
               </Badge>
               <span className="absolute top-3 right-3 rounded-pill bg-ink px-[10px] py-1 text-[11px] leading-[normal] font-extrabold tracking-[1px] whitespace-nowrap text-secondary">
                 {formatWhen(e.startAt)}
@@ -322,7 +327,7 @@ export function HomeMobile() {
         )}
       </div>
       <NextTicket />
-      <Tip />
+      <LeaveTipMobile fallback={<Tip />} />
       {user?.systemRole === "USER" && (
         <>
           <SectionHead title="Подобрали для тебя" link="Все" to={FOR_YOU_FEED_URL} />

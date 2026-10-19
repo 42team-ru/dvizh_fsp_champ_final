@@ -19,6 +19,7 @@ const REG_TONES = {
 } as const;
 
 const CARD_STYLE = { top: SPREAD_H + 20 };
+// Высота карточки фиксирована раскладкой профиля, поэтому размеры внутри в px: не растут от шрифта браузера.
 const CARD = "absolute left-0 h-[316px] w-[495px] gap-[14px] overflow-hidden rounded-[24px] p-[22px]";
 
 /** История посещений: всего, по видам спорта и ближайшие записи. В чужом профиле — его данные без записей. */
@@ -33,7 +34,7 @@ function Head({ total }: { total: number }) {
       <div className="flex items-baseline justify-between font-bold whitespace-nowrap">
         <h2 className="font-display text-[22px] text-foreground">История</h2>
         <span className="text-[13px] text-muted-foreground">
-          <span className="font-display text-lg font-extrabold text-foreground">{total}</span> {visitsWord(total)} за всё время
+          <span className="font-display text-[18px] leading-[28px] font-extrabold text-foreground">{total}</span> {visitsWord(total)} за всё время
         </span>
       </div>
     </>
@@ -50,14 +51,14 @@ function PublicHistory({ owner }: { owner: PublicProfile }) {
 
       <ul className="flex flex-col gap-[10px]" aria-label="Виды спорта">
         {user.sports.length === 0 ? (
-          <li className="text-sm font-semibold text-muted-foreground">Виды спорта пока не выбраны.</li>
+          <li className="text-[14px] leading-[20px] font-semibold text-muted-foreground">Виды спорта пока не выбраны.</li>
         ) : (
           user.sports.slice(0, 3).map((s, i) => (
-            <li key={s.sport.id} className="flex items-center gap-3">
+            <li key={s.sport.id} className="flex items-center gap-[12px]">
               <span className={cn("size-[14px] shrink-0 rounded-full border-[1.5px] border-ink", BARS[i % BARS.length])} />
-              <span className="min-w-0 truncate text-sm font-extrabold text-foreground">{s.sport.name}</span>
+              <span className="min-w-0 truncate text-[14px] leading-[20px] font-extrabold text-foreground">{s.sport.name}</span>
               {s.level && (
-                <span className="ml-auto text-sm font-bold whitespace-nowrap text-muted-foreground">
+                <span className="ml-auto text-[14px] leading-[20px] font-bold whitespace-nowrap text-muted-foreground">
                   {SPORT_LEVEL_LABEL[s.level]}
                 </span>
               )}
@@ -79,15 +80,15 @@ function PublicHistory({ owner }: { owner: PublicProfile }) {
           <Link
             key={e.id}
             to={`/events/${e.id}`}
-            className="flex flex-col gap-[6px] rounded-2xl border-[1.5px] border-ink bg-sky-soft px-[14px] py-3"
+            className="flex flex-col gap-[6px] rounded-2xl border-[1.5px] border-ink bg-sky-soft px-[14px] py-[12px]"
           >
-            <span className="flex items-center justify-between gap-2">
-              <span className="truncate text-sm font-extrabold text-foreground">{e.title}</span>
-              <span className="shrink-0 rounded-pill border-[1.5px] border-primary bg-card px-2 py-[3px] text-[9px] font-extrabold tracking-[1px] whitespace-nowrap text-primary">
+            <span className="flex items-center justify-between gap-[8px]">
+              <span className="truncate text-[14px] leading-[20px] font-extrabold text-foreground">{e.title}</span>
+              <span className="shrink-0 rounded-pill border-[1.5px] border-primary bg-card px-[8px] py-[3px] text-[9px] font-extrabold tracking-[1px] whitespace-nowrap text-primary">
                 {e.sport.name.toUpperCase()}
               </span>
             </span>
-            <span className="truncate text-xs font-medium text-muted-foreground">
+            <span className="truncate text-[12px] leading-[16px] font-medium text-muted-foreground">
               {[whenLabel(e.startAt), e.address ?? e.locationNote].filter(Boolean).join(" · ")}
             </span>
           </Link>
@@ -123,13 +124,13 @@ function MyHistory() {
 
       <ul className="flex flex-col gap-[10px]" aria-label="Посещения по видам спорта">
         {sports.length === 0 ? (
-          <li className="text-sm font-semibold text-muted-foreground">
+          <li className="text-[14px] leading-[20px] font-semibold text-muted-foreground">
             Посещений пока нет. После первого занятия здесь появится статистика по видам спорта.
           </li>
         ) : (
           sports.map((s, i) => (
-            <li key={s.sport.id} className="flex items-center gap-3">
-              <span className="w-[70px] shrink-0 truncate text-sm font-extrabold text-foreground" title={s.sport.name}>
+            <li key={s.sport.id} className="flex items-center gap-[12px]">
+              <span className="w-[70px] shrink-0 truncate text-[14px] leading-[20px] font-extrabold text-foreground" title={s.sport.name}>
                 {s.sport.name}
               </span>
               <span className="h-[14px] min-w-0 flex-1 overflow-hidden rounded-full border-[1.5px] border-ink bg-lilac/30">
@@ -138,7 +139,7 @@ function MyHistory() {
                   style={{ width: `${Math.max((s.count / max) * 100, 6)}%` }}
                 />
               </span>
-              <span className="text-sm font-extrabold whitespace-nowrap text-foreground">×{s.count}</span>
+              <span className="text-[14px] leading-[20px] font-extrabold whitespace-nowrap text-foreground">×{s.count}</span>
             </li>
           ))
         )}
@@ -162,22 +163,22 @@ function MyHistory() {
               key={r.id}
               to={`/events/${r.event.id}`}
               className={cn(
-                "flex flex-col gap-[6px] rounded-2xl border-[1.5px] border-ink px-[14px] py-3",
+                "flex flex-col gap-[6px] rounded-2xl border-[1.5px] border-ink px-[14px] py-[12px]",
                 tone.box,
               )}
             >
-              <span className="flex items-center justify-between gap-2">
-                <span className="truncate text-sm font-extrabold text-foreground">{r.event.title}</span>
+              <span className="flex items-center justify-between gap-[8px]">
+                <span className="truncate text-[14px] leading-[20px] font-extrabold text-foreground">{r.event.title}</span>
                 <span
                   className={cn(
-                    "shrink-0 rounded-pill border-[1.5px] bg-card px-2 py-[3px] text-[9px] font-extrabold tracking-[1px] whitespace-nowrap",
+                    "shrink-0 rounded-pill border-[1.5px] bg-card px-[8px] py-[3px] text-[9px] font-extrabold tracking-[1px] whitespace-nowrap",
                     tone.badge,
                   )}
                 >
                   {tone.text}
                 </span>
               </span>
-              <span className="truncate text-xs font-medium text-muted-foreground">
+              <span className="truncate text-[12px] leading-[16px] font-medium text-muted-foreground">
                 {[whenLabel(r.myNextOccurrence?.startAt ?? r.event.startAt), place].filter(Boolean).join(" · ")}
               </span>
             </Link>

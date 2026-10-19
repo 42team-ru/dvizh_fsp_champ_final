@@ -1,8 +1,8 @@
-import { BellRing, Hourglass } from "lucide-react";
+import { NotificationSettingsButton } from "@/features/notification-settings/ui/notification-settings-dialog";
+import { BellRing, Hourglass, Ticket } from "lucide-react";
 import { EmptyState } from "@/shared/components/ui/empty-state";
 import { MobileTabBar } from "@/widgets/mobile-shell/ui/mobile-tab-bar";
 import { BrandPlate } from "@/shared/components/ui/brand-plate";
-import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Disc } from "@/shared/components/ui/disc";
 import { Icon } from "@/shared/components/ui/icon";
@@ -10,7 +10,7 @@ import { cn } from "cn";
 import { MyEventsMap } from "@/widgets/events-map/ui/my-events-map";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 import { Link } from "react-router";
-import { PendingDialog, PendingRow, viewOf } from "./activity-parts";
+import { PendingRow, PlansDialog, PlansSwitch, TicketRow, viewOf } from "./activity-parts";
 import { type ActivityModel } from "../model/use-activity";
 
 const dir = "m-activity";
@@ -73,6 +73,7 @@ function Label({ children }: { children: string }) {
 }
 
 export function ActivityMobile({ m }: { m: ActivityModel }) {
+  const totals = { going: m.goingTotal, requests: m.pendingTotal };
   return (
     <div className="relative isolate flex min-h-dvh overflow-clip flex-col gap-4 bg-background pb-[110px] lg:hidden">
       <MemphisBackground variant="mobile" seed="activity" />
@@ -105,27 +106,16 @@ export function ActivityMobile({ m }: { m: ActivityModel }) {
             </Button>
           );
         })}
+        <NotificationSettingsButton className="h-11 shrink-0 px-[18px]" />
       </div>
 
-      {m.totalUnread > 0 && m.tab !== "requests" && (
+      {m.totalUnread > 0 && (
         <div className="px-4">
           <Button variant="ghost" size="sm" onClick={m.markAllRead}>Отметить всё прочитанным ({m.totalUnread})</Button>
         </div>
       )}
 
-      {m.tab === "requests" ? (
-        <>
-          <Label>ЖДУТ РЕШЕНИЯ ОРГАНИЗАТОРА</Label>
-          {m.pendingItems.length === 0 && !m.pending.isPending && (
-            <div className="px-4">
-              <EmptyState icon={Hourglass} tone="bg-secondary" title="Заявок в ожидании нет"
-                text="Записи по заявке появятся здесь, пока организатор их не рассмотрит." />
-            </div>
-          )}
-          {m.pendingItems.map((reg) => <div key={reg.id} className="px-4"><PendingRow reg={reg} /></div>)}
-        </>
-      ) : (
-        <>
+      <>
           {m.list.isPending && <p className="px-4 text-sm font-medium text-muted-foreground">Загружаем…</p>}
           {m.list.isSuccess && m.groups.length === 0 && (
             <div className="px-4">
@@ -163,19 +153,32 @@ export function ActivityMobile({ m }: { m: ActivityModel }) {
             </div>
           ))}
           {m.hasMore && <div className="px-4"><Button variant="soft" className="w-full" onClick={m.showMore}>Показать ещё</Button></div>}
-        </>
-      )}
+      </>
 
       {m.participant && <div className="px-4">
-        <div className="box-border flex w-full items-center justify-between gap-3 rounded-[24px] border-2 border-ink bg-primary p-[18px] text-white">
-          <div className="min-w-0">
-            <span className="text-[10px] font-extrabold tracking-[1.5px] text-lilac">ЗАЯВКИ</span>
-            <p className="font-display text-[32px] leading-[normal] font-extrabold">{m.pendingTotal}</p>
-            <p className="truncate text-[13px] font-bold">{m.pendingItems[0] ? `ждёт ответа: «${m.pendingItems[0].event.title}»` : "нет заявок в ожидании"}</p>
+        <div className="box-border flex w-full flex-col gap-3 rounded-[24px] border-2 border-ink bg-card p-[14px]">
+          <div className="no-scrollbar overflow-x-auto">
+            <PlansSwitch tab={m.plansTab} totals={totals} onChange={m.setPlansTab} />
           </div>
-          <PendingDialog items={m.pendingItems} total={m.pendingTotal} loading={m.pending.isPending}>
-            <Button variant="secondary" className="h-10 shrink-0 px-4 text-sm">Посмотреть</Button>
-          </PendingDialog>
+          {m.plansTab === "going" ? (
+            <>
+              {m.goingItems.length === 0 && !m.going.isPending && (
+                <EmptyState size="sm" icon={Ticket} tone="bg-accent" title="Билетов пока нет"
+                  text="Запишитесь на первую встречу — билет появится здесь." />
+              )}
+              {m.goingItems.map((reg, i) => <TicketRow key={reg.id} reg={reg} index={i} compact />)}
+            </>
+          ) : (
+            <>
+              {m.pendingItems.length === 0 && !m.pending.isPending && (
+                <EmptyState size="sm" icon={Hourglass} tone="bg-secondary" title="Заявок в ожидании нет" />
+              )}
+              {m.pendingItems.map((reg) => <PendingRow key={reg.id} reg={reg} />)}
+            </>
+          )}
+          <PlansDialog initialTab={m.plansTab} totals={totals} compact>
+            <Button variant="secondary" className="h-11 w-full text-sm">Смотреть все</Button>
+          </PlansDialog>
         </div>
       </div>}
 

@@ -2,26 +2,34 @@ import { useState } from "react";
 import { keepPreviousData, useQueryClient } from "@tanstack/react-query";
 import {
   getNotificationsListQueryKey, getNotificationsUnreadCountsQueryKey, useNotificationsList, useNotificationsRead,
-  useNotificationsReadAll, useNotificationsUnreadCounts,
+  useNotificationsReadAll,
 } from "@/shared/api/generated/core/notifications/notifications";
+import {
+  ACHIEVEMENT_TYPES, ACTIVITY_TYPES, REMINDER_TYPES, REPLY_TYPES, useUnreadNotifications,
+} from "@/entity/notification/model/use-unread-notifications";
 import { useRegistrationsMine } from "@/shared/api/generated/core/registrations/registrations";
-import type { NotificationResponse, NotificationsListTypesItem } from "@/shared/api/generated/core/appAPI.schemas";
+import type { NotificationResponse, NotificationsListTypesItem, RegistrationsMineStatus } from "@/shared/api/generated/core/appAPI.schemas";
 import { useUser } from "@/entity/user/model/use-user";
 
-/** Вкладки активности: каждая — свой набор типов уведомлений; «Заявки» — мои заявки, ждущие решения. */
-export type ActivityTab = "all" | "replies" | "achievements" | "reminders" | "requests";
+/** Вкладки ленты активности: каждая — свой набор типов уведомлений. */
+export type ActivityTab = "all" | "replies" | "achievements" | "reminders";
 
-const REPLIES: NotificationsListTypesItem[] = ["COMMENT_REPLY", "COMMENT_CREATED"];
-const ACHIEVEMENTS: NotificationsListTypesItem[] = ["ACHIEVEMENT_UNLOCKED"];
-const REMINDERS: NotificationsListTypesItem[] = ["REMINDER"];
-
-export const ACTIVITY_TABS: { key: ActivityTab; label: string; types?: NotificationsListTypesItem[] }[] = [
-  { key: "all", label: "Все", types: [...REPLIES, ...ACHIEVEMENTS, ...REMINDERS] },
-  { key: "replies", label: "Ответы", types: REPLIES },
-  { key: "achievements", label: "Достижения", types: ACHIEVEMENTS },
-  { key: "reminders", label: "Напоминания", types: REMINDERS },
-  { key: "requests", label: "Заявки" },
+export const ACTIVITY_TABS: { key: ActivityTab; label: string; types: NotificationsListTypesItem[] }[] = [
+  { key: "all", label: "Все", types: ACTIVITY_TYPES },
+  { key: "replies", label: "Ответы", types: REPLY_TYPES },
+  { key: "achievements", label: "Достижения", types: ACHIEVEMENT_TYPES },
+  { key: "reminders", label: "Напоминания", types: REMINDER_TYPES },
 ];
+
+/** Вкладки блока «Мои планы»: подтверждённые записи и заявки, ждущие решения организатора. */
+export type PlansTab = "going" | "requests";
+
+export const PLANS_TABS: { key: PlansTab; label: string; status: RegistrationsMineStatus }[] = [
+  { key: "going", label: "Ты идёшь", status: "CONFIRMED" },
+  { key: "requests", label: "Заявки", status: "PENDING" },
+];
+
+const PLANS_PAGE = 10;
 
 const STEP = 30;
 const DAY = 86_400_000;
@@ -46,7 +54,7 @@ export function shortTime(iso: string) {
 
 /**
  * Данные «Активности»: уведомления по вкладкам (ответы, достижения, напоминания), счётчики непрочитанного,
- * мои заявки в ожидании решения и ближайшие подтверждённые записи («Ты идёшь»). Обновляется раз в 30 секунд.
+ * превью ближайших подтверждённых записей («Ты идёшь») и заявок в ожидании. Обновляется раз в 30 секунд.
  */
 export function useActivity() {
   const cache = useQueryClient();
@@ -56,14 +64,15 @@ export function useActivity() {
   const tabs = participant ? ACTIVITY_TABS : ACTIVITY_TABS.filter((t) => t.key === "all" || t.key === "replies");
   const [tab, setTabState] = useState<ActivityTab>("all");
   const [size, setSize] = useState(STEP);
+  const [plansTab, setPlansTab] = useState<PlansTab>("going");
   // у клуба «Все» и «Ответы» — одно и то же: вопросы и ответы в обсуждениях
-  const types = participant ? ACTIVITY_TABS.find((t) => t.key === tab)?.types : REPLIES;
+  const types = participant ? ACTIVITY_TABS.find((t) => t.key === tab)?.types : REPLY_TYPES;
 
-  const counts = useNotificationsUnreadCounts({ query: { refetchInterval: 30_000 } });
+  const unread = useUnreadNotifications();
   const list = useNotificationsList({ types, size }, {
-    query: { enabled: tab !== "requests", placeholderData: keepPreviousData, refetchInterval: 30_000 },
+    query: { placeholderData: keepPreviousData, refetchInterval: 30_000 },
   });
-  const pending = useRegistrationsMine({ status: "PENDING", when: "UPCOMING", size: 50 }, { query: { enabled: participant } });
+  const pending = useRegistrationsMine({ status: "PENDING", when: "UPCOMING", size: 2 }, { query: { enabled: participant } });
   const going = useRegistrationsMine({ status: "CONFIRMED", when: "UPCOMING", size: 2 }, { query: { enabled: participant } });
   /** Отменённые организатором или снятые: будущих занятий у них нет, поэтому в UPCOMING не попадают. */
   const confirmed = useRegistrationsMine({ status: "CONFIRMED", size: 20 }, { query: { enabled: participant } });
@@ -79,11 +88,8 @@ export function useActivity() {
   const goingItems = [...(going.data?.status === 200 ? going.data.data.items ?? [] : []), ...cancelledItems].slice(0, 2);
   const goingTotal = going.data?.status === 200 ? going.data.data.totalElements ?? goingItems.length : 0;
 
-  const unreadByType = new Map((counts.data?.status === 200 ? counts.data.data : []).map((c) => [c.type, c.unread]));
-  const unreadOf = (key: ActivityTab) => key === "requests"
-    ? pendingTotal
-    : ((participant ? ACTIVITY_TABS.find((t) => t.key === key)?.types : REPLIES) ?? [])
-      .reduce((sum, t) => sum + (unreadByType.get(t) ?? 0), 0);
+  const unreadOf = (key: ActivityTab) =>
+    unread.unreadOf((participant ? ACTIVITY_TABS.find((t) => t.key === key)?.types : REPLY_TYPES) ?? []);
 
   // Лента по дням: «СЕГОДНЯ», «ВЧЕРА», дальше датой.
   const groups: { label: string; items: NotificationResponse[] }[] = [];
@@ -107,7 +113,7 @@ export function useActivity() {
     tab,
     setTab: (next: ActivityTab) => { setTabState(next); setSize(STEP); },
     unreadOf,
-    totalUnread: unreadOf("all"),
+    totalUnread: participant ? unread.total : unread.unreadOf(REPLY_TYPES),
     list,
     groups,
     hasMore: page?.nextCursor != null && size < 100,
@@ -115,12 +121,30 @@ export function useActivity() {
     /** Отметить прочитанным при переходе по уведомлению; уже прочитанные не трогаем. */
     markRead: (n: NotificationResponse) => { if (!n.readAt) read.mutate({ id: n.id }); },
     markAllRead: () => { if (page) readAll.mutate({ data: { throughRevision: page.revision } }); },
+    plansTab,
+    setPlansTab,
     pending,
     pendingItems,
     pendingTotal,
+    going,
     goingItems,
     goingTotal,
   };
 }
 
 export type ActivityModel = ReturnType<typeof useActivity>;
+
+/** Страница полного списка «Ты идёшь» или «Заявки» для окна «Все»: по 10 на страницу. */
+export function usePlansPage(tab: PlansTab, page: number) {
+  const status = PLANS_TABS.find((t) => t.key === tab)!.status;
+  const query = useRegistrationsMine({ status, when: "UPCOMING", page, size: PLANS_PAGE }, {
+    query: { placeholderData: keepPreviousData },
+  });
+  const data = query.data?.status === 200 ? query.data.data : undefined;
+  return {
+    query,
+    items: data?.items ?? [],
+    total: data?.totalElements ?? 0,
+    totalPages: data?.totalPages ?? 0,
+  };
+}

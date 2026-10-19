@@ -96,3 +96,14 @@ export const ORGANIZATION_STATUS: Record<string, { label: string; tone: string }
   REJECTED: { label: "отклонена", tone: "bg-salmon" },
   REVISION: { label: "на доработке", tone: "bg-peach" },
 };
+
+/** Категории внешних уведомлений: единые подписи и пояснения для настроек. */
+export const NOTIFICATION_CATEGORY_LABEL = {
+  REMINDERS: { label: "Напоминания", description: "За сутки и за час до начала" },
+  EVENTS: { label: "Изменения встреч", description: "Перенос, отмена и кворум" },
+  REGISTRATIONS: { label: "Записи и заявки", description: "Новые участники и решения по заявкам" },
+  DISCUSSIONS: { label: "Ответы в обсуждении", description: "Когда отвечают на ваше сообщение" },
+  ORGANIZATIONS: { label: "Проверка организации", description: "Заявки организаций и решения по ним" },
+  ORGANIZERS: { label: "Соорганизаторы", description: "Изменения команды организаторов" },
+  ACHIEVEMENTS: { label: "Достижения", description: "Новые награды за вашу активность" },
+} as const;

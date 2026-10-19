@@ -56,6 +56,8 @@ services:
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
       TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME:-}
       TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET:-}
+      # Маршруты 2ГИС для подсказки «когда выходить» (тот же ключ, что у карты)
+      VITE_2GIS_KEY: ${VITE_2GIS_KEY:-}
     depends_on:
       db:
         condition: service_healthy

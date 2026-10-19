@@ -113,13 +113,14 @@ public class NotificationService {
     @Transactional(readOnly = true)
     public NotificationSettingsResponse settings(UUID userId) {
         var stored = settings.findByUserId(userId).orElse(null);
-        var connected = bindings.findByUserId(userId).isPresent();
+        var binding = bindings.findByUserId(userId).orElse(null);
         var channels = stored == null ? Set.<NotificationChannel>of() : Set.copyOf(stored.getChannels());
         var categories = stored == null ? EnumSet.allOf(NotificationCategory.class) : Set.copyOf(stored.getCategories());
         return new NotificationSettingsResponse(channels, categories, publisher.remindersEnabled(userId), List.of(
-                new NotificationSettingsResponse.Channel(NotificationChannel.TELEGRAM, "REAL", properties.telegram().enabled(), connected),
-                new NotificationSettingsResponse.Channel(NotificationChannel.MAX, "MOCK", true, true),
-                new NotificationSettingsResponse.Channel(NotificationChannel.EMAIL, "MOCK", true, true)));
+                new NotificationSettingsResponse.Channel(NotificationChannel.TELEGRAM, "REAL", properties.telegram().enabled(), binding != null,
+                        binding == null || binding.getUsername() == null ? null : "@" + binding.getUsername()),
+                new NotificationSettingsResponse.Channel(NotificationChannel.MAX, "MOCK", true, stored != null && stored.getMaxPhone() != null, stored == null ? null : stored.getMaxPhone()),
+                new NotificationSettingsResponse.Channel(NotificationChannel.EMAIL, "MOCK", true, stored != null && stored.getEmail() != null, stored == null ? null : stored.getEmail())));
     }
 
     @Transactional
@@ -129,9 +130,52 @@ public class NotificationService {
                 && (!properties.telegram().enabled() || bindings.findByUserId(userId).isEmpty()))
             throw new ConflictException("Сначала подключите Telegram");
         var stored = settings.findByUserId(userId).orElseGet(() -> mapper.settings(userId, Set.of(), EnumSet.allOf(NotificationCategory.class)));
+        if (request.channels().contains(NotificationChannel.EMAIL) && stored.getEmail() == null)
+            throw new ConflictException("Сначала укажите почту");
+        if (request.channels().contains(NotificationChannel.MAX) && stored.getMaxPhone() == null)
+            throw new ConflictException("Сначала укажите номер MAX");
         mapper.settings(stored, request.channels(), request.categories());
         settings.saveAndFlush(stored);
         cancellation.settings(userId, request.channels(), request.categories());
+        return settings(userId);
+    }
+
+    /** Подключение и отключение заглушек атомарны с изменением внешних каналов. */
+    @Transactional
+    public NotificationSettingsResponse connectEmail(UUID userId, ConnectNotificationEmailRequest request) {
+        return mockChannel(userId, NotificationChannel.EMAIL, request.email().strip());
+    }
+
+    @Transactional
+    public NotificationSettingsResponse disconnectEmail(UUID userId) {
+        return mockChannel(userId, NotificationChannel.EMAIL, null);
+    }
+
+    @Transactional
+    public NotificationSettingsResponse connectMax(UUID userId, ConnectNotificationMaxRequest request) {
+        var phone = request.phone().replaceAll("[\\s()\\-]", "");
+        if (phone.matches("8[0-9]{10}")) phone = "+7" + phone.substring(1);
+        if (!phone.matches("\\+7[0-9]{10}")) throw new BadRequestException("Неверный номер телефона");
+        return mockChannel(userId, NotificationChannel.MAX, phone);
+    }
+
+    @Transactional
+    public NotificationSettingsResponse disconnectMax(UUID userId) {
+        return mockChannel(userId, NotificationChannel.MAX, null);
+    }
+
+    private NotificationSettingsResponse mockChannel(UUID userId, NotificationChannel channel, String target) {
+        users.findByIdForUpdate(userId).orElseThrow();
+        var stored = settings.findByUserId(userId).orElseGet(() ->
+                mapper.settings(userId, Set.of(), EnumSet.allOf(NotificationCategory.class)));
+        if (channel == NotificationChannel.EMAIL) mapper.email(stored, target);
+        else mapper.maxPhone(stored, target);
+        var channels = new HashSet<>(stored.getChannels());
+        if (target == null) channels.remove(channel);
+        else channels.add(channel);
+        mapper.settings(stored, channels, Set.copyOf(stored.getCategories()));
+        settings.saveAndFlush(stored);
+        cancellation.settings(userId, channels, stored.getCategories());
         return settings(userId);
     }
 

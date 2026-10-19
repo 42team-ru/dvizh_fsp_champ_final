@@ -25,6 +25,8 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  ConnectNotificationEmailRequest,
+  ConnectNotificationMaxRequest,
   NotificationPageResponse,
   NotificationPollResponse,
   NotificationSettingsResponse,
@@ -270,6 +272,374 @@ export const useNotificationsSaveSettings = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getNotificationsSaveSettingsMutationOptions(options), queryClient);
+    }
+    export type notificationsConnectMaxResponse200 = {
+  data: NotificationSettingsResponse
+  status: 200
+}
+
+export type notificationsConnectMaxResponseSuccess = (notificationsConnectMaxResponse200) & {
+  headers: Headers;
+};
+;
+
+export type notificationsConnectMaxResponse = (notificationsConnectMaxResponseSuccess)
+
+export const getNotificationsConnectMaxUrl = () => {
+
+
+
+
+  return `/api/notifications/max`
+}
+
+/**
+ * @summary Подключить MAX (демо)
+ */
+export const notificationsConnectMax = async (connectNotificationMaxRequest: ConnectNotificationMaxRequest, options?: Parameters<typeof authMutator>[1]): Promise<notificationsConnectMaxResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return authMutator<notificationsConnectMaxResponse>(getNotificationsConnectMaxUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(connectNotificationMaxRequest)
+  }
+);}
+
+
+
+
+
+export const getNotificationsConnectMaxMutationKey = () => ['notificationsConnectMax'] as const;
+
+export const getNotificationsConnectMaxMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsConnectMax>>, TError,NotificationsConnectMaxMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof notificationsConnectMax>>, TError,NotificationsConnectMaxMutationVariables, TContext> => {
+
+const mutationKey = getNotificationsConnectMaxMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof notificationsConnectMax>>, NotificationsConnectMaxMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  notificationsConnectMax(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type NotificationsConnectMaxMutationResult = NonNullable<Awaited<ReturnType<typeof notificationsConnectMax>>>
+    export type NotificationsConnectMaxMutationBody = ConnectNotificationMaxRequest
+    export type NotificationsConnectMaxMutationError = ErrorType<unknown>
+    export type NotificationsConnectMaxMutationVariables = {data: ConnectNotificationMaxRequest}
+
+    /**
+ * @summary Подключить MAX (демо)
+ */
+export const useNotificationsConnectMax = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsConnectMax>>, TError,NotificationsConnectMaxMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof notificationsConnectMax>>,
+        TError,
+        NotificationsConnectMaxMutationVariables,
+        TContext
+      > => {
+      return useMutation(getNotificationsConnectMaxMutationOptions(options), queryClient);
+    }
+    export type notificationsDisconnectMaxResponse200 = {
+  data: NotificationSettingsResponse
+  status: 200
+}
+
+export type notificationsDisconnectMaxResponseSuccess = (notificationsDisconnectMaxResponse200) & {
+  headers: Headers;
+};
+;
+
+export type notificationsDisconnectMaxResponse = (notificationsDisconnectMaxResponseSuccess)
+
+export const getNotificationsDisconnectMaxUrl = () => {
+
+
+
+
+  return `/api/notifications/max`
+}
+
+/**
+ * @summary Отключить MAX
+ */
+export const notificationsDisconnectMax = async ( options?: Parameters<typeof authMutator>[1]): Promise<notificationsDisconnectMaxResponse> => {
+
+  return authMutator<notificationsDisconnectMaxResponse>(getNotificationsDisconnectMaxUrl(),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getNotificationsDisconnectMaxMutationKey = () => ['notificationsDisconnectMax'] as const;
+
+export const getNotificationsDisconnectMaxMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsDisconnectMax>>, TError,void, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof notificationsDisconnectMax>>, TError,void, TContext> => {
+
+const mutationKey = getNotificationsDisconnectMaxMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof notificationsDisconnectMax>>, void> = () => {
+
+
+          return  notificationsDisconnectMax(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type NotificationsDisconnectMaxMutationResult = NonNullable<Awaited<ReturnType<typeof notificationsDisconnectMax>>>
+
+    export type NotificationsDisconnectMaxMutationError = ErrorType<unknown>
+
+
+    /**
+ * @summary Отключить MAX
+ */
+export const useNotificationsDisconnectMax = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsDisconnectMax>>, TError,void, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof notificationsDisconnectMax>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getNotificationsDisconnectMaxMutationOptions(options), queryClient);
+    }
+    export type notificationsConnectEmailResponse200 = {
+  data: NotificationSettingsResponse
+  status: 200
+}
+
+export type notificationsConnectEmailResponseSuccess = (notificationsConnectEmailResponse200) & {
+  headers: Headers;
+};
+;
+
+export type notificationsConnectEmailResponse = (notificationsConnectEmailResponseSuccess)
+
+export const getNotificationsConnectEmailUrl = () => {
+
+
+
+
+  return `/api/notifications/email`
+}
+
+/**
+ * @summary Подключить почту (демо)
+ */
+export const notificationsConnectEmail = async (connectNotificationEmailRequest: ConnectNotificationEmailRequest, options?: Parameters<typeof authMutator>[1]): Promise<notificationsConnectEmailResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return authMutator<notificationsConnectEmailResponse>(getNotificationsConnectEmailUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(connectNotificationEmailRequest)
+  }
+);}
+
+
+
+
+
+export const getNotificationsConnectEmailMutationKey = () => ['notificationsConnectEmail'] as const;
+
+export const getNotificationsConnectEmailMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsConnectEmail>>, TError,NotificationsConnectEmailMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof notificationsConnectEmail>>, TError,NotificationsConnectEmailMutationVariables, TContext> => {
+
+const mutationKey = getNotificationsConnectEmailMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof notificationsConnectEmail>>, NotificationsConnectEmailMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  notificationsConnectEmail(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type NotificationsConnectEmailMutationResult = NonNullable<Awaited<ReturnType<typeof notificationsConnectEmail>>>
+    export type NotificationsConnectEmailMutationBody = ConnectNotificationEmailRequest
+    export type NotificationsConnectEmailMutationError = ErrorType<unknown>
+    export type NotificationsConnectEmailMutationVariables = {data: ConnectNotificationEmailRequest}
+
+    /**
+ * @summary Подключить почту (демо)
+ */
+export const useNotificationsConnectEmail = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsConnectEmail>>, TError,NotificationsConnectEmailMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof notificationsConnectEmail>>,
+        TError,
+        NotificationsConnectEmailMutationVariables,
+        TContext
+      > => {
+      return useMutation(getNotificationsConnectEmailMutationOptions(options), queryClient);
+    }
+    export type notificationsDisconnectEmailResponse200 = {
+  data: NotificationSettingsResponse
+  status: 200
+}
+
+export type notificationsDisconnectEmailResponseSuccess = (notificationsDisconnectEmailResponse200) & {
+  headers: Headers;
+};
+;
+
+export type notificationsDisconnectEmailResponse = (notificationsDisconnectEmailResponseSuccess)
+
+export const getNotificationsDisconnectEmailUrl = () => {
+
+
+
+
+  return `/api/notifications/email`
+}
+
+/**
+ * @summary Отключить почту
+ */
+export const notificationsDisconnectEmail = async ( options?: Parameters<typeof authMutator>[1]): Promise<notificationsDisconnectEmailResponse> => {
+
+  return authMutator<notificationsDisconnectEmailResponse>(getNotificationsDisconnectEmailUrl(),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getNotificationsDisconnectEmailMutationKey = () => ['notificationsDisconnectEmail'] as const;
+
+export const getNotificationsDisconnectEmailMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsDisconnectEmail>>, TError,void, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof notificationsDisconnectEmail>>, TError,void, TContext> => {
+
+const mutationKey = getNotificationsDisconnectEmailMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof notificationsDisconnectEmail>>, void> = () => {
+
+
+          return  notificationsDisconnectEmail(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type NotificationsDisconnectEmailMutationResult = NonNullable<Awaited<ReturnType<typeof notificationsDisconnectEmail>>>
+
+    export type NotificationsDisconnectEmailMutationError = ErrorType<unknown>
+
+
+    /**
+ * @summary Отключить почту
+ */
+export const useNotificationsDisconnectEmail = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notificationsDisconnectEmail>>, TError,void, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof notificationsDisconnectEmail>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getNotificationsDisconnectEmailMutationOptions(options), queryClient);
     }
     export type notificationsReadResponse200 = {
   data: NotificationPollResponse

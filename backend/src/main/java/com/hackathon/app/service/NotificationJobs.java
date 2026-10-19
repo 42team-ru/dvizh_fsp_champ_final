@@ -17,6 +17,7 @@ import java.util.List;
 public class NotificationJobs {
     private final NotificationProperties properties;
     private final NotificationReminderService reminders;
+    private final LeaveTipService leaveTips;
     private final NotificationDeliveryService deliveries;
     private final NotificationMaintenance maintenance;
     private final TelegramService telegram;
@@ -35,6 +36,11 @@ public class NotificationJobs {
         for (var id : reminders.due()) {
             try { reminders.process(id); }
             catch (Exception failure) { log.error("Reminder processing failed: id={}, errorType={}", id, failure.getClass().getSimpleName()); }
+        }
+        // личные «пора выходить» из подсказки на главной
+        for (var id : leaveTips.due()) {
+            try { leaveTips.process(id); }
+            catch (Exception failure) { log.error("Personal reminder processing failed: id={}, errorType={}", id, failure.getClass().getSimpleName()); }
         }
     }
 

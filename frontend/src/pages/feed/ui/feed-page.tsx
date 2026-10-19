@@ -1,3 +1,4 @@
+import { usePetName } from "@/entity/user/model/use-pet-name";
 import { SearchX } from "lucide-react";
 import { useNavAccess } from "@/entity/user/model/use-nav-access";
 import { EmptyState } from "@/shared/components/ui/empty-state";
@@ -107,7 +108,8 @@ function BikeCard({ event, className, onDismiss }: { event: EventSummaryResponse
         <EventChips sport={data.sport} time={formatWhen(event.startAt)} />
         <EventDistance>{data.distance}</EventDistance>
       </div>
-      <div className="flex min-w-0 flex-1 flex-col justify-between px-[18px] pt-4 pb-[18px]">
+      {/* Кнопка «Не интересно» висит над колонкой текста: в подборке текст начинается под ней (12 + 32 + 12px). */}
+      <div className={cn("flex min-w-0 flex-1 flex-col justify-between px-[18px] pb-[18px]", onDismiss ? "pt-14" : "pt-4")}>
         <div>
           <h3 className="-mt-px line-clamp-3 font-display text-[18px] leading-[21.5px] font-bold text-foreground">
             {data.title}
@@ -123,6 +125,7 @@ function BikeCard({ event, className, onDismiss }: { event: EventSummaryResponse
 }
 
 function CtaCard({ className }: { className?: string }) {
+  const petName = usePetName();
   return (
     <Card className={cn("relative min-h-[330px] justify-between overflow-hidden bg-secondary p-[26px]", className)}>
       <img
@@ -144,7 +147,7 @@ function CtaCard({ className }: { className?: string }) {
           </h2>
         </div>
         <p className="mt-[13px] w-[193px] text-[15px] leading-[22px] font-semibold text-foreground">
-          Создай событие — Бублик расскажет о нём соседям с теми же интересами.
+          Создай событие — {petName} расскажет о нём соседям с теми же интересами.
         </p>
       </div>
       <div className="relative">
@@ -160,11 +163,13 @@ function CtaCard({ className }: { className?: string }) {
 }
 
 /** Карточка события из ленты по индексу; обложка-заглушка — по тому же слоту. */
-function Slot({ events, i, reasonOf, onDismiss, ...props }: {
+function Slot({ events, i, reasonOf, topReasonOf, onDismiss, ...props }: {
   events: EventSummaryResponse[] | undefined;
   i: number;
   /** У рекомендаций под названием — главная причина «почему вам это». */
   reasonOf?: (id: string) => string | undefined;
+  /** Есть у лучших рекомендаций: причина выделяется фиолетовым со звёздочками. */
+  topReasonOf?: (id: string) => string | undefined;
   /** Только в подборке «Для вас»: кнопка «Не интересно» на карточке. */
   onDismiss?: (id: string) => void;
 } & Omit<React.ComponentProps<typeof EventCard>, "event" | "href" | "action">) {
@@ -172,7 +177,8 @@ function Slot({ events, i, reasonOf, onDismiss, ...props }: {
   if (!event) return null;
   const data = toCardData(event, SLOT_COVERS[i % SLOT_COVERS.length]);
   const reason = reasonOf?.(event.id);
-  return <EventCard href={`/events/${event.id}`} event={reason ? { ...data, place: reason } : data} {...props}
+  return <EventCard href={`/events/${event.id}`} event={reason ? { ...data, place: reason } : data}
+    highlight={topReasonOf?.(event.id) != null} {...props}
     action={onDismiss ? <DismissButton onDismiss={() => onDismiss(event.id)} /> : undefined} />;
 }
 
@@ -186,7 +192,7 @@ export default function FeedPage() {
   const [view, setView] = useState<"list" | "map">("list");
   const [more, setMore] = useState(false);
   const list = useFeedEvents(filters.params, filters);
-  const { events, reasonOf } = list;
+  const { events, reasonOf, topReasonOf } = list;
   const { dismiss } = useDismissRecommendation();
   const onDismiss = filters.forYou ? dismiss : undefined;
   return (
@@ -207,20 +213,20 @@ export default function FeedPage() {
           {list.isError && <p role="alert" className="text-lg font-semibold text-destructive">Не удалось загрузить ленту.</p>}
           {/* Ряды — отдельные сетки: если событий мало, пустеет конец ряда, а не съезжает раскладка. */}
           <div className="grid grid-cols-12 gap-5">
-            <Slot reasonOf={reasonOf} onDismiss={onDismiss} events={events} i={0} size="lg" className="col-span-6" />
+            <Slot reasonOf={reasonOf} topReasonOf={topReasonOf} onDismiss={onDismiss} events={events} i={0} size="lg" className="col-span-6" />
             {/* В стопках обложки 2:1, чтобы ряд не вытягивал большую карточку и соседей в квадрат. */}
             <div className="col-span-3 flex flex-col gap-5">
-              <Slot reasonOf={reasonOf} onDismiss={onDismiss} events={events} i={1} coverClassName="aspect-[2/1]" className="grow" />
-              <Slot reasonOf={reasonOf} onDismiss={onDismiss} events={events} i={2} titleLines={2} coverClassName="aspect-[2/1]" className="grow" />
+              <Slot reasonOf={reasonOf} topReasonOf={topReasonOf} onDismiss={onDismiss} events={events} i={1} coverClassName="aspect-[2/1]" className="grow" />
+              <Slot reasonOf={reasonOf} topReasonOf={topReasonOf} onDismiss={onDismiss} events={events} i={2} titleLines={2} coverClassName="aspect-[2/1]" className="grow" />
             </div>
             <div className="col-span-3 flex flex-col gap-5">
-              <Slot reasonOf={reasonOf} onDismiss={onDismiss} events={events} i={3} coverClassName="aspect-[2/1]" className="grow" />
+              <Slot reasonOf={reasonOf} topReasonOf={topReasonOf} onDismiss={onDismiss} events={events} i={3} coverClassName="aspect-[2/1]" className="grow" />
             </div>
           </div>
           <div className="grid grid-cols-12 gap-5">
-            <Slot reasonOf={reasonOf} onDismiss={onDismiss} events={events} i={4} className="col-span-4" />
-            <Slot reasonOf={reasonOf} onDismiss={onDismiss} events={events} i={5} className="col-span-4" />
-            <Slot reasonOf={reasonOf} onDismiss={onDismiss} events={events} i={6} className="col-span-4" />
+            <Slot reasonOf={reasonOf} topReasonOf={topReasonOf} onDismiss={onDismiss} events={events} i={4} className="col-span-4" />
+            <Slot reasonOf={reasonOf} topReasonOf={topReasonOf} onDismiss={onDismiss} events={events} i={5} className="col-span-4" />
+            <Slot reasonOf={reasonOf} topReasonOf={topReasonOf} onDismiss={onDismiss} events={events} i={6} className="col-span-4" />
           </div>
           <div className="grid grid-cols-12 gap-5">
             {events?.[7] && <BikeCard event={events[7]} className="col-span-7" onDismiss={onDismiss} />}

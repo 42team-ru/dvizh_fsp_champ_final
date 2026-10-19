@@ -32,6 +32,8 @@ import type {
   AlbumPhotoResponse,
   AttendanceSummaryResponse,
   FileResponse,
+  LeaveReminderResponse,
+  LeaveTipResponse,
   MeResponse,
   PageResponseAlbumPhotoResponse,
   PageResponseAttendedOccurrenceResponse,
@@ -39,6 +41,7 @@ import type {
   PublicUserResponse,
   SaveUserPreferencesRequest,
   SaveUserSportsRequest,
+  SetLeaveReminderRequest,
   UpdateProfileRequest,
   UserPreferencesResponse,
   UserSportResponse,
@@ -620,6 +623,192 @@ export const useUsersSaveMyPreferences = <TError = ErrorType<ProblemDetail>,
         TContext
       > => {
       return useMutation(getUsersSaveMyPreferencesMutationOptions(options), queryClient);
+    }
+    export type usersSetLeaveReminderResponse200 = {
+  data: LeaveReminderResponse
+  status: 200
+}
+
+export type usersSetLeaveReminderResponseSuccess = (usersSetLeaveReminderResponse200) & {
+  headers: Headers;
+};
+;
+
+export type usersSetLeaveReminderResponse = (usersSetLeaveReminderResponseSuccess)
+
+export const getUsersSetLeaveReminderUrl = (occurrenceId: string,) => {
+
+
+
+
+  return `/api/users/me/leave-tip/${occurrenceId}/reminder`
+}
+
+/**
+ * Личное напоминание на занятие: придёт уведомлением «Напоминания». Повторный вызов заменяет время.
+ * @summary Напомнить, когда выходить
+ */
+export const usersSetLeaveReminder = async (occurrenceId: string,
+    setLeaveReminderRequest: SetLeaveReminderRequest, options?: Parameters<typeof authMutator>[1]): Promise<usersSetLeaveReminderResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return authMutator<usersSetLeaveReminderResponse>(getUsersSetLeaveReminderUrl(occurrenceId),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(setLeaveReminderRequest)
+  }
+);}
+
+
+
+
+
+export const getUsersSetLeaveReminderMutationKey = () => ['usersSetLeaveReminder'] as const;
+
+export const getUsersSetLeaveReminderMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersSetLeaveReminder>>, TError,UsersSetLeaveReminderMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof usersSetLeaveReminder>>, TError,UsersSetLeaveReminderMutationVariables, TContext> => {
+
+const mutationKey = getUsersSetLeaveReminderMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersSetLeaveReminder>>, UsersSetLeaveReminderMutationVariables> = (props) => {
+          const {occurrenceId,data} = props ?? {};
+
+          return  usersSetLeaveReminder(occurrenceId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UsersSetLeaveReminderMutationResult = NonNullable<Awaited<ReturnType<typeof usersSetLeaveReminder>>>
+    export type UsersSetLeaveReminderMutationBody = SetLeaveReminderRequest
+    export type UsersSetLeaveReminderMutationError = ErrorType<unknown>
+    export type UsersSetLeaveReminderMutationVariables = {occurrenceId: string;data: SetLeaveReminderRequest}
+
+    /**
+ * @summary Напомнить, когда выходить
+ */
+export const useUsersSetLeaveReminder = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersSetLeaveReminder>>, TError,UsersSetLeaveReminderMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof usersSetLeaveReminder>>,
+        TError,
+        UsersSetLeaveReminderMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUsersSetLeaveReminderMutationOptions(options), queryClient);
+    }
+    export type usersCancelLeaveReminderResponse204 = {
+  data: void
+  status: 204
+}
+
+export type usersCancelLeaveReminderResponseSuccess = (usersCancelLeaveReminderResponse204) & {
+  headers: Headers;
+};
+;
+
+export type usersCancelLeaveReminderResponse = (usersCancelLeaveReminderResponseSuccess)
+
+export const getUsersCancelLeaveReminderUrl = (occurrenceId: string,) => {
+
+
+
+
+  return `/api/users/me/leave-tip/${occurrenceId}/reminder`
+}
+
+/**
+ * @summary Отменить напоминание «когда выходить»
+ */
+export const usersCancelLeaveReminder = async (occurrenceId: string, options?: Parameters<typeof authMutator>[1]): Promise<usersCancelLeaveReminderResponse> => {
+
+  return authMutator<usersCancelLeaveReminderResponse>(getUsersCancelLeaveReminderUrl(occurrenceId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getUsersCancelLeaveReminderMutationKey = () => ['usersCancelLeaveReminder'] as const;
+
+export const getUsersCancelLeaveReminderMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersCancelLeaveReminder>>, TError,UsersCancelLeaveReminderMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof usersCancelLeaveReminder>>, TError,UsersCancelLeaveReminderMutationVariables, TContext> => {
+
+const mutationKey = getUsersCancelLeaveReminderMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersCancelLeaveReminder>>, UsersCancelLeaveReminderMutationVariables> = (props) => {
+          const {occurrenceId} = props ?? {};
+
+          return  usersCancelLeaveReminder(occurrenceId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UsersCancelLeaveReminderMutationResult = NonNullable<Awaited<ReturnType<typeof usersCancelLeaveReminder>>>
+
+    export type UsersCancelLeaveReminderMutationError = ErrorType<unknown>
+    export type UsersCancelLeaveReminderMutationVariables = {occurrenceId: string}
+
+    /**
+ * @summary Отменить напоминание «когда выходить»
+ */
+export const useUsersCancelLeaveReminder = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersCancelLeaveReminder>>, TError,UsersCancelLeaveReminderMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof usersCancelLeaveReminder>>,
+        TError,
+        UsersCancelLeaveReminderMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUsersCancelLeaveReminderMutationOptions(options), queryClient);
     }
     export type usersUploadAvatarResponse200 = {
   data: MeResponse
@@ -1221,6 +1410,91 @@ export const useUsersAddPhoto = <TError = ErrorType<ProblemDetail>,
       > => {
       return useMutation(getUsersAddPhotoMutationOptions(options), queryClient);
     }
+    export type usersDismissLeaveTipResponse204 = {
+  data: void
+  status: 204
+}
+
+export type usersDismissLeaveTipResponseSuccess = (usersDismissLeaveTipResponse204) & {
+  headers: Headers;
+};
+;
+
+export type usersDismissLeaveTipResponse = (usersDismissLeaveTipResponseSuccess)
+
+export const getUsersDismissLeaveTipUrl = (occurrenceId: string,) => {
+
+
+
+
+  return `/api/users/me/leave-tip/${occurrenceId}/dismiss`
+}
+
+/**
+ * @summary «Не надо»: скрыть подсказку на это занятие
+ */
+export const usersDismissLeaveTip = async (occurrenceId: string, options?: Parameters<typeof authMutator>[1]): Promise<usersDismissLeaveTipResponse> => {
+
+  return authMutator<usersDismissLeaveTipResponse>(getUsersDismissLeaveTipUrl(occurrenceId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getUsersDismissLeaveTipMutationKey = () => ['usersDismissLeaveTip'] as const;
+
+export const getUsersDismissLeaveTipMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersDismissLeaveTip>>, TError,UsersDismissLeaveTipMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof usersDismissLeaveTip>>, TError,UsersDismissLeaveTipMutationVariables, TContext> => {
+
+const mutationKey = getUsersDismissLeaveTipMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersDismissLeaveTip>>, UsersDismissLeaveTipMutationVariables> = (props) => {
+          const {occurrenceId} = props ?? {};
+
+          return  usersDismissLeaveTip(occurrenceId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UsersDismissLeaveTipMutationResult = NonNullable<Awaited<ReturnType<typeof usersDismissLeaveTip>>>
+
+    export type UsersDismissLeaveTipMutationError = ErrorType<unknown>
+    export type UsersDismissLeaveTipMutationVariables = {occurrenceId: string}
+
+    /**
+ * @summary «Не надо»: скрыть подсказку на это занятие
+ */
+export const useUsersDismissLeaveTip = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersDismissLeaveTip>>, TError,UsersDismissLeaveTipMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof usersDismissLeaveTip>>,
+        TError,
+        UsersDismissLeaveTipMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUsersDismissLeaveTipMutationOptions(options), queryClient);
+    }
     export type usersAddAlbumPhotoResponse200 = {
   data: AlbumPhotoResponse
   status: 200
@@ -1811,6 +2085,119 @@ export function useUsersWallet<TData = Awaited<ReturnType<typeof usersWallet>>, 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getUsersWalletQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type usersLeaveTipResponse200 = {
+  data: LeaveTipResponse
+  status: 200
+}
+
+export type usersLeaveTipResponseSuccess = (usersLeaveTipResponse200) & {
+  headers: Headers;
+};
+;
+
+export type usersLeaveTipResponse = (usersLeaveTipResponseSuccess)
+
+export const getUsersLeaveTipUrl = () => {
+
+
+
+
+  return `/api/users/me/leave-tip`
+}
+
+/**
+ * Время в пути пешком, на автобусе и на машине — маршрут 2ГИС на время выхода или оценка по расстоянию. Пустой ответ, если подсказки нет: не участник, помощник «Напоминания» выключен или впереди ничего.
+ * @summary «Бублик подсказывает»: когда выходить на ближайшее занятие
+ */
+export const usersLeaveTip = async ( options?: Parameters<typeof authMutator>[1]): Promise<usersLeaveTipResponse> => {
+
+  return authMutator<usersLeaveTipResponse>(getUsersLeaveTipUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getUsersLeaveTipQueryKey = () => {
+    return [
+    `/api/users/me/leave-tip`
+    ] as const;
+    }
+
+
+export const getUsersLeaveTipQueryOptions = <TData = Awaited<ReturnType<typeof usersLeaveTip>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersLeaveTip>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getUsersLeaveTipQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof usersLeaveTip>>> = ({ signal }) => usersLeaveTip({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof usersLeaveTip>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type UsersLeaveTipQueryResult = NonNullable<Awaited<ReturnType<typeof usersLeaveTip>>>
+export type UsersLeaveTipQueryError = ErrorType<unknown>
+
+
+export function useUsersLeaveTip<TData = Awaited<ReturnType<typeof usersLeaveTip>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersLeaveTip>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersLeaveTip>>,
+          TError,
+          Awaited<ReturnType<typeof usersLeaveTip>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUsersLeaveTip<TData = Awaited<ReturnType<typeof usersLeaveTip>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersLeaveTip>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersLeaveTip>>,
+          TError,
+          Awaited<ReturnType<typeof usersLeaveTip>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUsersLeaveTip<TData = Awaited<ReturnType<typeof usersLeaveTip>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersLeaveTip>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary «Бублик подсказывает»: когда выходить на ближайшее занятие
+ */
+
+export function useUsersLeaveTip<TData = Awaited<ReturnType<typeof usersLeaveTip>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersLeaveTip>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getUsersLeaveTipQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

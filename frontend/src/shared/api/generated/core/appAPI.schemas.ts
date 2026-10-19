@@ -370,6 +370,71 @@ export interface PetRenameRequest {
 }
 
 /**
+ * Способ; NONE — просто напомнить до начала
+ */
+export type SetLeaveReminderRequestTravelMode = typeof SetLeaveReminderRequestTravelMode[keyof typeof SetLeaveReminderRequestTravelMode];
+
+
+export const SetLeaveReminderRequestTravelMode = {
+  WALK: 'WALK',
+  BUS: 'BUS',
+  CAR: 'CAR',
+  NONE: 'NONE',
+} as const;
+
+/**
+ * Поставить личное напоминание на занятие
+ */
+export interface SetLeaveReminderRequest {
+  /** Когда напомнить: до начала занятия, не раньше чем за 12 часов */
+  dueAt: string;
+  /**
+     * Минут в пути по выбранному способу
+     * @minimum 0
+     * @maximum 600
+     */
+  travelMinutes?: number;
+  /** Способ; NONE — просто напомнить до начала */
+  travelMode: SetLeaveReminderRequestTravelMode;
+}
+
+export type LeaveReminderResponseStatus = typeof LeaveReminderResponseStatus[keyof typeof LeaveReminderResponseStatus];
+
+
+export const LeaveReminderResponseStatus = {
+  SCHEDULED: 'SCHEDULED',
+  SENT: 'SENT',
+  CANCELLED: 'CANCELLED',
+  DISMISSED: 'DISMISSED',
+} as const;
+
+/**
+ * Выбранный способ
+ */
+export type LeaveReminderResponseTravelMode = typeof LeaveReminderResponseTravelMode[keyof typeof LeaveReminderResponseTravelMode];
+
+
+export const LeaveReminderResponseTravelMode = {
+  WALK: 'WALK',
+  BUS: 'BUS',
+  CAR: 'CAR',
+  NONE: 'NONE',
+} as const;
+
+/**
+ * Личное напоминание на занятие
+ */
+export interface LeaveReminderResponse {
+  status: LeaveReminderResponseStatus;
+  /** Когда напомнить; у отказа нет */
+  dueAt?: string;
+  /** Минут в пути по выбранному способу */
+  travelMinutes?: number;
+  /** Выбранный способ */
+  travelMode?: LeaveReminderResponseTravelMode;
+}
+
+/**
  * Подпись к фото альбома
  */
 export interface AlbumCaptionRequest {
@@ -541,6 +606,7 @@ export interface Channel {
   mode: string;
   available: boolean;
   connected: boolean;
+  target?: string;
 }
 
 export type NotificationSettingsResponseChannelsItem = typeof NotificationSettingsResponseChannelsItem[keyof typeof NotificationSettingsResponseChannelsItem];
@@ -570,6 +636,22 @@ export interface NotificationSettingsResponse {
   categories: NotificationSettingsResponseCategoriesItem[];
   reminders: boolean;
   availableChannels: Channel[];
+}
+
+export interface ConnectNotificationMaxRequest {
+  /**
+     * @minLength 0
+     * @maxLength 64
+     */
+  phone: string;
+}
+
+export interface ConnectNotificationEmailRequest {
+  /**
+     * @minLength 0
+     * @maxLength 254
+     */
+  email: string;
 }
 
 /**
@@ -1956,6 +2038,89 @@ export interface WalletResponse {
   energyMax: number;
   /** Последние 20 операций, свежие сверху */
   entries: WalletEntryResponse[];
+}
+
+export type LeaveTipResponseFormat = typeof LeaveTipResponseFormat[keyof typeof LeaveTipResponseFormat];
+
+
+export const LeaveTipResponseFormat = {
+  OFFLINE: 'OFFLINE',
+  ONLINE: 'ONLINE',
+} as const;
+
+/**
+ * Что предложить по умолчанию; NONE — без дороги
+ */
+export type LeaveTipResponseRecommendedMode = typeof LeaveTipResponseRecommendedMode[keyof typeof LeaveTipResponseRecommendedMode];
+
+
+export const LeaveTipResponseRecommendedMode = {
+  WALK: 'WALK',
+  BUS: 'BUS',
+  CAR: 'CAR',
+  NONE: 'NONE',
+} as const;
+
+export type TravelOptionResponseMode = typeof TravelOptionResponseMode[keyof typeof TravelOptionResponseMode];
+
+
+export const TravelOptionResponseMode = {
+  WALK: 'WALK',
+  BUS: 'BUS',
+  CAR: 'CAR',
+  NONE: 'NONE',
+} as const;
+
+export type TravelOptionResponseSource = typeof TravelOptionResponseSource[keyof typeof TravelOptionResponseSource];
+
+
+export const TravelOptionResponseSource = {
+  ROUTE: 'ROUTE',
+  ESTIMATE: 'ESTIMATE',
+} as const;
+
+/**
+ * Дорога одним способом
+ */
+export interface TravelOptionResponse {
+  mode: TravelOptionResponseMode;
+  /** Минут в пути */
+  minutes: number;
+  /** false — транспорт в это время не ходит */
+  available: boolean;
+  /** Пояснение: номера маршрутов или «первый рейс в 05:57» */
+  note?: string;
+  source: TravelOptionResponseSource;
+}
+
+/**
+ * Подсказка «когда выходить» на ближайшее подтверждённое занятие
+ */
+export interface LeaveTipResponse {
+  eventId: string;
+  occurrenceId: string;
+  title: string;
+  /** Начало занятия */
+  startAt: string;
+  format: LeaveTipResponseFormat;
+  /** Адрес или пояснение к месту; у онлайн нет */
+  place?: string;
+  /** Широта места; у онлайн нет */
+  lat?: number;
+  /** Долгота места; у онлайн нет */
+  lon?: number;
+  /** Домашняя точка из предпочтений; нет — время в пути не считаем */
+  home?: HomePoint;
+  /** Прямое расстояние от дома до места, км */
+  distanceKm?: number;
+  /** Оценки дороги: пешком, на автобусе, на машине; пусто без дома или онлайн */
+  estimates: TravelOptionResponse[];
+  /** Что предложить по умолчанию; NONE — без дороги */
+  recommendedMode: LeaveTipResponseRecommendedMode;
+  /** Когда напомнить по умолчанию: выход по оценке, без дома — за час, онлайн — за 15 минут */
+  suggestedRemindAt: string;
+  /** Уже поставленное напоминание или отказ */
+  reminder?: LeaveReminderResponse;
 }
 
 /**

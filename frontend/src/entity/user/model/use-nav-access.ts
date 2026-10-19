@@ -1,4 +1,4 @@
-import { useNotificationsUnreadCounts } from "@/shared/api/generated/core/notifications/notifications";
+import { REPLY_TYPES, useUnreadNotifications } from "@/entity/notification/model/use-unread-notifications";
 import { useUser } from "./use-user";
 
 /**
@@ -10,8 +10,9 @@ export function useNavAccess() {
   const { user } = useUser();
   const role = user?.systemRole;
   const showActivity = role === "USER" || role === "ORG";
-  const counts = useNotificationsUnreadCounts({ query: { enabled: showActivity, refetchInterval: 30_000 } });
-  const unread = counts.data?.status === 200 ? counts.data.data.reduce((sum, c) => sum + c.unread, 0) : 0;
+  // те же типы, что показывает страница «Активность» (клубу — только ответы): число в меню совпадает с «N новых» на ней
+  const counts = useUnreadNotifications(showActivity);
+  const unread = role === "ORG" ? counts.unreadOf(REPLY_TYPES) : counts.total;
   return {
     showActivity,
     showProfile: role === "USER",
