@@ -4,6 +4,7 @@ import { Icon } from "@/shared/components/ui/icon";
 import { Participants } from "@/shared/components/ui/participants";
 import { cn } from "cn";
 import { Link } from "react-router";
+import { Sparkles } from "lucide-react";
 
 export type EventCover = {
   /** Токен фона, например `bg-orange`. */
@@ -47,8 +48,9 @@ export function EventCover({ cover }: { cover: EventCover }) {
 
 export function EventChips({ sport, time }: { sport: string; time: string }) {
   return (
-    <div className="absolute top-[14px] right-[14px] left-[14px] flex justify-between">
-      <Badge variant="outline">{sport}</Badge>
+    <div className="absolute top-[14px] right-[14px] left-[14px] flex justify-between gap-2">
+      {/* Длинный вид спорта сжимается с многоточием, время всегда целиком. */}
+      <Badge variant="outline" title={sport} className="min-w-0 shrink"><span className="truncate">{sport}</span></Badge>
       <Badge variant="secondary">
         <Icon name="feed/icon-clock" className="size-[14px]" />
         {time}
@@ -92,6 +94,7 @@ export function EventCard({
   className,
   href,
   action,
+  highlight,
 }: {
   event: EventCardData;
   coverClassName?: string;
@@ -102,6 +105,8 @@ export function EventCard({
   href?: string;
   /** Действие в правом верхнем углу поверх ссылки (например, «Не интересно» в подборке). */
   action?: React.ReactNode;
+  /** Строка под названием — причина лучшей рекомендации: фиолетовым и со звёздочками. */
+  highlight?: boolean;
 }) {
   const large = size === "lg";
   const titleBox = large ? 31 : titleLines === 2 ? 43 : 21.5;
@@ -142,9 +147,16 @@ export function EventCard({
               {event.title}
             </h3>
           </div>
-          <p className="mt-[6px] truncate text-sm leading-[19px] font-medium text-muted-foreground">
-            {event.place}
-          </p>
+          {highlight ? (
+            <p className="mt-[6px] flex items-center gap-1 text-sm leading-[19px] font-semibold text-primary">
+              <Sparkles className="size-4 shrink-0" aria-hidden />
+              <span className="truncate">{event.place}</span>
+            </p>
+          ) : (
+            <p className="mt-[6px] truncate text-sm leading-[19px] font-medium text-muted-foreground">
+              {event.place}
+            </p>
+          )}
         </div>
         <Participants
           people={event.people}

@@ -73,6 +73,9 @@ app:
       token: ${TELEGRAM_BOT_TOKEN:}
       username: ${TELEGRAM_BOT_USERNAME:}
       webhook-secret: ${TELEGRAM_WEBHOOK_SECRET:}
+  routing:
+    # Маршруты 2ГИС для «Бублик подсказывает» (когда выходить). Тот же ключ, что у карты; пусто — оценка по расстоянию
+    dgis-key: ${VITE_2GIS_KEY:}
   recommendations:
     # Подбор мероприятий и клубов; формулы и смысл весов — docs/recommendations.md
     half-life-days: 45      # история вдвое «легче» через столько дней

@@ -62,12 +62,6 @@ function FilterBar({ m }: { m: ActivityModel }) {
         })}
         <NotificationSettingsButton className="h-[38px] min-h-0 px-4" />
       </div>
-      {m.totalUnread > 0 && (
-        <button type="button" onClick={m.markAllRead} title="Отметить всё прочитанным"
-          className="absolute top-3 right-0">
-          <Badge variant="accent" className="text-[13px] leading-[18px] text-white">{m.totalUnread} новых · прочитать</Badge>
-        </button>
-      )}
     </div>
   );
 }
@@ -76,7 +70,7 @@ function FilterBar({ m }: { m: ActivityModel }) {
 function Feed({ m }: { m: ActivityModel }) {
   return (
     <Card className="absolute top-0 left-0 h-[626px] w-[701px] overflow-hidden">
-      <div className="absolute inset-x-6 top-6 bottom-6 flex flex-col gap-[10px] overflow-y-auto pr-1">
+      <div className="absolute inset-y-0 left-6 right-6 flex flex-col gap-[10px] overflow-y-auto py-6 pr-1">
             {m.list.isPending && <p className="text-[15px] font-medium text-muted-foreground">Загружаем…</p>}
             {m.list.isError && <p role="alert" className="text-[15px] font-medium text-destructive">Не удалось загрузить активность.</p>}
             {m.list.isSuccess && m.groups.length === 0 && (
@@ -115,14 +109,16 @@ function Feed({ m }: { m: ActivityModel }) {
 function Plans({ m }: { m: ActivityModel }) {
   const totals = { going: m.goingTotal, requests: m.pendingTotal };
   return (
-    <Card className="absolute top-0 left-[721px] h-[315px] w-[495px] overflow-hidden">
-      <div className="absolute inset-x-6 top-6 flex items-center justify-between gap-2">
+    // Отступ 17px со всех сторон; содержимое тянется на ширину карточки, без абсолютных координат.
+    <Card className="absolute top-0 left-[721px] h-[315px] w-[495px] gap-[19px] overflow-hidden p-[17px]">
+      <div className="flex shrink-0 items-center justify-between gap-2">
         <PlansSwitch tab={m.plansTab} totals={totals} onChange={m.setPlansTab} />
         <PlansDialog initialTab={m.plansTab} totals={totals}>
-          <Button variant="secondary" className={XS}>Все</Button>
+          {/* Высота в px, как у переключателя: шапка не растёт от размера шрифта браузера и не выталкивает талоны. */}
+          <Button variant="secondary" className="h-[38px] px-4 text-[13px] leading-[18px]">Все</Button>
         </PlansDialog>
       </div>
-      <div className="absolute top-[78px] left-6 flex w-[443px] flex-col gap-3">
+      <div className="flex min-h-0 w-full flex-col gap-[12px]">
         {m.plansTab === "going" ? (
           <>
             {m.goingItems.length === 0 && !m.going.isPending && (
@@ -179,6 +175,14 @@ export default function ActivityPage() {
         <FilterBar m={m} />
         <div className="relative h-[626px] w-[1216px] shrink-0">
           <Feed m={m} />
+          {m.totalUnread > 0 && (
+            <button type="button" onClick={m.markAllRead} title="Отметить всё прочитанным"
+              className="absolute -top-[14px] right-[539px] z-10 rotate-[-2deg] transition-transform hover:rotate-0">
+              <Badge variant="accent" className="border-2 border-ink text-[13px] leading-[18px] text-white shadow-hard-sm">
+                {m.totalUnread} новых · прочитать
+              </Badge>
+            </button>
+          )}
           <Plans m={m} />
           <Goal />
         </div>

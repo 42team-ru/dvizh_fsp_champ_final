@@ -5,13 +5,14 @@ import { Button } from "@/shared/components/ui/button";
 import { Icon } from "@/shared/components/ui/icon";
 import { AccountMenu } from "@/features/auth/sign-out/ui/account-menu";
 import { useCabinetAccess } from "@/entity/user/model/use-cabinet-access";
+import { useUnreadNotifications } from "@/entity/notification/model/use-unread-notifications";
 import { BriefcaseBusiness } from "lucide-react";
 import { SearchPalette } from "@/widgets/search-palette/ui/search-palette";
 
 const NAV = [
   { key: "home", to: "/", label: "Главная", icon: "icon-home", w: "w-[119px]" },
   { key: "feed", to: "/feed", label: "Лента", icon: "icon-grid", w: "w-[104.5px]" },
-  { key: "activity", to: "/activity", label: "Активность", icon: "icon-bell", w: "w-[178.5px]", count: 3 },
+  { key: "activity", to: "/activity", label: "Активность", icon: "icon-bell", w: "w-[178.5px]" },
   { key: "profile", to: "/profile", label: "Профиль", icon: "icon-user", w: "w-[126.5px]" },
 ];
 
@@ -22,6 +23,7 @@ const iconFolder = (current: string, key: string) =>
 /** `wide` — контейнер 1440px, как у ленты; остальные страницы 1280px. Вкладка «Кабинет» — только организаторам. */
 export function AppHeader({ current = "home", wide }: { current?: "home" | "feed" | "profile" | "activity" | "cabinet"; wide?: boolean }) {
   const cabinet = useCabinetAccess();
+  const unread = useUnreadNotifications().total;
   return (
     <header className="box-border h-[76px] border-b-2 border-ink bg-background">
       <div className={`mx-auto flex h-full w-full ${wide ? "max-w-[1440px]" : "max-w-[1280px]"} items-center px-8`}>
@@ -46,12 +48,13 @@ export function AppHeader({ current = "home", wide }: { current?: "home" | "feed
               <Link to={item.to} aria-current={item.key === current ? "page" : undefined}>
                 <Icon name={`${iconFolder(current, item.key)}/${item.icon}`} className="size-[19px]" />
                 {item.label}
-                {item.count ? (
+                {item.key === "activity" && unread > 0 ? (
                   <Badge
                     variant="accent"
-                    className="absolute top-[10px] left-[140.5px] size-[22px] justify-center rounded-[11px] p-px text-xs leading-[17px] font-extrabold text-white"
+                    aria-label={`${unread} непрочитанных`}
+                    className="absolute top-1/2 left-[140.5px] h-[22px] -translate-y-1/2 min-w-[22px] justify-center rounded-[11px] px-1 py-px text-xs leading-[17px] font-extrabold text-white"
                   >
-                    {item.count}
+                    {unread > 99 ? "99+" : unread}
                   </Badge>
                 ) : null}
               </Link>

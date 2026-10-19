@@ -19,6 +19,10 @@ import {
   useRecommendationPreview,
 } from "@/entity/event/model/use-recommendation-preview";
 import { QrCode } from "@/shared/components/ui/qr-code";
+import { LeaveTipMobile } from "@/widgets/leave-tip/ui/leave-tip";
+import { nextStartOf, untilLabel, useNextTicket } from "@/entity/event/model/use-next-ticket";
+import { useUnreadNotifications } from "@/entity/notification/model/use-unread-notifications";
+import type { MyRegistrationResponse } from "@/shared/api/generated/core/appAPI.schemas";
 
 const dir = "m-home";
 
@@ -44,6 +48,7 @@ function SectionHead({ title, link, to = "/feed" }: { title: string; link?: stri
 
 function AppBar() {
   const { user } = useUser();
+  const unread = useUnreadNotifications().total;
   return (
     <div className="flex h-16 shrink-0 items-center justify-between px-4">
       <BrandPlate>
@@ -55,16 +60,16 @@ function AppBar() {
       <div className="flex items-center gap-2">
         <Link
           to="/activity"
-          aria-label="Активность"
+          aria-label={unread > 0 ? `Активность: ${unread} непрочитанных` : "Активность"}
           className="relative box-border flex size-11 items-center justify-center rounded-[22px] border-2 border-ink bg-card"
         >
           <Icon name={`${dir}/icon-bell`} className="size-5" />
-          <span className="absolute top-[6px] left-6 box-border size-3 rounded-[6px] border-[1.5px] border-ink bg-accent" />
+          {unread > 0 && <span className="absolute top-[6px] left-6 box-border size-3 rounded-[6px] border-[1.5px] border-ink bg-accent" />}
         </Link>
         <Link to="/profile" aria-label="Профиль">
           <Disc
             user={user}
-            initials="АС"
+            initials={`${user?.firstName?.[0] ?? ""}${user?.lastName?.[0] ?? ""}` || "?"}
             tone="bg-sky"
             className="size-11"
             textClassName="text-xs leading-[normal]"
@@ -75,30 +80,47 @@ function AppBar() {
   );
 }
 
-function NextTicket() {
+/** Ближайшая подтверждённая встреча билетом; без записей — приглашение подобрать встречу. */
+function NextTicket({ ticket }: { ticket?: MyRegistrationResponse }) {
+  if (!ticket) {
+    return (
+      <div className="px-4">
+        <div className="box-border flex w-full flex-col gap-3 rounded-[26px] border-2 border-ink bg-primary p-5 shadow-[4px_4px_0_var(--ink)]">
+          <p className="font-display text-[22px] leading-7 font-extrabold text-white">Найди компанию на неделю</p>
+          <p className="text-sm leading-[normal] font-medium text-lilac">Подберём встречи по твоим интересам и району.</p>
+          <Button asChild variant="secondary" className="h-12 w-full px-5 shadow-none">
+            <Link to={FOR_YOU_FEED_URL}>Подобрать встречу</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+  const e = ticket.event;
+  const start = nextStartOf(ticket);
+  const place = e.format === "ONLINE" ? "Онлайн" : e.address ?? e.locationNote ?? "Место уточняется";
   return (
     <div className="px-4">
       <div className="box-border w-full overflow-hidden rounded-[26px] border-2 border-ink bg-primary shadow-[4px_4px_0_var(--ink)]">
         <div className="flex flex-col gap-[10px] px-5 pt-5 pb-[14px]">
-          <div className="flex items-center justify-between">
-            <Badge variant="secondary" className={tag}>
-              ФУТБОЛ
+          <div className="flex items-center justify-between gap-2">
+            <Badge variant="secondary" title={e.sport.name} className={cn(tag, "min-w-0 shrink")}>
+              <span className="truncate">{e.sport.name.toUpperCase()}</span>
             </Badge>
             <span className="text-[13px] leading-[normal] font-bold whitespace-nowrap text-lilac">
-              через 2 часа
+              {untilLabel(start)}
             </span>
           </div>
           <p className="font-display text-[22px] leading-7 font-extrabold text-white">
-            Вечерний футбол 6×6
+            {e.title}
           </p>
-          <div className="flex items-center gap-[6px]">
-            <Icon name={`${dir}/icon-pin`} className="size-4" />
-            <span className="text-sm leading-[normal] font-medium whitespace-nowrap text-lilac">
-              Стадион «Локомотив» · 3,2 км
+          <div className="flex min-w-0 items-center gap-[6px]">
+            <Icon name={`${dir}/icon-pin`} className="size-4 shrink-0" />
+            <span className="truncate text-sm leading-[normal] font-medium text-lilac">
+              {place}
             </span>
           </div>
-          <Button variant="secondary" className="h-12 w-full px-5 shadow-none">
-            Открыть билет
+          <Button asChild variant="secondary" className="h-12 w-full px-5 shadow-none">
+            <Link to={`/events/${e.id}`}>Открыть билет</Link>
           </Button>
         </div>
         <div className="relative h-[22px] bg-card">
@@ -111,48 +133,26 @@ function NextTicket() {
           <span className="absolute top-0 right-[-11px] box-border size-[22px] rounded-[11px] border-2 border-ink bg-background" />
         </div>
         <div className="flex items-center gap-3 bg-card px-5 pt-1 pb-[18px]">
-          <div className="flex min-w-0 flex-1 flex-col gap-[10px] leading-[normal] font-extrabold whitespace-nowrap">
+          <div className="flex min-w-0 flex-1 flex-col gap-[10px] leading-[normal] font-extrabold">
             <div className="flex flex-col gap-[2px]">
               <span className="text-[10px] tracking-[1px] text-muted-foreground">КОГДА</span>
-              <span className="text-sm text-foreground">Сегодня, 19:30</span>
+              <span className="truncate text-sm text-foreground">{formatWhen(start)}</span>
             </div>
-            <div className="flex flex-col gap-[2px]">
-              <span className="text-[10px] tracking-[1px] text-muted-foreground">СБОР</span>
-              <span className="text-sm text-foreground">19:20 у входа на стадион</span>
+            <div className="flex min-w-0 flex-col gap-[2px]">
+              <span className="text-[10px] tracking-[1px] text-muted-foreground">
+                {e.format === "ONLINE" ? "ФОРМАТ" : e.locationNote ? "СБОР" : "ГДЕ"}
+              </span>
+              <span className="truncate text-sm text-foreground">
+                {e.format === "ONLINE" ? "Онлайн, ссылка в карточке" : e.locationNote ?? place}
+              </span>
             </div>
           </div>
           <div className="flex flex-col items-center gap-1">
-            <QrCode path="/feed" label="QR-код: лента встреч" className="size-[63px]" />
+            <QrCode path={`/events/${e.id}`} label="QR-код: страница встречи" className="size-[63px]" />
             <span className="text-[10px] leading-[normal] font-extrabold tracking-[1px] whitespace-nowrap text-muted-foreground">
-              № 0119
+              № {e.id.slice(0, 4).toUpperCase()}
             </span>
           </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function Tip() {
-  return (
-    <div className="px-4">
-      <div className="box-border flex w-full flex-col gap-3 rounded-[22px] border-2 border-ink bg-sky-soft p-[14px]">
-        <div className="flex items-center gap-3">
-          <img src={`/${dir}/img.png`} alt="" className="size-16 shrink-0 object-contain" />
-          <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
-            <span className="text-[10px] leading-[normal] font-extrabold tracking-[1.2px] whitespace-nowrap text-primary">
-              БУБЛИК ПОДСКАЗЫВАЕТ
-            </span>
-            <span className="text-sm leading-[19px] font-bold text-foreground">
-              Выходить пора в 19:00 — до стадиона 25 минут пешком
-            </span>
-          </div>
-        </div>
-        <div className="flex gap-[10px]">
-          <Button className="h-12 min-w-0 flex-1 px-5 text-sm">Напомнить</Button>
-          <Button variant="soft" rough={false} className="h-12 min-w-0 flex-1 px-5 text-sm">
-            Не надо
-          </Button>
         </div>
       </div>
     </div>
@@ -195,9 +195,10 @@ function EventScroller() {
               )}
               <Badge
                 variant="outline"
-                className={cn(tag, "absolute top-3 left-3 border-[1.5px] bg-card")}
+                title={e.sport.name}
+                className={cn(tag, "absolute top-3 left-3 max-w-[calc(100%-150px)] border-[1.5px] bg-card")}
               >
-                {e.sport.name.toUpperCase()}
+                <span className="truncate">{e.sport.name.toUpperCase()}</span>
               </Badge>
               <span className="absolute top-3 right-3 rounded-pill bg-ink px-[10px] py-1 text-[11px] leading-[normal] font-extrabold tracking-[1px] whitespace-nowrap text-secondary">
                 {formatWhen(e.startAt)}
@@ -250,16 +251,18 @@ function EventScroller() {
 }
 
 export function HomeMobile() {
+  const { user } = useUser();
+  const { ticket, isPending } = useNextTicket();
   return (
     <div className="relative isolate flex min-h-dvh flex-col gap-4 overflow-hidden bg-background pb-[110px] lg:hidden">
       <MemphisBackground variant="mobile" />
       <AppBar />
       <div className="flex flex-col gap-[2px] px-4 pt-1 leading-[normal] whitespace-nowrap">
-        <h1 className="font-display text-[26px] font-extrabold text-foreground">Привет, Аня!</h1>
-        <p className="text-[15px] font-medium text-muted-foreground">Дальше у тебя</p>
+        <h1 className="font-display text-[26px] font-extrabold text-foreground">Привет{user?.firstName ? `, ${user.firstName}` : ""}!</h1>
+        {!isPending && <p className="text-[15px] font-medium text-muted-foreground">{ticket ? "Дальше у тебя" : "Ближайших встреч пока нет"}</p>}
       </div>
-      <NextTicket />
-      <Tip />
+      {!isPending && <NextTicket ticket={ticket} />}
+      <LeaveTipMobile />
       <SectionHead title="Подобрали для тебя" link="Все" to={FOR_YOU_FEED_URL} />
       <EventScroller />
       <MobileTabBar current="home" />

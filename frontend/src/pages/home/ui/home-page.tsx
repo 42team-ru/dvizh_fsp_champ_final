@@ -9,14 +9,17 @@ import { Icon } from "@/shared/components/ui/icon";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 import { Participants } from "@/shared/components/ui/participants";
 import { Sparkles } from "lucide-react";
-import { toCardData } from "@/entity/event/lib/event-format";
+import { formatWhen, toCardData } from "@/entity/event/lib/event-format";
 import {
   FOR_YOU_FEED_URL,
   formatDistance,
   useRecommendationPreview,
 } from "@/entity/event/model/use-recommendation-preview";
-import type { RecommendedEventResponse } from "@/shared/api/generated/core/appAPI.schemas";
+import type { EventSummaryResponse, RecommendedEventResponse } from "@/shared/api/generated/core/appAPI.schemas";
+import { nextStartOf, untilLabel, useNextTicket } from "@/entity/event/model/use-next-ticket";
+import { useUser } from "@/entity/user/model/use-user";
 import { QrCode } from "@/shared/components/ui/qr-code";
+import { LeaveTip } from "@/widgets/leave-tip/ui/leave-tip";
 
 /** Обложки карточек подборки, если у события нет своего фото. */
 const COVERS = [
@@ -70,108 +73,109 @@ function SectionHeading({
   );
 }
 
+/** Где встреча одной строкой: онлайн, адрес или пояснение к месту. */
+const placeOf = (e: EventSummaryResponse) =>
+  e.format === "ONLINE" ? "Онлайн" : e.address ?? e.locationNote ?? "Место уточняется";
+
+/** «Дальше у тебя»: ближайшая подтверждённая встреча и её билет; без записей — приглашение подобрать встречу. */
 function Hero() {
+  const { user } = useUser();
+  const { ticket, isPending } = useNextTicket();
+  const e = ticket?.event;
+  const start = ticket ? nextStartOf(ticket) : undefined;
+  const cover = e ? e.coverUrl ?? e.sport.imageUrl : undefined;
   return (
-    <section className="relative box-border h-[330px] overflow-hidden rounded-[28px] border-2 border-ink bg-primary">
-      <img src="/home/memphis.svg" alt="" className="absolute top-0 left-0 h-[330px] w-[1216px] max-w-none" />
+    // Поток вместо абсолютных координат: при крупном шрифте браузера блок растёт, а не обрезает кнопки.
+    <section className="relative box-border flex min-h-[330px] items-center justify-between gap-8 overflow-hidden rounded-[28px] border-2 border-ink bg-primary px-[44px] py-[32px]">
+      <img src="/home/memphis.svg" alt="" className="absolute top-0 left-0 h-full w-[1216px] max-w-none object-cover object-left-top" />
 
-      <div className="absolute top-[44px] left-[44px] w-[600px]">
+      <div className="relative w-[600px] shrink-0">
         <p className="text-[15px] leading-[21px] font-bold text-white opacity-90">
-          Привет, Аня! Дальше у тебя
+          Привет{user?.firstName ? `, ${user.firstName}` : ""}! {e ? "Дальше у тебя" : isPending ? "" : "Ближайших встреч пока нет"}
         </p>
-        <h1 className="mt-[6px] font-display text-[52px] leading-[54.5px] font-extrabold tracking-[-1px] text-white">
-          Вечерний
-          <br />
-          футбол 6×6
+        <h1 className="mt-[6px] line-clamp-2 min-h-[109px] font-display text-[52px] leading-[54.5px] font-extrabold tracking-[-1px] text-white">
+          {e ? e.title : isPending ? "" : "Найди компанию на неделю"}
         </h1>
-        <div className="mt-[26px] flex gap-2">
-          <Badge variant="outline" className="text-[13px] leading-[18px]">
-            <Icon name="icon-clock" className="size-[14px]" />
-            19:30
-          </Badge>
-          <Badge variant="outline" className="text-[13px] leading-[18px]">
-            <Icon name="icon-pin" className="size-[14px]" />
-            Стадион «Локомотив»
-          </Badge>
-          <Badge variant="outline" className="text-[13px] leading-[18px]">
-            <Icon name="icon-route" className="size-[14px]" />
-            3,2 км
-          </Badge>
-        </div>
-        <div className="mt-[26px] flex gap-3">
-          <Button variant="secondary" size="lg" rough>
-            Открыть билет
-          </Button>
-          <Button variant="clear" size="lg" rough={{ color: "white" }}>
-            <Icon name="icon-arrow" className="size-[18px]" />
-            Другие события
-          </Button>
-        </div>
-      </div>
-
-      <article className="absolute top-[42px] left-[800px] box-border h-[244px] w-[356px] overflow-hidden rounded-[22px] border-2 border-ink bg-card p-0 shadow-hard">
-        <div className="relative h-[118px] w-[352px] shrink-0 overflow-hidden border-b-2 border-ink">
-          <div className="absolute inset-x-0 top-0 h-[116px] bg-orange">
-            <img
-              src="/home/memphis1.svg"
-              alt=""
-              className="absolute top-[-74px] left-0 h-[264px] w-[352px] max-w-none"
-            />
+        {e && start ? (
+          <div className="mt-[26px] flex gap-2">
+            <Badge variant="outline" className="shrink-0 text-[13px] leading-[18px]">
+              <Icon name="icon-clock" className="size-[14px]" />
+              {formatWhen(start)}
+            </Badge>
+            <Badge variant="outline" className="min-w-0 shrink text-[13px] leading-[18px]" title={placeOf(e)}>
+              <Icon name="icon-pin" className="size-[14px]" />
+              <span className="truncate">{placeOf(e)}</span>
+            </Badge>
+            <Badge variant="outline" className="shrink-0 text-[13px] leading-[18px]">
+              <Icon name="icon-route" className="size-[14px]" />
+              {untilLabel(start)}
+            </Badge>
           </div>
-          <div className="absolute inset-x-0 top-0 h-[116px] bg-gradient-to-b from-transparent from-40% to-[rgba(22,24,31,0.55)]" />
-          <Badge variant="outline" className="absolute top-3 left-[14px]">
-            Футбол
-          </Badge>
-          <p className="absolute top-[91px] left-4 text-[11px] leading-[15px] font-extrabold tracking-[1.5px] text-white">
-            БИЛЕТ № 0119
+        ) : (
+          <p className="mt-[26px] h-[26px] text-[15px] leading-[26px] font-semibold text-white opacity-90">
+            {isPending ? "" : "Подберём встречи по твоим интересам и району."}
           </p>
+        )}
+        <div className="mt-[26px] flex gap-3">
+          <Button asChild variant="secondary" size="lg" rough>
+            {e ? <Link to={`/events/${e.id}`}>Открыть билет</Link> : <Link to={FOR_YOU_FEED_URL}>Подобрать встречу</Link>}
+          </Button>
+          <Button asChild variant="clear" size="lg" rough={{ color: "white" }}>
+            <Link to={e ? "/feed" : "/events/new"}>
+              <Icon name="icon-arrow" className="size-[18px]" />
+              {e ? "Другие события" : "Создать своё"}
+            </Link>
+          </Button>
         </div>
-        <div className="relative flex h-[122px] w-[352px] shrink-0">
-          <div className="flex w-[248px] flex-col justify-between px-4 py-[14px]">
-            <div>
-              <Eyebrow>КОГДА</Eyebrow>
-              <p className="mt-1 font-display text-[17px] leading-[21px] font-bold text-foreground">
-                Сегодня, 19:30
-              </p>
-            </div>
-            <div>
-              <Eyebrow>СБОР</Eyebrow>
-              <p className="mt-[2px] text-sm leading-[19px] font-bold text-foreground">
-                19:20 у входа на стадион
-              </p>
-            </div>
-          </div>
-          <div className="absolute top-3 left-[252px] h-[98px] w-[2px] border-l-2 border-dashed border-ink" />
-          <span className="absolute top-[-11px] left-[241px] box-border size-[22px] rounded-[11px] border-2 border-ink bg-card" />
-          <div className="flex w-[104px] items-center justify-center">
-            <QrCode path="/feed" label="QR-код: лента встреч" className="size-[76px]" />
-          </div>
-        </div>
-      </article>
-    </section>
-  );
-}
-
-function Tip() {
-  return (
-    <Card className="relative h-[104px] flex-row items-center gap-5 bg-mint-soft pr-[26px] pl-[152px]">
-      <img
-        src="/home/wave.png"
-        alt=""
-        className="pointer-events-none absolute top-[-30px] left-[18px] h-[128px] w-[124px] max-w-none object-cover"
-      />
-      <div className="w-[738.5px] shrink-0">
-        <Eyebrow>БУБЛИК ПОДСКАЗЫВАЕТ</Eyebrow>
-        <p className="mt-[6px] font-display text-[18px] leading-[23.5px] font-bold whitespace-nowrap text-foreground">
-          Выходить пора в 19:00 — до стадиона 25 минут пешком
-        </p>
       </div>
-      <Button variant="ink" rough>
-        <Icon name="icon-bell1" className="size-[18px]" />
-        Напомнить
-      </Button>
-      <Button variant="soft" rough={false}>Не надо</Button>
-    </Card>
+
+      {e && start && (
+        <Link to={`/events/${e.id}`} aria-label={`Билет: ${e.title}`}
+          className="relative box-border h-[244px] w-[356px] shrink-0 overflow-hidden rounded-[22px] border-2 border-ink bg-card p-0 shadow-hard">
+          <div className="relative h-[118px] w-[352px] shrink-0 overflow-hidden border-b-2 border-ink">
+            <div className="absolute inset-x-0 top-0 h-[116px] bg-orange">
+              {cover ? (
+                <img src={cover} alt="" className="size-full max-w-none object-cover" />
+              ) : (
+                <img
+                  src="/home/memphis1.svg"
+                  alt=""
+                  className="absolute top-[-74px] left-0 h-[264px] w-[352px] max-w-none"
+                />
+              )}
+            </div>
+            <div className="absolute inset-x-0 top-0 h-[116px] bg-gradient-to-b from-transparent from-40% to-[rgba(22,24,31,0.55)]" />
+            <Badge variant="outline" title={e.sport.name} className="absolute top-3 left-[14px] max-w-[calc(100%-28px)]">
+              <span className="truncate">{e.sport.name}</span>
+            </Badge>
+            <p className="absolute top-[91px] left-4 text-[11px] leading-[15px] font-extrabold tracking-[1.5px] text-white">
+              БИЛЕТ № {e.id.slice(0, 4).toUpperCase()}
+            </p>
+          </div>
+          <div className="relative flex h-[122px] w-[352px] shrink-0">
+            <div className="flex w-[248px] min-w-0 flex-col justify-between px-4 py-[14px]">
+              <div>
+                <Eyebrow>КОГДА</Eyebrow>
+                <p className="mt-1 truncate font-display text-[17px] leading-[21px] font-bold text-foreground">
+                  {formatWhen(start)}
+                </p>
+              </div>
+              <div>
+                <Eyebrow>{e.format === "ONLINE" ? "ФОРМАТ" : e.locationNote ? "СБОР" : "ГДЕ"}</Eyebrow>
+                <p className="mt-[2px] truncate text-[14px] leading-[19px] font-bold text-foreground">
+                  {e.format === "ONLINE" ? "Онлайн, ссылка в карточке" : e.locationNote ?? placeOf(e)}
+                </p>
+              </div>
+            </div>
+            <div className="absolute top-3 left-[252px] h-[98px] w-[2px] border-l-2 border-dashed border-ink" />
+            <span className="absolute top-[-11px] left-[241px] box-border size-[22px] rounded-[11px] border-2 border-ink bg-card" />
+            <div className="flex w-[104px] items-center justify-center">
+              <QrCode path={`/events/${e.id}`} label="QR-код: страница встречи" className="size-[76px]" />
+            </div>
+          </div>
+        </Link>
+      )}
+    </section>
   );
 }
 
@@ -200,8 +204,8 @@ function EventCard({ item, index, onDismiss }: { item: RecommendedEventResponse;
         </div>
         <div className="absolute inset-x-0 top-0 h-[178px] bg-[linear-gradient(180deg,rgba(22,24,31,0.08)_0%,rgba(22,24,31,0)_30%,rgba(22,24,31,0)_55%,rgba(22,24,31,0.62)_100%)]" />
         <div className="absolute inset-x-0 top-0 h-[178px] bg-[rgba(246,244,255,0.1)]" />
-        <div className="absolute top-[14px] right-[14px] left-[14px] flex justify-between">
-          <Badge variant="outline">{card.sport}</Badge>
+        <div className="absolute top-[14px] right-[14px] left-[14px] flex justify-between gap-2">
+          <Badge variant="outline" title={card.sport} className="min-w-0 shrink"><span className="truncate">{card.sport}</span></Badge>
           <Badge variant="secondary">
             <Icon name="icon-clock" className="size-[14px]" />
             {card.time}
@@ -264,7 +268,7 @@ export default function HomePage() {
       <main className="mx-auto flex w-full max-w-[1280px] flex-col gap-7 px-8 pt-8 pb-12">
         <Hero />
         <div className="mt-2">
-          <Tip />
+          <LeaveTip />
         </div>
         <SectionHeading title="Подобрали для тебя" hint="по интересам, месту и времени" linkLabel="Все рекомендации"
           to={FOR_YOU_FEED_URL} />

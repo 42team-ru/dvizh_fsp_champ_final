@@ -5,7 +5,7 @@
 //   node scripts/dev.mjs front    (make front)  — фронт :5173, свой терминал
 // Ctrl+C останавливает только то, что запущено в этом терминале. Кроссплатформенно (Windows, macOS, Linux).
 import { spawn, spawnSync } from 'node:child_process'
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import net from 'node:net'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -53,7 +53,12 @@ if (mode === 'db') {
   if (!(await isOpen(5440))) die('БД не запущена. Сначала выполните: make dev')
   if (!(await isOpen(9440))) die('S3 (MinIO) не запущен. Выполните: make dev (поднимет недостающее)')
   await ensurePortFree(8080, 'бэкенд')
-  runHere(win ? 'gradlew.bat' : './gradlew', ['bootRun', '--console=plain'], join(root, 'backend'))
+  // Ключ 2ГИС из корневого .env: бэк считает маршруты для подсказки «когда выходить» (без ключа — оценка)
+  const key = existsSync(join(root, '.env'))
+    ? readFileSync(join(root, '.env'), 'utf8').match(/^VITE_2GIS_KEY=["']?([^"'\r\n]*)/m)?.[1] ?? ''
+    : ''
+  runHere(win ? 'gradlew.bat' : './gradlew', ['bootRun', '--console=plain'], join(root, 'backend'),
+    key && !process.env.VITE_2GIS_KEY ? { VITE_2GIS_KEY: key } : {})
 } else if (mode === 'front') {
   await ensurePortFree(5173, 'фронт')
   const frontend = join(root, 'frontend')

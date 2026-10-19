@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import { BrandPlate } from "@/shared/components/ui/brand-plate";
 import { useUser } from "@/entity/user/model/use-user";
+import { useUnreadNotifications } from "@/entity/notification/model/use-unread-notifications";
 import { Disc } from "@/shared/components/ui/disc";
 import { Icon } from "@/shared/components/ui/icon";
 import { cn } from "cn";
@@ -17,6 +18,7 @@ export function MobileAppBar({
   titleClassName?: string;
 }) {
   const { user } = useUser();
+  const unread = useUnreadNotifications().total;
   return (
     <div className="flex h-16 shrink-0 items-center justify-between px-4">
       <BrandPlate>
@@ -33,11 +35,11 @@ export function MobileAppBar({
       <div className="flex items-center gap-2">
         <Link
           to="/activity"
-          aria-label="Активность"
+          aria-label={unread > 0 ? `Активность: ${unread} непрочитанных` : "Активность"}
           className="relative box-border flex size-11 items-center justify-center rounded-[22px] border-2 border-ink bg-card"
         >
           <Icon name={`${dir}/icon-bell`} className="size-5" />
-          <span className="absolute top-[6px] left-6 box-border size-3 rounded-[6px] border-[1.5px] border-ink bg-accent" />
+          {unread > 0 && <span className="absolute top-[6px] left-6 box-border size-3 rounded-[6px] border-[1.5px] border-ink bg-accent" />}
         </Link>
         <Link to="/profile" aria-label="Профиль">
           <Disc

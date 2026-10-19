@@ -8,6 +8,8 @@ import type {
 
 /** Сколько рекомендаций показываем в ленте «Для вас». */
 const FOR_YOU_SIZE = 20;
+/** Сколько лучших рекомендаций выделяем фиолетовой причиной со звёздочками, как на главной. */
+const TOP_PICKS = 3;
 
 /**
  * События ленты: обычный events_list или, при чипе «Для вас», персональная подборка recommendations_events.
@@ -23,11 +25,14 @@ export function useFeedEvents(params: EventsListParams, { forYou, ready }: { for
     ? recommended.data?.status === 200 ? items.map((item) => item.event) : undefined
     : list.data?.status === 200 ? list.data.data : undefined;
   const byId = new Map(items.map((item) => [item.event.id, item]));
+  const top = new Set(items.slice(0, TOP_PICKS).map((item) => item.event.id));
   return {
     events,
     isPending: source.isPending,
     isError: source.isError,
     /** Главная причина рекомендации; undefined — не из подборки. */
     reasonOf: (id: string) => byId.get(id)?.reasons[0]?.text,
+    /** Причина только у самых подходящих (подборка уже отсортирована по score); у остальных undefined. */
+    topReasonOf: (id: string) => (top.has(id) ? byId.get(id)?.reasons[0]?.text : undefined),
   };
 }

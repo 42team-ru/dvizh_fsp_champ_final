@@ -54,7 +54,6 @@ function TicketNotch({ side }: { side: "top" | "bottom" }) {
 }
 
 const TONES = ["bg-sky", "bg-lime-soft", "bg-lavender-soft", "bg-peach", "bg-mint-soft"];
-const GOING_LEFT = [0, 114, 227.5, 341.5];
 const TAKE_TONES = ["bg-lime-soft", "bg-lavender-soft", "bg-sky-soft", "bg-mint-soft"];
 
 function Img({ src, className }: { src: string; className?: string }) {
@@ -117,8 +116,8 @@ function TicketHero({ m }: { m: EventModel }) {
       <div className="relative h-[396px] w-[270px] shrink-0 overflow-hidden border-r-2 border-ink">
         <img src={cover} alt="" className="absolute top-0 left-0 h-[396px] w-[268px] object-cover" />
         <div className="absolute top-0 left-0 h-[396px] w-[268px] bg-gradient-to-b from-[rgba(22,24,31,0.05)] via-[rgba(22,24,31,0.15)] via-55% to-[rgba(22,24,31,0.7)]" />
-        <div className="absolute top-[18px] left-[18px] flex gap-[6px]">
-          <Badge variant="outline">{e.sport.name}</Badge>
+        <div className="absolute top-[18px] right-[18px] left-[18px] flex gap-[6px]">
+          <Badge variant="outline" title={e.sport.name} className="min-w-0 shrink"><span className="truncate">{e.sport.name}</span></Badge>
           <Badge variant="outline">{m.levelLabel}</Badge>
         </div>
         <div className="absolute top-[339px] left-5 w-[230px]">
@@ -278,8 +277,9 @@ function About({ m }: { m: EventModel }) {
 function Organizer({ m }: { m: EventModel }) {
   const e = m.event!;
   return (
-    <Card className="relative min-h-[286.5px] shrink-0 overflow-hidden bg-sky-soft">
-      <div className="absolute top-[22px] left-[22px] flex h-14 w-[447px] items-center gap-[14px]">
+    // Обычный поток с отступами: при крупном шрифте браузера блоки раздвигаются, а не наезжают друг на друга.
+    <Card className="relative min-h-[286.5px] shrink-0 gap-[17px] overflow-hidden bg-sky-soft p-[22px]">
+      <div className="flex min-h-14 items-center gap-[14px]">
         <Link to={`/users/${e.author.id}`} aria-label={fullName(e.author)} className="shrink-0">
           <Disc
             initials={e.organization ? e.organization.name.slice(0, 2).toUpperCase() : initials(e.author)}
@@ -296,26 +296,26 @@ function Organizer({ m }: { m: EventModel }) {
           </p>
         </div>
       </div>
-      <div className="absolute top-24 left-[22px] flex h-[61px] w-[447px] gap-2">
+      <div className="grid grid-cols-2 gap-2">
         {[
           { v: String(m.going), l: "записались", tone: "bg-lime-soft" },
           { v: String(e.organizers.length), l: "организаторов", tone: "bg-background" },
         ].map((s) => (
           <div
             key={s.l}
-            className={cn("relative h-[61px] w-[219.5px] rounded-[14px] border-2 border-transparent", s.tone)}
+            className={cn("relative min-h-[61px] rounded-[14px] border-2 border-transparent px-[10px] pt-2 pb-[6px]", s.tone)}
           >
-            <p className="absolute top-[10px] left-3 font-display text-lg leading-[22px] font-extrabold text-foreground">
+            <p className="font-display text-lg leading-[22px] font-extrabold text-foreground">
               {s.v}
             </p>
-            <p className="absolute top-8 left-3 text-[11px] leading-[15px] font-semibold text-muted-foreground">
+            <p className="text-[11px] leading-[15px] font-semibold text-muted-foreground">
               {s.l}
             </p>
             <RoughBorder radius={14} roughness={0.9} />
           </div>
         ))}
       </div>
-      <Button asChild variant="soft" className="absolute top-[173px] left-[22px] w-[447px]">
+      <Button asChild variant="soft" className="w-full">
         <a href="#event-chat">
           <Icon name="event/icon-plus1" className="size-[18px]" />
           Задать вопрос организатору
@@ -441,21 +441,21 @@ function Going({ m }: { m: EventModel }) {
   const shown = e.participants.slice(0, e.participants.length > 8 ? 7 : 8);
   const rest = m.going - shown.length;
   return (
-    <Card className="relative min-h-[249px] shrink-0 overflow-hidden">
-      <div className="absolute top-6 left-6 flex h-[25px] w-[443px] items-center justify-between">
+    <Card className="relative min-h-[249px] shrink-0 gap-[18px] overflow-hidden p-6">
+      <div className="flex items-center justify-between gap-2">
         <h2 className="font-display text-xl leading-[25px] font-bold text-foreground">Кто идёт</h2>
         <span className="text-[13px] leading-[18px] font-bold text-muted-foreground">
           {m.going}{e.capacity != null ? ` из ${e.capacity}` : ""}
         </span>
       </div>
-      <div className="absolute top-[67px] left-6 h-[154px] w-[443px]">
-        {shown.length === 0 && <p className="text-sm font-semibold text-muted-foreground">Пока никого — будьте первым.</p>}
+      {shown.length === 0 && <p className="text-sm font-semibold text-muted-foreground">Пока никого — будьте первым.</p>}
+      {/* Четыре колонки, каждый участник по центру своей: ряды растут под шрифт, а не наезжают. */}
+      <div className="grid grid-cols-4 gap-y-3">
         {shown.map((g, i) => (
           <Link
             key={g.id}
             to={`/users/${g.id}`}
-            className="absolute flex h-[71px] w-[102px] flex-col items-center gap-[6px]"
-            style={{ left: GOING_LEFT[i % 4], top: i < 4 ? 0 : 83 }}
+            className="flex min-w-0 flex-col items-center gap-[6px]"
           >
             <Disc
               initials={initials(g)}
@@ -464,14 +464,11 @@ function Going({ m }: { m: EventModel }) {
               className="size-12"
               textClassName="text-base leading-[22px] tracking-[-0.5px]"
             />
-            <span className="max-w-[100px] truncate text-xs leading-[17px] font-bold text-foreground">{g.firstName || g.username}</span>
+            <span className="max-w-full truncate text-xs leading-[17px] font-bold text-foreground">{g.firstName || g.username}</span>
           </Link>
         ))}
         {rest > 0 && (
-          <div
-            className="absolute flex h-[71px] w-[102px] flex-col items-center gap-[6px]"
-            style={{ left: 341.5, top: 83 }}
-          >
+          <div className="col-start-4 flex flex-col items-center gap-[6px]">
             <span className="flex size-12 items-center justify-center rounded-full border-2 border-dashed border-ink text-sm leading-[19px] font-extrabold text-foreground">
               +{rest}
             </span>

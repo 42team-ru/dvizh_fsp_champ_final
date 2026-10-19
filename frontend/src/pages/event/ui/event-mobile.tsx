@@ -159,9 +159,11 @@ export function EventMobile({ m }: { m: EventModel }) {
         <EventShare m={m} open={shareOpen} onOpenChange={setShareOpen} />
         <Badge
           variant="outline"
-          className="absolute top-[188px] left-4 h-auto border-[1.5px] bg-card px-[10px] py-1 text-[11px] leading-[normal] font-extrabold tracking-[1px]"
+          title={e.sport.name}
+          className="absolute top-[188px] left-4 h-auto max-w-[calc(100%-140px)] border-[1.5px] bg-card px-[10px] py-1 text-[11px] leading-[normal] font-extrabold tracking-[1px]"
         >
-          {e.sport.name.toUpperCase()}
+          {/* Справа — уровень: длинный вид спорта обрезаем, чтобы не наехать на него. */}
+          <span className="truncate">{e.sport.name.toUpperCase()}</span>
         </Badge>
         <span className="absolute top-[192px] right-4 rounded-pill bg-ink px-[10px] py-1 text-[10px] leading-[normal] font-extrabold tracking-[1px] whitespace-nowrap text-secondary">
           {m.levelLabel.toUpperCase()}

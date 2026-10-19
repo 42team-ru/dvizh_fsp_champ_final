@@ -411,6 +411,72 @@
         }
       }
     },
+    "/api/users/me/leave-tip/{occurrenceId}/reminder": {
+      "put": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Напомнить, когда выходить",
+        "description": "Личное напоминание на занятие: придёт уведомлением «Напоминания». Повторный вызов заменяет время.",
+        "operationId": "users_setLeaveReminder",
+        "parameters": [
+          {
+            "name": "occurrenceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetLeaveReminderRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaveReminderResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Отменить напоминание «когда выходить»",
+        "operationId": "users_cancelLeaveReminder",
+        "parameters": [
+          {
+            "name": "occurrenceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
     "/api/users/me/avatar": {
       "put": {
         "tags": [
@@ -1475,6 +1541,31 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/users/me/leave-tip/{occurrenceId}/dismiss": {
+      "post": {
+        "tags": [
+          "users"
+        ],
+        "summary": "«Не надо»: скрыть подсказку на это занятие",
+        "operationId": "users_dismissLeaveTip",
+        "parameters": [
+          {
+            "name": "occurrenceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
           }
         }
       }
@@ -4035,6 +4126,28 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/WalletResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/me/leave-tip": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "«Бублик подсказывает»: когда выходить на ближайшее занятие",
+        "description": "Время в пути пешком, на автобусе и на машине — маршрут 2ГИС на время выхода или оценка по расстоянию. Пустой ответ, если подсказки нет: не участник, помощник «Напоминания» выключен или впереди ничего.",
+        "operationId": "users_leaveTip",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaveTipResponse"
                 }
               }
             }
@@ -6795,6 +6908,77 @@
           "name"
         ]
       },
+      "SetLeaveReminderRequest": {
+        "type": "object",
+        "description": "Поставить личное напоминание на занятие",
+        "properties": {
+          "dueAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Когда напомнить: до начала занятия, не раньше чем за 12 часов"
+          },
+          "travelMinutes": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Минут в пути по выбранному способу",
+            "example": 25,
+            "maximum": 600,
+            "minimum": 0
+          },
+          "travelMode": {
+            "type": "string",
+            "description": "Способ; NONE — просто напомнить до начала",
+            "enum": [
+              "WALK",
+              "BUS",
+              "CAR",
+              "NONE"
+            ]
+          }
+        },
+        "required": [
+          "dueAt",
+          "travelMode"
+        ]
+      },
+      "LeaveReminderResponse": {
+        "type": "object",
+        "description": "Личное напоминание на занятие",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "SCHEDULED",
+              "SENT",
+              "CANCELLED",
+              "DISMISSED"
+            ]
+          },
+          "dueAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Когда напомнить; у отказа нет"
+          },
+          "travelMinutes": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Минут в пути по выбранному способу"
+          },
+          "travelMode": {
+            "type": "string",
+            "description": "Выбранный способ",
+            "enum": [
+              "WALK",
+              "BUS",
+              "CAR",
+              "NONE"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
       "AlbumCaptionRequest": {
         "type": "object",
         "description": "Подпись к фото альбома",
@@ -9447,6 +9631,136 @@
           "energyMax",
           "entries",
           "level"
+        ]
+      },
+      "LeaveTipResponse": {
+        "type": "object",
+        "description": "Подсказка «когда выходить» на ближайшее подтверждённое занятие",
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "occurrenceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Начало занятия"
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "OFFLINE",
+              "ONLINE"
+            ]
+          },
+          "place": {
+            "type": "string",
+            "description": "Адрес или пояснение к месту; у онлайн нет"
+          },
+          "lat": {
+            "type": "number",
+            "format": "double",
+            "description": "Широта места; у онлайн нет"
+          },
+          "lon": {
+            "type": "number",
+            "format": "double",
+            "description": "Долгота места; у онлайн нет"
+          },
+          "home": {
+            "$ref": "#/components/schemas/HomePoint",
+            "description": "Домашняя точка из предпочтений; нет — время в пути не считаем"
+          },
+          "distanceKm": {
+            "type": "number",
+            "format": "double",
+            "description": "Прямое расстояние от дома до места, км"
+          },
+          "estimates": {
+            "type": "array",
+            "description": "Оценки дороги: пешком, на автобусе, на машине; пусто без дома или онлайн",
+            "items": {
+              "$ref": "#/components/schemas/TravelOptionResponse"
+            }
+          },
+          "recommendedMode": {
+            "type": "string",
+            "description": "Что предложить по умолчанию; NONE — без дороги",
+            "enum": [
+              "WALK",
+              "BUS",
+              "CAR",
+              "NONE"
+            ]
+          },
+          "suggestedRemindAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Когда напомнить по умолчанию: выход по оценке, без дома — за час, онлайн — за 15 минут"
+          },
+          "reminder": {
+            "$ref": "#/components/schemas/LeaveReminderResponse",
+            "description": "Уже поставленное напоминание или отказ"
+          }
+        },
+        "required": [
+          "estimates",
+          "eventId",
+          "format",
+          "occurrenceId",
+          "recommendedMode",
+          "startAt",
+          "suggestedRemindAt",
+          "title"
+        ]
+      },
+      "TravelOptionResponse": {
+        "type": "object",
+        "description": "Дорога одним способом",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "WALK",
+              "BUS",
+              "CAR",
+              "NONE"
+            ]
+          },
+          "minutes": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Минут в пути"
+          },
+          "available": {
+            "type": "boolean",
+            "description": "false — транспорт в это время не ходит"
+          },
+          "note": {
+            "type": "string",
+            "description": "Пояснение: номера маршрутов или «первый рейс в 05:57»",
+            "example": "№ 12, 15"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "ROUTE",
+              "ESTIMATE"
+            ]
+          }
+        },
+        "required": [
+          "available",
+          "minutes",
+          "mode",
+          "source"
         ]
       },
       "AttendedOccurrenceResponse": {

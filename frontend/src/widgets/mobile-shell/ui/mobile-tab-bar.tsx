@@ -1,13 +1,14 @@
 import { Link } from "react-router";
 import { Icon } from "@/shared/components/ui/icon";
 import { cn } from "cn";
+import { useUnreadNotifications } from "@/entity/notification/model/use-unread-notifications";
 
 export type MobileTab = "home" | "feed" | "activity" | "profile";
 
 const TABS = [
   { key: "home", to: "/", label: "Главная", icon: "icon-home" },
   { key: "feed", to: "/feed", label: "Лента", icon: "icon-grid" },
-  { key: "activity", to: "/activity", label: "Активность", icon: "icon-bell", count: 3 },
+  { key: "activity", to: "/activity", label: "Активность", icon: "icon-bell" },
   { key: "profile", to: "/profile", label: "Профиль", icon: "icon-user" },
 ] as const;
 
@@ -17,6 +18,7 @@ const TABS = [
  */
 export function MobileTabBar({ current }: { current: MobileTab }) {
   const dir = `m-${current}`;
+  const unread = useUnreadNotifications().total;
   const tab = (t: (typeof TABS)[number]) => {
     const active = t.key === current;
     return (
@@ -33,9 +35,10 @@ export function MobileTabBar({ current }: { current: MobileTab }) {
           )}
         >
           <Icon name={`${dir}/${t.icon}`} className="size-5" />
-          {"count" in t ? (
-            <span className="absolute top-[-4px] left-8 box-border flex size-[18px] items-center justify-center rounded-[9px] border-[1.5px] border-ink bg-accent text-[10px] leading-[normal] font-extrabold text-white">
-              {t.count}
+          {t.key === "activity" && unread > 0 ? (
+            <span aria-label={`${unread} непрочитанных`}
+              className="absolute top-[-4px] left-8 box-border flex h-[18px] min-w-[18px] items-center justify-center rounded-[9px] border-[1.5px] border-ink bg-accent px-[3px] text-[10px] leading-[normal] font-extrabold text-white">
+              {unread > 99 ? "99+" : unread}
             </span>
           ) : null}
         </span>
