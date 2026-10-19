@@ -9,42 +9,21 @@ import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 import { RoughBorder } from "@/shared/components/ui/rough-border";
 import { Participants } from "@/shared/components/ui/participants";
 import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar";
+import { Sparkles } from "lucide-react";
+import { toCardData } from "@/entity/event/lib/event-format";
+import {
+  FOR_YOU_FEED_URL,
+  formatDistance,
+  useRecommendationPreview,
+} from "@/entity/event/model/use-recommendation-preview";
+import type { RecommendedEventResponse } from "@/shared/api/generated/core/appAPI.schemas";
 
-const EVENTS = [
-  {
-    sport: "Бег",
-    time: "Сб 9:00",
-    distance: "1,8 км от тебя",
-    title: "Пробежка вокруг Татышева",
-    place: "Остров Татышев · средний темп",
-    people: ["ДК", "ЛП", "МС"],
-    going: 12,
-    total: 20,
-    cover: { photo: "/home/box.png" },
-  },
-  {
-    sport: "Футбол",
-    time: "Сегодня 19:30",
-    distance: "3,2 км от тебя",
-    title: "Вечерний футбол 6×6",
-    place: "Стадион «Локомотив» · любители",
-    people: ["ИВ", "АР", "ОТ"],
-    going: 11,
-    total: 14,
-    cover: { bg: "bg-orange", art: "/home/memphis3.svg" },
-  },
-  {
-    sport: "Йога",
-    time: "Вс 10:00",
-    distance: "2,4 км от тебя",
-    title: "Йога на набережной",
-    place: "Набережная Енисея · любой уровень",
-    people: ["ЛП", "КЕ"],
-    going: 6,
-    total: 15,
-    cover: { bg: "bg-sky", art: "/home/memphis4.svg" },
-  },
-];
+/** Обложки карточек подборки, если у события нет своего фото. */
+const COVERS = [
+  { photo: "/home/box.png" },
+  { bg: "bg-orange", art: "/home/memphis3.svg" },
+  { bg: "bg-sky", art: "/home/memphis4.svg" },
+] as const;
 
 const FRIENDS = [
   {
@@ -93,10 +72,12 @@ function SectionHeading({
   title,
   hint,
   linkLabel,
+  to = "/",
 }: {
   title: string;
   hint?: string;
   linkLabel: string;
+  to?: string;
 }) {
   return (
     <div className="flex h-8 items-center justify-between">
@@ -111,7 +92,7 @@ function SectionHeading({
         ) : null}
       </div>
       <Link
-        to="/"
+        to={to}
         className="flex items-center gap-[6px] text-sm leading-[19px] font-extrabold text-foreground"
       >
         {linkLabel}
@@ -226,11 +207,16 @@ function Tip() {
   );
 }
 
-function EventCard({ event }: { event: (typeof EVENTS)[number] }) {
-  const { cover } = event;
+/** Карточка рекомендации: та же вёрстка, что в макете, данные — из recommendations_events. */
+function EventCard({ item, index }: { item: RecommendedEventResponse; index: number }) {
+  const { event } = item;
+  const cover = event.coverUrl ? { photo: event.coverUrl } : COVERS[index % COVERS.length];
+  const card = toCardData(event, { bg: "bg-sky" });
+  const where = event.format === "ONLINE" ? "Онлайн" : formatDistance(item.distanceKm) ?? card.distance;
   return (
-    <Card className="h-[323.5px] overflow-hidden p-0">
-      <div className="relative h-[180px] w-[388px] shrink-0 overflow-hidden border-b-2 border-ink">
+    <Card className="relative h-[323.5px] overflow-hidden p-0">
+      <Link to={`/events/${event.id}`} aria-label={event.title} className="absolute inset-0 z-10" />
+      <div className="relative h-[180px] w-full shrink-0 overflow-hidden border-b-2 border-ink">
         <div className={`absolute inset-x-0 top-0 h-[178px] ${"bg" in cover ? cover.bg : ""}`}>
           {"photo" in cover ? (
             <img src={cover.photo} alt="" className="size-full max-w-none object-cover" />
@@ -245,31 +231,54 @@ function EventCard({ event }: { event: (typeof EVENTS)[number] }) {
         <div className="absolute inset-x-0 top-0 h-[178px] bg-[linear-gradient(180deg,rgba(22,24,31,0.08)_0%,rgba(22,24,31,0)_30%,rgba(22,24,31,0)_55%,rgba(22,24,31,0.62)_100%)]" />
         <div className="absolute inset-x-0 top-0 h-[178px] bg-[rgba(246,244,255,0.1)]" />
         <div className="absolute top-[14px] right-[14px] left-[14px] flex justify-between">
-          <Badge variant="outline">{event.sport}</Badge>
+          <Badge variant="outline">{card.sport}</Badge>
           <Badge variant="secondary">
             <Icon name="icon-clock" className="size-[14px]" />
-            {event.time}
+            {card.time}
           </Badge>
         </div>
-        <div className="absolute top-[147px] left-4 flex items-center gap-[6px]">
-          <Icon name="icon-pin1" className="size-4" />
-          <span className="text-[13px] leading-[18px] font-semibold whitespace-nowrap text-white">
-            {event.distance}
-          </span>
+        <div className="absolute top-[147px] right-4 left-4 flex items-center gap-[6px]">
+          <Icon name="icon-pin1" className="size-4 shrink-0" />
+          <span className="truncate text-[13px] leading-[18px] font-semibold text-white">{where}</span>
         </div>
       </div>
-      <div className="flex w-[388px] shrink-0 flex-col gap-3 px-[18px] pt-4 pb-[18px]">
+      <div className="flex w-full shrink-0 flex-col gap-3 px-[18px] pt-4 pb-[18px]">
         <div className="h-[46.5px]">
-          <h3 className="-mt-px font-display text-[18px] leading-[22px] font-bold whitespace-nowrap text-foreground">
-            {event.title}
+          <h3 className="-mt-px truncate font-display text-[18px] leading-[22px] font-bold text-foreground">
+            {card.title}
           </h3>
-          <p className="mt-[6px] text-sm leading-[19px] font-medium whitespace-nowrap text-muted-foreground">
-            {event.place}
+          <p className="mt-[6px] flex items-center gap-1 truncate text-sm leading-[19px] font-semibold text-primary">
+            <Sparkles className="size-4 shrink-0" aria-hidden />
+            <span className="truncate">{item.reasons[0]?.text ?? card.place}</span>
           </p>
         </div>
-        <Participants people={event.people} going={event.going} total={event.total} />
+        <Participants people={card.people} going={card.going} total={card.total} tone={card.tone} />
       </div>
     </Card>
+  );
+}
+
+function Recommendations() {
+  const { items, isPending, isError } = useRecommendationPreview(3);
+  if (isPending) {
+    return <p className="text-lg font-semibold text-muted-foreground">Подбираем встречи…</p>;
+  }
+  if (isError) {
+    return <p role="alert" className="text-lg font-semibold text-destructive">Не удалось загрузить подборку.</p>;
+  }
+  if (items.length === 0) {
+    return (
+      <p className="text-lg font-semibold text-muted-foreground">
+        Пока нечего предложить — отметь любимые виды спорта в профиле, и Бублик подберёт встречи.
+      </p>
+    );
+  }
+  return (
+    <div className="grid grid-cols-3 gap-5">
+      {items.map((item, i) => (
+        <EventCard key={item.event.id} item={item} index={i} />
+      ))}
+    </div>
   );
 }
 
@@ -360,12 +369,9 @@ export default function HomePage() {
         <div className="mt-2">
           <Tip />
         </div>
-        <SectionHeading title="Рядом с тобой" hint="3 события" linkLabel="Вся лента" />
-        <div className="grid grid-cols-3 gap-5">
-          {EVENTS.map((e) => (
-            <EventCard key={e.title} event={e} />
-          ))}
-        </div>
+        <SectionHeading title="Подобрали для тебя" hint="по интересам, месту и времени" linkLabel="Все рекомендации"
+          to={FOR_YOU_FEED_URL} />
+        <Recommendations />
         <SectionHeading title="Друзья тренируются" linkLabel="Все" />
         <div className="grid grid-cols-2 gap-5">
           {FRIENDS.map((f) => (

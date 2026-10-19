@@ -229,6 +229,24 @@ export interface HelpersPreferences {
   cheer: boolean;
 }
 
+/**
+ * Домашняя точка для подбора «рядом с домом»
+ */
+export interface HomePoint {
+  /**
+     * Широта
+     * @minimum -90
+     * @maximum 90
+     */
+  lat: number;
+  /**
+     * Долгота
+     * @minimum -180
+     * @maximum 180
+     */
+  lon: number;
+}
+
 export type SaveUserPreferencesRequestLevel = typeof SaveUserPreferencesRequestLevel[keyof typeof SaveUserPreferencesRequestLevel];
 
 
@@ -275,6 +293,8 @@ export interface SaveUserPreferencesRequest {
      */
   radiusKm: number;
   helpers: HelpersPreferences;
+  /** Домашняя точка для подбора «рядом с домом»; не передана — очищается */
+  home?: HomePoint;
 }
 
 export type UserPreferencesResponseLevel = typeof UserPreferencesResponseLevel[keyof typeof UserPreferencesResponseLevel];
@@ -318,6 +338,8 @@ export interface UserPreferencesResponse {
      */
   radiusKm: number;
   helpers: HelpersPreferences;
+  /** Домашняя точка; null — не задана */
+  home?: HomePoint;
 }
 
 /**
@@ -1326,6 +1348,27 @@ export interface RegistrationResponse {
 }
 
 /**
+ * NOT_MY_SPORT — ещё и реже показывать этот вид спорта
+ */
+export type DismissRecommendationRequestReason = typeof DismissRecommendationRequestReason[keyof typeof DismissRecommendationRequestReason];
+
+
+export const DismissRecommendationRequestReason = {
+  NOT_INTERESTED: 'NOT_INTERESTED',
+  NOT_MY_SPORT: 'NOT_MY_SPORT',
+  TOO_FAR: 'TOO_FAR',
+  BAD_TIME: 'BAD_TIME',
+} as const;
+
+/**
+ * Скрыть мероприятие из подборки
+ */
+export interface DismissRecommendationRequest {
+  /** NOT_MY_SPORT — ещё и реже показывать этот вид спорта */
+  reason: DismissRecommendationRequestReason;
+}
+
+/**
  * Базовая, магазин или эксклюзив
  */
 export type ShopItemResponseKind = typeof ShopItemResponseKind[keyof typeof ShopItemResponseKind];
@@ -2024,6 +2067,143 @@ export interface PageResponseMyRegistrationResponse {
   size?: number;
   totalElements?: number;
   totalPages?: number;
+}
+
+export type RecommendationReasonCode = typeof RecommendationReasonCode[keyof typeof RecommendationReasonCode];
+
+
+export const RecommendationReasonCode = {
+  YOUR_SPORT: 'YOUR_SPORT',
+  RELATED_SPORT: 'RELATED_SPORT',
+  LEVEL_FIT: 'LEVEL_FIT',
+  BEGINNER_FRIENDLY: 'BEGINNER_FRIENDLY',
+  NEARBY: 'NEARBY',
+  ONLINE: 'ONLINE',
+  GOOD_TIME: 'GOOD_TIME',
+  FRIENDS_GOING: 'FRIENDS_GOING',
+  KNOWN_ORGANIZER: 'KNOWN_ORGANIZER',
+  TRUSTED_ORGANIZER: 'TRUSTED_ORGANIZER',
+  NEEDS_PEOPLE: 'NEEDS_PEOPLE',
+  POPULAR: 'POPULAR',
+  SOON: 'SOON',
+  NEW_SPORT: 'NEW_SPORT',
+  AWARDED: 'AWARDED',
+  SAME_CITY: 'SAME_CITY',
+  ACTIVE: 'ACTIVE',
+} as const;
+
+/**
+ * Причина рекомендации
+ */
+export interface RecommendationReason {
+  code: RecommendationReasonCode;
+  /** Текст для показа как есть */
+  text: string;
+}
+
+/**
+ * Рекомендованная организация
+ */
+export interface RecommendedOrganizationResponse {
+  organization: OrganizationShortResponse;
+  /** Город */
+  city?: string;
+  /** Описание */
+  description?: string;
+  /** Логотип: /api/files/{id}; null — без логотипа */
+  logoUrl?: string;
+  /** Виды спорта клуба */
+  sports: SportResponse[];
+  /** Встреч в ближайшие 30 дней */
+  upcomingEvents: number;
+  /** Проведено встреч */
+  hostedMeetings: number;
+  /** До ближайшей очной встречи клуба, км; null — неизвестно */
+  distanceKm?: number;
+  /** Оценка 0–1 */
+  score: number;
+  /** 1–3 главные причины */
+  reasons: RecommendationReason[];
+}
+
+/**
+ * Мероприятие в персональной подборке
+ */
+export interface RecommendedEventResponse {
+  /** Карточка как в ленте */
+  event: EventSummaryResponse;
+  /** Оценка 0–1, чем больше, тем лучше подходит */
+  score: number;
+  /** Расстояние до места в км; null — онлайн или точка отсчёта неизвестна */
+  distanceKm?: number;
+  /** 1–3 главные причины, самая весомая первой */
+  reasons: RecommendationReason[];
+  /** Слот «Попробуйте новое»: вид спорта вне моих интересов */
+  discovery: boolean;
+}
+
+export interface PageResponseRecommendedEventResponse {
+  items?: RecommendedEventResponse[];
+  page?: number;
+  size?: number;
+  totalElements?: number;
+  totalPages?: number;
+}
+
+export type RecommendationFeatureCode = typeof RecommendationFeatureCode[keyof typeof RecommendationFeatureCode];
+
+
+export const RecommendationFeatureCode = {
+  SPORT: 'SPORT',
+  LEVEL: 'LEVEL',
+  DISTANCE: 'DISTANCE',
+  TIME: 'TIME',
+  SOCIAL: 'SOCIAL',
+  ORGANIZER: 'ORGANIZER',
+  TRUST: 'TRUST',
+  POPULARITY: 'POPULARITY',
+  QUORUM: 'QUORUM',
+  URGENCY: 'URGENCY',
+  ACTIVITY: 'ACTIVITY',
+  BEGINNER: 'BEGINNER',
+} as const;
+
+/**
+ * Признак оценки: значение, вес и вклад
+ */
+export interface RecommendationFeature {
+  code: RecommendationFeatureCode;
+  /** Значение признака 0–1 */
+  value: number;
+  /** Вес после перераспределения; 0 — признак выключен (нет данных) */
+  weight: number;
+  /** Вклад в оценку: value × weight */
+  contribution: number;
+}
+
+/**
+ * Разбор оценки рекомендации по признакам
+ */
+export interface RecommendationExplainResponse {
+  eventId: string;
+  /** Итоговая оценка 0–1 */
+  score: number;
+  /** Взвешенная сумма признаков до множителей */
+  baseScore: number;
+  /** Множитель за сильно неподходящий уровень (1 — нет штрафа) */
+  levelGate: number;
+  /** Множитель за скрытия этого вида спорта (1 — нет штрафа) */
+  dismissPenalty: number;
+  /** Попадёт ли в подборку */
+  eligible: boolean;
+  /** Почему не попадёт; null — попадёт */
+  excludedReason?: string;
+  /** Расстояние в км; null — онлайн или точка отсчёта неизвестна */
+  distanceKm?: number;
+  /** Все признаки */
+  features: RecommendationFeature[];
+  /** Главные причины */
+  reasons: RecommendationReason[];
 }
 
 export interface PingResponse {
@@ -2822,6 +3002,115 @@ export const RegistrationsMineWhen = {
   UPCOMING: 'UPCOMING',
   PAST: 'PAST',
 } as const;
+
+export type RecommendationsOrganizationsParams = {
+/**
+ * Текущее место: широта (вместе с lon)
+ * @minimum -90
+ * @maximum 90
+ */
+lat?: number;
+/**
+ * Текущее место: долгота (вместе с lat)
+ * @minimum -180
+ * @maximum 180
+ */
+lon?: number;
+/**
+ * Сколько показать, 1–20
+ * @minimum 1
+ * @maximum 20
+ */
+limit?: number;
+};
+
+export type RecommendationsEventsParams = {
+/**
+ * Текущее место: широта (вместе с lon); иначе — домашняя точка из предпочтений
+ * @minimum -90
+ * @maximum 90
+ */
+lat?: number;
+/**
+ * Текущее место: долгота (вместе с lat)
+ * @minimum -180
+ * @maximum 180
+ */
+lon?: number;
+/**
+ * Радиус в км, 1–100; по умолчанию из предпочтений
+ * @minimum 1
+ * @maximum 100
+ */
+radiusKm?: number;
+/**
+ * Только этот вид спорта
+ */
+sportId?: string;
+/**
+ * Начало не раньше; по умолчанию — через 30 минут от текущего момента
+ */
+from?: string;
+/**
+ * Начало не позже; по умолчанию — 30 дней вперёд
+ */
+to?: string;
+/**
+ * Страница с нуля
+ * @minimum 0
+ */
+page?: number;
+/**
+ * Размер страницы 1–50; по умолчанию 20
+ * @minimum 1
+ * @maximum 50
+ */
+size?: number;
+};
+
+export type RecommendationsExplainParams = {
+/**
+ * Текущее место: широта (вместе с lon); иначе — домашняя точка из предпочтений
+ * @minimum -90
+ * @maximum 90
+ */
+lat?: number;
+/**
+ * Текущее место: долгота (вместе с lat)
+ * @minimum -180
+ * @maximum 180
+ */
+lon?: number;
+/**
+ * Радиус в км, 1–100; по умолчанию из предпочтений
+ * @minimum 1
+ * @maximum 100
+ */
+radiusKm?: number;
+/**
+ * Только этот вид спорта
+ */
+sportId?: string;
+/**
+ * Начало не раньше; по умолчанию — через 30 минут от текущего момента
+ */
+from?: string;
+/**
+ * Начало не позже; по умолчанию — 30 дней вперёд
+ */
+to?: string;
+/**
+ * Страница с нуля
+ * @minimum 0
+ */
+page?: number;
+/**
+ * Размер страницы 1–50; по умолчанию 20
+ * @minimum 1
+ * @maximum 50
+ */
+size?: number;
+};
 
 export type NotificationsListParams = {
 cursor?: string;

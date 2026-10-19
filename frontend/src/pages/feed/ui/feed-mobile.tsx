@@ -10,10 +10,11 @@ import { cn } from "cn";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
-import { useEventsList } from "@/shared/api/generated/core/events/events";
 import type { EventSummaryResponse } from "@/shared/api/generated/core/appAPI.schemas";
 import { formatWhen } from "@/entity/event/lib/event-format";
-import { FEED_CHIPS, useFeedFilters } from "@/entity/event/model/use-feed-filters";
+import { FEED_CHIPS, FOR_YOU_CHIP, useFeedFilters } from "@/entity/event/model/use-feed-filters";
+import { useFeedEvents } from "@/entity/event/model/use-feed-events";
+import { Sparkles } from "lucide-react";
 import { EventsMap } from "@/widgets/events-map/ui/events-map";
 import { FeedExtraFilters } from "@/widgets/feed-filters/ui/feed-extra-filters";
 
@@ -209,8 +210,8 @@ export function FeedMobile() {
   const [view, setView] = useState<"list" | "map">("list");
   const [more, setMore] = useState(false);
   const params = searchText ? { ...filters.params, searchText } : filters.params;
-  const list = useEventsList(params, { query: { enabled: filters.ready } });
-  const events = list.data?.status === 200 ? list.data.data : [];
+  const list = useFeedEvents(params, filters);
+  const events = list.events ?? [];
   // Узор ленты: крупная карточка, затем пара мелких — и так по кругу.
   const groups: EventSummaryResponse[][] = [];
   for (let i = 0; i < events.length; i += 3) groups.push(events.slice(i, i + 3));
@@ -255,12 +256,13 @@ export function FeedMobile() {
         {FEED_CHIPS.map((c) => (
           <Button
             key={c}
-            variant={c === filters.chip ? "ink" : "soft"}
+            variant={c === filters.chip ? (c === FOR_YOU_CHIP ? "default" : "ink") : c === FOR_YOU_CHIP ? "accent" : "soft"}
             aria-pressed={c === filters.chip}
             onClick={() => filters.setChip(c)}
             rough={false}
             className="h-11 shrink-0 px-[18px] text-sm shadow-none"
           >
+            {c === FOR_YOU_CHIP && <Sparkles className="size-4" aria-hidden />}
             {c}
           </Button>
         ))}
