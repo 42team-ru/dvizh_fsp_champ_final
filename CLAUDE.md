@@ -282,6 +282,7 @@ cd backend && ./gradlew postgresTest  # смоук миграций на нас�
 
 **Техника:**
 - Основной вид — «почти E2E»: `@SpringBootTest` + `MockMvc`, весь контекст, настоящая цепочка Security, ничего своего не мокаем.
+- **Тесты пишутся через тестовый API** `e2e/support` (`TestApi`, `Actor`, `EventForm`, `OrganizationForm`, `ApiAssertions`): участники и действия (`api.newUser("petya")`, `petya.joinEvent(id)`, `author.approve(id)`), ответы — настоящие DTO с проверками AssertJ, отказ — `assertThatApi(() -> ...).fails(FORBIDDEN, "текст")`. Нужного действия нет — добавить метод в `Actor`, а не писать `mvc.perform` и `jsonPath` в тесте. Сырой запрос (`actor.raw(...)`) — только для формата, который не выражается DTO (флаги cookie, GeoJSON).
 - База в тестах — H2 (`@ActiveProfiles("h2")`, `src/test/resources/application-h2.yml`): стартует мгновенно.
 - Testcontainers (настоящий Postgres) — **один** смоук-тест на миграции Flyway и соответствие схемы сущностям (`PostgresMigrationsTest`, тег `postgres`). Он **не входит** в обычный `./gradlew test` (быстрый, без Docker); запускается `./gradlew postgresTest`, а `./gradlew check` (и CI) гоняет оба. Менялись миграции или сущности — запустить `postgresTest`. Новые Testcontainers-тесты не добавлять без причины.
 - Ориентир: весь `./gradlew test` быстрее ~30 секунд. Если вырос, сначала искать лишние тесты, а не оптимизировать.

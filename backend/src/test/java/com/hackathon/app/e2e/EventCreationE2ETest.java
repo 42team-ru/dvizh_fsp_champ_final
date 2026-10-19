@@ -1,10 +1,9 @@
 package com.hackathon.app.e2e;
 
-import static com.hackathon.app.e2e.support.E2eSupport.uniqueName;
+import static com.hackathon.app.e2e.support.ApiAssertions.assertThatApi;
+import static com.hackathon.app.e2e.support.TestApi.uniqueName;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.http.HttpStatus.*;
 
 import java.time.Instant;
 import java.util.Locale;
@@ -12,8 +11,13 @@ import java.util.Map;
 import java.util.UUID;
 
 import com.hackathon.app.domain.entity.Sport;
-import com.hackathon.app.domain.enums.AccountType;
-import com.hackathon.app.e2e.support.E2eSupport;
+import com.hackathon.app.domain.enums.EventStatus;
+import com.hackathon.app.domain.enums.OrganizationStatus;
+import com.hackathon.app.domain.enums.RegistrationStatus;
+import com.hackathon.app.e2e.support.Actor;
+import com.hackathon.app.e2e.support.EventForm;
+import com.hackathon.app.e2e.support.OrganizationForm;
+import com.hackathon.app.e2e.support.TestApi;
 import com.hackathon.app.repository.AppUserRepository;
 import com.hackathon.app.repository.SportRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,11 +40,11 @@ class EventCreationE2ETest {
 	@Autowired AppUserRepository users;
 	@Autowired PasswordEncoder passwords;
 	@Autowired SportRepository sports;
-	private E2eSupport support;
+	private TestApi api;
 
 	@BeforeEach
 	void setUp() {
-		support = new E2eSupport(mvc, json, users, passwords);
+		api = new TestApi(mvc, json, users, passwords);
 	}
 
 	/**
@@ -54,56 +58,38 @@ class EventCreationE2ETest {
 	 * ПОЧЕМУ ВАЖНО: сценарий приёмки должен работать без демо-сида; дубли справочника дробят результаты поиска.
 	 */
 	@Test
-	void userPublishesFindsAndOpensEventsWithoutDuplicatingCustomSport() throws Exception {
-		var author = support.registerAndLogin(uniqueName("author"), AccountType.USER);
-		var reader = support.registerAndLogin(uniqueName("reader"), AccountType.USER);
+	void userPublishesFindsAndOpensEventsWithoutDuplicatingCustomSport() {
+		// 1. Справочник готовим независимо от демо-данных.
+		var author = api.newUser("author");
+		var reader = api.newUser("reader");
 		var catalogue = new Sport();
 		catalogue.setName(uniqueName("Шахматы "));
 		catalogue.setNormalizedName(catalogue.getName().toLowerCase(Locale.ROOT));
 		catalogue.setSlug(uniqueName("chess"));
 		catalogue.setCustom(false);
 		sports.saveAndFlush(catalogue);
-		mvc.perform(get("/api/sports").cookie(author).param("query", catalogue.getName()))
-				.andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1))
-				.andExpect(jsonPath("$[0].id").value(catalogue.getId().toString()))
-				.andExpect(jsonPath("$[0].custom").value(false));
+		assertThat(author.sports(catalogue.getName())).singleElement().satisfies(sport -> {
+			assertThat(sport.id()).isEqualTo(catalogue.getId());
+			assertThat(sport.custom()).isFalse();
+		});
 
-		var knownForm = support.eventForm();
-		knownForm.remove("sportName");
-		knownForm.put("sportId", catalogue.getId().toString());
-		var knownId = support.createdEventId(author, knownForm);
+		// 2. Публикуем со справочным и новым видом, проверяем поиск и карточку.
+		var knownForm = EventForm.free().sportId(catalogue.getId());
+		var known = author.createEvent(knownForm);
 		var customName = uniqueName("Сапсёрфинг на озёрах ");
-		var customForm = support.eventForm();
-		customForm.put("sportName", customName);
-		var custom = support.createEvent(author, customForm).andExpect(status().isCreated())
-				.andExpect(jsonPath("$.sport.custom").value(true)).andReturn();
-		var body = json.readTree(custom.getResponse().getContentAsString());
-		var customId = body.get("id").asText();
-		var sportId = body.get("sport").get("id").asText();
-		for (var entry : Map.of(knownId, catalogue.getId().toString(), customId, sportId).entrySet()) {
-			var form = entry.getKey().equals(knownId) ? knownForm : customForm;
-			mvc.perform(get("/api/events").cookie(reader).param("searchText", form.get("title").toString())
-					.param("sportId", entry.getValue()))
-					.andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1))
-					.andExpect(jsonPath("$[0].id").value(entry.getKey()));
-			mvc.perform(get("/api/events/{id}", entry.getKey()).cookie(reader))
-					.andExpect(status().isOk()).andExpect(jsonPath("$.title").value(form.get("title")))
-					.andExpect(jsonPath("$.sport.id").value(entry.getValue()))
-					.andExpect(jsonPath("$.status").value("PUBLISHED"))
-					.andExpect(jsonPath("$.viewer.canRegister").value(true));
-		}
-		mvc.perform(get("/api/events").cookie(reader).param("searchText", customForm.get("title").toString())
-				.param("sportId", catalogue.getId().toString()))
-				.andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(0));
+		var customForm = EventForm.free().sport(customName);
+		var custom = author.createEvent(customForm);
+		assertThat(custom.sport().custom()).isTrue();
+		assertFoundAndPublished(reader, known.id(), knownForm.get("title").toString(), catalogue.getId());
+		assertFoundAndPublished(reader, custom.id(), customForm.get("title").toString(), custom.sport().id());
+		assertThat(reader.feed(Map.of("searchText", customForm.get("title").toString(), "sportId", catalogue.getId().toString()))).isEmpty();
 
-		customForm.put("sportName", "  " + customName.toUpperCase(Locale.ROOT).replace('Ё', 'Е').replace(" ", "   ") + "  ");
-		support.createEvent(author, customForm).andExpect(status().isCreated())
-				.andExpect(jsonPath("$.sport.id").value(sportId));
-		mvc.perform(get("/api/sports").cookie(reader).param("query", customName))
-				.andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1))
-				.andExpect(jsonPath("$[0].id").value(sportId));
+		// 3. Регистр, пробелы и ё/е не создают новый вид спорта.
+		customForm.sport("  " + customName.toUpperCase(Locale.ROOT).replace('Ё', 'Е').replace(" ", "   ") + "  ");
+		assertThat(author.createEvent(customForm).sport().id()).isEqualTo(custom.sport().id());
+		assertThat(reader.sports(customName)).extracting(s -> s.id()).containsExactly(custom.sport().id());
 		assertThat(sports.findByNormalizedNameContainingOrderByNameAsc(customName.toLowerCase(Locale.ROOT).replace('ё', 'е')))
-				.extracting(Sport::getId).containsExactly(UUID.fromString(sportId));
+				.extracting(Sport::getId).containsExactly(custom.sport().id());
 	}
 
 	/**
@@ -117,30 +103,26 @@ class EventCreationE2ETest {
 	 * ПОЧЕМУ ВАЖНО: API обязан проверять допуск клуба и форму независимо от доступности кнопки на фронте.
 	 */
 	@Test
-	void forbiddenRolesAndInvalidFormsCannotPublish() throws Exception {
-		var admin = support.createAdminAndLogin();
-		var org = support.registerAndLogin(uniqueName("org"), AccountType.ORG);
-		var user = support.registerAndLogin(uniqueName("user"), AccountType.USER);
-		support.createEvent(admin).andExpect(status().isForbidden())
-				.andExpect(jsonPath("$.detail").value("Администратор не создаёт мероприятия"));
+	void forbiddenRolesAndInvalidFormsCannotPublish() {
+		// 1. Роль и допуск проверяются при каждой публикации.
+		var admin = api.newAdmin();
+		var org = api.newOrganization("org");
+		var user = api.newUser("user");
+		assertThatApi(() -> admin.createEvent(EventForm.free())).fails(FORBIDDEN, "Администратор не создаёт мероприятия");
 		var blocked = "Публиковать мероприятия от организации можно только после одобрения заявки";
-		support.createEvent(org).andExpect(status().isForbidden()).andExpect(jsonPath("$.detail").value(blocked));
-		mvc.perform(put("/api/organizations/me").cookie(org).contentType(APPLICATION_JSON)
-				.content(json.writeValueAsString(Map.of("name", uniqueName("Клуб "), "description", "Совместные тренировки",
-						"contacts", Map.of("EMAIL", "club@example.com")))))
-				.andExpect(status().isOk()).andExpect(jsonPath("$.status").value("PENDING"));
-		support.createEvent(org).andExpect(status().isForbidden()).andExpect(jsonPath("$.detail").value(blocked));
-		var form = support.eventForm();
-		form.put("endAt", Instant.parse(form.get("startAt").toString()).minusSeconds(1).toString());
-		support.createEvent(user, form).andExpect(status().isBadRequest())
-				.andExpect(jsonPath("$.detail").value("Окончание должно быть позже начала"));
-		form.remove("endAt");
-		form.put("address", "   ");
-		support.createEvent(user, form).andExpect(status().isBadRequest())
-				.andExpect(jsonPath("$.detail").value("Для очного мероприятия нужен адрес"));
-		support.createEvent(user, Map.of()).andExpect(status().isBadRequest());
-		mvc.perform(get("/api/events/mine").cookie(user)).andExpect(status().isOk())
-				.andExpect(jsonPath("$.length()").value(0));
+		assertThatApi(() -> org.createEvent(EventForm.free())).fails(FORBIDDEN, blocked);
+		assertThat(org.submitOrganization(OrganizationForm.valid().noContacts().contact("EMAIL", "club@example.com")).status())
+				.isEqualTo(OrganizationStatus.PENDING);
+		assertThatApi(() -> org.createEvent(EventForm.free())).fails(FORBIDDEN, blocked);
+
+		// 2. Невалидная форма не создаёт события.
+		var form = EventForm.free();
+		form.endsAt(Instant.parse(form.get("startAt").toString()).minusSeconds(1));
+		assertThatApi(() -> user.createEvent(form)).fails(BAD_REQUEST, "Окончание должно быть позже начала");
+		form.without("endAt").with("address", "   ");
+		assertThatApi(() -> user.createEvent(form)).fails(BAD_REQUEST, "Для очного мероприятия нужен адрес");
+		assertThatApi(() -> user.createEvent(EventForm.empty())).fails(BAD_REQUEST);
+		assertThat(user.myEvents()).isEmpty();
 	}
 
 	/**
@@ -153,25 +135,37 @@ class EventCreationE2ETest {
 	 * ПОЧЕМУ ВАЖНО: чужая правка и потеря уже занятых мест нарушают договорённости участников с организатором.
 	 */
 	@Test
-	void updateRequiresOrganizerAndCannotDisplaceConfirmedParticipants() throws Exception {
-		var author = support.registerAndLogin(uniqueName("author"), AccountType.USER);
-		var first = support.registerAndLogin(uniqueName("first"), AccountType.USER);
-		var second = support.registerAndLogin(uniqueName("second"), AccountType.USER);
-		var form = support.eventForm();
-		form.put("capacity", 3);
-		var id = support.createdEventId(author, form);
-		support.registerForEvent(first, id).andExpect(status().isCreated()).andExpect(jsonPath("$.status").value("CONFIRMED"));
-		support.registerForEvent(second, id).andExpect(status().isCreated()).andExpect(jsonPath("$.status").value("CONFIRMED"));
-		mvc.perform(put("/api/events/{id}", id).cookie(first).contentType(APPLICATION_JSON).content(json.writeValueAsString(form)))
-				.andExpect(status().isForbidden()).andExpect(jsonPath("$.detail").value("Редактировать мероприятие может только организатор"));
-		form.put("capacity", 1);
-		mvc.perform(put("/api/events/{id}", id).cookie(author).contentType(APPLICATION_JSON).content(json.writeValueAsString(form)))
-				.andExpect(status().isConflict()).andExpect(jsonPath("$.detail").value("Уже записано 2, лимит мест не может быть меньше"));
-		mvc.perform(get("/api/events/{id}", id).cookie(author)).andExpect(status().isOk())
-				.andExpect(jsonPath("$.capacity").value(3)).andExpect(jsonPath("$.participantsCount").value(2));
-		form.put("capacity", 2);
-		mvc.perform(put("/api/events/{id}", id).cookie(author).contentType(APPLICATION_JSON).content(json.writeValueAsString(form)))
-				.andExpect(status().isOk()).andExpect(jsonPath("$.capacity").value(2))
-				.andExpect(jsonPath("$.participantsCount").value(2));
+	void updateRequiresOrganizerAndCannotDisplaceConfirmedParticipants() {
+		// 1. Два подтверждённых участника занимают места.
+		var author = api.newUser("author");
+		var first = api.newUser("first");
+		var second = api.newUser("second");
+		var form = EventForm.free().capacity(3);
+		var id = author.createEvent(form).id();
+		assertThat(first.joinEvent(id).status()).isEqualTo(RegistrationStatus.CONFIRMED);
+		assertThat(second.joinEvent(id).status()).isEqualTo(RegistrationStatus.CONFIRMED);
+
+		// 2. Чужая правка и вытеснение участников запрещены.
+		assertThatApi(() -> first.updateEvent(id, form)).fails(FORBIDDEN, "Редактировать мероприятие может только организатор");
+		form.capacity(1);
+		assertThatApi(() -> author.updateEvent(id, form)).fails(CONFLICT, "Уже записано 2, лимит мест не может быть меньше");
+		var unchanged = author.openEvent(id);
+		assertThat(unchanged.capacity()).isEqualTo(3);
+		assertThat(unchanged.participantsCount()).isEqualTo(2);
+
+		// 3. Лимит по числу занятых мест допустим.
+		var updated = author.updateEvent(id, form.capacity(2));
+		assertThat(updated.capacity()).isEqualTo(2);
+		assertThat(updated.participantsCount()).isEqualTo(2);
+	}
+
+	private void assertFoundAndPublished(Actor reader, UUID id, String title, UUID sportId) {
+		assertThat(reader.feed(Map.of("searchText", title, "sportId", sportId.toString())))
+				.extracting(e -> e.id()).containsExactly(id);
+		var card = reader.openEvent(id);
+		assertThat(card.title()).isEqualTo(title);
+		assertThat(card.sport().id()).isEqualTo(sportId);
+		assertThat(card.status()).isEqualTo(EventStatus.PUBLISHED);
+		assertThat(card.viewer().canRegister()).isTrue();
 	}
 }

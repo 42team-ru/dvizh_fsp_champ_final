@@ -2,6 +2,7 @@ package com.hackathon.app.domain.entity;
 
 import java.util.UUID;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -27,7 +28,8 @@ public class Comment extends AuditEntity {
 	private UUID eventId;
 	/** Автор (id пользователя). */
 	private UUID authorId;
-	/** Текст. */
+	/** Текст; длина как в миграции V6, иначе схема H2 в тестах обрежет его до 255. */
+	@Column(length = 2000)
 	private String text;
 	/** Скрыт модератором (модерация сообщений — доп. фича, пока всегда false). */
 	private boolean hidden;
