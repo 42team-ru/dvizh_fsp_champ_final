@@ -15,7 +15,7 @@ export function useInvalidateAdmin() {
   const client = useQueryClient();
   return () =>
     client.invalidateQueries({
-      predicate: (q) => typeof q.queryKey[0] === "string" && /^\/api\/(admin|events|comments|organizations)/.test(q.queryKey[0]),
+      predicate: (q) => typeof q.queryKey[0] === "string" && /^\/api\/(admin|events|comments|organizations|sports)/.test(q.queryKey[0]),
     });
 }
 

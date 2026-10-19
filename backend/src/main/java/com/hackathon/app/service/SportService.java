@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import com.hackathon.app.domain.dto.SportResponse;
 import com.hackathon.app.domain.entity.Sport;
+import com.hackathon.app.domain.enums.SportStatus;
 import com.hackathon.app.domain.exception.BadRequestException;
 import com.hackathon.app.domain.mapper.SportMapper;
 import com.hackathon.app.repository.SportRepository;
@@ -28,7 +29,7 @@ public class SportService {
         var found = normalized == null
                 ? sports.findAllByOrderByNameAsc()
                 : sports.findByNormalizedNameContainingOrderByNameAsc(normalized);
-        return found.stream().map(mapper::toResponse).toList();
+        return found.stream().filter(SportService::selectable).map(mapper::toResponse).toList();
     }
 
     @Transactional(readOnly = true)
@@ -48,15 +49,30 @@ public class SportService {
             throw new BadRequestException("Выберите вид спорта из списка или введите свой");
         }
         if (sportId != null) {
-            return sports.findById(sportId).orElseThrow(() -> new BadRequestException("Неизвестный вид спорта"));
+            return usable(sports.findById(sportId).orElseThrow(() -> new BadRequestException("Неизвестный вид спорта")));
         }
         var normalized = normalize(name);
         return sports.findByNormalizedName(normalized)
+                .map(this::usable)
                 .orElseGet(() -> sports.save(mapper.toCustom(name, normalized, freeSlug(normalized.replace(' ', '-')), userId)));
     }
 
+    /** Виды, которые показываются в справочнике: отключённые и слитые — нет. */
+    private static boolean selectable(Sport sport) {
+        return sport.getCatalogStatus() == SportStatus.ACTIVE || sport.getCatalogStatus() == SportStatus.PENDING;
+    }
+
+    /** Отключённый вид выбрать нельзя; слитый заменяется видом, с которым его объединили. */
+    private Sport usable(Sport sport) {
+        return switch (sport.getCatalogStatus()) {
+            case ACTIVE, PENDING -> sport;
+            case MERGED -> usable(sports.findById(sport.getMergedIntoId()).orElseThrow());
+            case HIDDEN -> throw new BadRequestException("Вид спорта «" + sport.getName() + "» отключён администратором");
+        };
+    }
+
     /** Свободный slug: при совпадении добавляется номер — «мини-футбол-2». */
-    private String freeSlug(String name) {
+    String freeSlug(String name) {
         // колонка slug — 100 символов: оставляем место под номер
         var base = name.length() > 95 ? name.substring(0, 95) : name;
         var slug = base;
@@ -67,13 +83,13 @@ public class SportService {
     }
 
     /** «  Пляжный   волейбол » → «Пляжный волейбол»; пустая → null. */
-    private static String collapseSpaces(String value) {
+    static String collapseSpaces(String value) {
         var trimmed = Strings.blankToNull(value);
         return trimmed == null ? null : trimmed.replaceAll("\\s+", " ");
     }
 
     /** Ключ без дублей: схлопнуть пробелы, нижний регистр, ё → е. */
-    private static String normalize(String value) {
+    static String normalize(String value) {
         var collapsed = collapseSpaces(value);
         return collapsed == null ? null : collapsed.toLowerCase(Locale.ROOT).replace('ё', 'е');
     }

@@ -58,6 +58,14 @@ export const EVENT_STATUS: Record<string, { label: string; tone: string }> = {
   DELETED: { label: "Удалено", tone: "bg-salmon" },
 };
 
+/** Состояние вида спорта в справочнике (админка «Виды спорта»). */
+export const SPORT_STATUS: Record<string, { label: string; tone: string }> = {
+  ACTIVE: { label: "Активен", tone: "bg-lime-soft" },
+  PENDING: { label: "На модерации", tone: "bg-peach" },
+  HIDDEN: { label: "Скрыт", tone: "bg-salmon" },
+  MERGED: { label: "Объединён", tone: "bg-salmon" },
+};
+
 /** Каналы связи организации: подпись и пример формата (формат проверяет сервер). */
 export const CONTACT_TYPES: { key: string; label: string; placeholder: string }[] = [
   { key: "PHONE", label: "Телефон", placeholder: "+7 900 123-45-67" },

@@ -67,6 +67,11 @@ public class SportImages {
 		return URL_PREFIX + UriUtils.encodePathSegment(file(slug), StandardCharsets.UTF_8) + ".webp";
 	}
 
+	/** Есть ли у вида своя иллюстрация в classpath, а не общая заглушка. */
+	public static boolean hasOwn(String slug) {
+		return !"default".equals(file(slug));
+	}
+
 	/** Точка фокуса картинки вида — голова персонажа. */
 	public static FocusPoint focus(String slug) {
 		return FOCUS.getOrDefault(file(slug), FOCUS.get("default"));

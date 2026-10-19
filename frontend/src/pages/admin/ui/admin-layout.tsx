@@ -31,6 +31,7 @@ function Rail() {
       badge: pending > 0 && <span className="rounded-pill bg-peach px-2 py-px text-[11px] font-extrabold text-foreground group-aria-[current=page]:bg-secondary">{pending}</span>,
     },
     { to: "/admin/events", label: "Мероприятия" },
+    { to: "/admin/sports", label: "Виды спорта" },
     { to: "/admin/users", label: "Пользователи" },
     {
       to: "/admin/awards",
