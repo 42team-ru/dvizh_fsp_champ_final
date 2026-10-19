@@ -20,4 +20,9 @@ public interface UserPetEquipmentRepository extends JpaRepository<UserPetEquipme
 	@Query("delete from UserPetEquipment e where e.userId = :userId")
 	void deleteByUserId(UUID userId);
 
+	/** Удалённую вещь снять со всех бобров. */
+	@Modifying(flushAutomatically = true, clearAutomatically = true)
+	@Query("delete from UserPetEquipment e where e.itemId = :itemId")
+	void deleteByItemId(UUID itemId);
+
 }

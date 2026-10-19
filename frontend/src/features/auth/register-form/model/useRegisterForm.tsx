@@ -6,7 +6,7 @@ import {
   type AuthRegisterMutationError,
 } from "@/shared/api/generated/core/auth/auth";
 import { useNavigate } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@/shared/lib/toast";
 import { useEmailAvailability } from "./use-availability-check";
 
 export function useRegisterForm() {

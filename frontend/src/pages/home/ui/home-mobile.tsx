@@ -12,16 +12,6 @@ import { cn } from "cn";
 
 const dir = "m-home";
 
-const WEEK = [
-  { day: "Пн", state: "done" },
-  { day: "Вт", state: "done" },
-  { day: "Ср", state: "empty" },
-  { day: "Чт", state: "done" },
-  { day: "Пт", state: "done" },
-  { day: "Сб", state: "empty" },
-  { day: "Вс", state: "today" },
-] as const;
-
 const EVENTS = [
   {
     sport: "БЕГ",
@@ -232,53 +222,6 @@ function Tip() {
   );
 }
 
-function Week() {
-  return (
-    <div className="px-4">
-      <Card className="gap-[14px] rounded-[22px] p-4">
-        <div className="flex items-center justify-between leading-[normal] font-bold whitespace-nowrap">
-          <span className="font-display text-base text-foreground">Твоя неделя</span>
-          <span className="text-[13px] text-muted-foreground">13–19 окт</span>
-        </div>
-        <div className="flex justify-between">
-          {WEEK.map(({ day, state }) => (
-            <div key={day} className="flex flex-col items-center gap-[6px]">
-              <span className="text-[11px] leading-[normal] font-bold text-muted-foreground">
-                {day}
-              </span>
-              <span
-                className={cn(
-                  "box-border flex size-[38px] items-center justify-center rounded-[19px] bg-card",
-                  state === "done" && "border-2 border-ink bg-secondary",
-                  state === "empty" && "border-2 border-track",
-                  state === "today" && "border-[3px] border-primary"
-                )}
-              >
-                {state === "done" ? (
-                  <Icon name={`${dir}/icon-check`} className="size-4" />
-                ) : null}
-                {state === "today" ? (
-                  <span className="text-base leading-[normal] font-extrabold text-primary">•</span>
-                ) : null}
-              </span>
-            </div>
-          ))}
-        </div>
-        <div className="flex items-center justify-between leading-[normal] whitespace-nowrap">
-          <span className="text-sm font-extrabold text-foreground">4 из 5 тренировок</span>
-          <span className="text-[13px] font-bold text-muted-foreground">ещё одна до цели</span>
-        </div>
-        <Progress value={80} indicatorClassName="bg-secondary border-r-0" className="bg-card" />
-        <Badge
-          className={cn(tag, "w-fit bg-lime-soft text-foreground")}
-        >
-          БУБЛИК ЖДЁТ МОНЕТ
-        </Badge>
-      </Card>
-    </div>
-  );
-}
-
 function EventScroller() {
   return (
     <div className="no-scrollbar flex gap-3 overflow-x-auto px-4 pb-1">
@@ -411,7 +354,6 @@ export function HomeMobile() {
       </div>
       <NextTicket />
       <Tip />
-      <Week />
       <SectionHead title="Другие события" link="Все" />
       <EventScroller />
       <SectionHead title="Друзья в движении" />

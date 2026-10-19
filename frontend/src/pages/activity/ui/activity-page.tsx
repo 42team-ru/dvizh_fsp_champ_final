@@ -150,8 +150,8 @@ function Feed() {
           dot
           action={
             <div className="flex shrink-0 gap-2">
-              <Button rough={false} className={XS}>Принять</Button>
-              <Button variant="soft" rough={false} className={XS}>
+              <Button className={XS}>Принять</Button>
+              <Button variant="accent" className={XS}>
                 Нет
               </Button>
             </div>
@@ -165,7 +165,7 @@ function Feed() {
           textWidth="w-[446px]"
           dot
           action={
-            <Button variant="soft" className={cn(XS, "shrink-0")}>
+            <Button variant="secondary" className={cn(XS, "shrink-0")}>
               Билет
             </Button>
           }
@@ -184,7 +184,7 @@ function Feed() {
           lead={<Avatar44 initials="СМ" />}
           textWidth="w-[423.5px]"
           action={
-            <Button variant="soft" className={cn(XS, "shrink-0")}>
+            <Button variant="soft" className={cn(XS, "shrink-0", "bg-sky")}>
               Ответить
             </Button>
           }
@@ -195,7 +195,7 @@ function Feed() {
           lead={<IconSquare tone="bg-secondary" icon="icon-trophy" />}
           textWidth="w-[420.5px]"
           action={
-            <Button variant="soft" className={cn(XS, "shrink-0")}>
+            <Button variant="secondary" className={cn(XS, "shrink-0")}>
               Смотреть
             </Button>
           }
@@ -214,7 +214,7 @@ function Feed() {
           lead={<Avatar44 initials="МС" />}
           textWidth="w-[437px]"
           action={
-            <Button variant="soft" className={cn(XS, "shrink-0")}>
+            <Button variant="soft" className={cn(XS, "shrink-0", "bg-sky")}>
               В ответ
             </Button>
           }
@@ -253,7 +253,6 @@ function Tickets() {
               </p>
             </div>
             <div className="absolute top-[14px] left-[96px] h-[72px] w-[2px] border-l-2 border-dashed border-ink" />
-            <span className="absolute top-[-11px] left-[85px] box-border size-[22px] rounded-[11px] border-2 border-t-0 border-ink bg-card" />
             <span className="absolute top-[89px] left-[85px] box-border size-[22px] rounded-[11px] border-2 border-b-0 border-ink bg-card" />
             <div className="flex h-[100px] w-[265px] shrink-0 flex-col justify-center gap-1 py-[14px] pr-4 pl-[22px]">
               <div className={cn("w-[227px] shrink-0", t.titleBox)}>

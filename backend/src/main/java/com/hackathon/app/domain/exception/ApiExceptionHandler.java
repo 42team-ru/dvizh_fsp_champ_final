@@ -47,6 +47,11 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 		return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
 	}
 
+	@ExceptionHandler(ServiceUnavailableException.class)
+	ProblemDetail unavailable(ServiceUnavailableException e) {
+		return ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE, e.getMessage());
+	}
+
 	/** Файл больше spring.servlet.multipart.max-file-size: 413 с понятным текстом вместо английского по умолчанию. */
 	@Override
 	protected ResponseEntity<Object> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException ex,

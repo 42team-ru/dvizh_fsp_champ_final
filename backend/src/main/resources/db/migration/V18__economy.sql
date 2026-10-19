@@ -18,6 +18,8 @@ CREATE INDEX ix_event_occurrences_reward_pending ON event_occurrences (start_at)
 ALTER TABLE pet_items ADD COLUMN price INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE pet_items ADD COLUMN kind VARCHAR(20) NOT NULL DEFAULT 'SHOP';
 ALTER TABLE pet_items ADD COLUMN unlock_hint VARCHAR(200);
+-- Свои вещи от админа (V17) продаются в магазине по цене по умолчанию.
+UPDATE pet_items SET price = 100 WHERE built_in = FALSE;
 
 -- Журнал монет. ref_key уникален: одна и та же награда никогда не начисляется дважды.
 CREATE TABLE coin_ledger (

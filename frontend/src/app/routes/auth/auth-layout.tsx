@@ -9,7 +9,6 @@ type Brand = {
   /** Папка в `public/` с картинками панели. */
   assets: "login" | "register";
   bublik: string;
-  contentTop: string;
   /** Мобильный баннер: высота, папка картинок и положение Бублика. */
   banner: { height: number; dir: string; bublik: string };
 };
@@ -21,7 +20,6 @@ const LOGIN_BRAND: Brand = {
   bubble: "Бублик скучал. Заходи — серия не ждёт!",
   assets: "login",
   bublik: "bublik.png",
-  contentTop: "lg:pt-[155px]",
   banner: { height: 250, dir: "m-login", bublik: "left-[212px] top-[88px] size-[170px]" },
 };
 
@@ -32,7 +30,6 @@ const REGISTER_BRAND: Brand = {
   bubble: "Привет! Я Бублик. Сначала паспорт, потом знакомство!",
   assets: "register",
   bublik: "bublik.png",
-  contentTop: "lg:pt-[103px]",
   banner: { height: 200, dir: "m-register", bublik: "left-[242px] top-[68px] size-[140px]" },
 };
 
@@ -41,11 +38,11 @@ export default function AuthLayout() {
   const brand = pathname.includes("/register") ? REGISTER_BRAND : LOGIN_BRAND;
 
   return (
-    <div className="relative isolate flex min-h-dvh w-full flex-col overflow-clip bg-background lg:flex-row">
+    <div className="relative isolate flex min-h-dvh w-full flex-col overflow-clip bg-background lg:h-dvh lg:flex-row">
       <MemphisBackground variant="auth" seed={brand.assets} className="hidden lg:block" />
       <MobileBanner brand={brand} />
       <BrandPanel brand={brand} />
-      <div className={`relative flex-1 px-4 pt-[18px] pb-5 lg:px-16 lg:pb-10 ${brand.contentTop}`}>
+      <div className={`relative flex-1 px-4 pt-[18px] pb-5 lg:flex lg:items-center-safe lg:justify-center-safe lg:overflow-y-auto lg:px-6 lg:py-10`}>
         <Outlet />
       </div>
     </div>

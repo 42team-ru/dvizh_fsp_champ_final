@@ -8,7 +8,7 @@ import {
 } from "@/shared/api/generated/core/auth/auth";
 import { USER_QUERY_KEY } from "@/entity/user/model/use-user";
 import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { toast } from "@/shared/lib/toast";
 import { useNavigate } from "react-router";
 import useAuthStore from "@/entity/auth/model/auth-store";
 
@@ -45,7 +45,7 @@ export function useLoginForm() {
         });
 
         queryClient.removeQueries({ queryKey: USER_QUERY_KEY });
-        navigate("/dashboard", { viewTransition: true });
+        navigate("/", { viewTransition: true });
       } catch (error: unknown) {
         const apiError = error as AuthLoginMutationError;
         toast.error("Ошибка при входе", {

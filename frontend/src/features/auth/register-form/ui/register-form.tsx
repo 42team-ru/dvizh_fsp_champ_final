@@ -5,7 +5,6 @@ import {
   passwordStrength,
 } from "../model/register-shema";
 import { RegisterFormLinks } from "./register-form-links";
-import { RegisterAside } from "./register-aside";
 import { AuthTextInput } from "@/features/auth/shared/ui/auth-text-input";
 import { AuthPasswordInput } from "@/features/auth/shared/ui/auth-password-input";
 import { AuthSubmitButton } from "@/features/auth/shared/ui/auth-submit-button";
@@ -26,7 +25,7 @@ export default function RegisterForm() {
   return (
     <>
       <form
-        className="flex w-full max-w-[380px] flex-col gap-[14px] lg:gap-4"
+        className="flex w-full max-w-[520px] flex-col gap-[14px] lg:gap-4"
         onSubmit={(evt) => {
           evt.preventDefault();
           form.handleSubmit();
@@ -197,7 +196,6 @@ export default function RegisterForm() {
 
         <RegisterFormLinks />
       </form>
-      <RegisterAside />
     </>
   );
 }

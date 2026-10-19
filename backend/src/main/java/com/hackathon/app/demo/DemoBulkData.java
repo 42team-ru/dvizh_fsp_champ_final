@@ -186,7 +186,7 @@ final class DemoBulkData {
 
     private static final List<EventLevel> ANY_LEVEL = List.of(EventLevel.ANY);
     private static final List<EventLevel> CASUAL = List.of(EventLevel.ANY, EventLevel.BEGINNER, EventLevel.AMATEUR);
-    private static final List<EventLevel> SKILLED = List.of(EventLevel.AMATEUR, EventLevel.AMATEUR, EventLevel.ADVANCED);
+    private static final List<EventLevel> SKILLED = List.of(EventLevel.AMATEUR, EventLevel.AMATEUR, EventLevel.AMATEUR);
 
     /** Вес шаблона = сколько раз он встречается в списке (футбол и бег популярнее петанка). */
     static final List<Template> TEMPLATES = List.of(
@@ -224,7 +224,7 @@ final class DemoBulkData {
                     "Исправный велосипед и шлем", "Вода, перекус"),
             t("Велоспорт", List.of("Шоссейная тренировка 60 км", "Групповой заезд за город"),
                     "Едем группой со сменами, средняя скорость 28–30 км/ч. Новичкам лучше на прогулку.",
-                    EventKind.TRAINING, List.of(EventLevel.ADVANCED, EventLevel.PRO), 0.5, 6, 15, 180, List.of(7, 8), false,
+                    EventKind.TRAINING, List.of(EventLevel.AMATEUR, EventLevel.PRO), 0.5, 6, 15, 180, List.of(7, 8), false,
                     "Шоссейный велосипед, опыт езды в группе", "Запасная камера, вода, гели"),
             t("Теннис", List.of("Парный теннис", "Теннис: ищу пару на корт"),
                     "Корт уже забронирован, делим аренду. Играем пары, меняемся каждый сет.",

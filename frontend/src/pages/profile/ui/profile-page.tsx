@@ -1,5 +1,6 @@
 import { PetNameEditor } from "@/features/rename-pet/ui/pet-name-editor";
 import { useState } from "react";
+import { useAttendance } from "./use-attendance";
 import { MyBeaverPet } from "@/widgets/beaver-pet/ui/my-beaver-pet";
 import { ProfileMobile } from "./profile-mobile";
 import { AppHeader } from "@/widgets/app-header/ui/app-header";
@@ -8,7 +9,6 @@ import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
 import { Eyebrow } from "@/shared/components/ui/eyebrow";
 import { Icon } from "@/shared/components/ui/icon";
-import { Progress } from "@/shared/components/ui/progress";
 import { RoughBorder } from "@/shared/components/ui/rough-border";
 import { cn } from "cn";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
@@ -171,13 +171,14 @@ function Pet() {
       <div className="relative h-[326px] w-[330px] shrink-0 overflow-hidden border-r-2 border-ink bg-sky">
         <Img name="memphis1.svg" className="top-0 left-0 size-[330px]" />
         <MyBeaverPet speechContainer={speechContainer} className="absolute top-[18px] left-[12px] h-[300px] w-[300px] [&_.beaver-pet]:h-full [&_svg]:h-full" />
+        {/* Реплика бобра — облачко справа сверху от него, хвостиком к голове. */}
+        <div ref={setSpeechContainer} className="beaver-speech-corner absolute top-3 right-3 z-10 w-[170px]" />
       </div>
       <div className="flex h-[326px] w-[367px] shrink-0 flex-col items-start gap-2 px-[28px] py-4">
         <div className="w-full min-w-0 shrink-0">
           <Eyebrow>ТВОЙ ПИТОМЕЦ</Eyebrow>
           <PetNameEditor>
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-semibold text-muted-foreground">Бобр · уровень 4</p>
+            <div className="flex items-center justify-end gap-2">
               <Badge variant="secondary" className="h-[38px] gap-[6px] border-2 px-[14px] text-[15px] font-extrabold">
                 <Icon name="profile/icon-coin" className="size-[18px]" />
                 150
@@ -186,44 +187,25 @@ function Pet() {
           </PetNameEditor>
         </div>
 
-        <div ref={setSpeechContainer} className="relative min-h-6 w-[311px] flex-1" />
-
-        <div className="flex h-20 w-[311px] shrink-0 flex-col gap-3">
-          {[
-            { label: "Энергия", value: "4 из 5", pct: 80, bar: "bg-mint" },
-            { label: "Стиль", value: "1 из 5", pct: 20, bar: undefined },
-          ].map((m) => (
-            <div key={m.label} className="relative h-[34px] w-[311px]">
-              <div className="flex h-[18px] justify-between text-[13px] leading-[18px] font-bold">
-                <span className="text-foreground">{m.label}</span>
-                <span className="text-muted-foreground">{m.value}</span>
-              </div>
-              <Progress
-                value={m.pct}
-                indicatorClassName={m.bar}
-                className="absolute top-6 left-0"
-              />
-            </div>
-          ))}
-        </div>
       </div>
     </Card>
   );
 }
 
-function Streak() {
+function Attendance() {
+  const { total, text, word } = useAttendance();
   return (
     <Card className="absolute top-[646px] left-0 h-[235px] w-[392px] justify-between overflow-hidden rounded-[28px] bg-primary px-[28px] py-[26px]">
       <Img name="memphis2.svg" className="top-0 left-0 h-[260px] w-[400px]" />
       <div className="relative h-[81px] w-[336px]">
-        <Eyebrow className="text-lilac">СЕРИЯ</Eyebrow>
+        <Eyebrow className="text-lilac">ПОСЕЩЕНО</Eyebrow>
         <p className="absolute top-[18px] left-0 w-[167px] font-display font-extrabold whitespace-nowrap text-white">
-          <span className="text-[56px] leading-[56px]">12 </span>
-          <span className="text-[22px] leading-[56px]">дней</span>
+          <span className="text-[56px] leading-[56px]">{total} </span>
+          <span className="text-[22px] leading-[56px]">{word}</span>
         </p>
       </div>
       <p className="relative w-[213.5px] text-sm leading-[19.5px] font-semibold text-white">
-        Лучший результат — 16. Ещё 4 дня, и бейдж «Железная воля» твой.
+        {text}
       </p>
     </Card>
   );
@@ -367,7 +349,7 @@ export default function ProfilePage() {
           <Passport />
           <Pet />
           <Wardrobe />
-          <Streak />
+          <Attendance />
           <Achievements />
         </div>
       </main>

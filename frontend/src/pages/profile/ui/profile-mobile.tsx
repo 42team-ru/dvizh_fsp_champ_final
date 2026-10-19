@@ -1,5 +1,6 @@
 import { PetNameEditor } from "@/features/rename-pet/ui/pet-name-editor";
 import { useState } from "react";
+import { useAttendance } from "./use-attendance";
 import { MyBeaverPet } from "@/widgets/beaver-pet/ui/my-beaver-pet";
 import { MobileTabBar } from "@/widgets/mobile-shell/ui/mobile-tab-bar";
 import { Badge } from "@/shared/components/ui/badge";
@@ -142,9 +143,6 @@ function Pet() {
           <div className="flex min-w-[180px] flex-1 flex-col items-start gap-1">
             <Eyebrow className={cn(small, "text-foreground")}>ТВОЙ ПИТОМЕЦ</Eyebrow>
             <PetNameEditor />
-            <p className="text-[13px] leading-[normal] font-bold whitespace-nowrap text-foreground">
-              Бобр · уровень 4
-            </p>
             <span className="box-border flex items-center gap-[6px] rounded-pill border-[1.5px] border-ink bg-card py-1 pr-3 pl-[6px]">
               <span className="box-border size-[18px] rounded-[9px] border-[1.5px] border-ink bg-secondary" />
               <span className="text-[13px] leading-[normal] font-extrabold text-foreground">150</span>
@@ -152,36 +150,22 @@ function Pet() {
           </div>
         </div>
         <div ref={setSpeechContainer} className="relative h-[72.5px] w-full" />
-        {[
-          { label: "Энергия", value: "4 из 5", pct: 80 },
-          { label: "Стиль", value: "1 из 5", pct: 20 },
-        ].map((m) => (
-          <div key={m.label} className="flex flex-col gap-1">
-            <div className="flex justify-between text-[13px] leading-[normal] whitespace-nowrap text-foreground">
-              <span className="font-extrabold">{m.label}</span>
-              <span className="font-bold">{m.value}</span>
-            </div>
-            <Progress value={m.pct} indicatorClassName="bg-secondary border-r-0" className="bg-card" />
-          </div>
-        ))}
       </div>
     </div>
   );
 }
 
-function Streak() {
+function Attendance() {
+  const { total, text, word } = useAttendance();
   return (
     <div className="px-4">
       <div className="box-border flex w-full flex-col gap-2 rounded-[24px] border-2 border-ink bg-primary p-5">
-        <Eyebrow className={cn(small, "tracking-[1.5px] text-lilac")}>СЕРИЯ</Eyebrow>
+        <Eyebrow className={cn(small, "tracking-[1.5px] text-lilac")}>ПОСЕЩЕНО</Eyebrow>
         <div className="flex items-end gap-2 leading-[normal] whitespace-nowrap text-white">
-          <span className="font-display text-[52px] font-extrabold">12</span>
-          <span className="font-display text-xl font-bold">дней</span>
+          <span className="font-display text-[52px] font-extrabold">{total}</span>
+          <span className="font-display text-xl font-bold">{word}</span>
         </div>
-        <Progress value={75} indicatorClassName="bg-secondary border-r-0" className="bg-card" />
-        <p className="text-[13px] leading-[18px] font-bold text-white">
-          Лучший результат — 16. Ещё 4 дня, и бейдж «Железная воля» твой.
-        </p>
+        <p className="text-[13px] leading-[18px] font-bold text-white">{text}</p>
       </div>
     </div>
   );
@@ -306,7 +290,7 @@ export function ProfileMobile() {
       <AppBar />
       <Passport />
       <Pet />
-      <Streak />
+      <Attendance />
       <Achievements />
       <Wardrobe />
       <Settings />

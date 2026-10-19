@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import com.hackathon.app.domain.entity.PetItem;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 public interface PetItemRepository extends JpaRepository<PetItem, UUID> {
 
@@ -14,5 +15,14 @@ public interface PetItemRepository extends JpaRepository<PetItem, UUID> {
 	boolean existsBySlotIdAndCode(UUID slotId, String code);
 
 	Optional<PetItem> findBySlotIdAndCode(UUID slotId, String code);
+	/** Вещь от админа по коду: коды custom-* уникальны во всём каталоге. */
+	Optional<PetItem> findByCodeAndBuiltInFalse(String code);
+
+	/** Вещи от админа, новые сверху. */
+	List<PetItem> findByBuiltInFalseOrderByCreatedAtDesc();
+
+	/** Новая вещь встаёт в конец своего слота. */
+	@Query("select coalesce(max(i.position), -1) from PetItem i where i.slotId = :slotId")
+	int maxPosition(UUID slotId);
 
 }

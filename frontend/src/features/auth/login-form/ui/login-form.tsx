@@ -10,8 +10,9 @@ export default function LoginForm() {
   const { form, showPassword, setShowPassword } = useLoginForm();
 
   return (
+    <div className="flex w-full flex-col items-center gap-[14px] xl:w-auto xl:flex-row xl:gap-12 2xl:gap-[72px]">
     <form
-      className="flex w-full max-w-[380px] flex-col gap-[14px] lg:gap-[18px]"
+      className="flex w-full max-w-[400px] flex-col gap-[14px] lg:gap-[18px] xl:w-[400px] xl:min-w-0 2xl:w-[480px] 2xl:max-w-[480px]"
       onSubmit={(evt) => {
         evt.preventDefault();
         form.handleSubmit();
@@ -83,17 +84,22 @@ export default function LoginForm() {
               submittingText="Входим..."
               idleText="Войти"
             />
-            <DemoAccounts
-              disabled={isSubmitting}
-              onPick={(username, password) => {
-                form.setFieldValue("username", username);
-                form.setFieldValue("password", password);
-              }}
-            />
             <LoginFormLinks />
           </>
         )}
       </form.Subscribe>
     </form>
+    <form.Subscribe selector={(state) => state.isSubmitting}>
+      {(isSubmitting) => (
+        <DemoAccounts
+          disabled={isSubmitting}
+          onPick={(username, password) => {
+            form.setFieldValue("username", username);
+            form.setFieldValue("password", password);
+          }}
+        />
+      )}
+    </form.Subscribe>
+    </div>
   );
 }

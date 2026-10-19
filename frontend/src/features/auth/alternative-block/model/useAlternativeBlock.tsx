@@ -1,4 +1,4 @@
-import { toast } from "sonner";
+import { toast } from "@/shared/lib/toast";
 
 const BACKEND_URL =
   import.meta.env.VITE_BACKEND_URL || "https://42team.ru/api";

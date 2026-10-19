@@ -11,5 +11,7 @@ public record PetItemResponse(
 		/** Подпись для конструктора. */
 		@Schema(description = "Подпись", example = "Хоккейная форма — Сокол (Красноярск)", requiredMode = REQUIRED) String label,
 		/** Встроенное изображение фронтенда. */
-		@Schema(description = "Встроенная (рисует фронт)", requiredMode = REQUIRED) boolean builtIn) {
+		@Schema(description = "Встроенная (рисует фронт)", requiredMode = REQUIRED) boolean builtIn,
+		/** Рисунок вещи от админа; у встроенных null. */
+		@Schema(description = "Рисунок и посадка вещи, добавленной админом; у встроенных null") PetArtResponse art) {
 }

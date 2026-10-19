@@ -333,7 +333,6 @@ export const EventRequestLevel = {
   ANY: 'ANY',
   BEGINNER: 'BEGINNER',
   AMATEUR: 'AMATEUR',
-  ADVANCED: 'ADVANCED',
   PRO: 'PRO',
 } as const;
 
@@ -524,7 +523,6 @@ export const EventResponseLevel = {
   ANY: 'ANY',
   BEGINNER: 'BEGINNER',
   AMATEUR: 'AMATEUR',
-  ADVANCED: 'ADVANCED',
   PRO: 'PRO',
 } as const;
 
@@ -921,6 +919,69 @@ export interface CommentResponse {
 }
 
 /**
+ * Посадка вещи на бобра
+ */
+export interface PetFitRequest {
+  /**
+     * @minimum -500
+     * @maximum 1000
+     */
+  x: number;
+  /**
+     * @minimum -500
+     * @maximum 1000
+     */
+  y: number;
+  /**
+     * @minimum 0.01
+     * @maximum 20
+     */
+  scale: number;
+}
+
+export type PetArtResponseBodyPart = typeof PetArtResponseBodyPart[keyof typeof PetArtResponseBodyPart];
+
+
+export const PetArtResponseBodyPart = {
+  HEAD: 'HEAD',
+  EYES: 'EYES',
+  NECK: 'NECK',
+  CHEST: 'CHEST',
+  LEGS: 'LEGS',
+  PAW: 'PAW',
+  GROUND: 'GROUND',
+} as const;
+
+/**
+ * Рисунок вещи, добавленной админом
+ */
+export interface PetArtResponse {
+  bodyPart: PetArtResponseBodyPart;
+  /** SVG-разметка из одних <path> */
+  svg: string;
+  /** translate x в координатах рисунка бобра */
+  x: number;
+  /** translate y в координатах рисунка бобра */
+  y: number;
+  /** Масштаб */
+  scale: number;
+}
+
+/**
+ * Вещь бобра в каталоге
+ */
+export interface PetItemResponse {
+  /** Код вещи — его передают в образе */
+  id: string;
+  /** Подпись */
+  label: string;
+  /** Встроенная (рисует фронт) */
+  builtIn: boolean;
+  /** Рисунок и посадка вещи, добавленной админом; у встроенных null */
+  art?: PetArtResponse;
+}
+
+/**
  * Отказ по заявке; тело можно не передавать
  */
 export interface RejectRegistrationRequest {
@@ -1128,6 +1189,19 @@ export interface LoginRequest {
   password: string;
 }
 
+/**
+ * Разобранная картинка и рассчитанная посадка
+ */
+export interface PetArtPreviewResponse {
+  art: PetArtResponse;
+  /** Ширина рисунка до масштаба */
+  width: number;
+  /** Высота рисунка до масштаба */
+  height: number;
+  /** Сколько контуров получилось */
+  paths: number;
+}
+
 export interface RejectOrganizationRequest {
   /**
      * @minLength 0
@@ -1276,7 +1350,6 @@ export const EventSummaryResponseLevel = {
   ANY: 'ANY',
   BEGINNER: 'BEGINNER',
   AMATEUR: 'AMATEUR',
-  ADVANCED: 'ADVANCED',
   PRO: 'PRO',
 } as const;
 
@@ -1609,18 +1682,6 @@ export const PetSlotResponseKind = {
 } as const;
 
 /**
- * Вещь бобра в каталоге
- */
-export interface PetItemResponse {
-  /** Код вещи — его передают в образе */
-  id: string;
-  /** Подпись */
-  label: string;
-  /** Встроенная (рисует фронт) */
-  builtIn: boolean;
-}
-
-/**
  * Слот бобра с вещами
  */
 export interface PetSlotResponse {
@@ -1780,7 +1841,6 @@ export const EventMapPropertiesLevel = {
   ANY: 'ANY',
   BEGINNER: 'BEGINNER',
   AMATEUR: 'AMATEUR',
-  ADVANCED: 'ADVANCED',
   PRO: 'PRO',
 } as const;
 
@@ -2073,7 +2133,6 @@ export const EventsListLevel = {
   ANY: 'ANY',
   BEGINNER: 'BEGINNER',
   AMATEUR: 'AMATEUR',
-  ADVANCED: 'ADVANCED',
   PRO: 'PRO',
 } as const;
 
@@ -2128,6 +2187,63 @@ export type CommentsListParams = {
  * Только сообщения новее этого момента: createdAt последнего полученного
  */
 after?: string;
+};
+
+export type AdminCreatePetItemParams = {
+/**
+ * Часть тела
+ */
+bodyPart: AdminCreatePetItemBodyPart;
+/**
+ * Название
+ */
+label: string;
+x?: number;
+y?: number;
+scale?: number;
+};
+
+export type AdminCreatePetItemBodyPart = typeof AdminCreatePetItemBodyPart[keyof typeof AdminCreatePetItemBodyPart];
+
+
+export const AdminCreatePetItemBodyPart = {
+  HEAD: 'HEAD',
+  EYES: 'EYES',
+  NECK: 'NECK',
+  CHEST: 'CHEST',
+  LEGS: 'LEGS',
+  PAW: 'PAW',
+  GROUND: 'GROUND',
+} as const;
+
+export type AdminCreatePetItemBody = {
+  /** Картинка PNG или SVG до 5 МБ */
+  file: Blob | File;
+};
+
+export type AdminPreviewPetItemParams = {
+/**
+ * Часть тела
+ */
+bodyPart: AdminPreviewPetItemBodyPart;
+};
+
+export type AdminPreviewPetItemBodyPart = typeof AdminPreviewPetItemBodyPart[keyof typeof AdminPreviewPetItemBodyPart];
+
+
+export const AdminPreviewPetItemBodyPart = {
+  HEAD: 'HEAD',
+  EYES: 'EYES',
+  NECK: 'NECK',
+  CHEST: 'CHEST',
+  LEGS: 'LEGS',
+  PAW: 'PAW',
+  GROUND: 'GROUND',
+} as const;
+
+export type AdminPreviewPetItemBody = {
+  /** Картинка PNG или SVG до 5 МБ */
+  file: Blob | File;
 };
 
 export type UsersHistoryParams = {
@@ -2271,7 +2387,6 @@ export const EventsMapLevel = {
   ANY: 'ANY',
   BEGINNER: 'BEGINNER',
   AMATEUR: 'AMATEUR',
-  ADVANCED: 'ADVANCED',
   PRO: 'PRO',
 } as const;
 

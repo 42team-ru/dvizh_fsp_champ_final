@@ -902,6 +902,57 @@
         }
       }
     },
+    "/api/admin/pets/items/{code}/fit": {
+      "put": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Подогнать посадку вещи",
+        "operationId": "admin_updatePetItemFit",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PetFitRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Вещь с новой посадкой",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PetItemResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Нет такой вещи",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/registrations/{id}/reject": {
       "post": {
         "tags": [
@@ -1220,7 +1271,6 @@
                 "ANY",
                 "BEGINNER",
                 "AMATEUR",
-                "ADVANCED",
                 "PRO"
               ]
             }
@@ -2306,6 +2356,227 @@
         }
       }
     },
+    "/api/admin/pets/items": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Вещи бобра, добавленные админом",
+        "operationId": "admin_listPetItems",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PetItemResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Добавить вещь бобра",
+        "description": "x, y, scale — посадка из предпросмотра, если её подогнали руками; без них считается заново.",
+        "operationId": "admin_createPetItem",
+        "parameters": [
+          {
+            "name": "bodyPart",
+            "in": "query",
+            "description": "Часть тела",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "HEAD",
+                "EYES",
+                "NECK",
+                "CHEST",
+                "LEGS",
+                "PAW",
+                "GROUND"
+              ]
+            }
+          },
+          {
+            "name": "label",
+            "in": "query",
+            "description": "Название",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "Золотая корона"
+          },
+          {
+            "name": "x",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "name": "y",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "name": "scale",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Картинка PNG или SVG до 5 МБ"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PetItemResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Неверная картинка, название или посадка",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "На сервере нет Python для импорта",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/pets/items/preview": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Разобрать картинку без сохранения",
+        "description": "PNG векторизуется, SVG очищается до контуров; считается посадка на часть тела.",
+        "operationId": "admin_previewPetItem",
+        "parameters": [
+          {
+            "name": "bodyPart",
+            "in": "query",
+            "description": "Часть тела",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "HEAD",
+                "EYES",
+                "NECK",
+                "CHEST",
+                "LEGS",
+                "PAW",
+                "GROUND"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Картинка PNG или SVG до 5 МБ"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Рисунок и рассчитанная посадка",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PetArtPreviewResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Не PNG/SVG, пустой или слишком сложный рисунок",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "На сервере нет Python для импорта",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/organizations/{id}/reject": {
       "post": {
         "tags": [
@@ -3277,7 +3548,6 @@
                 "ANY",
                 "BEGINNER",
                 "AMATEUR",
-                "ADVANCED",
                 "PRO"
               ]
             }
@@ -3917,6 +4187,41 @@
           },
           "409": {
             "description": "Это автор или мероприятие удалено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/pets/items/{code}": {
+      "delete": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Удалить вещь",
+        "description": "Снимается со всех бобров.",
+        "operationId": "admin_deletePetItem",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Нет такой вещи",
             "content": {
               "application/json": {
                 "schema": {
@@ -4572,7 +4877,6 @@
               "ANY",
               "BEGINNER",
               "AMATEUR",
-              "ADVANCED",
               "PRO"
             ]
           },
@@ -4812,7 +5116,6 @@
               "ANY",
               "BEGINNER",
               "AMATEUR",
-              "ADVANCED",
               "PRO"
             ]
           },
@@ -5457,6 +5760,114 @@
           "repliesCount"
         ]
       },
+      "PetFitRequest": {
+        "type": "object",
+        "description": "Посадка вещи на бобра",
+        "properties": {
+          "x": {
+            "type": "number",
+            "format": "double",
+            "example": 76.21,
+            "maximum": 1000,
+            "minimum": -500
+          },
+          "y": {
+            "type": "number",
+            "format": "double",
+            "example": -40,
+            "maximum": 1000,
+            "minimum": -500
+          },
+          "scale": {
+            "type": "number",
+            "format": "double",
+            "example": 1.29,
+            "maximum": 20,
+            "minimum": 0.01
+          }
+        },
+        "required": [
+          "scale",
+          "x",
+          "y"
+        ]
+      },
+      "PetArtResponse": {
+        "type": "object",
+        "description": "Рисунок вещи, добавленной админом",
+        "properties": {
+          "bodyPart": {
+            "type": "string",
+            "enum": [
+              "HEAD",
+              "EYES",
+              "NECK",
+              "CHEST",
+              "LEGS",
+              "PAW",
+              "GROUND"
+            ]
+          },
+          "svg": {
+            "type": "string",
+            "description": "SVG-разметка из одних <path>"
+          },
+          "x": {
+            "type": "number",
+            "format": "double",
+            "description": "translate x в координатах рисунка бобра",
+            "example": 76.21
+          },
+          "y": {
+            "type": "number",
+            "format": "double",
+            "description": "translate y в координатах рисунка бобра",
+            "example": -40
+          },
+          "scale": {
+            "type": "number",
+            "format": "double",
+            "description": "Масштаб",
+            "example": 1.29
+          }
+        },
+        "required": [
+          "bodyPart",
+          "scale",
+          "svg",
+          "x",
+          "y"
+        ]
+      },
+      "PetItemResponse": {
+        "type": "object",
+        "description": "Вещь бобра в каталоге",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Код вещи — его передают в образе",
+            "example": "hc-sokol"
+          },
+          "label": {
+            "type": "string",
+            "description": "Подпись",
+            "example": "Хоккейная форма — Сокол (Красноярск)"
+          },
+          "builtIn": {
+            "type": "boolean",
+            "description": "Встроенная (рисует фронт)"
+          },
+          "art": {
+            "$ref": "#/components/schemas/PetArtResponse",
+            "description": "Рисунок и посадка вещи, добавленной админом; у встроенных null"
+          }
+        },
+        "required": [
+          "builtIn",
+          "id",
+          "label"
+        ]
+      },
       "RejectRegistrationRequest": {
         "type": "object",
         "description": "Отказ по заявке; тело можно не передавать",
@@ -5768,6 +6179,36 @@
           "username"
         ]
       },
+      "PetArtPreviewResponse": {
+        "type": "object",
+        "description": "Разобранная картинка и рассчитанная посадка",
+        "properties": {
+          "art": {
+            "$ref": "#/components/schemas/PetArtResponse"
+          },
+          "width": {
+            "type": "number",
+            "format": "double",
+            "description": "Ширина рисунка до масштаба"
+          },
+          "height": {
+            "type": "number",
+            "format": "double",
+            "description": "Высота рисунка до масштаба"
+          },
+          "paths": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Сколько контуров получилось"
+          }
+        },
+        "required": [
+          "art",
+          "height",
+          "paths",
+          "width"
+        ]
+      },
       "RejectOrganizationRequest": {
         "type": "object",
         "properties": {
@@ -6073,7 +6514,6 @@
               "ANY",
               "BEGINNER",
               "AMATEUR",
-              "ADVANCED",
               "PRO"
             ]
           },
@@ -6627,31 +7067,6 @@
           "slots"
         ]
       },
-      "PetItemResponse": {
-        "type": "object",
-        "description": "Вещь бобра в каталоге",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "Код вещи — его передают в образе",
-            "example": "hc-sokol"
-          },
-          "label": {
-            "type": "string",
-            "description": "Подпись",
-            "example": "Хоккейная форма — Сокол (Красноярск)"
-          },
-          "builtIn": {
-            "type": "boolean",
-            "description": "Встроенная (рисует фронт)"
-          }
-        },
-        "required": [
-          "builtIn",
-          "id",
-          "label"
-        ]
-      },
       "PetSlotResponse": {
         "type": "object",
         "description": "Слот бобра с вещами",
@@ -6983,7 +7398,6 @@
               "ANY",
               "BEGINNER",
               "AMATEUR",
-              "ADVANCED",
               "PRO"
             ]
           },
