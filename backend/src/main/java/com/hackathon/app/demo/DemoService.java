@@ -1,9 +1,7 @@
-package com.hackathon.app.service;
+package com.hackathon.app.demo;
 
 import java.util.List;
 
-import com.hackathon.app.config.DemoProperties;
-import com.hackathon.app.domain.dto.DemoAccountResponse;
 import com.hackathon.app.repository.AppUserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

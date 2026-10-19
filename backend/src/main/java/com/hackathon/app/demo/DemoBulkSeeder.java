@@ -1,11 +1,10 @@
-package com.hackathon.app.service;
+package com.hackathon.app.demo;
 
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -15,55 +14,48 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import com.hackathon.app.config.DemoProperties;
+import com.hackathon.app.demo.DemoBulkData.City;
+import com.hackathon.app.demo.DemoBulkData.Club;
+import com.hackathon.app.demo.DemoBulkData.Qa;
+import com.hackathon.app.demo.DemoBulkData.Template;
+import com.hackathon.app.demo.DemoBulkData.Venue;
 import com.hackathon.app.domain.dto.EventRequest;
-import com.hackathon.app.domain.dto.PetRequest;
 import com.hackathon.app.domain.dto.SaveOrganizationRequest;
-import com.hackathon.app.domain.entity.Comment;
-import com.hackathon.app.domain.entity.Event;
-import com.hackathon.app.domain.entity.EventOrganizer;
-import com.hackathon.app.domain.entity.Registration;
-import com.hackathon.app.domain.entity.Sport;
 import com.hackathon.app.domain.enums.EventFormat;
 import com.hackathon.app.domain.enums.EventStatus;
 import com.hackathon.app.domain.enums.JoinMode;
 import com.hackathon.app.domain.enums.OrganizationStatus;
-import com.hackathon.app.domain.enums.PetSlotKind;
-import com.hackathon.app.domain.enums.RegistrationStatus;
 import com.hackathon.app.domain.enums.SystemRole;
-import com.hackathon.app.domain.mapper.CommentMapper;
-import com.hackathon.app.domain.mapper.EventMapper;
-import com.hackathon.app.domain.mapper.OrganizerMapper;
-import com.hackathon.app.domain.mapper.RegistrationMapper;
 import com.hackathon.app.domain.mapper.UserMapper;
 import com.hackathon.app.repository.AppUserRepository;
-import com.hackathon.app.repository.CommentRepository;
-import com.hackathon.app.repository.DemoDataRepository;
-import com.hackathon.app.repository.EventOrganizerRepository;
-import com.hackathon.app.repository.EventRepository;
-import com.hackathon.app.repository.RegistrationRepository;
-import com.hackathon.app.service.DemoBulkData.City;
-import com.hackathon.app.service.DemoBulkData.Club;
-import com.hackathon.app.service.DemoBulkData.Qa;
-import com.hackathon.app.service.DemoBulkData.Template;
-import com.hackathon.app.service.DemoBulkData.Venue;
+import com.hackathon.app.service.AdminEventService;
+import com.hackathon.app.service.AdminOrganizationService;
+import com.hackathon.app.service.CommentService;
+import com.hackathon.app.service.EventOrganizerService;
+import com.hackathon.app.service.EventService;
+import com.hackathon.app.service.OrganizationService;
+import com.hackathon.app.service.RegistrationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Массовые демо-данные (часть DemoSeeder, только при DEMO_MODE=true): сотни пользователей в 12 городах с датами
- * регистрации за полгода, клубы во всех статусах допуска, мероприятия на реальных площадках (прошедшие и будущие,
- * часть снята админом), записи и заявки во всех статусах, соорганизаторы, обсуждения, образы бобров.
+ * Массовые демо-данные («живой проект»), только при DEMO_MODE=true: сотни людей в 12 городах с датами регистрации
+ * за полгода, клубы во всех статусах допуска, мероприятия на реальных площадках (прошедшие и будущие, часть снята
+ * админом), записи и заявки, соорганизаторы, обсуждения.
+ * <p>
+ * Всё, что видно в приложении, получено обычными сервисами, как у настоящего пользователя: анкета клуба → решение
+ * админа, создание мероприятия, запись, решение по заявке, сообщения и ответы, снятие админом. Монеты, достижения и
+ * награды клубов здесь не создаются вообще: их начисляет настоящая обработка встреч ({@link DemoHistory}).
+ * Исключения ради скорости, ни одно не создаёт невозможного состояния: сами строки аккаунтов массовки (с одним
+ * общим хешем пароля, bcrypt на сотни аккаунтов долгий) и перенос дат в прошлое ({@link DemoDataRepository}).
  * Генерация детерминированная (фиксированный seed), даты — от сегодняшнего дня, поэтому демо не устаревает.
- * Идемпотентно целиком: если клуб-маркер уже есть, повторно ничего не создаётся. Полный сброс: docker compose down -v.
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class DemoBulkSeeder {
+class DemoBulkSeeder {
 
     private static final long SEED = 20261019L;
     private static final int PEOPLE = 240;
@@ -80,41 +72,51 @@ public class DemoBulkSeeder {
 
     private final DemoProperties props;
     private final AppUserRepository users;
-    private final EventRepository events;
-    private final RegistrationRepository registrations;
-    private final EventOrganizerRepository organizers;
-    private final CommentRepository comments;
-    private final DemoDataRepository demoData;
-    private final SportService sportService;
-    private final OccurrenceService occurrenceService;
+    private final DemoDataRepository data;
+    private final DemoHistory history;
+    private final DemoPetSeeder pets;
     private final OrganizationService organizationService;
     private final AdminOrganizationService adminOrganizationService;
-    private final PetService pets;
-    private final PetCatalogService petCatalog;
+    private final EventService eventService;
+    private final RegistrationService registrationService;
+    private final CommentService commentService;
+    private final EventOrganizerService organizerService;
+    private final AdminEventService adminEventService;
     private final UserMapper userMapper;
-    private final EventMapper eventMapper;
-    private final RegistrationMapper registrationMapper;
-    private final CommentMapper commentMapper;
-    private final OrganizerMapper organizerMapper;
     private final PasswordEncoder passwordEncoder;
     private final Clock clock;
 
     /** Человек или аккаунт клуба: где живёт и когда присоединился. */
-    private record Person(UUID id, City city, Instant signedUpAt) {
+    record Person(UUID id, String username, City city, Instant signedUpAt) {
     }
 
     /** Одобренный клуб и его аккаунт — автор событий клуба. */
-    private record ApprovedClub(Person account, UUID organizationId, Club club, Instant approvedAt) {
+    private record ApprovedClub(Person account, UUID organizationId, Club club) {
+    }
+
+    /** Что и когда произойдёт: автор, клуб (если от имени клуба), город, шаблон, начало. */
+    private record Plan(Person author, UUID organizationId, City city, Template template, Instant startAt) {
+    }
+
+    /** Подвинуть запись или заявку во времени: когда подана и когда решена. */
+    private record RegistrationAt(UUID id, Instant createdAt, Instant decidedAt) {
+    }
+
+    /** Подвинуть сообщение во времени: когда написано, когда исправлено или удалено. */
+    private record CommentAt(UUID id, Instant createdAt, Instant editedAt, Instant deletedAt) {
     }
 
     /** Состояние одного прогона: генератор случайных чисел, «сейчас», счётчики для лога. */
     private final class Run {
         final Random random = new Random(SEED);
         final Instant now = clock.instant();
-        final Map<String, Sport> sports = new HashMap<>();
+        List<Person> people;
+        Map<String, List<Person>> peopleByCity;
+        UUID adminId;
         int events;
         int registrations;
         int comments;
+        long startedAt = System.currentTimeMillis();
 
         boolean chance(double p) {
             return random.nextDouble() < p;
@@ -147,25 +149,27 @@ public class DemoBulkSeeder {
         }
     }
 
-    @Transactional
-    public void seed(Map<String, UUID> coreIds) {
-        var marker = DemoBulkData.CLUBS.getFirst().username();
-        if (users.existsByUsernameIgnoreCase(marker)) {
-            return;
-        }
-        long started = System.currentTimeMillis();
-        var run = new Run();
-        var adminId = coreIds.get("admin");
-        var passwordHash = passwordEncoder.encode(props.password()); // один хеш на всех: bcrypt на сотни аккаунтов долгий
-        var people = createPeople(run, passwordHash);
-        var clubs = createClubs(run, passwordHash, adminId);
-        var peopleByCity = people.stream().collect(Collectors.groupingBy(p -> p.city().name()));
+    private Run run;
 
+    /**
+     * Люди и клубы создаются сразу, а мероприятия ставятся в историю ({@link DemoHistory}) и произойдут при её
+     * проигрывании. Возвращает людей: часть из них потом ходит на встречи основных клубов.
+     */
+    List<Person> seed(DemoCast cast, UUID adminId) {
+        run = new Run();
+        run.adminId = adminId;
+        var passwordHash = passwordEncoder.encode(props.password()); // один хеш на всех: bcrypt на сотни аккаунтов долгий
+        var people = createPeople(run, passwordHash, cast);
+        var clubs = createClubs(run, passwordHash, adminId, cast);
+        run.people = people;
+        run.peopleByCity = people.stream().collect(Collectors.groupingBy(p -> p.city().name()));
+
+        var plans = new ArrayList<Plan>();
         for (var city : DemoBulkData.CITIES) {
-            var locals = peopleByCity.getOrDefault(city.name(), List.of());
+            var locals = run.peopleByCity.getOrDefault(city.name(), List.of());
             for (int i = 0; i < city.weight() * EVENTS_PER_CITY_WEIGHT && !locals.isEmpty(); i++) {
                 var template = run.pick(DemoBulkData.TEMPLATES.stream().filter(t -> !t.online()).toList());
-                createEvent(run, run.pick(locals), null, city, template, people, peopleByCity, adminId);
+                plans.add(plan(run, run.pick(locals), null, city, template));
             }
         }
         for (var club : clubs) {
@@ -173,24 +177,31 @@ public class DemoBulkSeeder {
                     .filter(t -> !t.online() && t.sport().equals(club.club().sport())).toList();
             int count = run.between(3, 6);
             for (int i = 0; i < count && !templates.isEmpty(); i++) {
-                createEvent(run, club.account(), club.organizationId(), club.account().city(), run.pick(templates),
-                        people, peopleByCity, adminId);
+                plans.add(plan(run, club.account(), club.organizationId(), club.account().city(), run.pick(templates)));
             }
         }
         var onlineTemplates = DemoBulkData.TEMPLATES.stream().filter(Template::online).toList();
         for (int i = 0; i < ONLINE_EVENTS; i++) {
             var author = run.pick(people);
-            createEvent(run, author, null, author.city(), run.pick(onlineTemplates), people, peopleByCity, adminId);
+            plans.add(plan(run, author, null, author.city(), run.pick(onlineTemplates)));
         }
-        dressPets(run, people);
+        for (var plan : plans) {
+            var endAt = plan.startAt().plus(Duration.ofMinutes(plan.template().durationMinutes()));
+            history.add(plan.startAt(), endAt, () -> execute(run, plan, endAt));
+        }
+        return people;
+    }
+
+    /** Итог массового сида для лога; вызывается после проигрывания истории. */
+    void logSummary() {
         log.info("Demo bulk data: {} people, {} clubs, {} events, {} registrations, {} comments in {} ms",
-                people.size(), DemoBulkData.CLUBS.size(), run.events, run.registrations, run.comments,
-                System.currentTimeMillis() - started);
+                run.people.size(), DemoBulkData.CLUBS.size(), run.events, run.registrations, run.comments,
+                System.currentTimeMillis() - run.startedAt);
     }
 
     // --- Пользователи и клубы ---
 
-    private List<Person> createPeople(Run run, String passwordHash) {
+    private List<Person> createPeople(Run run, String passwordHash, DemoCast cast) {
         var taken = new HashSet<String>();
         var people = new ArrayList<Person>();
         for (int i = 0; i < PEOPLE + SPIKE_PEOPLE; i++) {
@@ -206,14 +217,15 @@ public class DemoBulkSeeder {
                     .atTime(run.between(7, 23), run.between(0, 59)).atZone(city.zone()).toInstant();
             var user = users.save(userMapper.toLocalUser(UUID.randomUUID(), username, username + "@demo.local",
                     passwordHash, first, last, city.name(), run.pick(DemoBulkData.BIOS), SystemRole.USER, signedUpAt));
-            people.add(new Person(user.getId(), city, signedUpAt));
+            people.add(new Person(user.getId(), username, city, signedUpAt));
+            cast.remember(user.getId(), signedUpAt);
         }
-        demoData.flushAndClear();
+        data.flushAndClear();
         return people;
     }
 
     /** Клубы через обычные сервисы (анкета → решение админа), потом даты сдвигаются в прошлое. */
-    private List<ApprovedClub> createClubs(Run run, String passwordHash, UUID adminId) {
+    private List<ApprovedClub> createClubs(Run run, String passwordHash, UUID adminId, DemoCast cast) {
         var approved = new ArrayList<ApprovedClub>();
         for (var club : DemoBulkData.CLUBS) {
             var city = DemoBulkData.CITIES.stream().filter(c -> c.name().equals(club.city())).findFirst().orElseThrow();
@@ -226,6 +238,7 @@ public class DemoBulkSeeder {
             var account = users.save(userMapper.toLocalUser(UUID.randomUUID(), club.username(),
                     club.username() + "@demo.local", passwordHash, club.contactFirstName(), club.contactLastName(),
                     city.name(), null, SystemRole.ORG, signedUpAt));
+            cast.remember(account.getId(), signedUpAt);
             var organizationId = organizationService.saveMine(account.getId(),
                     new SaveOrganizationRequest(club.name(), club.description(), city.name(), club.contacts())).id();
             var submittedAt = signedUpAt.plus(Duration.ofHours(run.between(1, 20)));
@@ -237,23 +250,23 @@ public class DemoBulkSeeder {
                 case PENDING -> {
                 }
             }
-            demoData.backdateOrganization(organizationId, submittedAt, reviewedAt);
+            data.backdateOrganization(organizationId, submittedAt, reviewedAt);
             if (club.status() == OrganizationStatus.APPROVED) {
                 // события клуб публикует только после одобрения: для них «присоединился» = одобрен
-                approved.add(new ApprovedClub(new Person(account.getId(), city, reviewedAt), organizationId, club, reviewedAt));
+                approved.add(new ApprovedClub(new Person(account.getId(), club.username(), city, reviewedAt),
+                        organizationId, club));
             }
         }
-        demoData.flushAndClear();
+        data.flushAndClear();
         return approved;
     }
 
     // --- Мероприятия ---
 
-    private void createEvent(Run run, Person author, UUID organizationId, City city, Template template,
-            List<Person> people, Map<String, List<Person>> peopleByCity, UUID adminId) {
+    /** Когда мероприятие состоится: 45% прошедших (история записей и обсуждений), остальные — в ближайшие полтора месяца. */
+    private Plan plan(Run run, Person author, UUID organizationId, City city, Template template) {
         var zone = city.zone();
         var today = LocalDate.ofInstant(run.now, zone);
-        // 45% прошедших (история записей и обсуждений), остальные — в ближайшие полтора месяца
         int dayOffset = run.chance(0.45) ? -run.between(1, 60) : run.between(1, 45);
         var startAt = today.plusDays(dayOffset).atTime(run.pick(template.hours()), run.chance(0.7) ? 0 : 30)
                 .atZone(zone).toInstant();
@@ -262,6 +275,17 @@ public class DemoBulkSeeder {
             // автор присоединился позже — переносим в будущее
             startAt = today.plusDays(run.between(2, 30)).atTime(run.pick(template.hours()), 0).atZone(zone).toInstant();
         }
+        return new Plan(author, organizationId, city, template, startAt);
+    }
+
+    /** Одно мероприятие со всем, что вокруг него происходит, в порядке настоящей жизни (через сервисы). */
+    private void execute(Run run, Plan plan, Instant endAt) {
+        var author = plan.author();
+        var city = plan.city();
+        var template = plan.template();
+        var startAt = plan.startAt();
+        boolean past = startAt.isBefore(run.now);
+        var earliestCreated = author.signedUpAt().plus(Duration.ofHours(2));
         var latestCreated = run.now.minus(Duration.ofHours(1));
         var createdAt = startAt.minus(Duration.ofDays(run.between(2, 21))).minus(Duration.ofHours(run.between(0, 12)));
         if (createdAt.isAfter(latestCreated)) {
@@ -269,7 +293,6 @@ public class DemoBulkSeeder {
             createdAt = run.between(max(earliestCreated, run.now.minus(Duration.ofDays(21))), latestCreated);
         }
         createdAt = clamp(createdAt, earliestCreated, latestCreated);
-        var endAt = startAt.plus(Duration.ofMinutes(template.durationMinutes()));
 
         Venue venue = null;
         if (!template.online()) {
@@ -279,7 +302,11 @@ public class DemoBulkSeeder {
         }
         Integer capacity = template.maxCapacity() > 0 ? run.between(template.minCapacity(), template.maxCapacity()) : null;
         var joinMode = run.chance(template.requestShare()) ? JoinMode.REQUEST : JoinMode.FREE;
-        var request = new EventRequest(run.pick(template.titles()), template.description(), null, null, startAt, endAt,
+        // Сервис не создаёт прошедшую встречу: она рождается с датой в будущем и переезжает в прошлое в самом конце.
+        var createStart = past ? run.now.plus(Duration.ofDays(2)) : startAt;
+        var createEnd = createStart.plus(Duration.ofMinutes(template.durationMinutes()));
+        var request = new EventRequest(run.pick(template.titles()), template.description(), null, template.sport(),
+                createStart, createEnd,
                 template.online() ? EventFormat.ONLINE : EventFormat.OFFLINE,
                 venue == null ? null : venue.address(),
                 venue == null ? null : venue.name() + (run.chance(0.5) ? ". " + run.pick(LOCATION_NOTES) : ""),
@@ -289,51 +316,61 @@ public class DemoBulkSeeder {
                 run.pick(template.levels()), template.kind(), template.requirements(), template.equipment(), capacity,
                 joinMode, "Чат участников: https://t.me/+" + Long.toString(run.random.nextLong() & 0xFFFFFFFFFFL, 36),
                 null, null);
-        var sport = run.sports.computeIfAbsent(template.sport(), name -> sportService.resolve(null, name, author.id()));
-        var event = events.saveAndFlush(eventMapper.toEntity(request, author.id(), sport.getId(), organizationId,
-                startAt, endAt));
-        // занятие разового мероприятия: по нему лента и карта фильтруют по датам
-        occurrenceService.apply(event, null, run.now);
+        var eventId = eventService.create(author.id(), request).id();
 
         // соорганизатор у части событий частных лиц
         UUID coOrganizerId = null;
-        var locals = peopleByCity.getOrDefault(city.name(), people);
-        if (organizationId == null && run.chance(0.12)) {
+        var locals = run.peopleByCity.getOrDefault(city.name(), run.people);
+        Instant coOrganizerAt = null;
+        if (plan.organizationId() == null && run.chance(0.12)) {
             var candidate = run.pick(locals);
             if (!candidate.id().equals(author.id()) && candidate.signedUpAt().isBefore(createdAt)) {
+                organizerService.add(eventId, author.id(), candidate.username());
                 coOrganizerId = candidate.id();
-                var organizer = organizers.save(organizerMapper.toEntity(event.getId(), coOrganizerId, author.id()));
-                organizers.flush();
-                demoData.backdate(EventOrganizer.class, organizer.getId(), createdAt.plus(Duration.ofHours(1)));
+                coOrganizerAt = createdAt.plus(Duration.ofHours(1));
             }
         }
 
-        var participants = createRegistrations(run, event, author.id(), coOrganizerId, createdAt, startAt, locals, people);
-        createComments(run, event, author.id(), coOrganizerId, createdAt, startAt, endAt, participants, locals);
+        var registrationTimes = new ArrayList<RegistrationAt>();
+        var commentTimes = new ArrayList<CommentAt>();
+        var participants = register(run, eventId, joinMode, capacity, author.id(), coOrganizerId, createdAt, startAt,
+                locals, run.people, registrationTimes);
+        discuss(run, eventId, author.id(), coOrganizerId, createdAt, startAt, endAt, participants, locals, commentTimes);
 
         // модерация: немного снятых и удалённых, с причиной
+        Instant moderatedAt = null;
         double roll = run.random.nextDouble();
         if (roll < 0.06) {
             var status = roll < 0.04 ? EventStatus.UNPUBLISHED : EventStatus.DELETED;
             var reason = run.pick(status == EventStatus.UNPUBLISHED ? DemoBulkData.UNPUBLISH_REASONS : DemoBulkData.DELETE_REASONS);
-            var moderated = events.findById(event.getId()).orElseThrow();
-            eventMapper.moderate(moderated, status, reason,
-                    run.between(createdAt.plus(Duration.ofHours(6)), min(startAt, run.now)), adminId);
-            events.save(moderated);
+            if (status == EventStatus.UNPUBLISHED) {
+                adminEventService.unpublish(eventId, run.adminId, reason);
+            } else {
+                adminEventService.delete(eventId, run.adminId, reason);
+            }
+            moderatedAt = run.between(createdAt.plus(Duration.ofHours(6)), min(startAt, run.now));
         }
-        events.flush();
-        demoData.backdate(Event.class, event.getId(), createdAt);
-        demoData.flushAndClear();
+
+        // Все действия выше уже совершены обычными сервисами; теперь только метки времени переезжают в прошлое.
+        data.moveEvent(eventId, createdAt, startAt, endAt);
+        registrationTimes.forEach(t -> data.backdateRegistration(t.id(), t.createdAt(), t.decidedAt()));
+        commentTimes.forEach(t -> data.backdateComment(t.id(), t.createdAt(), t.editedAt(), t.deletedAt()));
+        if (coOrganizerId != null) {
+            data.backdateOrganizer(eventId, coOrganizerId, coOrganizerAt);
+        }
+        if (moderatedAt != null) {
+            data.backdateModeration(eventId, moderatedAt);
+        }
         run.events++;
     }
 
     /** Записи и заявки во всех статусах; возвращает подтверждённых участников (для обсуждения). */
-    private List<UUID> createRegistrations(Run run, Event event, UUID authorId, UUID coOrganizerId, Instant createdAt,
-            Instant startAt, List<Person> locals, List<Person> people) {
+    private List<UUID> register(Run run, UUID eventId, JoinMode joinMode, Integer capacity, UUID authorId,
+            UUID coOrganizerId, Instant createdAt, Instant startAt, List<Person> locals, List<Person> people,
+            List<RegistrationAt> times) {
         boolean past = startAt.isBefore(run.now);
         var windowEnd = min(startAt, run.now).minus(Duration.ofMinutes(15));
-        boolean request = event.getJoinMode() == JoinMode.REQUEST;
-        Integer capacity = event.getCapacity();
+        boolean request = joinMode == JoinMode.REQUEST;
         int wanted = capacity != null
                 ? (int) Math.round(capacity * (past ? 0.5 + run.random.nextDouble() * 0.5 : 0.2 + run.random.nextDouble() * 0.7))
                 : past ? run.between(4, 22) : run.between(1, 15);
@@ -356,22 +393,22 @@ public class DemoBulkSeeder {
             }
             var registeredAt = run.between(registrationFrom, windowEnd);
             boolean seatsLeft = capacity == null || confirmed.size() < capacity;
-            Registration registration;
+            if (!seatsLeft) {
+                break; // когда мест нет, записаться или подать заявку нельзя (правило сервиса)
+            }
             if (!request) {
-                if (!seatsLeft) {
-                    break;
-                }
-                registration = registrationMapper.toRegistration(event.getId(), person.id(), RegistrationStatus.CONFIRMED,
-                        null, registeredAt);
+                var registration = registrationService.create(eventId, person.id(), null);
+                var decidedAt = registeredAt;
                 if (run.chance(0.08)) {
-                    registrationMapper.cancel(registration, run.between(registeredAt, windowEnd), person.id());
+                    registrationService.cancel(eventId, person.id());
+                    decidedAt = run.between(registeredAt, windowEnd);
                 } else {
                     confirmed.add(person.id());
                 }
+                times.add(new RegistrationAt(registration.id(), registeredAt, decidedAt));
             } else {
                 var message = run.chance(0.6) ? run.pick(DemoBulkData.REQUEST_MESSAGES) : null;
-                registration = registrationMapper.toRegistration(event.getId(), person.id(), RegistrationStatus.PENDING,
-                        message, null);
+                var registration = registrationService.create(eventId, person.id(), message);
                 var decidedAt = registeredAt.plus(Duration.ofHours(run.between(1, 40)));
                 if (past && !decidedAt.isBefore(windowEnd)) {
                     decidedAt = run.between(registeredAt, windowEnd); // к началу организатор успел решить все заявки
@@ -379,25 +416,22 @@ public class DemoBulkSeeder {
                 boolean decided = past || (decidedAt.isBefore(windowEnd) && run.chance(0.75));
                 if (decided) {
                     if (seatsLeft && run.chance(0.78)) {
-                        registrationMapper.decide(registration, RegistrationStatus.CONFIRMED, null, decidedAt, authorId);
+                        registrationService.approve(registration.id(), authorId);
                         confirmed.add(person.id());
                     } else {
-                        registrationMapper.decide(registration, RegistrationStatus.REJECTED,
-                                run.pick(DemoBulkData.REJECT_REASONS), decidedAt, authorId);
+                        registrationService.reject(registration.id(), authorId, run.pick(DemoBulkData.REJECT_REASONS));
                     }
                 }
+                times.add(new RegistrationAt(registration.id(), registeredAt, decided ? decidedAt : null));
             }
-            var saved = registrations.save(registration);
-            registrations.flush();
-            demoData.backdate(Registration.class, saved.getId(), registeredAt);
             run.registrations++;
         }
         return confirmed;
     }
 
     /** Вопросы и ответы организатора до начала; после прошедших — отзывы. */
-    private void createComments(Run run, Event event, UUID authorId, UUID coOrganizerId, Instant createdAt,
-            Instant startAt, Instant endAt, List<UUID> participants, List<Person> locals) {
+    private void discuss(Run run, UUID eventId, UUID authorId, UUID coOrganizerId, Instant createdAt,
+            Instant startAt, Instant endAt, List<UUID> participants, List<Person> locals, List<CommentAt> times) {
         if (!run.chance(0.5)) {
             return;
         }
@@ -418,88 +452,86 @@ public class DemoBulkSeeder {
                 continue; // событие опубликовано только что — вопросов ещё нет
             }
             var askedAt = run.between(askFrom, askTo);
-            var questionId = comment(run, event, askerId, qa.question(), askedAt, null);
+            var questionId = say(run, eventId, askerId, qa.question(), askedAt, null, times);
             var answeredAt = askedAt.plus(Duration.ofMinutes(run.between(10, 600)));
             if (run.chance(0.85) && answeredAt.isBefore(run.now)) {
                 // организатор отвечает именно на вопрос — с цитатой, как в мессенджере
                 var answerer = coOrganizerId != null && run.chance(0.3) ? coOrganizerId : authorId;
-                var answerId = comment(run, event, answerer, qa.answer(), answeredAt, questionId);
+                var answerId = say(run, eventId, answerer, qa.answer(), answeredAt, questionId, times);
                 var thanksAt = answeredAt.plus(Duration.ofMinutes(run.between(5, 180)));
                 if (run.chance(0.35) && thanksAt.isBefore(run.now)) {
-                    comment(run, event, askerId, run.pick(DemoBulkData.THANKS), thanksAt, answerId);
+                    say(run, eventId, askerId, run.pick(DemoBulkData.THANKS), thanksAt, answerId, times);
                 }
             }
             var echoAt = askedAt.plus(Duration.ofMinutes(run.between(5, 300)));
             if (!locals.isEmpty() && run.chance(0.2) && echoAt.isBefore(run.now)) {
                 var echoerId = run.pick(locals).id();
                 if (!echoerId.equals(askerId) && !echoerId.equals(authorId)) {
-                    comment(run, event, echoerId, run.pick(DemoBulkData.ECHOES), echoAt, questionId);
+                    say(run, eventId, echoerId, run.pick(DemoBulkData.ECHOES), echoAt, questionId, times);
                 }
             }
         }
         if (endAt.plus(Duration.ofHours(1)).isBefore(run.now) && !participants.isEmpty() && run.chance(0.5)) {
             var qa = run.pick(DemoBulkData.AFTER_EVENT);
             var saidAt = run.between(endAt.plus(Duration.ofMinutes(30)), min(endAt.plus(Duration.ofDays(2)), run.now));
-            var reviewId = comment(run, event, run.pick(participants), qa.question(), saidAt, null);
+            var reviewId = say(run, eventId, run.pick(participants), qa.question(), saidAt, null, times);
             var answeredAt = saidAt.plus(Duration.ofMinutes(run.between(15, 300)));
             if (answeredAt.isBefore(run.now)) {
-                comment(run, event, authorId, qa.answer(), answeredAt, reviewId);
+                say(run, eventId, authorId, qa.answer(), answeredAt, reviewId, times);
             }
         }
     }
 
     /** Сообщение (replyToId — ответ на него). Изредка автор его правит или удаляет — как в живом чате. */
-    private UUID comment(Run run, Event event, UUID authorId, String text, Instant at, UUID replyToId) {
-        var comment = commentMapper.toEntity(event.getId(), authorId, text, replyToId);
+    private UUID say(Run run, UUID eventId, UUID authorId, String text, Instant at, UUID replyToId, List<CommentAt> times) {
+        var id = commentService.create(eventId, authorId, text, replyToId).id();
         var laterAt = at.plus(Duration.ofMinutes(run.between(1, 30)));
+        Instant editedAt = null;
+        Instant deletedAt = null;
         if (laterAt.isBefore(run.now)) {
             double roll = run.random.nextDouble();
             if (roll < 0.06) {
-                commentMapper.edit(comment, text + " " + run.pick(DemoBulkData.EDIT_TAILS), laterAt);
+                commentService.update(eventId, id, authorId, text + " " + run.pick(DemoBulkData.EDIT_TAILS));
+                editedAt = laterAt;
             } else if (roll < 0.3 && DemoBulkData.ECHOES.contains(text)) { // удаляют только реплики, на которые не отвечали
-                commentMapper.delete(comment, laterAt);
+                commentService.delete(eventId, id, authorId);
+                deletedAt = laterAt;
             }
         }
-        var saved = comments.save(comment);
-        comments.flush();
-        demoData.backdate(Comment.class, saved.getId(), at);
+        times.add(new CommentAt(id, at, editedAt, deletedAt));
         run.comments++;
-        return saved.getId();
+        return id;
     }
 
     // --- Бобры ---
 
-    /** Образ у двух третей людей: болеют за местные клубы, остальное — по настроению. */
-    private void dressPets(Run run, List<Person> people) {
-        var catalog = petCatalog.load();
-        Map<String, List<String>> codesBySlot = new HashMap<>();
-        Map<String, PetSlotKind> kindBySlot = new HashMap<>();
-        for (var slot : catalog.slots()) {
-            kindBySlot.put(slot.getCode(), slot.getKind());
-            codesBySlot.put(slot.getCode(), catalog.itemsBySlotId().getOrDefault(slot.getId(), List.of()).stream()
-                    .map(i -> i.getCode()).toList());
-        }
+    /** Образ у двух третей людей: болеют за местные клубы, остальное — по настроению. Покупают на свои монеты. */
+    void dress(List<Person> people) {
+        var random = new Random(SEED + 1);
         for (var person : people) {
-            if (!run.chance(0.66)) {
+            if (random.nextDouble() >= 0.66) {
                 continue;
             }
-            var outfit = new HashMap<String, String>();
-            var shirts = codesBySlot.getOrDefault("shirt", List.of());
-            if (!shirts.isEmpty() && run.chance(0.85)) {
+            var shop = pets.catalogFor(person.id());
+            var outfit = new LinkedHashMap<String, String>();
+            var shirts = pets.codes(shop, "shirt");
+            if (!shirts.isEmpty() && random.nextDouble() < 0.85) {
                 var local = person.city().shirts().stream().filter(shirts::contains).toList();
-                outfit.put("shirt", !local.isEmpty() && run.chance(0.6) ? run.pick(local) : run.pick(shirts));
+                outfit.put("shirt", !local.isEmpty() && random.nextDouble() < 0.6
+                        ? local.get(random.nextInt(local.size())) : shirts.get(random.nextInt(shirts.size())));
             }
-            codesBySlot.forEach((slot, codes) -> {
-                if (kindBySlot.get(slot) == PetSlotKind.OUTFIT && !slot.equals("shirt") && !codes.isEmpty()
-                        && run.chance(slot.equals("hat") ? 0.45 : 0.15)) {
-                    outfit.put(slot, run.pick(codes));
+            for (var slot : pets.outfitSlots(shop)) {
+                var codes = pets.codes(shop, slot);
+                if (!slot.equals("shirt") && !codes.isEmpty() && random.nextDouble() < (slot.equals("hat") ? 0.45 : 0.15)) {
+                    outfit.put(slot, codes.get(random.nextInt(codes.size())));
                 }
-            });
-            var activities = codesBySlot.getOrDefault(PetCatalogService.ACTIVITY, List.of(PetCatalogService.NO_ACTIVITY));
-            var activity = run.chance(0.3) ? PetCatalogService.NO_ACTIVITY : run.pick(activities);
-            pets.save(person.id(), new PetRequest(activity, outfit));
+            }
+            var activities = pets.codes(shop, "activity");
+            var activity = random.nextDouble() < 0.3 || activities.isEmpty() ? "none"
+                    : activities.get(random.nextInt(activities.size()));
+            pets.dress(person.id(), activity, outfit);
         }
-        demoData.flushAndClear();
+        data.flushAndClear();
     }
 
     // --- Утилиты ---

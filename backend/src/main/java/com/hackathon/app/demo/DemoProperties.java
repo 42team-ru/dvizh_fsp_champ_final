@@ -1,4 +1,4 @@
-package com.hackathon.app.config;
+package com.hackathon.app.demo;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

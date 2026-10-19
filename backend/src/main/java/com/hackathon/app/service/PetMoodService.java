@@ -14,11 +14,14 @@ import com.hackathon.app.domain.dto.PetStatusResponse;
 import com.hackathon.app.domain.entity.Event;
 import com.hackathon.app.domain.entity.Registration;
 import com.hackathon.app.domain.enums.EventStatus;
+import com.hackathon.app.domain.enums.LedgerKind;
 import com.hackathon.app.domain.enums.OccurrenceStatus;
 import com.hackathon.app.domain.enums.PetMood;
 import com.hackathon.app.domain.enums.PetStatusReason;
 import com.hackathon.app.domain.enums.RegistrationStatus;
+import com.hackathon.app.repository.CoinLedgerRepository;
 import com.hackathon.app.repository.DbTimeRepository;
+import com.hackathon.app.repository.UserAchievementRepository;
 import com.hackathon.app.repository.EventOccurrenceRepository;
 import com.hackathon.app.repository.EventRepository;
 import com.hackathon.app.repository.RegistrationRepository;
@@ -34,17 +37,30 @@ public class PetMoodService {
     private final RegistrationRepository registrations;
     /** Ближайшие запланированные занятия, включая серии. */
     private final EventOccurrenceRepository occurrences;
+    /** Журнал монет: награды за встречи. */
+    private final CoinLedgerRepository ledger;
+    /** Полученные достижения. */
+    private final UserAchievementRepository achievements;
+    /** Инвентарь: что предложить купить. */
+    private final ShopService shop;
     /** Единое бизнес-время базы. */
     private final DbTimeRepository time;
     /** Пояс для разовых встреч, у которых нет собственного timeZone; совпадает с демо-городом. */
     private static final ZoneId DEFAULT_ZONE = ZoneId.of("Asia/Krasnoyarsk");
+    /** Начисления за встречи (достижения отдельно). */
+    private static final java.util.List<LedgerKind> COIN_KINDS = java.util.List.of(LedgerKind.MEETING,
+            LedgerKind.FIRST_MEETING, LedgerKind.ORGANIZER_MEETING, LedgerKind.FIRST_ORGANIZED);
     /** Дата в короткой русской записи. */
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("dd.MM.yyyy");
     /** Часы и минуты в локальном времени встречи. */
     private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("HH:mm");
 
     public PetMoodService(EventRepository events, RegistrationRepository registrations,
-            EventOccurrenceRepository occurrences, DbTimeRepository time) {
+            EventOccurrenceRepository occurrences, CoinLedgerRepository ledger,
+            UserAchievementRepository achievements, ShopService shop, DbTimeRepository time) {
+        this.ledger = ledger;
+        this.achievements = achievements;
+        this.shop = shop;
         this.events = events;
         this.registrations = registrations;
         this.occurrences = occurrences;
@@ -96,6 +112,27 @@ public class PetMoodService {
                 var event = related.get(r.getEventId());
                 return state(PetMood.WINK, "Меня приняли на «" + event.getTitle() + "»!",
                         PetStatusReason.REGISTRATION_APPROVED, event);
+            }
+        }
+        // 4а. Новое достижение за последние сутки.
+        var achievement = achievements.findByUserIdAndCreatedAtGreaterThanEqualOrderByCreatedAtDesc(userId, now.minus(Duration.ofHours(24)))
+                .stream().filter(a -> recent(a.getCreatedAt(), now, Duration.ofHours(24))).findFirst();
+        if (achievement.isPresent()) {
+            return state(PetMood.HAPPY, "Новое достижение: «" + achievement.get().getCode().getTitle() + "»!",
+                    PetStatusReason.ACHIEVEMENT_EARNED, null);
+        }
+        // 4б. Монеты за встречу за последние сутки: сумма всех начислений за последнее занятие.
+        var earned = ledger.findByUserIdAndKindInAndCreatedAtGreaterThanEqualOrderByCreatedAtDesc(userId, COIN_KINDS,
+                now.minus(Duration.ofHours(24))).stream().filter(e -> recent(e.getCreatedAt(), now, Duration.ofHours(24))).toList();
+        if (!earned.isEmpty() && earned.getFirst().getEventId() != null) {
+            var latest = earned.getFirst();
+            int sum = earned.stream().filter(e -> java.util.Objects.equals(e.getOccurrenceId(), latest.getOccurrenceId()))
+                    .mapToInt(e -> e.getAmount()).sum();
+            var event = events.findById(latest.getEventId()).orElse(null);
+            if (event != null) {
+                var offer = shop.owns(userId, "hat:cap") ? "Заглянем в магазин?" : "Купим кепку?";
+                return state(PetMood.WINK, "+" + sum + " монет за «" + event.getTitle() + "»! " + offer,
+                        PetStatusReason.COINS_EARNED, event);
             }
         }
         // Следующее SCHEDULED-занятие: старое начало серии и отменённые даты не считаются будущей встречей.

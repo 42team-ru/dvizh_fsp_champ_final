@@ -286,6 +286,16 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "Вещь ещё не куплена и не получена",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -1016,6 +1026,58 @@
           },
           "409": {
             "description": "Мест нет, мероприятие снято или участник сам отменил",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pets/shop/{item}/buy": {
+      "post": {
+        "tags": [
+          "pets"
+        ],
+        "summary": "Купить вещь",
+        "description": "item — id вещи из магазина в виде слот:код, например hat:cap.",
+        "operationId": "pets_buy",
+        "parameters": [
+          {
+            "name": "item",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Вещь куплена",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShopItemResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Нет такой вещи",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Не хватает монет, вещь уже есть или это эксклюзив",
             "content": {
               "application/json": {
                 "schema": {
@@ -2381,6 +2443,38 @@
         }
       }
     },
+    "/api/admin/awards/{id}/confirm": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Подтвердить «Организацию месяца»",
+        "operationId": "admin_confirmAward",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationAwardResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/users/{id}": {
       "get": {
         "tags": [
@@ -2460,6 +2554,27 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/me/wallet": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Мой кошелёк: монеты, уровень, энергия и последние операции",
+        "operationId": "users_wallet",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletResponse"
                 }
               }
             }
@@ -2594,6 +2709,30 @@
         }
       }
     },
+    "/api/users/me/achievements": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Мои достижения: все шесть с прогрессом и датой получения",
+        "operationId": "users_achievements",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AchievementResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/sports": {
       "get": {
         "tags": [
@@ -2721,6 +2860,31 @@
         }
       }
     },
+    "/api/pets/shop": {
+      "get": {
+        "tags": [
+          "pets"
+        ],
+        "summary": "Магазин: все вещи с ценой, видом и признаком «моя»",
+        "description": "Базовые вещи есть у всех, магазинные покупаются за монеты, эксклюзивы дают за достижения (поле hint).",
+        "operationId": "pets_shop",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ShopItemResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/pets/catalog": {
       "get": {
         "tags": [
@@ -2768,6 +2932,28 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PublicOrganizationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/organizations/featured": {
+      "get": {
+        "tags": [
+          "organizations"
+        ],
+        "summary": "Организация месяца для ленты",
+        "description": "Подтверждённая админом организация за прошлый или текущий месяц; пустой ответ, если её нет.",
+        "operationId": "organizations_featured",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeaturedOrganizationResponse"
                 }
               }
             }
@@ -3498,6 +3684,39 @@
         }
       }
     },
+    "/api/admin/awards": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Предложение «Организации месяца» и счета лучших кандидатов",
+        "description": "Без месяца — самое свежее предложение, ожидающее подтверждения, иначе прошлый месяц.",
+        "operationId": "admin_listAwards",
+        "parameters": [
+          {
+            "name": "month",
+            "in": "query",
+            "description": "Месяц в виде 2026-09",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminAwardsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/organizations/me/documents/{fileId}": {
       "delete": {
         "tags": [
@@ -3951,6 +4170,8 @@
               "REGISTERED_EVENT_MODERATED",
               "REGISTRATION_REJECTED",
               "REGISTRATION_APPROVED",
+              "COINS_EARNED",
+              "ACHIEVEMENT_EARNED",
               "EVENT_SOON",
               "NEW_REQUESTS",
               "AWAITING_APPROVAL",
@@ -5308,6 +5529,64 @@
           "userId"
         ]
       },
+      "ShopItemResponse": {
+        "type": "object",
+        "description": "Вещь бобра в магазине с ценой и признаком «моя»",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Идентификатор для покупки: слот:код",
+            "example": "hat:cap"
+          },
+          "slot": {
+            "type": "string",
+            "description": "Код слота для pets_equip",
+            "example": "hat"
+          },
+          "code": {
+            "type": "string",
+            "description": "Код вещи для pets_equip",
+            "example": "cap"
+          },
+          "label": {
+            "type": "string",
+            "description": "Подпись",
+            "example": "Кепка"
+          },
+          "price": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Цена в монетах; 0 у базовых и эксклюзивов",
+            "example": 60
+          },
+          "kind": {
+            "type": "string",
+            "description": "Базовая, магазин или эксклюзив",
+            "enum": [
+              "BASE",
+              "SHOP",
+              "EXCLUSIVE"
+            ]
+          },
+          "owned": {
+            "type": "boolean",
+            "description": "Вещь уже у пользователя и её можно надеть"
+          },
+          "hint": {
+            "type": "string",
+            "description": "У эксклюзива — за что дают, например «Дают за 10 встреч»; иначе null"
+          }
+        },
+        "required": [
+          "code",
+          "id",
+          "kind",
+          "label",
+          "owned",
+          "price",
+          "slot"
+        ]
+      },
       "RegistrationRequest": {
         "type": "object",
         "description": "Запись на мероприятие; тело можно не передавать",
@@ -5679,6 +5958,58 @@
           "title"
         ]
       },
+      "OrganizationAwardResponse": {
+        "type": "object",
+        "description": "Награда «Организация месяца»",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "organizationId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Организация-победитель"
+          },
+          "organizationName": {
+            "type": "string",
+            "description": "Название организации"
+          },
+          "period": {
+            "type": "string",
+            "format": "date",
+            "description": "Первый день месяца, за который награда",
+            "example": "2026-09-01"
+          },
+          "score": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Счёт",
+            "example": 45
+          },
+          "status": {
+            "type": "string",
+            "description": "Предложена или подтверждена",
+            "enum": [
+              "PROPOSED",
+              "CONFIRMED"
+            ]
+          },
+          "confirmedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Когда подтверждена; null — ещё нет"
+          }
+        },
+        "required": [
+          "id",
+          "organizationId",
+          "organizationName",
+          "period",
+          "score",
+          "status"
+        ]
+      },
       "EventSummaryResponse": {
         "type": "object",
         "description": "Мероприятие в списке: лента, мои мероприятия, мои записи",
@@ -5918,6 +6249,112 @@
           "username"
         ]
       },
+      "WalletEntryResponse": {
+        "type": "object",
+        "description": "Операция в журнале монет",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Монеты: плюс — начисление, минус — трата",
+            "example": 10
+          },
+          "kind": {
+            "type": "string",
+            "description": "За что",
+            "enum": [
+              "MEETING",
+              "FIRST_MEETING",
+              "ORGANIZER_MEETING",
+              "FIRST_ORGANIZED",
+              "ACHIEVEMENT",
+              "PURCHASE",
+              "ADJUSTMENT"
+            ]
+          },
+          "note": {
+            "type": "string",
+            "description": "Подпись для человека",
+            "example": "Встреча"
+          },
+          "eventId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Мероприятие, за которое начислено; null — не про встречу"
+          },
+          "eventTitle": {
+            "type": "string",
+            "description": "Название мероприятия; null — не про встречу"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Когда произошло"
+          }
+        },
+        "required": [
+          "amount",
+          "id",
+          "kind",
+          "note",
+          "occurredAt"
+        ]
+      },
+      "WalletResponse": {
+        "type": "object",
+        "description": "Кошелёк и прогресс бобра",
+        "properties": {
+          "coins": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Баланс монет",
+            "example": 180
+          },
+          "level": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Уровень: 1 плюс одна ступень за каждые 5 засчитанных встреч (проведённая считается за две)",
+            "example": 4
+          },
+          "countedMeetings": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Засчитанных встреч всего с учётом двойного веса проведённых",
+            "example": 17
+          },
+          "energy": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Энергия: засчитанные встречи за последние 7 дней",
+            "example": 3
+          },
+          "energyMax": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Максимум энергии",
+            "example": 5
+          },
+          "entries": {
+            "type": "array",
+            "description": "Последние 20 операций, свежие сверху",
+            "items": {
+              "$ref": "#/components/schemas/WalletEntryResponse"
+            }
+          }
+        },
+        "required": [
+          "coins",
+          "countedMeetings",
+          "energy",
+          "energyMax",
+          "entries",
+          "level"
+        ]
+      },
       "AttendedOccurrenceResponse": {
         "type": "object",
         "description": "Прошедшее занятие, на котором человек был записан или отмечен",
@@ -6014,6 +6451,75 @@
         "required": [
           "count",
           "sport"
+        ]
+      },
+      "AchievementResponse": {
+        "type": "object",
+        "description": "Достижение с прогрессом",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "FIRST_STEP",
+              "VERSATILE",
+              "REGULAR",
+              "TEAM_BUILDER",
+              "SOUL_OF_COMPANY",
+              "OWN_BEAVER"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "description": "Название",
+            "example": "Завсегдатай"
+          },
+          "description": {
+            "type": "string",
+            "description": "Условие",
+            "example": "Сходить на 10 встреч"
+          },
+          "progress": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Текущий прогресс, не больше цели",
+            "example": 2
+          },
+          "goal": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Цель",
+            "example": 3
+          },
+          "unit": {
+            "type": "string",
+            "description": "Единица прогресса: «2 из 3 видов спорта»",
+            "example": "видов спорта"
+          },
+          "reward": {
+            "type": "string",
+            "description": "Награда словами",
+            "example": "+50 монет"
+          },
+          "earnedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Когда получено; null — ещё нет"
+          },
+          "imageUrl": {
+            "type": "string",
+            "description": "Иллюстрация достижения",
+            "example": "/api/achievement-images/first_step.webp"
+          }
+        },
+        "required": [
+          "code",
+          "description",
+          "goal",
+          "imageUrl",
+          "progress",
+          "reward",
+          "title",
+          "unit"
         ]
       },
       "MyRegistrationResponse": {
@@ -6188,6 +6694,71 @@
           "label"
         ]
       },
+      "AwardBadgeResponse": {
+        "type": "object",
+        "description": "Награда на публичной странице организации: полученная с датой или веха с прогрессом",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "FIRST_MEETING",
+              "PARTICIPANTS_100",
+              "RETURNING_20",
+              "ORG_OF_MONTH"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "description": "Название",
+            "example": "100 участников"
+          },
+          "description": {
+            "type": "string",
+            "description": "Условие"
+          },
+          "earned": {
+            "type": "boolean",
+            "description": "Получена ли"
+          },
+          "earnedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Когда получена; null — ещё нет"
+          },
+          "period": {
+            "type": "string",
+            "format": "date",
+            "description": "Месяц награды «Организация месяца» (первый день); у вех null",
+            "example": "2026-09-01"
+          },
+          "progress": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Прогресс вехи, не больше цели; у «Организации месяца» 0",
+            "example": 64
+          },
+          "goal": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Цель вехи; у «Организации месяца» 0",
+            "example": 100
+          },
+          "imageUrl": {
+            "type": "string",
+            "description": "Иллюстрация награды",
+            "example": "/api/achievement-images/org_participants_100.webp"
+          }
+        },
+        "required": [
+          "description",
+          "earned",
+          "goal",
+          "imageUrl",
+          "kind",
+          "progress",
+          "title"
+        ]
+      },
       "PublicOrganizationResponse": {
         "type": "object",
         "properties": {
@@ -6218,8 +6789,45 @@
             "items": {
               "$ref": "#/components/schemas/FileResponse"
             }
+          },
+          "awards": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AwardBadgeResponse"
+            }
           }
         }
+      },
+      "FeaturedOrganizationResponse": {
+        "type": "object",
+        "description": "Организация месяца для блока в ленте",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string",
+            "description": "Город"
+          },
+          "logoUrl": {
+            "type": "string",
+            "description": "Адрес логотипа; null — без логотипа"
+          },
+          "period": {
+            "type": "string",
+            "format": "date",
+            "description": "Первый день месяца награды"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "period"
+        ]
       },
       "EventRegistrationResponse": {
         "type": "object",
@@ -6748,6 +7356,80 @@
             "format": "int32"
           }
         }
+      },
+      "AdminAwardsResponse": {
+        "type": "object",
+        "description": "Предложение «Организации месяца» за месяц и лучшие кандидаты",
+        "properties": {
+          "period": {
+            "type": "string",
+            "format": "date",
+            "description": "Первый день месяца",
+            "example": "2026-09-01"
+          },
+          "award": {
+            "$ref": "#/components/schemas/OrganizationAwardResponse",
+            "description": "Награда за месяц (предложенная или подтверждённая); null — ещё нет"
+          },
+          "candidates": {
+            "type": "array",
+            "description": "Лучшие кандидаты по убыванию счёта, до 5",
+            "items": {
+              "$ref": "#/components/schemas/AwardCandidateResponse"
+            }
+          }
+        },
+        "required": [
+          "candidates",
+          "period"
+        ]
+      },
+      "AwardCandidateResponse": {
+        "type": "object",
+        "description": "Кандидат на «Организацию месяца» со счётом",
+        "properties": {
+          "organizationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "organizationName": {
+            "type": "string"
+          },
+          "meetings": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Встреч за месяц"
+          },
+          "participants": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Уникальных пришедших участников"
+          },
+          "returning": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Из них вернувшихся (были у организации и раньше)"
+          },
+          "moderated": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Событий, снятых или удалённых админом за месяц"
+          },
+          "score": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Счёт: пришедшие ×3 + вернувшиеся ×5 − 30 за снятое событие"
+          }
+        },
+        "required": [
+          "meetings",
+          "moderated",
+          "organizationId",
+          "organizationName",
+          "participants",
+          "returning",
+          "score"
+        ]
       }
     },
     "securitySchemes": {

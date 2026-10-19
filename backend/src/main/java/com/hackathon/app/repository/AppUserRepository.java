@@ -19,6 +19,11 @@ public interface AppUserRepository extends JpaRepository<AppUser, UUID> {
     org.springframework.data.domain.Page<AppUser> search(String pattern,
             com.hackathon.app.domain.enums.SystemRole role, org.springframework.data.domain.Pageable pageable);
 
+	/** С блокировкой строки: баланс монет меняется только под ней, иначе две покупки потратят одни монеты. */
+	@org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+	@Query("select u from AppUser u where u.id = :id")
+	Optional<AppUser> findByIdForUpdate(java.util.UUID id);
+
     boolean existsByUsernameIgnoreCase(String username);
 
 	boolean existsByEmailIgnoreCase(String email);

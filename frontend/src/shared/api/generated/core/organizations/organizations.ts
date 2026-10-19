@@ -25,6 +25,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  FeaturedOrganizationResponse,
   OrganizationResponse,
   OrganizationsAddDocumentBody,
   OrganizationsUploadLogoBody,
@@ -657,6 +658,119 @@ export function useOrganizationsGet<TData = Awaited<ReturnType<typeof organizati
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getOrganizationsGetQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type organizationsFeaturedResponse200 = {
+  data: FeaturedOrganizationResponse
+  status: 200
+}
+
+export type organizationsFeaturedResponseSuccess = (organizationsFeaturedResponse200) & {
+  headers: Headers;
+};
+;
+
+export type organizationsFeaturedResponse = (organizationsFeaturedResponseSuccess)
+
+export const getOrganizationsFeaturedUrl = () => {
+
+
+
+
+  return `/api/organizations/featured`
+}
+
+/**
+ * Подтверждённая админом организация за прошлый или текущий месяц; пустой ответ, если её нет.
+ * @summary Организация месяца для ленты
+ */
+export const organizationsFeatured = async ( options?: Parameters<typeof authMutator>[1]): Promise<organizationsFeaturedResponse> => {
+
+  return authMutator<organizationsFeaturedResponse>(getOrganizationsFeaturedUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getOrganizationsFeaturedQueryKey = () => {
+    return [
+    `/api/organizations/featured`
+    ] as const;
+    }
+
+
+export const getOrganizationsFeaturedQueryOptions = <TData = Awaited<ReturnType<typeof organizationsFeatured>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsFeatured>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getOrganizationsFeaturedQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof organizationsFeatured>>> = ({ signal }) => organizationsFeatured({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof organizationsFeatured>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type OrganizationsFeaturedQueryResult = NonNullable<Awaited<ReturnType<typeof organizationsFeatured>>>
+export type OrganizationsFeaturedQueryError = ErrorType<unknown>
+
+
+export function useOrganizationsFeatured<TData = Awaited<ReturnType<typeof organizationsFeatured>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsFeatured>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof organizationsFeatured>>,
+          TError,
+          Awaited<ReturnType<typeof organizationsFeatured>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useOrganizationsFeatured<TData = Awaited<ReturnType<typeof organizationsFeatured>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsFeatured>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof organizationsFeatured>>,
+          TError,
+          Awaited<ReturnType<typeof organizationsFeatured>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useOrganizationsFeatured<TData = Awaited<ReturnType<typeof organizationsFeatured>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsFeatured>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Организация месяца для ленты
+ */
+
+export function useOrganizationsFeatured<TData = Awaited<ReturnType<typeof organizationsFeatured>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsFeatured>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getOrganizationsFeaturedQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

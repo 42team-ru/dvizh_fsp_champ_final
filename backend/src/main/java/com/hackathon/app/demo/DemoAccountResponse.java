@@ -1,4 +1,4 @@
-package com.hackathon.app.domain.dto;
+package com.hackathon.app.demo;
 
 import com.hackathon.app.domain.entity.AppUser;
 import com.hackathon.app.domain.enums.SystemRole;

@@ -60,3 +60,20 @@ ILLUSTRATION STYLE: minimal flat illustration, simple bold shapes. Clean black o
 | `dance` | Two people dancing together holding hands, calm and joyful, side view, tomato red background, one in yellow and one in blue. |
 | `nordic_walking` | One older person walking with two nordic walking poles, side view, smiling, lemon yellow background, blue jacket, red cap. |
 | `checkers` | One person sitting at a small table playing checkers, one hand moving a piece, black and red pieces on a board, three-quarter view, electric blue background, yellow sweater. |
+
+## Достижения и награды организаций
+
+Тот же стиль и та же генерация. Файлы — `backend/src/main/resources/achievement-images/<код>.webp`: у достижений людей код `AchievementCode` в нижнем регистре, у наград организаций — `org_` + `OrganizationAwardKind` (у «Организации месяца» префикс не удваивается: `org_of_month`). Раздаются как статика по `/api/achievement-images/…`; ссылку отдают `AchievementResponse.imageUrl` и `AwardBadgeResponse.imageUrl` (`util/AchievementImages`). Новое достижение без файла даст битую картинку — файл добавлять вместе с кодом.
+
+| Файл | Сцена |
+|---|---|
+| `first_step` | One person confidently taking a first step over a simple start line on the ground, side view, sneakers, lemon yellow background, blue shirt, red sneakers. |
+| `versatile` | One person happily holding three sports items at once: a football under one arm, a tennis racket in one hand and a big chess knight piece in the other, front view, electric blue background, yellow shirt. |
+| `regular` | One person proudly holding a big gold medal on a ribbon against the chest, smiling, front view, tomato red background, yellow medal, blue shirt. |
+| `team_builder` | One person waving to invite a second person who is walking towards them, a ball under the first person's arm, side view, lemon yellow background, one in blue and one in red. |
+| `soul_of_company` | One cheerful organizer wearing a small golden crown and a whistle on a cord, holding a clipboard, front view, electric blue background, yellow crown, red top. |
+| `own_beaver` | One person in a blue t-shirt hugging a friendly round cartoon beaver mascot of the same height, both smiling, front view, tomato red background, brown beaver with big white front teeth. |
+| `org_first_meeting` | One organizer holding a small pennant flag and warmly greeting a first participant who just arrived with a sports bag, side view, lemon yellow background, organizer in blue, participant in red. |
+| `org_participants_100` | One happy organizer throwing a big burst of round confetti pieces into the air with both hands, front view, electric blue background, yellow and red confetti, yellow top. |
+| `org_returning_20` | Two friends meeting again and shaking hands warmly, both with sports bags on their shoulders, side view, tomato red background, one in yellow and one in blue. |
+| `org_of_month` | One organizer proudly lifting a big golden trophy cup above the head with both hands, front view, lemon yellow background, golden trophy, blue top. |

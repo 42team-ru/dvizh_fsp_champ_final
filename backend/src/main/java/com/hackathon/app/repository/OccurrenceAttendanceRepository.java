@@ -27,6 +27,10 @@ public interface OccurrenceAttendanceRepository extends JpaRepository<Occurrence
 
 	long countByOccurrenceId(UUID occurrenceId);
 
+	/** Кто отметился на занятии. */
+	@Query("select a.userId from OccurrenceAttendance a where a.occurrenceId = :occurrenceId")
+	List<UUID> findUserIds(UUID occurrenceId);
+
 	boolean existsByOccurrenceId(UUID occurrenceId);
 
 	/** Мои отметки среди занятий из списка. */

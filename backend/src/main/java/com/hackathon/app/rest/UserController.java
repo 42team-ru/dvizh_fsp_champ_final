@@ -12,7 +12,11 @@ import com.hackathon.app.domain.dto.PublicUserResponse;
 import com.hackathon.app.domain.dto.SaveUserSportsRequest;
 import com.hackathon.app.domain.dto.UpdateProfileRequest;
 import com.hackathon.app.domain.dto.UserSportResponse;
+import com.hackathon.app.domain.dto.AchievementResponse;
+import com.hackathon.app.domain.dto.WalletResponse;
+import com.hackathon.app.service.AchievementService;
 import com.hackathon.app.service.AttendanceHistoryService;
+import com.hackathon.app.service.WalletService;
 import com.hackathon.app.service.UserProfileService;
 import com.hackathon.app.service.UserSportService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -50,6 +54,26 @@ class UserController {
 	private final UserProfileService profiles;
 	private final UserSportService userSports;
 	private final AttendanceHistoryService history;
+	private final WalletService wallet;
+	private final AchievementService achievements;
+
+	@GetMapping("/me/wallet")
+	@Operation(operationId = "users_wallet", summary = "Мой кошелёк: монеты, уровень, энергия и последние операции")
+	WalletResponse wallet(@AuthenticationPrincipal Jwt jwt) {
+		log.info("Endpoint called: GET /api/users/me/wallet, userId={}", jwt.getSubject());
+		var response = wallet.wallet(userId(jwt));
+		log.info("Endpoint response: GET /api/users/me/wallet, coins={}, level={}", response.coins(), response.level());
+		return response;
+	}
+
+	@GetMapping("/me/achievements")
+	@Operation(operationId = "users_achievements", summary = "Мои достижения: все шесть с прогрессом и датой получения")
+	List<AchievementResponse> achievements(@AuthenticationPrincipal Jwt jwt) {
+		log.info("Endpoint called: GET /api/users/me/achievements, userId={}", jwt.getSubject());
+		var response = achievements.list(userId(jwt));
+		log.info("Endpoint response: GET /api/users/me/achievements, items={}", response.size());
+		return response;
+	}
 
 	@GetMapping("/{id}")
 	@Operation(operationId = "users_get", summary = "Публичный профиль организатора",

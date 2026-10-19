@@ -30,7 +30,7 @@ import tools.jackson.databind.ObjectMapper;
  * Остальные тесты идут на H2 и быстрее.
  */
 @Tag("postgres")
-@SpringBootTest
+@SpringBootTest(properties = {"app.storage.type=memory", "app.demo.enabled=false", "app.economy.scheduler-enabled=false"})
 @AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
 class PostgresMigrationsTest {

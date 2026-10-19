@@ -25,6 +25,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AchievementResponse,
   AttendanceSummaryResponse,
   MeResponse,
   PageResponseAttendedOccurrenceResponse,
@@ -35,7 +36,8 @@ import type {
   UserSportResponse,
   UsersHistoryParams,
   UsersHistorySummaryParams,
-  UsersUploadAvatarBody
+  UsersUploadAvatarBody,
+  WalletResponse
 } from '../appAPI.schemas';
 
 import { authMutator } from '../../../mutators/authMutator';
@@ -689,6 +691,118 @@ export function useUsersGet<TData = Awaited<ReturnType<typeof usersGet>>, TError
 
 
 
+export type usersWalletResponse200 = {
+  data: WalletResponse
+  status: 200
+}
+
+export type usersWalletResponseSuccess = (usersWalletResponse200) & {
+  headers: Headers;
+};
+;
+
+export type usersWalletResponse = (usersWalletResponseSuccess)
+
+export const getUsersWalletUrl = () => {
+
+
+
+
+  return `/api/users/me/wallet`
+}
+
+/**
+ * @summary Мой кошелёк: монеты, уровень, энергия и последние операции
+ */
+export const usersWallet = async ( options?: Parameters<typeof authMutator>[1]): Promise<usersWalletResponse> => {
+
+  return authMutator<usersWalletResponse>(getUsersWalletUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getUsersWalletQueryKey = () => {
+    return [
+    `/api/users/me/wallet`
+    ] as const;
+    }
+
+
+export const getUsersWalletQueryOptions = <TData = Awaited<ReturnType<typeof usersWallet>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersWallet>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getUsersWalletQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof usersWallet>>> = ({ signal }) => usersWallet({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof usersWallet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type UsersWalletQueryResult = NonNullable<Awaited<ReturnType<typeof usersWallet>>>
+export type UsersWalletQueryError = ErrorType<unknown>
+
+
+export function useUsersWallet<TData = Awaited<ReturnType<typeof usersWallet>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersWallet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersWallet>>,
+          TError,
+          Awaited<ReturnType<typeof usersWallet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUsersWallet<TData = Awaited<ReturnType<typeof usersWallet>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersWallet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersWallet>>,
+          TError,
+          Awaited<ReturnType<typeof usersWallet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUsersWallet<TData = Awaited<ReturnType<typeof usersWallet>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersWallet>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Мой кошелёк: монеты, уровень, энергия и последние операции
+ */
+
+export function useUsersWallet<TData = Awaited<ReturnType<typeof usersWallet>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersWallet>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getUsersWalletQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 export type usersHistoryResponse200 = {
   data: PageResponseAttendedOccurrenceResponse
   status: 200
@@ -924,6 +1038,118 @@ export function useUsersHistorySummary<TData = Awaited<ReturnType<typeof usersHi
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getUsersHistorySummaryQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type usersAchievementsResponse200 = {
+  data: AchievementResponse[]
+  status: 200
+}
+
+export type usersAchievementsResponseSuccess = (usersAchievementsResponse200) & {
+  headers: Headers;
+};
+;
+
+export type usersAchievementsResponse = (usersAchievementsResponseSuccess)
+
+export const getUsersAchievementsUrl = () => {
+
+
+
+
+  return `/api/users/me/achievements`
+}
+
+/**
+ * @summary Мои достижения: все шесть с прогрессом и датой получения
+ */
+export const usersAchievements = async ( options?: Parameters<typeof authMutator>[1]): Promise<usersAchievementsResponse> => {
+
+  return authMutator<usersAchievementsResponse>(getUsersAchievementsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getUsersAchievementsQueryKey = () => {
+    return [
+    `/api/users/me/achievements`
+    ] as const;
+    }
+
+
+export const getUsersAchievementsQueryOptions = <TData = Awaited<ReturnType<typeof usersAchievements>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersAchievements>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getUsersAchievementsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof usersAchievements>>> = ({ signal }) => usersAchievements({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof usersAchievements>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type UsersAchievementsQueryResult = NonNullable<Awaited<ReturnType<typeof usersAchievements>>>
+export type UsersAchievementsQueryError = ErrorType<unknown>
+
+
+export function useUsersAchievements<TData = Awaited<ReturnType<typeof usersAchievements>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersAchievements>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersAchievements>>,
+          TError,
+          Awaited<ReturnType<typeof usersAchievements>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUsersAchievements<TData = Awaited<ReturnType<typeof usersAchievements>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersAchievements>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof usersAchievements>>,
+          TError,
+          Awaited<ReturnType<typeof usersAchievements>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useUsersAchievements<TData = Awaited<ReturnType<typeof usersAchievements>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersAchievements>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Мои достижения: все шесть с прогрессом и датой получения
+ */
+
+export function useUsersAchievements<TData = Awaited<ReturnType<typeof usersAchievements>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof usersAchievements>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getUsersAchievementsQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

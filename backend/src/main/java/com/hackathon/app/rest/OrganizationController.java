@@ -5,6 +5,8 @@ import java.util.UUID;
 import com.hackathon.app.domain.dto.OrganizationResponse;
 import com.hackathon.app.domain.dto.PublicOrganizationResponse;
 import com.hackathon.app.domain.dto.SaveOrganizationRequest;
+import com.hackathon.app.domain.dto.FeaturedOrganizationResponse;
+import com.hackathon.app.service.OrganizationAwardService;
 import com.hackathon.app.service.OrganizationService;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -38,6 +40,7 @@ import org.springframework.web.multipart.MultipartFile;
 class OrganizationController {
 
 	private final OrganizationService organizations;
+	private final OrganizationAwardService awards;
 
 	@GetMapping("/me")
 	@Operation(operationId = "organizations_me", summary = "Анкета своей организации со статусом допуска")
@@ -95,6 +98,16 @@ class OrganizationController {
 		log.info("Endpoint called: DELETE /api/organizations/me/documents/{}, userId={}", fileId, jwt.getSubject());
 		var response = organizations.removeDocument(userId(jwt), fileId);
 		log.info("Endpoint response: DELETE /api/organizations/me/documents/{}, documents={}", fileId, response.documents().size());
+		return response;
+	}
+
+	@GetMapping("/featured")
+	@Operation(operationId = "organizations_featured", summary = "Организация месяца для ленты",
+			description = "Подтверждённая админом организация за прошлый или текущий месяц; пустой ответ, если её нет.")
+	FeaturedOrganizationResponse featured() {
+		log.info("Endpoint called: GET /api/organizations/featured");
+		var response = awards.featured();
+		log.info("Endpoint response: GET /api/organizations/featured, organizationId={}", response == null ? null : response.id());
 		return response;
 	}
 

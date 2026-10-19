@@ -9,6 +9,7 @@ import com.hackathon.app.domain.entity.AppUser;
 import com.hackathon.app.domain.entity.PetItem;
 import com.hackathon.app.domain.entity.PetSlot;
 import com.hackathon.app.domain.entity.UserPetEquipment;
+import com.hackathon.app.domain.enums.PetItemKind;
 import com.hackathon.app.domain.enums.PetSlotKind;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -23,6 +24,9 @@ public interface PetMapper {
 	PetSlot toSlot(String code, String label, PetSlotKind kind, int position, boolean builtIn);
 
 	PetItem toItem(UUID slotId, String code, String label, boolean builtIn, int position);
+
+	/** Цена, вид и подсказка вещи; вызывается и для уже существующих вещей при старте. */
+	void economy(@MappingTarget PetItem item, int price, PetItemKind kind, String unlockHint);
 
 	UserPetEquipment toEquipment(UUID userId, UUID slotId, UUID itemId);
 

@@ -50,7 +50,7 @@ class PetNameE2ETest {
         var viewer = api.newUser("petNameViewer");
         assertThat(owner.pet().name()).isEqualTo("Бублик");
         assertThat(viewer.petOf(owner.id()).name()).isEqualTo("Бублик");
-        var outfit = owner.savePet(new PetRequest("none", Map.of("hat", "cap"))).outfit();
+        var outfit = owner.savePet(new PetRequest("none", Map.of("hat", "headband"))).outfit();
         var renamed = owner.renamePet("  Капитан \t  Бобр  ");
         assertThat(renamed.name()).isEqualTo("Капитан Бобр");
         assertThat(renamed.outfit()).isEqualTo(outfit);

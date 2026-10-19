@@ -1,5 +1,6 @@
 package com.hackathon.app.rest;
 
+import java.util.List;
 import java.util.UUID;
 
 import com.hackathon.app.domain.dto.PetCatalogResponse;
@@ -7,7 +8,9 @@ import com.hackathon.app.domain.dto.PetEquipRequest;
 import com.hackathon.app.domain.dto.PetRequest;
 import com.hackathon.app.domain.dto.PetRenameRequest;
 import com.hackathon.app.domain.dto.PetResponse;
+import com.hackathon.app.domain.dto.ShopItemResponse;
 import com.hackathon.app.service.PetCatalogService;
+import com.hackathon.app.service.ShopService;
 import com.hackathon.app.service.PetService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -23,6 +26,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -38,6 +42,7 @@ class PetController {
 
 	private final PetService pets;
 	private final PetCatalogService catalog;
+	private final ShopService shop;
 
 	@GetMapping("/pets/catalog")
 	@Operation(operationId = "pets_catalog", summary = "Каталог: слоты и вещи",
@@ -46,6 +51,29 @@ class PetController {
 		log.info("Endpoint called: GET /api/pets/catalog, userId={}", jwt.getSubject());
 		var response = catalog.catalog();
 		log.info("Endpoint response: GET /api/pets/catalog, slots={}", response.slots().size());
+		return response;
+	}
+
+	@GetMapping("/pets/shop")
+	@Operation(operationId = "pets_shop", summary = "Магазин: все вещи с ценой, видом и признаком «моя»",
+			description = "Базовые вещи есть у всех, магазинные покупаются за монеты, эксклюзивы дают за достижения (поле hint).")
+	List<ShopItemResponse> shop(@AuthenticationPrincipal Jwt jwt) {
+		log.info("Endpoint called: GET /api/pets/shop, userId={}", jwt.getSubject());
+		var response = shop.shop(userId(jwt));
+		log.info("Endpoint response: GET /api/pets/shop, items={}", response.size());
+		return response;
+	}
+
+	@PostMapping("/pets/shop/{item}/buy")
+	@Operation(operationId = "pets_buy", summary = "Купить вещь",
+			description = "item — id вещи из магазина в виде слот:код, например hat:cap.")
+	@ApiResponse(responseCode = "200", description = "Вещь куплена")
+	@ApiResponse(responseCode = "404", description = "Нет такой вещи", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+	@ApiResponse(responseCode = "409", description = "Не хватает монет, вещь уже есть или это эксклюзив", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+	ShopItemResponse buy(@AuthenticationPrincipal Jwt jwt, @PathVariable String item) {
+		log.info("Endpoint called: POST /api/pets/shop/{}/buy, userId={}", item, jwt.getSubject());
+		var response = shop.buy(userId(jwt), item);
+		log.info("Endpoint response: POST /api/pets/shop/{}/buy, response={}", item, response);
 		return response;
 	}
 
@@ -86,6 +114,7 @@ class PetController {
 			description = "Например, сменить головной убор: slot = hat, item = helmet. item = null — снять.")
 	@ApiResponse(responseCode = "200", description = "OK")
 	@ApiResponse(responseCode = "400", description = "Нет такой вещи в слоте", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+	@ApiResponse(responseCode = "409", description = "Вещь ещё не куплена и не получена", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
 	@ApiResponse(responseCode = "404", description = "Нет такого слота", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
 	PetResponse equip(@AuthenticationPrincipal Jwt jwt, @PathVariable String slot,
 			@RequestBody PetEquipRequest request) {

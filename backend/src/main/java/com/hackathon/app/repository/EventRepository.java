@@ -24,6 +24,13 @@ public interface EventRepository extends JpaRepository<Event, UUID>, JpaSpecific
 	/** Для идемпотентного демо-сида: такое мероприятие у автора уже есть. */
 	boolean existsByAuthorIdAndTitle(UUID authorId, String title);
 
+	/** События организаций, снятые или удалённые админом в [from, to): штраф «Организации месяца». */
+	@Query("""
+			select e from Event e
+			where e.organizationId is not null and e.moderatedAt >= :from and e.moderatedAt < :to
+			  and e.status in (com.hackathon.app.domain.enums.EventStatus.UNPUBLISHED, com.hackathon.app.domain.enums.EventStatus.DELETED)""")
+	List<Event> findModeratedOrganizationEvents(java.time.Instant from, java.time.Instant to);
+
 	/** Для дашборда админа. */
 	long countByStatus(EventStatus status);
 

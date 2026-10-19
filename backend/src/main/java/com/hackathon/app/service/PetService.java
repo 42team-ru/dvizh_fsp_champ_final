@@ -37,6 +37,8 @@ public class PetService {
     private final UserPetEquipmentRepository equipment;
     private final AppUserRepository users;
     private final PetMapper mapper;
+    /** Инвентарь: надеть можно только своё. */
+    private final ShopService shop;
     /** Вычисление личного настроения и фразы. */
     private final PetMoodService moods;
 
@@ -88,6 +90,7 @@ public class PetService {
                 chosen.put(slot, resolve(catalog, slotCode, itemCode));
             }
         });
+        shop.requireOwned(userId, catalog, chosen.values());
         equipment.deleteByUserId(userId);
         chosen.forEach((slot, item) -> equipment.save(mapper.toEquipment(userId, slot.getId(), item.getId())));
         equipment.flush();
@@ -107,6 +110,7 @@ public class PetService {
             current.ifPresent(equipment::delete);
         } else {
             var item = resolve(catalog, slotCode, itemCode);
+            shop.requireOwned(userId, catalog, java.util.List.of(item));
             current.ifPresentOrElse(e -> mapper.equip(e, item.getId()),
                     () -> equipment.save(mapper.toEquipment(userId, slot.getId(), item.getId())));
         }

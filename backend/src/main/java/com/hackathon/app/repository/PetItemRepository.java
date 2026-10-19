@@ -1,6 +1,7 @@
 package com.hackathon.app.repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import com.hackathon.app.domain.entity.PetItem;
@@ -11,5 +12,7 @@ public interface PetItemRepository extends JpaRepository<PetItem, UUID> {
 	List<PetItem> findAllByOrderByPositionAsc();
 
 	boolean existsBySlotIdAndCode(UUID slotId, String code);
+
+	Optional<PetItem> findBySlotIdAndCode(UUID slotId, String code);
 
 }
