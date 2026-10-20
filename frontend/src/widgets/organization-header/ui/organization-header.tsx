@@ -1,10 +1,11 @@
-import { MapPin } from "lucide-react";
+import { ArrowUpRight, MapPin } from "lucide-react";
 import type {
   PublicOrganizationResponse,
   OrganizationOverviewResponse,
 } from "@/shared/api/generated/core/appAPI.schemas";
 import { SubscribeButton } from "@/features/organization-subscription/ui/subscribe-button";
 import { Badge } from "@/shared/components/ui/badge";
+import { Button } from "@/shared/components/ui/button";
 import { AvatarStack } from "@/shared/components/ui/avatar-stack";
 import { monthLabel } from "@/shared/lib/date-ru";
 import { ORGANIZATION_VERIFIED_LABEL } from "@/shared/lib/statuses";
@@ -13,9 +14,11 @@ import { plural } from "@/shared/lib/plural";
 export function OrganizationHeader({
   org,
   overview,
+  onShare,
 }: {
   org: PublicOrganizationResponse;
   overview?: OrganizationOverviewResponse;
+  onShare?(): void;
 }) {
   const latest = org.awards?.find((a) => a.earned && a.kind === "ORG_OF_MONTH");
   const stats = [
@@ -87,6 +90,17 @@ export function OrganizationHeader({
               id={org.id!}
               subscribed={overview.subscription.subscribed}
             />
+            {onShare && (
+              <Button
+                variant="soft"
+                className="h-11 px-4 text-sm"
+                aria-haspopup="dialog"
+                onClick={onShare}
+              >
+                <ArrowUpRight className="size-[18px]" />
+                Поделиться
+              </Button>
+            )}
             <div className="flex items-center gap-2 text-xs font-extrabold">
               <AvatarStack people={overview.subscription.subscriberAvatars} />
               {overview.subscription.subscribersCount}{" "}
