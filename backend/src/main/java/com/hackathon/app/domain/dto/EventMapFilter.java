@@ -10,6 +10,8 @@ import com.hackathon.app.domain.enums.JoinMode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -42,5 +44,11 @@ public record EventMapFilter(
 		@Schema(description = "«Для меня»: только виды спорта из моего профиля и подходящие моему уровню, как в ленте")
 		Boolean forMe,
 		@Schema(description = "Только мероприятия этой организации (карта на странице организации)")
-		UUID organizationId) {
+		UUID organizationId,
+		@Schema(description = "Центр фильтра по городу: широта, вместе с lon")
+		@DecimalMin("-90") @DecimalMax("90") Double lat,
+		@Schema(description = "Центр фильтра по городу: долгота, вместе с lat")
+		@DecimalMin("-180") @DecimalMax("180") Double lon,
+		@Schema(description = "Радиус вокруг центра в км, 1–100; по умолчанию 10")
+		@Min(1) @Max(100) Integer radiusKm) {
 }

@@ -3964,6 +3964,24 @@ forMe?: boolean;
  * Только мероприятия этой организации (карта на странице организации)
  */
 organizationId?: string;
+/**
+ * Центр фильтра по городу: широта, вместе с lon
+ * @minimum -90
+ * @maximum 90
+ */
+lat?: number;
+/**
+ * Центр фильтра по городу: долгота, вместе с lat
+ * @minimum -180
+ * @maximum 180
+ */
+lon?: number;
+/**
+ * Радиус вокруг центра в км, 1–100; по умолчанию 10
+ * @minimum 1
+ * @maximum 100
+ */
+radiusKm?: number;
 };
 
 export type EventsMapLevel = typeof EventsMapLevel[keyof typeof EventsMapLevel];

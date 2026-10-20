@@ -31,9 +31,11 @@ public class EventMapRepository {
 	 * minLon больше maxLon — область пересекает 180-й меридиан, ищем в двух прямоугольниках.
 	 * Null-фильтры не применяются. forUserId — лента «Для меня»: виды спорта из профиля этого пользователя
 	 * и уровень мероприятия «Любой» или как у него (уровень не указан — любой). organizationId — только события организации.
+	 * near — тот же прямоугольник вокруг центра города, что в ленте; null — все города.
 	 */
 	public List<UUID> findIdsInArea(double minLon, double minLat, double maxLon, double maxLat, Instant from,
-			Instant to, String searchText, UUID sportId, EventLevel level, JoinMode joinMode, UUID forUserId, UUID organizationId, int limit) {
+			Instant to, String searchText, UUID sportId, EventLevel level, JoinMode joinMode, UUID forUserId, UUID organizationId,
+			EventSpecifications.Near near, int limit) {
 		var sql = new StringBuilder("""
 				select e.id from events e
 				join event_occurrences o on o.event_id = e.id
@@ -74,6 +76,9 @@ public class EventMapRepository {
 					 and exists (select 1 from user_sports us where us.user_id = :forUserId and us.sport_id = e.sport_id
 					   and (us.level is null or e.level = 'ANY' or e.level = us.level))""");
 		}
+		if (near != null) {
+			sql.append(" and e.lat between :nearMinLat and :nearMaxLat and e.lon between :nearMinLon and :nearMaxLon");
+		}
 		sql.append(" group by e.id order by min(o.start_at), e.id limit :limit");
 
 		var statement = jdbc.sql(sql.toString())
@@ -104,6 +109,12 @@ public class EventMapRepository {
 		}
 		if (forUserId != null) {
 			statement = statement.param("forUserId", forUserId);
+		}
+		if (near != null) {
+			double dLat = near.radiusKm() / 111.0;
+			double dLon = near.radiusKm() / (111.0 * Math.max(0.01, Math.cos(Math.toRadians(near.lat()))));
+			statement = statement.param("nearMinLat", near.lat() - dLat).param("nearMaxLat", near.lat() + dLat)
+					.param("nearMinLon", near.lon() - dLon).param("nearMaxLon", near.lon() + dLon);
 		}
 		return statement.query(UUID.class).list();
 	}

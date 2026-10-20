@@ -199,6 +199,41 @@ class EventCreationE2ETest {
 		assertThat(search.totalElements()).isEqualTo(1);
 	}
 
+	/**
+	 * ФЛОУ: читатель выбирает свой город и видит местные встречи вместе с онлайн-событиями.
+	 * ШАГИ: 1. Через API создать встречи одного нового вида в Красноярске, Москве и онлайн.
+	 *   2. Запросить ленту вокруг центра Красноярска, затем Москвы с радиусом города 30 км.
+	 *   3. Убрать географический фильтр («Все города») и перечитать ленту.
+	 * ПРОВЕРЯЕМ: чужой город исключён, онлайн остаётся в обоих городах; без координат видны все три,
+	 *   totalElements соответствует фильтру, а не общему количеству событий.
+	 * ПОЧЕМУ ВАЖНО: у события нет поля city; фильтр по координатам должен работать на H2
+	 *   без разбора адресов и не скрывать доступные из любого города онлайн-встречи.
+	 */
+	@Test
+	void cityCoordinatesIncludeLocalAndOnlineEventsAndCountOnlyMatches() {
+		var author = api.newUser("cityAuthor");
+		var reader = api.newUser("cityReader");
+		var sport = uniqueName("Городской спорт ");
+		var local = author.createEvent(EventForm.free().sport(sport));
+		var moscow = author.createEvent(EventForm.free().sport(sport)
+				.offline("Москва, Лужники", 55.7158, 37.5537));
+		var online = author.createEvent(EventForm.free().sport(sport).online("https://meet.example.com/city"));
+		var sportId = local.sport().id().toString();
+
+		var city = reader.feedPage(Map.of("sportId", sportId, "lat", "56.0153",
+				"lon", "92.8932", "radiusKm", "30"));
+		assertThat(city.items()).extracting(e -> e.id()).containsExactlyInAnyOrder(local.id(), online.id());
+		assertThat(city.totalElements()).isEqualTo(2);
+		var other = reader.feedPage(Map.of("sportId", sportId, "lat", "55.7558",
+				"lon", "37.6173", "radiusKm", "30"));
+		assertThat(other.items()).extracting(e -> e.id()).containsExactlyInAnyOrder(moscow.id(), online.id());
+		assertThat(other.totalElements()).isEqualTo(2);
+
+		var all = reader.feedPage(Map.of("sportId", sportId));
+		assertThat(all.items()).extracting(e -> e.id()).containsExactlyInAnyOrder(local.id(), moscow.id(), online.id());
+		assertThat(all.totalElements()).isEqualTo(3);
+	}
+
 	private void assertFoundAndPublished(Actor reader, UUID id, String title, UUID sportId) {
 		assertThat(reader.feed(Map.of("searchText", title, "sportId", sportId.toString())))
 				.extracting(e -> e.id()).containsExactly(id);
