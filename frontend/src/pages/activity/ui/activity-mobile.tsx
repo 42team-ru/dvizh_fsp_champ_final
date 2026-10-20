@@ -8,6 +8,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Disc } from "@/shared/components/ui/disc";
 import { Icon } from "@/shared/components/ui/icon";
 import { cn } from "cn";
+import type { LucideIcon } from "lucide-react";
 import { MyEventsMap } from "@/widgets/events-map/ui/my-events-map";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 import { Link } from "react-router";
@@ -59,7 +60,7 @@ function Row({
   );
 }
 
-function IconBox({ tone, icon }: { tone: string; icon: string }) {
+function IconBox({ tone, icon: Glyph }: { tone: string; icon: LucideIcon }) {
   return (
     <span
       className={cn(
@@ -67,7 +68,7 @@ function IconBox({ tone, icon }: { tone: string; icon: string }) {
         tone
       )}
     >
-      <Icon name={`${dir}/${icon}`} className="size-[22px]" />
+      <Glyph aria-hidden className="size-[22px] text-foreground" strokeWidth={2.4} />
     </span>
   );
 }

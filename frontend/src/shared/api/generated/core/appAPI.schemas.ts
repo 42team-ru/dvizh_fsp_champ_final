@@ -1317,6 +1317,44 @@ export interface CommentUpdateRequest {
   text: string;
 }
 
+export type CommentModerationResponseStatus = typeof CommentModerationResponseStatus[keyof typeof CommentModerationResponseStatus];
+
+
+export const CommentModerationResponseStatus = {
+  PENDING: 'PENDING',
+  CLEAN: 'CLEAN',
+  FLAGGED: 'FLAGGED',
+  AUTO_HIDDEN: 'AUTO_HIDDEN',
+  RESOLVED: 'RESOLVED',
+} as const;
+
+export type CommentModerationResponseCategoriesItem = typeof CommentModerationResponseCategoriesItem[keyof typeof CommentModerationResponseCategoriesItem];
+
+
+export const CommentModerationResponseCategoriesItem = {
+  PROFANITY: 'PROFANITY',
+  INSULT: 'INSULT',
+  HARASSMENT: 'HARASSMENT',
+  HATE: 'HATE',
+  THREAT: 'THREAT',
+  SEXUAL: 'SEXUAL',
+  SPAM: 'SPAM',
+  OTHER: 'OTHER',
+} as const;
+
+/**
+ * Оценка сообщения модерацией — только администратору
+ */
+export interface CommentModerationResponse {
+  /** Id проверки в очереди */
+  checkId: string;
+  status: CommentModerationResponseStatus;
+  categories: CommentModerationResponseCategoriesItem[];
+  severity: number;
+  /** Пояснение оценки */
+  explanation?: string;
+}
+
 /**
  * Сообщение, на которое ответили: автор и начало текста
  */
@@ -1364,6 +1402,8 @@ export interface CommentResponse {
   hidden: boolean;
   /** Причина скрытия — только администратору и автору; иначе null */
   hiddenReason?: string;
+  /** Оценка модерации — только администратору; null — не проверялось или не админ */
+  moderation?: CommentModerationResponse;
 }
 
 /**
@@ -2340,6 +2380,117 @@ export interface AdminOrganizationResponse {
 }
 
 /**
+ * Что проверяли
+ */
+export type ModerationItemResponseTargetType = typeof ModerationItemResponseTargetType[keyof typeof ModerationItemResponseTargetType];
+
+
+export const ModerationItemResponseTargetType = {
+  COMMENT: 'COMMENT',
+  EVENT: 'EVENT',
+  USER_PROFILE: 'USER_PROFILE',
+  ORGANIZATION: 'ORGANIZATION',
+} as const;
+
+export type ModerationItemResponseStatus = typeof ModerationItemResponseStatus[keyof typeof ModerationItemResponseStatus];
+
+
+export const ModerationItemResponseStatus = {
+  PENDING: 'PENDING',
+  CLEAN: 'CLEAN',
+  FLAGGED: 'FLAGGED',
+  AUTO_HIDDEN: 'AUTO_HIDDEN',
+  RESOLVED: 'RESOLVED',
+} as const;
+
+/**
+ * Кто оценил: словарь или нейросеть; null — ещё никто
+ */
+export type ModerationItemResponseSource = typeof ModerationItemResponseSource[keyof typeof ModerationItemResponseSource];
+
+
+export const ModerationItemResponseSource = {
+  HEURISTIC: 'HEURISTIC',
+  LLM: 'LLM',
+} as const;
+
+export type ModerationItemResponseCategoriesItem = typeof ModerationItemResponseCategoriesItem[keyof typeof ModerationItemResponseCategoriesItem];
+
+
+export const ModerationItemResponseCategoriesItem = {
+  PROFANITY: 'PROFANITY',
+  INSULT: 'INSULT',
+  HARASSMENT: 'HARASSMENT',
+  HATE: 'HATE',
+  THREAT: 'THREAT',
+  SEXUAL: 'SEXUAL',
+  SPAM: 'SPAM',
+  OTHER: 'OTHER',
+} as const;
+
+/**
+ * Решение администратора
+ */
+export type ModerationItemResponseDecision = typeof ModerationItemResponseDecision[keyof typeof ModerationItemResponseDecision];
+
+
+export const ModerationItemResponseDecision = {
+  APPROVED: 'APPROVED',
+  HIDDEN: 'HIDDEN',
+  ACTION_TAKEN: 'ACTION_TAKEN',
+} as const;
+
+/**
+ * Проверка текста в очереди модерации
+ */
+export interface ModerationItemResponse {
+  id: string;
+  /** Что проверяли */
+  targetType: ModerationItemResponseTargetType;
+  /** Id объекта: сообщения, мероприятия, пользователя или организации */
+  targetId: string;
+  /** Мероприятие (у сообщения — его обсуждение); null — профиль или анкета */
+  eventId?: string;
+  /** Название мероприятия, организации или имя человека — подпись ссылки */
+  targetTitle?: string;
+  /** Автор текста; null — аккаунт удалён */
+  author?: UserShortResponse;
+  /** Проверенный текст; у мероприятия и анкеты — поля с подписями */
+  text: string;
+  status: ModerationItemResponseStatus;
+  /** Кто оценил: словарь или нейросеть; null — ещё никто */
+  source?: ModerationItemResponseSource;
+  /** Найденные нарушения */
+  categories: ModerationItemResponseCategoriesItem[];
+  /** 0 — нет нарушений, 3 — грубое */
+  severity: number;
+  /** Пояснение оценки */
+  explanation?: string;
+  /** Сообщение сейчас скрыто (только для сообщений) */
+  hidden: boolean;
+  /** Когда текст отправлен на проверку или изменён */
+  updatedAt: string;
+  /** Когда поставлена оценка */
+  checkedAt?: string;
+  /** Решение администратора */
+  decision?: ModerationItemResponseDecision;
+  /** Когда принято решение */
+  reviewedAt?: string;
+}
+
+/**
+ * Скрытие сообщения администратором
+ */
+export interface HideCommentRequest {
+  /**
+     * Причина: её увидят автор сообщения и администраторы
+     * @minLength 0
+     * @maxLength 1000
+     */
+  reason: string;
+}
+
+/**
  * Снятие с публикации или удаление мероприятия админом
  */
 export interface ModerateEventRequest {
@@ -2389,18 +2540,6 @@ export interface AdminEventResponse {
   /** Когда снято или удалено */
   moderatedAt?: string;
   createdAt: string;
-}
-
-/**
- * Скрытие сообщения администратором
- */
-export interface HideCommentRequest {
-  /**
-     * Причина: её увидят автор сообщения и администраторы
-     * @minLength 0
-     * @maxLength 1000
-     */
-  reason: string;
 }
 
 /**
@@ -3570,6 +3709,8 @@ export interface AdminStatsResponse {
   registrationsPending: number;
   /** Комментариев */
   comments: number;
+  /** Текстов ждут решения модератора: сомнительные и скрытые автоматически */
+  moderationQueue: number;
   /** Сколько присоединилось по дням (регистрации), старые дни сначала, дни без регистраций — с нулём */
   signupsByDay: DailyCountResponse[];
 }
@@ -3600,6 +3741,14 @@ export interface AdminSportCountsResponse {
 
 export interface PageResponseAdminOrganizationResponse {
   items: AdminOrganizationResponse[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+export interface PageResponseModerationItemResponse {
+  items: ModerationItemResponse[];
   page: number;
   size: number;
   totalElements: number;
@@ -4421,6 +4570,34 @@ export const AdminListOrganizationsStatus = {
   APPROVED: 'APPROVED',
   REJECTED: 'REJECTED',
   REVISION: 'REVISION',
+} as const;
+
+export type AdminListModerationParams = {
+status?: AdminListModerationStatus;
+targetType?: AdminListModerationTargetType;
+page?: number;
+size?: number;
+};
+
+export type AdminListModerationStatus = typeof AdminListModerationStatus[keyof typeof AdminListModerationStatus];
+
+
+export const AdminListModerationStatus = {
+  PENDING: 'PENDING',
+  CLEAN: 'CLEAN',
+  FLAGGED: 'FLAGGED',
+  AUTO_HIDDEN: 'AUTO_HIDDEN',
+  RESOLVED: 'RESOLVED',
+} as const;
+
+export type AdminListModerationTargetType = typeof AdminListModerationTargetType[keyof typeof AdminListModerationTargetType];
+
+
+export const AdminListModerationTargetType = {
+  COMMENT: 'COMMENT',
+  EVENT: 'EVENT',
+  USER_PROFILE: 'USER_PROFILE',
+  ORGANIZATION: 'ORGANIZATION',
 } as const;
 
 export type AdminListEventsParams = {

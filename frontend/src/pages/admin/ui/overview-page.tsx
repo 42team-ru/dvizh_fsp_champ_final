@@ -54,6 +54,7 @@ const KPIS: { key: keyof Omit<AdminStatsResponse, "signupsByDay">; label: string
   { key: "registrationsConfirmed", label: "Записи подтверждены", hint: "участники в мероприятиях" },
   { key: "registrationsPending", label: "Заявки участников", hint: "ждут решения организаторов" },
   { key: "comments", label: "Комментарии", hint: "в обсуждениях" },
+  { key: "moderationQueue", label: "Модерация", hint: "тексты ждут решения", tone: "bg-peach" },
 ];
 
 /** «Красивый» верх шкалы: 10, 20, 30, 50, 100… чтобы подписи были круглыми. */

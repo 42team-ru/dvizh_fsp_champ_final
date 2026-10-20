@@ -5,18 +5,19 @@ import {
   useNotificationsReadAll,
 } from "@/shared/api/generated/core/notifications/notifications";
 import {
-  ACHIEVEMENT_TYPES, ACTIVITY_TYPES, REMINDER_TYPES, REPLY_TYPES, TEAM_TYPES, useUnreadNotifications,
+  ACHIEVEMENT_TYPES, ANNOUNCEMENT_TYPES, REMINDER_TYPES, REPLY_TYPES, useUnreadNotifications,
 } from "@/entity/notification/model/use-unread-notifications";
 import { useRegistrationsMine } from "@/shared/api/generated/core/registrations/registrations";
 import type { NotificationResponse, NotificationsListTypesItem, RegistrationsMineStatus } from "@/shared/api/generated/core/appAPI.schemas";
 import { useUser } from "@/entity/user/model/use-user";
 
-/** Вкладки ленты активности: каждая — свой набор типов уведомлений. */
-export type ActivityTab = "all" | "replies" | "achievements" | "reminders";
+/** Вкладки ленты активности: «Все» — все уведомления без фильтра, остальные — свой набор типов. */
+export type ActivityTab = "all" | "replies" | "announcements" | "achievements" | "reminders";
 
-export const ACTIVITY_TABS: { key: ActivityTab; label: string; types: NotificationsListTypesItem[] }[] = [
-  { key: "all", label: "Все", types: ACTIVITY_TYPES },
+export const ACTIVITY_TABS: { key: ActivityTab; label: string; types?: NotificationsListTypesItem[] }[] = [
+  { key: "all", label: "Все" },
   { key: "replies", label: "Ответы", types: REPLY_TYPES },
+  { key: "announcements", label: "Объявления", types: ANNOUNCEMENT_TYPES },
   { key: "achievements", label: "Достижения", types: ACHIEVEMENT_TYPES },
   { key: "reminders", label: "Напоминания", types: REMINDER_TYPES },
 ];
@@ -65,9 +66,7 @@ export function useActivity() {
   const [tab, setTabState] = useState<ActivityTab>("all");
   const [size, setSize] = useState(STEP);
   const [plansTab, setPlansTab] = useState<PlansTab>("going");
-  // у клуба «Все» — вопросы и ответы в обсуждениях и приглашения в команду организаторов
-  const types = participant ? ACTIVITY_TABS.find((t) => t.key === tab)?.types
-    : tab === "replies" ? REPLY_TYPES : [...REPLY_TYPES, ...TEAM_TYPES];
+  const types = ACTIVITY_TABS.find((t) => t.key === tab)?.types;
 
   const unread = useUnreadNotifications();
   const list = useNotificationsList({ types, size }, {
@@ -90,7 +89,7 @@ export function useActivity() {
   const goingTotal = going.data?.status === 200 ? going.data.data.totalElements ?? goingItems.length : 0;
 
   const unreadOf = (key: ActivityTab) =>
-    unread.unreadOf((participant ? ACTIVITY_TABS.find((t) => t.key === key)?.types : REPLY_TYPES) ?? []);
+    key === "all" ? unread.all : unread.unreadOf(ACTIVITY_TABS.find((t) => t.key === key)?.types ?? []);
 
   // Лента по дням: «СЕГОДНЯ», «ВЧЕРА», дальше датой.
   const groups: { label: string; items: NotificationResponse[] }[] = [];
@@ -114,7 +113,7 @@ export function useActivity() {
     tab,
     setTab: (next: ActivityTab) => { setTabState(next); setSize(STEP); },
     unreadOf,
-    totalUnread: participant ? unread.total : unread.unreadOf(REPLY_TYPES),
+    totalUnread: unread.all,
     list,
     groups,
     hasMore: page?.nextCursor != null && size < 100,

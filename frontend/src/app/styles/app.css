@@ -280,6 +280,15 @@ body,
   }
 }
 
+/* Всплывашки Radix (меню, селекты, подсказки) при зуме ViewportScale: позицию считают в экранных пикселях,
+   а зум на <html> умножал сдвиг ещё раз — меню уезжало вниз и вправо. Обёртка снимает зум, содержимое возвращает. */
+[data-radix-popper-content-wrapper] {
+  zoom: calc(1 / var(--vp-zoom, 1));
+}
+[data-radix-popper-content-wrapper] > * {
+  zoom: var(--vp-zoom, 1);
+}
+
 /* Catalog scenes fit the complete animal and backdrop into their measured frame.
    This is outside Tailwind layers to override the animated rig's intrinsic SVG sizing. */
 .pet-look-preview .beaver-speech {

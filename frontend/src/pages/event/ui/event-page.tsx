@@ -28,6 +28,7 @@ import { Icon } from "@/shared/components/ui/icon";
 import { Progress } from "@/shared/components/ui/progress";
 import { RoughBorder } from "@/shared/components/ui/rough-border";
 import { cn } from "cn";
+import { quoteText } from "@/shared/lib/statuses";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 import { TicketStrip } from "@/entity/event/ui/ticket-strip";
 import { TicketAdmittedStamp } from "@/entity/event/ui/ticket-admitted-stamp";
@@ -439,7 +440,7 @@ function Chat({ m }: { m: EventModel }) {
               </p>
               {!c.hidden && c.replyTo && (
                 <p className="mt-1 border-l-2 border-ink pl-2 text-[13px] text-muted-foreground">
-                  {fullName(c.replyTo.author)}: {c.replyTo.hidden ? "Удалено администратором" : c.replyTo.deleted ? "Сообщение удалено" : c.replyTo.text}
+                  {fullName(c.replyTo.author)}: {quoteText(c.replyTo)}
                 </p>
               )}
               <p className="mt-0.5 text-[15px] leading-[22px] font-medium whitespace-pre-line text-foreground">

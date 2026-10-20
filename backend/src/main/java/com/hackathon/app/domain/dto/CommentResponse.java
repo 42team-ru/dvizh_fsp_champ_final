@@ -33,5 +33,7 @@ public record CommentResponse(
 		@Schema(description = "Удалено автором", requiredMode = REQUIRED) boolean deleted,
 		@Schema(description = "Скрыто администратором: показать «Сообщение скрыто модератором»", requiredMode = REQUIRED)
 		boolean hidden,
-		@Schema(description = "Причина скрытия — только администратору и автору; иначе null") String hiddenReason) {
+		@Schema(description = "Причина скрытия — только администратору и автору; иначе null") String hiddenReason,
+		@Schema(description = "Оценка модерации — только администратору; null — не проверялось или не админ")
+		CommentModerationResponse moderation) {
 }

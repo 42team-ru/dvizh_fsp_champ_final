@@ -8,7 +8,8 @@ import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/shared/comp
 import { Icon } from "@/shared/components/ui/icon";
 import { QrCode } from "@/shared/components/ui/qr-code";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
-import { ORGANIZATION_NOTIFICATION, REGISTRATION_STATUS } from "@/shared/lib/statuses";
+import { FALLBACK_NOTIFICATION_ICON, NOTIFICATION_ICON, ORGANIZATION_NOTIFICATION, REGISTRATION_STATUS } from "@/shared/lib/statuses";
+import type { LucideIcon } from "lucide-react";
 import { cn } from "cn";
 import { PLANS_TABS, shortTime, usePlansPage, type PlansTab } from "../model/use-activity";
 
@@ -23,7 +24,7 @@ const fullName = (u: NonNullable<NotificationResponse["actor"]>) => [u.firstName
 export type NotificationView = {
   /** Автор (ответ в обсуждении) — аватар; иначе значок. */
   actor?: NotificationResponse["actor"];
-  icon: "icon-clock" | "icon-trophy" | "icon-bell";
+  icon: LucideIcon;
   tone: string;
   text: ReactNode;
   action: string;
@@ -32,6 +33,11 @@ export type NotificationView = {
 
 /** Текст под тип: ответ — кто и что написал, достижение — название и награда, напоминание — встреча и время. */
 export function viewOf(n: NotificationResponse): NotificationView {
+  return { ...textOf(n), ...(NOTIFICATION_ICON[n.type] ?? FALLBACK_NOTIFICATION_ICON) };
+}
+
+/** Текст, кнопка и ссылка; значок и цвет — из NOTIFICATION_ICON по типу. */
+function textOf(n: NotificationResponse): Omit<NotificationView, "icon" | "tone"> {
   const [first, ...rest] = n.body.split("\n");
   const second = rest.join(" ");
   switch (n.type) {
@@ -41,7 +47,7 @@ export function viewOf(n: NotificationResponse): NotificationView {
     case "COMMENT_REPLY":
     case "COMMENT_CREATED":
       return {
-        actor: n.actor, icon: "icon-bell", tone: "bg-sky-soft", action: "Ответить", href: `${n.targetPath}#event-chat`,
+        actor: n.actor, action: "Ответить", href: `${n.targetPath}#event-chat`,
         text: (
           <>
             <span className={b}>{n.actor ? fullName(n.actor) : "Участник"}</span>
@@ -55,7 +61,7 @@ export function viewOf(n: NotificationResponse): NotificationView {
       const name = /«(.+)»/.exec(n.title)?.[1] ?? n.title;
       const reward = /Награда: (.+)$/.exec(n.body)?.[1];
       return {
-        icon: "icon-trophy", tone: "bg-secondary", action: "Смотреть", href: n.targetPath,
+        action: "Смотреть", href: n.targetPath,
         text: (
           <>
             Новое достижение <Badge variant="secondary" className="mx-1 h-6 align-middle">{name}</Badge>
@@ -67,7 +73,7 @@ export function viewOf(n: NotificationResponse): NotificationView {
     }
     case "ORGANIZER_INVITED":
       return {
-        actor: n.actor, icon: "icon-bell", tone: "bg-lime-soft", action: "Открыть", href: n.targetPath,
+        actor: n.actor, action: "Открыть", href: n.targetPath,
         text: (
           <>
             <span className={b}>{n.actor ? fullName(n.actor) : "Автор"}</span> зовёт вас в организаторы
@@ -78,7 +84,7 @@ export function viewOf(n: NotificationResponse): NotificationView {
     case "ORGANIZER_ADDED":
     case "ORGANIZER_INVITE_DECLINED":
       return {
-        actor: n.actor, icon: "icon-bell", tone: "bg-card", action: "Открыть", href: n.targetPath,
+        actor: n.actor, action: "Открыть", href: n.targetPath,
         text: (
           <>
             {n.actor && <span className={b}>{fullName(n.actor)}</span>}
@@ -90,12 +96,12 @@ export function viewOf(n: NotificationResponse): NotificationView {
       };
     case "REMINDER":
       return {
-        icon: "icon-clock", tone: "bg-lavender-soft", action: "Открыть", href: n.targetPath,
+        action: "Открыть", href: n.targetPath,
         text: <><span className={b}>{n.title}</span>{n.body && <>: {n.body.replace(/\n/g, " · ")}</>}{time(n.createdAt)}</>,
       };
     default:
       return {
-        icon: "icon-bell", tone: "bg-card", action: "Открыть", href: n.targetPath,
+        action: "Открыть", href: n.targetPath,
         text: <><span className={b}>{n.title}</span>{first && <>: {first}</>}{time(n.createdAt)}</>,
       };
   }

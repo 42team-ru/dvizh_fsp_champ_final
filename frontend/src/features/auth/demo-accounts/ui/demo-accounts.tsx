@@ -70,6 +70,7 @@ export default function DemoAccounts({ onPick, disabled }: DemoAccountsProps) {
             >
               <Disc
                 initials={`${first[0] ?? ""}${last[0] ?? ""}`.toUpperCase()}
+                user={account.systemRole === "ORG" ? undefined : account}
                 tone={TONES[i % TONES.length]}
                 className="size-11 shrink-0"
                 textClassName="text-sm"

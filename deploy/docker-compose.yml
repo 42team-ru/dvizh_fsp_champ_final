@@ -33,6 +33,20 @@ services:
       timeout: 3s
       retries: 10
 
+  # Нейросеть модерации (docs/moderation.md): Qwen3-1.7B Q4 в llama.cpp на CPU, ~1.5 ГБ памяти.
+  # Модель (~1.1 ГБ) качается с Hugging Face при первом старте в volume llmcache; пока качается — работает словарь.
+  # Наружу не публикуется. Выключить: MODERATION_LLM_ENABLED=false в .env.
+  llm:
+    image: ghcr.io/ggml-org/llama.cpp:server-b11459
+    restart: unless-stopped
+    command: >-
+      -hf unsloth/Qwen3-1.7B-GGUF:Q4_K_M --alias qwen3-1.7b
+      --host 0.0.0.0 --port 8080 --ctx-size 4096 --parallel 1 --threads 4
+      --jinja --chat-template-kwargs '{"enable_thinking":false}'
+    volumes:
+      - llmcache:/root/.cache/llama.cpp
+    mem_limit: 2g
+
   app:
     image: ${IMAGE}/app:${TAG:-latest}
     restart: unless-stopped
@@ -54,7 +68,12 @@ services:
       TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET:-}
       # Маршруты 2ГИС для подсказки «когда выходить» (тот же ключ, что у карты)
       VITE_2GIS_KEY: ${VITE_2GIS_KEY:-}
+      # Модерация нейросетью; false — только словарь (docs/moderation.md)
+      MODERATION_LLM_ENABLED: ${MODERATION_LLM_ENABLED:-true}
+      MODERATION_LLM_URL: http://llm:8080
     depends_on:
+      llm:
+        condition: service_started
       db:
         condition: service_healthy
       minio:
@@ -83,3 +102,4 @@ services:
 
 volumes:
   pgdata:
+  llmcache:

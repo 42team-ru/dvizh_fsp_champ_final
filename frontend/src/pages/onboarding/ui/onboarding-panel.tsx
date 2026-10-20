@@ -4,6 +4,7 @@ import { Bell, Check, Clock, Home, Map as MapIcon, PartyPopper, Shirt, Star, Tro
 import { BeaverPet, type BeaverMood, type BeaverPetHandle } from "@/widgets/beaver-pet/ui/beaver-pet";
 import type { BeaverActivity, BeaverOutfit } from "@/widgets/beaver-pet/ui/beaver-wardrobe";
 import { cn } from "cn";
+import { UserAvatar } from "@/shared/components/ui/user-avatar";
 import type { Pet, Prefs, Profile, SportRow } from "./onboarding-steps";
 
 /** Шаги, о которых бобр «знает» — трекер внизу панели. */
@@ -146,10 +147,9 @@ function speech({ step, profile, sports, prefs }: PanelData): string {
 }
 
 /** Карточки вокруг бобра: что он уже понял про тебя. */
-function Floating({ step, profile, sports, prefs }: PanelData) {
+function Floating({ step, profile, sports, prefs, pet }: PanelData) {
   if (step === 1) {
     const name = `${profile.firstName} ${profile.lastName}`.trim();
-    const initials = `${profile.firstName.trim().charAt(0)}${profile.lastName.trim().charAt(0)}`.toUpperCase();
     return (
       <Float className="top-6 right-6 w-[260px] rotate-[3deg] shadow-[6px_6px_0_var(--primary)]" delay={0.1}>
         <div className="flex items-center justify-between">
@@ -157,9 +157,7 @@ function Floating({ step, profile, sports, prefs }: PanelData) {
           <span className="rounded-pill border-[1.5px] border-ink bg-secondary px-2 text-[10px] font-extrabold">СТР. 1</span>
         </div>
         <div className="mt-2 flex gap-3">
-          <span className="flex h-[84px] w-[70px] shrink-0 items-center justify-center rounded-[10px] border-2 border-ink bg-sky-soft font-display text-xl font-extrabold">
-            {initials || "?"}
-          </span>
+          <UserAvatar user={{ ...profile, pet }} className="h-[84px] w-[70px] shrink-0 rounded-[10px] border-2 border-ink bg-sky-soft" />
           <div className="min-w-0">
             <p className="text-[10px] font-extrabold tracking-[1px] text-muted-foreground">ИМЯ</p>
             <p className="line-clamp-2 font-display text-lg leading-6 font-extrabold break-words">{name || "—"}</p>

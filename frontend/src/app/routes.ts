@@ -35,6 +35,7 @@ export default [
         index("routes/admin/overview.tsx"),
         route("organizations", "routes/admin/organizations.tsx"),
         route("organizations/:id", "routes/admin/organization.tsx"),
+        route("moderation", "routes/admin/moderation.tsx"),
         route("events", "routes/admin/events.tsx"),
         route("sports", "routes/admin/sports.tsx"),
         route("events/:id/comments", "routes/admin/event-comments.tsx"),

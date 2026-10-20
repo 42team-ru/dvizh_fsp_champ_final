@@ -46,6 +46,7 @@ public class AuthService {
 	private final JwtEncoder jwtEncoder;
 	private final AuthProperties props;
 	private final DbTimeRepository dbTimeRepository;
+	private final ContentGuard contentGuard;
 	private final SecureRandom random = new SecureRandom();
 
 	@Transactional
@@ -58,6 +59,7 @@ public class AuthService {
 		if (users.existsByEmailIgnoreCase(email)) {
 			throw new ConflictException("Пользователь с таким email уже существует");
 		}
+		contentGuard.requireClean(ContentGuard.fields("Логин", username, "Имя", r.firstName(), "Фамилия", r.lastName()));
 		var user = new AppUser();
 		user.setId(UUID.randomUUID());
 		user.setUsername(username);

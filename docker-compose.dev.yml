@@ -38,6 +38,20 @@ services:
       timeout: 3s
       retries: 20
 
+  # Нейросеть модерации для make back (с MODERATION_LLM_ENABLED=true): make llm. С make dev не стартует.
+  llm:
+    image: ghcr.io/ggml-org/llama.cpp:server-b11459
+    profiles: [llm]
+    command: >-
+      -hf unsloth/Qwen3-1.7B-GGUF:Q4_K_M --alias qwen3-1.7b
+      --host 0.0.0.0 --port 8080 --ctx-size 4096 --parallel 1 --threads 4
+      --jinja --chat-template-kwargs '{"enable_thinking":false}'
+    ports:
+      - "127.0.0.1:8091:8080"
+    volumes:
+      - llmcache-dev:/root/.cache/llama.cpp
+
 volumes:
   pgdata-dev:
+  llmcache-dev:
   minio-dev:

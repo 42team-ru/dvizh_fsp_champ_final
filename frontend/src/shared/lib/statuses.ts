@@ -1,3 +1,8 @@
+import {
+  Ban, Bell, CalendarCheck, CalendarClock, CalendarPlus, CalendarX, CircleAlert, CircleCheck, CircleX, Clock, EyeOff,
+  FileClock, FilePen, MessageCircleQuestion, MessageCircleReply, PencilLine, RotateCcw, ShieldCheck, ShieldX, Trash2,
+  Trophy, UserRoundCog, UserRoundMinus, UserRoundPlus, UserRoundX, UsersRound, type LucideIcon,
+} from "lucide-react";
 /**
  * Подписи значений модели для UI в одном месте: уровни, режимы записи, форматы, статусы записи.
  */
@@ -118,7 +123,7 @@ export const NOTIFICATION_CATEGORY_LABEL = {
 
 /** Новая встреча клуба, на анонсы которого подписан участник. */
 export const ORGANIZATION_NOTIFICATION = {
-  ORG_NEW_EVENT: { label: "Новая встреча клуба", icon: "icon-bell" as const, tone: "bg-lime-soft", action: "К встрече" },
+  ORG_NEW_EVENT: { label: "Новая встреча клуба", action: "К встрече" },
 };
 
 /** Завершённое неотменённое занятие в архиве клуба. */
@@ -158,3 +163,83 @@ export const BLOG_POST_STATUS: Record<string, { label: string; tone: string }> =
   DRAFT: { label: "Черновик", tone: "bg-muted" },
   PUBLISHED: { label: "Опубликован", tone: "bg-mint" },
 };
+
+/** Модерация текстов (админка «Модерация»): состояние проверки. */
+export const MODERATION_STATUS: Record<string, { label: string; tone: string }> = {
+  PENDING: { label: "Ждёт нейросеть", tone: "bg-lavender-soft" },
+  CLEAN: { label: "Чисто", tone: "bg-lime-soft" },
+  FLAGGED: { label: "На проверке", tone: "bg-peach" },
+  AUTO_HIDDEN: { label: "Скрыто автоматически", tone: "bg-salmon" },
+  RESOLVED: { label: "Решено", tone: "bg-lime-soft" },
+};
+
+/** Вид нарушения, найденный словарём или нейросетью. */
+export const MODERATION_CATEGORY_LABEL: Record<string, string> = {
+  PROFANITY: "Мат",
+  INSULT: "Оскорбление",
+  HARASSMENT: "Травля",
+  HATE: "Ненависть",
+  THREAT: "Угроза",
+  SEXUAL: "Непристойность",
+  SPAM: "Реклама",
+  OTHER: "Другое",
+};
+
+/** Что проверяли. */
+export const MODERATION_TARGET_LABEL: Record<string, string> = {
+  COMMENT: "Сообщение",
+  EVENT: "Мероприятие",
+  USER_PROFILE: "Профиль",
+  ORGANIZATION: "Организация",
+};
+
+/** Решение администратора. */
+export const MODERATION_DECISION_LABEL: Record<string, string> = {
+  APPROVED: "Всё в порядке",
+  HIDDEN: "Скрыто",
+  ACTION_TAKEN: "Приняты меры",
+};
+
+/** Заглушки в обсуждении вместо текста: скрытое модератором и удалённое автором. */
+export const COMMENT_HIDDEN_TEXT = "Сообщение скрыто модератором из-за нарушения правил сайта";
+export const COMMENT_DELETED_TEXT = "Сообщение удалено";
+
+/** Текст цитаты над ответом: скрытое и удалённое не цитируются. */
+export const quoteText = (q: { text?: string; deleted: boolean; hidden: boolean }) =>
+  q.deleted ? "сообщение удалено" : q.hidden ? "сообщение скрыто модератором" : q.text;
+
+/**
+ * Значок уведомления в «Активности» по типу: иконка и цвет плашки. Цвет не единственный носитель смысла —
+ * рядом всегда текст. Тип без записи получает колокольчик (FALLBACK_NOTIFICATION_ICON).
+ */
+export const NOTIFICATION_ICON: Record<string, { icon: LucideIcon; tone: string }> = {
+  REMINDER: { icon: Clock, tone: "bg-lavender-soft" },
+  ORG_NEW_EVENT: { icon: CalendarPlus, tone: "bg-lime-soft" },
+  EVENT_CHANGED: { icon: PencilLine, tone: "bg-sky-soft" },
+  EVENT_UNPUBLISHED: { icon: EyeOff, tone: "bg-peach" },
+  EVENT_DELETED: { icon: Trash2, tone: "bg-salmon" },
+  EVENT_RESTORED: { icon: RotateCcw, tone: "bg-lime-soft" },
+  EVENT_ANNOUNCEMENT: { icon: CircleAlert, tone: "bg-secondary" },
+  OCCURRENCE_CANCELLED: { icon: CalendarX, tone: "bg-salmon" },
+  OCCURRENCE_RESCHEDULED: { icon: CalendarClock, tone: "bg-sky-soft" },
+  OCCURRENCE_CONFIRMED: { icon: CalendarCheck, tone: "bg-lime-soft" },
+  QUORUM_REACHED: { icon: UsersRound, tone: "bg-lime-soft" },
+  QUORUM_LOST: { icon: UserRoundMinus, tone: "bg-peach" },
+  REGISTRATION_CREATED: { icon: UserRoundPlus, tone: "bg-sky-soft" },
+  REGISTRATION_CANCELLED: { icon: UserRoundX, tone: "bg-peach" },
+  REGISTRATION_APPROVED: { icon: CircleCheck, tone: "bg-lime-soft" },
+  REGISTRATION_REJECTED: { icon: CircleX, tone: "bg-salmon" },
+  COMMENT_REPLY: { icon: MessageCircleReply, tone: "bg-sky-soft" },
+  COMMENT_CREATED: { icon: MessageCircleQuestion, tone: "bg-sky-soft" },
+  COMMENT_HIDDEN: { icon: Ban, tone: "bg-peach" },
+  ORGANIZATION_SUBMITTED: { icon: FileClock, tone: "bg-sky-soft" },
+  ORGANIZATION_APPROVED: { icon: ShieldCheck, tone: "bg-lime-soft" },
+  ORGANIZATION_REJECTED: { icon: ShieldX, tone: "bg-salmon" },
+  ORGANIZATION_RETURNED: { icon: FilePen, tone: "bg-peach" },
+  ORGANIZER_INVITED: { icon: UserRoundPlus, tone: "bg-lime-soft" },
+  ORGANIZER_ADDED: { icon: UserRoundCog, tone: "bg-lime-soft" },
+  ORGANIZER_REMOVED: { icon: UserRoundMinus, tone: "bg-peach" },
+  ORGANIZER_INVITE_DECLINED: { icon: UserRoundX, tone: "bg-peach" },
+  ACHIEVEMENT_UNLOCKED: { icon: Trophy, tone: "bg-secondary" },
+};
+export const FALLBACK_NOTIFICATION_ICON = { icon: Bell, tone: "bg-card" };

@@ -7,6 +7,7 @@ import { cn } from "cn";
 import { getCommentsListQueryKey, useCommentsCreate, useCommentsList } from "@/shared/api/generated/core/comments/comments";
 import type { CommentResponse } from "@/shared/api/generated/core/appAPI.schemas";
 import { Button } from "@/shared/components/ui/button";
+import { COMMENT_DELETED_TEXT, COMMENT_HIDDEN_TEXT, quoteText } from "@/shared/lib/statuses";
 import { fullName } from "@/pages/event/model/use-event";
 import type { ManagedEvent } from "../model/use-manage-event";
 import { ago } from "../model/format";
@@ -17,7 +18,7 @@ const shortName = (u: CommentResponse["author"]) => (u.lastName ? `${u.firstName
 
 function Message({ c, onReply }: { c: CommentResponse; onReply?: () => void }) {
   const mine = c.isMine;
-  const body = c.deleted ? "Сообщение удалено" : c.hidden ? "Скрыто администратором" : c.text;
+  const body = c.deleted ? COMMENT_DELETED_TEXT : c.hidden ? COMMENT_HIDDEN_TEXT : c.text;
   return (
     <div className={cn("flex items-start gap-2.5", mine && "flex-row-reverse")}>
       <Avatar user={c.author} className="size-[34px]" />
@@ -37,10 +38,11 @@ function Message({ c, onReply }: { c: CommentResponse; onReply?: () => void }) {
         </div>
         {c.replyTo && (
           <p className={cn("rounded-[8px] px-2 py-1 text-xs font-medium", mine ? "bg-white/15" : "bg-paper text-muted-foreground")}>
-            {shortName(c.replyTo.author)}: {c.replyTo.deleted ? "сообщение удалено" : c.replyTo.text}
+            {shortName(c.replyTo.author)}: {quoteText(c.replyTo)}
           </p>
         )}
-        <p className={cn("text-[15px] leading-[21px] font-bold whitespace-pre-line", (c.deleted || c.hidden) && "font-medium italic opacity-70")}>{body}</p>
+        <p className={cn("text-[15px] leading-[21px] font-bold whitespace-pre-line", (c.deleted || c.hidden) && (mine ? "font-medium italic opacity-70" : "font-medium italic text-muted-foreground"))}>{body}</p>
+        {c.hidden && c.hiddenReason && <p className="text-xs font-semibold italic opacity-70">Причина: {c.hiddenReason}</p>}
         {onReply && !c.deleted && !c.hidden && !mine && (
           <button type="button" onClick={onReply} className="self-start text-xs font-bold text-muted-foreground underline">
             Ответить

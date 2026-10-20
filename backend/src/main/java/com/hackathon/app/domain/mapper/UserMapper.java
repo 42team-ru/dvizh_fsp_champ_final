@@ -34,6 +34,11 @@ public interface UserMapper {
 	/** Правка профиля: имя, фамилия, город, о себе. */
 	void updateProfile(@MappingTarget AppUser user, UpdateProfileRequest request);
 
+	/** Модератор стёр «о себе» с нарушением; остальной профиль не меняется. */
+	default void clearBio(@MappingTarget AppUser user) {
+		user.setBio(null);
+	}
+
 	/** Активный аккаунт со входом по логину и паролю; пароль уже захеширован. */
 	@Mapping(target = "active", constant = "true")
 	@Mapping(target = "authProvider", constant = "LOCAL")

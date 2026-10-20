@@ -1,6 +1,6 @@
 import * as React from "react"
 import { cn } from "cn"
-import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar"
+import { UserAvatar } from "@/shared/components/ui/user-avatar"
 import { Progress } from "@/shared/components/ui/progress"
 
 import type { EventParticipantResponse } from "@/shared/api/generated/core/appAPI.schemas"
@@ -14,14 +14,12 @@ function Participants({
   total,
   tone = "default",
   className,
-  renderBeaver,
 }: {
   people: EventParticipantResponse[]
   going: number
   total?: number
   tone?: "default" | "warning"
   className?: string
-  renderBeaver: (person: EventParticipantResponse) => React.ReactNode
 }) {
   const warning = tone === "warning"
   return (
@@ -35,19 +33,15 @@ function Participants({
             {people.slice(0, 3).map((p, i) => {
               const name = [p.firstName, p.lastName].filter(Boolean).join(" ") || p.username;
               return (
-                <Avatar
+                <UserAvatar
                   key={p.id}
+                  user={p}
                   role="img"
                   title={name}
                   aria-label={name}
-                  className={cn("absolute top-0 size-7 overflow-hidden border-2 border-ink after:hidden", AVATAR_TONES[i])}
+                  className={cn("absolute top-0 size-7 rounded-full border-2 border-ink object-cover", AVATAR_TONES[i])}
                   style={{ left: i * 20 }}
-                >
-                  {p.avatarUrl && <AvatarImage src={p.avatarUrl} alt="" />}
-                  <AvatarFallback className={cn("relative overflow-hidden", AVATAR_TONES[i])}>
-                    {renderBeaver(p)}
-                  </AvatarFallback>
-                </Avatar>
+                />
               );
             })}
           </div>

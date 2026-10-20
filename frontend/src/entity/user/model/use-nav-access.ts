@@ -1,4 +1,4 @@
-import { REPLY_TYPES, useUnreadNotifications } from "@/entity/notification/model/use-unread-notifications";
+import { useUnreadNotifications } from "@/entity/notification/model/use-unread-notifications";
 import { useUser } from "./use-user";
 
 /**
@@ -10,9 +10,9 @@ export function useNavAccess() {
   const { user } = useUser();
   const role = user?.systemRole;
   const showActivity = role === "USER" || role === "ORG";
-  // те же типы, что показывает страница «Активность» (клубу — только ответы): число в меню совпадает с «N новых» на ней
+  // все непрочитанные, как вкладка «Все» в «Активности»: число в меню совпадает с «N новых» на ней
   const counts = useUnreadNotifications(showActivity);
-  const unread = role === "ORG" ? counts.unreadOf(REPLY_TYPES) : counts.total;
+  const unread = counts.all;
   return {
     showActivity,
     showProfile: role === "USER",

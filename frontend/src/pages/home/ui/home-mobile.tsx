@@ -27,7 +27,9 @@ import {
   useRecommendationPreview,
 } from "@/entity/event/model/use-recommendation-preview";
 import { QrCode } from "@/shared/components/ui/qr-code";
-import { calendarUrl, routeUrl, ticketDay, untilStart, useNextTicket } from "@/entity/event/model/use-next-ticket";
+import { AddToCalendarButton } from "@/features/add-to-calendar/ui/add-to-calendar-button";
+import { calendarEventOf } from "@/features/add-to-calendar/lib/calendar-links";
+import { routeUrl, ticketDay, untilStart, useNextTicket } from "@/entity/event/model/use-next-ticket";
 import { LeaveTipMobile } from "@/widgets/leave-tip/ui/leave-tip";
 
 const dir = "m-home";
@@ -198,9 +200,7 @@ function Tip() {
           </div>
         </div>
         <div className="flex gap-[10px]">
-          <Button asChild className="h-12 min-w-0 flex-1 px-5 text-sm">
-            <a href={calendarUrl(e.id)} download>В календарь</a>
-          </Button>
+          <AddToCalendarButton className="h-12 min-w-0 flex-1 px-5 text-sm" event={calendarEventOf(e, next.startAt, next.endAt)} />
           {e.format === "OFFLINE" && e.lat != null && e.lon != null ? (
             <RouteButton to={{ lat: e.lat, lon: e.lon }} rough={false} className="h-12 min-w-0 flex-1 px-5 text-sm">Маршрут</RouteButton>
           ) : e.format === "OFFLINE" && e.address ? (
