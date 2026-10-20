@@ -1,8 +1,12 @@
+import { CommentContent } from "./comment-content";
+import { CommentModerationAction } from "@/features/comment-moderation/ui/comment-moderation";
+import { MessageActionsSheet, MessageGestures } from "@/features/comment-gestures/ui/message-gestures";
+import type { CommentResponse } from "@/shared/api/generated/core/appAPI.schemas";
 import { profilePath } from "@/entity/user/lib/profile-path";
 import { coverOf } from "@/entity/event/lib/cover";
 import { MessageCircleQuestion } from "lucide-react";
 import { EmptyState } from "@/shared/components/ui/empty-state";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link } from "react-router";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
@@ -92,7 +96,17 @@ function IconRow({
 
 function MobileChat({ m }: { m: EventModel }) {
   const [text, setText] = useState("");
+  const [replyTo, setReplyTo] = useState<{ id: string; who: string } | null>(null);
+  const [held, setHeld] = useState<CommentResponse>();
+  const input = useRef<HTMLInputElement>(null);
   const canComment = m.event!.viewer.canComment;
+  const reply = (c: CommentResponse) => {
+    setReplyTo({ id: c.id, who: fullName(c.author) });
+    input.current?.focus({ preventScroll: true });
+    input.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+  const canReply = (c: CommentResponse) => canComment && !c.deleted && !c.hidden;
+  const canRemove = (c: CommentResponse) => m.moderation.isAdmin && !c.deleted && !c.hidden;
   return (
     <Card className="gap-[10px] rounded-[22px] p-[18px]">
       <div className="flex items-center justify-between leading-[normal] font-bold whitespace-nowrap">
@@ -105,30 +119,47 @@ function MobileChat({ m }: { m: EventModel }) {
           <Link to={profilePath(c.author)} aria-label={fullName(c.author)} className="shrink-0">
             <Disc user={c.author} initials={initials(c.author)} tone={TONES[i % TONES.length]} className="size-8 shrink-0" textClassName="text-xs leading-[normal]" />
           </Link>
+          <MessageGestures className="min-w-0 flex-1"
+            onReply={canReply(c) ? () => reply(c) : undefined}
+            onHold={canReply(c) || canRemove(c) ? () => setHeld(c) : undefined}>
           <div className={cn(
-            "box-border flex min-w-0 flex-1 flex-col gap-[2px] rounded-[14px] border-[1.5px] border-ink px-3 py-2",
+            "box-border flex min-w-0 flex-1 flex-col gap-[2px] break-words rounded-[14px] border-[1.5px] border-ink px-3 py-2",
             c.isOrganizer ? "bg-lime-soft" : "bg-sky-soft",
           )}>
             <span className="text-[11px] leading-[normal] font-bold text-muted-foreground">
               {fullName(c.author)}{c.isOrganizer && " · Организатор"} · {new Date(c.createdAt).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}
             </span>
-            {c.replyTo && <span className="border-l-2 border-ink pl-2 text-xs text-muted-foreground">{fullName(c.replyTo.author)}: {c.replyTo.text}</span>}
+            {!c.hidden && c.replyTo && <span className="border-l-2 border-ink pl-2 text-xs text-muted-foreground">{fullName(c.replyTo.author)}: {c.replyTo.hidden ? "Удалено администратором" : c.replyTo.deleted ? "Сообщение удалено" : c.replyTo.text}</span>}
             <span className="text-[13px] leading-[18px] font-medium text-foreground">
-              {c.deleted ? "Сообщение удалено" : c.text}
+              <CommentContent comment={c} isAdmin={m.moderation.isAdmin} />
             </span>
+            <CommentModerationAction comment={c} moderation={m.moderation} />
           </div>
+          </MessageGestures>
         </div>
       ))}
+      {m.comments.length > 0 && canComment && <p className="text-[11px] font-bold text-muted-foreground">Свайп вправо — ответить, удержание — меню</p>}
+      <MessageActionsSheet open={held !== undefined} text={held && !held.deleted && !held.hidden ? held.text : undefined} onClose={() => setHeld(undefined)}
+        onReply={held && canReply(held) ? () => reply(held) : undefined}
+        onRemove={held && canRemove(held) ? () => m.moderation.open(held) : undefined} />
       {canComment ? (
+        <>
+        {replyTo && (
+          <p className="flex items-center justify-between gap-2 rounded-xl border-l-4 border-ink bg-muted px-3 py-2 text-sm font-semibold">
+            <span className="min-w-0 truncate">Ответ для {replyTo.who}</span>
+            <button type="button" className="shrink-0 font-extrabold underline" onClick={() => setReplyTo(null)}>отменить</button>
+          </p>
+        )}
         <form className="flex items-center gap-2 rounded-[14px] border-2 border-ink px-[14px] py-2"
           onSubmit={(event) => {
             event.preventDefault();
-            if (text.trim()) void m.sendComment(text.trim()).then(() => setText("")).catch(() => undefined);
+            if (text.trim()) void m.sendComment(text.trim(), replyTo?.id).then(() => { setText(""); setReplyTo(null); }).catch(() => undefined);
           }}>
-          <input value={text} onChange={(e) => setText(e.target.value)} aria-label="Сообщение" maxLength={2000}
+          <input ref={input} value={text} onChange={(e) => setText(e.target.value)} aria-label="Сообщение" maxLength={2000}
             placeholder="Задать вопрос" className="min-w-0 flex-1 bg-transparent text-sm outline-none" />
           <Button type="submit" size="sm" disabled={!text.trim() || m.commentPending}>→</Button>
         </form>
+        </>
       ) : (
         <div className="box-border flex items-center gap-[10px] rounded-[14px] border-2 border-dashed border-muted-foreground px-[14px] py-3">
           <Icon name={`${dir}/icon-lock`} className="size-[18px] shrink-0" />
