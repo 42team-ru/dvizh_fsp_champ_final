@@ -124,3 +124,16 @@ export const ORGANIZATION_NOTIFICATION = {
 /** Завершённое неотменённое занятие в архиве клуба. */
 export const PAST_MEETING_STATUS = { label: "Проведено", tone: "bg-card" };
 export const ORGANIZATION_VERIFIED_LABEL = "Проверена администратором";
+
+/** Состояние занятия в полном расписании встречи. */
+export const OCCURRENCE_STATUS_LABEL = {
+  SCHEDULED: "Запланировано",
+  CANCELLED: "Отменено",
+} as const;
+
+/** Текущий результат сбора кворума на занятие. */
+export const QUORUM_STATUS_LABEL = {
+  GATHERING: "Собираем участников",
+  REACHED: "Кворум набран — состоится",
+  CONFIRMED: "Организатор подтвердил: состоится",
+} as const;

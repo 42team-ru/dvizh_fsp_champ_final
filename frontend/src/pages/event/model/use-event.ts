@@ -62,17 +62,17 @@ function facts(event: EventResponse) {
   const when = days <= 0 ? "сегодня" : days === 1 ? "завтра" : `через ${days} ${plural(days, ["день", "дня", "дней"])}`;
   return [
     {
-      icon: "icon-clock", label: "КОГДА",
+      section: "when" as const, icon: "icon-clock", label: "КОГДА",
       value: `${WEEKDAYS[start.getDay()]}, ${start.getDate()} ${MONTHS[start.getMonth()]}`,
       lines: [endIso ? `${time(start)}–${time(new Date(endIso))}` : time(start), event.schedule?.description ?? when],
     },
     {
-      icon: "icon-pin", label: "ГДЕ",
+      section: "where" as const, icon: "icon-pin", label: "ГДЕ",
       value: event.format === "ONLINE" ? FORMAT_LABEL.ONLINE : placeName(event.address),
       lines: event.format === "ONLINE" ? ["ссылка — после записи", ""] : [event.address ?? "", event.locationNote ?? ""],
     },
     {
-      icon: "icon-route", label: "ЗАПИСЬ",
+      section: "registration" as const, icon: "icon-route", label: "ЗАПИСЬ",
       value: JOIN_MODE_LABEL[event.joinMode],
       lines: [
         event.capacity != null ? `мест: ${event.capacity}` : "без лимита мест",

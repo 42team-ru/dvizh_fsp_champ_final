@@ -6,6 +6,7 @@ import { WavingBeaver } from "@/widgets/beaver-pet/ui/waving-beaver";
 import { useRef, useState } from "react";
 import { CancelledStamp } from "@/shared/components/ui/cancelled-stamp";
 import { Link } from "react-router";
+import { EventDetailsDialog, type EventDetailsSection } from "./event-details-dialog";
 import { EventMobile } from "./event-mobile";
 import { fullName, initials, privateNote, rejectedText, useEvent } from "../model/use-event";
 import { plural } from "@/shared/lib/plural";
@@ -114,7 +115,7 @@ function RegisterAction({ m, className, hintClassName }: { m: EventModel; classN
   );
 }
 
-function TicketHero({ m }: { m: EventModel }) {
+function TicketHero({ m, onDetails }: { m: EventModel; onDetails: (section: EventDetailsSection) => void }) {
   const e = m.event!;
   const cover = coverOf(e);
   const showQrStamp = !m.moderated && e.singleOccurrence?.status !== "CANCELLED" && (e.viewer.registrationStatus === "CONFIRMED" || e.viewer.isOrganizer);
@@ -151,10 +152,10 @@ function TicketHero({ m }: { m: EventModel }) {
 
         <div className="flex h-[87px] w-[602px]">
           {m.facts.map((f, i) => (
-            <div key={f.label} className={cn("relative h-[87px] shrink-0", FACT_WIDTHS[i])}>
+            <button type="button" key={f.label} aria-label={`Подробнее: ${f.label.toLowerCase()}`} aria-haspopup="dialog" onClick={() => onDetails(f.section)} className={cn("relative h-[87px] shrink-0 cursor-pointer text-left transition-colors hover:bg-lavender-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring", FACT_WIDTHS[i])}>
               <div className="absolute top-0 left-5 flex h-4 items-center gap-[6px]">
                 <Icon name={`event/${f.icon}`} className="size-4" />
-                <Eyebrow>{f.label}</Eyebrow>
+                <Eyebrow>{f.label}</Eyebrow><span aria-hidden className="text-lg leading-none">›</span>
               </div>
               <p title={f.value} className="absolute top-[23px] left-5 w-[175px] truncate font-display text-[19px] leading-6 font-bold text-foreground">
                 {f.value}
@@ -163,7 +164,7 @@ function TicketHero({ m }: { m: EventModel }) {
                 <span title={f.lines[0]} className="block truncate">{f.lines[0]}</span>
                 <span title={f.lines[1]} className="block truncate">{f.lines[1]}</span>
               </p>
-            </div>
+            </button>
           ))}
         </div>
       </div>
@@ -467,9 +468,16 @@ function Going({ m }: { m: EventModel }) {
 
 export default function EventPage() {
   const m = useEvent();
+  const [details, setDetails] = useState<EventDetailsSection>();
+  const detailsTrigger = useRef<HTMLElement | null>(null);
+  const openDetails = (section: EventDetailsSection) => {
+    detailsTrigger.current = document.activeElement as HTMLElement;
+    setDetails(section);
+  };
   return (
     <>
-    <EventMobile m={m} />
+    <EventMobile m={m} onDetails={openDetails} />
+    {m.event && <EventDetailsDialog key={m.id} event={m.event} section={details} onClose={() => setDetails(undefined)} onRestoreFocus={() => detailsTrigger.current?.focus()} />}
     <div className="relative isolate hidden min-h-dvh overflow-clip bg-background lg:block">
       <MemphisBackground seed="event" />
       <AppHeader current="feed" />
@@ -500,7 +508,7 @@ export default function EventPage() {
         )}
         {m.event && (
           <>
-            <TicketHero m={m} />
+            <TicketHero m={m} onDetails={openDetails} />
             <div className="grid w-[1216px] shrink-0 grid-cols-[701px_495px] items-start gap-5">
               <div className="flex min-w-0 flex-col gap-5">
                 <About m={m} />

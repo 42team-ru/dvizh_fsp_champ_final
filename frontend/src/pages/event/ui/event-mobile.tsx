@@ -22,6 +22,8 @@ import { EventShare } from "./event-share";
 import { InviteActions } from "@/features/organizer-invite/ui/invite-actions";
 import { EventGoingCrowd } from "@/widgets/event-going-crowd/ui/event-going-crowd";
 
+import type { EventDetailsSection } from "./event-details-dialog";
+
 const dir = "m-event";
 const TONES = ["bg-sky", "bg-mint", "bg-peach", "bg-secondary", "bg-lavender-soft"];
 const TAKE_TONES = ["bg-sky-soft", "bg-lime-soft", "bg-peach", "bg-lavender-soft"];
@@ -62,27 +64,29 @@ function IconRow({
   label,
   value,
   hint,
+  onClick,
 }: {
   icon: string;
   label: string;
   value: string;
   hint: string;
+  onClick: () => void;
 }) {
   return (
-    <div className="flex items-center gap-3">
+    <button type="button" onClick={onClick} aria-label={`Подробнее: ${label.toLowerCase()}`} aria-haspopup="dialog" className="flex w-full cursor-pointer items-center gap-3 rounded-xl text-left transition-colors hover:bg-lavender-soft focus-visible:outline-2 focus-visible:outline-ring">
       <span className="box-border flex size-10 shrink-0 items-center justify-center rounded-xl border-2 border-ink bg-lavender-soft">
         <Icon name={`${dir}/${icon}`} className="size-5" />
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-px leading-[normal] whitespace-nowrap">
         <span className="text-[10px] font-extrabold tracking-[1px] text-muted-foreground">
-          {label}
+          {label} <span aria-hidden className="ml-1 text-base">›</span>
         </span>
         <span className="overflow-hidden text-[15px] font-extrabold text-ellipsis text-foreground">{value}</span>
         <span className="overflow-hidden text-xs font-medium text-ellipsis text-muted-foreground">
           {hint}
         </span>
       </div>
-    </div>
+    </button>
   );
 }
 
@@ -136,7 +140,7 @@ function MobileChat({ m }: { m: EventModel }) {
   );
 }
 
-export function EventMobile({ m }: { m: EventModel }) {
+export function EventMobile({ m, onDetails }: { m: EventModel; onDetails: (section: EventDetailsSection) => void }) {
   const [shareOpen, setShareOpen] = useState(false);
   const e = m.event;
   if (!e) {
@@ -248,7 +252,7 @@ export function EventMobile({ m }: { m: EventModel }) {
             <div className="flex items-center gap-3">
               <div className="flex min-w-0 flex-1 flex-col gap-3">
                 {m.facts.slice(0, 2).map((f) => (
-                  <IconRow key={f.label} icon={f.icon} label={f.label} value={`${f.value}${f.label === "КОГДА" ? ` · ${f.lines[0]}` : ""}`}
+                  <IconRow key={f.label} onClick={() => onDetails(f.section)} icon={f.icon} label={f.label} value={`${f.value}${f.label === "КОГДА" ? ` · ${f.lines[0]}` : ""}`}
                     hint={f.label === "КОГДА" ? f.lines[1] : f.lines.filter(Boolean).join(" · ")} />
                 ))}
               </div>
@@ -270,13 +274,13 @@ export function EventMobile({ m }: { m: EventModel }) {
       </div>
 
       <div className="flex gap-3 px-4">
-        <div className="box-border flex min-w-0 flex-1 flex-col gap-1 rounded-[22px] border-2 border-ink bg-secondary p-4 text-foreground">
+        <button type="button" aria-label="Подробнее: запись" aria-haspopup="dialog" onClick={() => onDetails("registration")} className="box-border flex min-w-0 flex-1 cursor-pointer flex-col gap-1 rounded-[22px] border-2 border-ink bg-secondary p-4 text-left text-foreground transition-colors hover:bg-lime-soft focus-visible:outline-2 focus-visible:outline-ring">
           <span className="text-[10px] leading-[normal] font-extrabold tracking-[1.2px] whitespace-nowrap">
-            {m.facts[2]?.label}
+            {m.facts[2]?.label} <span aria-hidden className="ml-1 text-base">›</span>
           </span>
           <span className="font-display text-[20px] leading-[normal] font-extrabold">{m.facts[2]?.value}</span>
           <span className="text-xs leading-4 font-bold">{m.facts[2]?.lines.join(", ")}</span>
-        </div>
+        </button>
         <div className="box-border flex min-w-0 flex-1 flex-col items-start gap-2 rounded-[22px] border-2 border-ink bg-card p-4">
           <Eyebrow className="text-[10px] tracking-[1.2px]">КТО ИДЁТ</Eyebrow>
           <span className="font-display text-[22px] leading-[normal] font-extrabold whitespace-nowrap text-foreground">
