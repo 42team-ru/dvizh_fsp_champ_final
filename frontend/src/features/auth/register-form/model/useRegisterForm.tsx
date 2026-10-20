@@ -6,7 +6,7 @@ import {
   useAuthRegister,
   type AuthRegisterMutationError,
 } from "@/shared/api/generated/core/auth/auth";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { USER_QUERY_KEY } from "@/entity/user/model/use-user";
 import { toast } from "@/shared/lib/toast";
@@ -14,6 +14,8 @@ import { useEmailAvailability, useUsernameAvailability } from "./use-availabilit
 
 export function useRegisterForm() {
   const navigate = useNavigate();
+  // Кнопки лендинга «Я представляю клуб» ведут сюда с ?type=org.
+  const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { mutateAsync: registerAsync } = useAuthRegister();
   const { mutateAsync: loginAsync } = useAuthLogin();
@@ -25,7 +27,7 @@ export function useRegisterForm() {
 
   const form = useForm({
     defaultValues: {
-      accountType: "USER" as "USER" | "ORG",
+      accountType: (searchParams.get("type") === "org" ? "ORG" : "USER") as "USER" | "ORG",
       firstName: "",
       lastName: "",
       username: "",

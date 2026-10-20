@@ -1,0 +1,7 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="ring">
+<path id="Vector" d="M108 60C108 86.5097 86.5097 108 60 108C33.4903 108 12 86.5097 12 60C12 33.4903 33.4903 12 60 12C86.5097 12 108 33.4903 108 60Z" stroke-width="14" stroke="white"/>
+<path id="Vector_2" d="M108 60C108 86.5097 86.5097 108 60 108C33.4903 108 12 86.5097 12 60C12 33.4903 33.4903 12 60 12C86.5097 12 108 33.4903 108 60Z" stroke-width="14" stroke="#4B3FE0"/>
+<path id="Vector_3" d="M60 94C78.7777 94 94 78.7777 94 60C94 41.2223 78.7777 26 60 26C41.2223 26 26 41.2223 26 60C26 78.7777 41.2223 94 60 94Z" fill="#C6F135" stroke-width="2.5" stroke="#13142B"/>
+</g>
+</svg>

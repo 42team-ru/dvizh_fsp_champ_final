@@ -1,0 +1,23 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="640" height="470" viewBox="0 0 640 470" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Map tiles" clip-path="url(#clip0_0_14)">
+<path id="Vector" d="M763.077 -0.0769318H-98.4616V536.538H763.077V-0.0769318Z" fill="#E7F3CC"/>
+<path id="Vector_2" d="M18.4615 -0.0769318H652.308V227.615C516.923 260.846 393.846 278.077 297.846 292.846C221.538 252.231 147.692 184.538 61.5384 147.615C22.1538 113.154 14.7692 49.1538 18.4615 -0.0769318Z" fill="#F4F1E1"/>
+<g id="Group">
+<path id="Vector_3" d="M36.9231 36.8461H652.308M36.9231 81.1538H652.308M61.5385 125.462H652.308M110.769 169.769H652.308" stroke-width="3.69231" stroke="white"/>
+<path id="Vector_4" d="M147.692 -0.0769318V184.538M227.692 -0.0769318V233.769M307.692 -0.0769318V276.846M387.692 -0.0769318V264.538M467.692 -0.0769318V252.231M547.692 -0.0769318V239.923" stroke-width="3.69231" stroke="white"/>
+</g>
+<path id="Vector_5" d="M-98.4616 406.077C-61.5385 408.538 172.308 307.615 295.385 313.769C418.462 319.923 516.923 285.462 676.923 184.538" stroke-width="51.6923" stroke-linecap="round" stroke="#8CCBF7"/>
+<path id="Vector_6" d="M-98.4616 406.077C-61.5385 408.538 172.308 307.615 295.385 313.769C418.462 319.923 516.923 285.462 676.923 184.538" stroke-width="41.8462" stroke-linecap="round" stroke="#B9DFFB"/>
+<g id="Group_2">
+<path id="Vector_7" d="M-12.3077 157.462L652.308 71.3077" stroke-width="6.15385" stroke-linecap="round" stroke="#FFAD5C"/>
+<path id="Vector_8" d="M92.3077 -0.0769318L320 285.462" stroke-width="6.15385" stroke-linecap="round" stroke="#FFAD5C"/>
+<path id="Vector_9" d="M258.462 -0.0769318L504.615 252.231" stroke-width="6.15385" stroke-linecap="round" stroke="#FFAD5C"/>
+<path id="Vector_10" d="M332.308 273.154L381.538 406.077L652.308 467.615" stroke-width="6.15385" stroke-linecap="round" stroke="#FFAD5C"/>
+</g>
+</g>
+<defs>
+<clipPath id="clip0_0_14">
+<rect width="640" height="470" fill="white"/>
+</clipPath>
+</defs>
+</svg>

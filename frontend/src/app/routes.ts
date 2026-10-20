@@ -11,6 +11,7 @@ export default [
   route("e/:code", "routes/short-link.tsx", { id: "short-event" }),
   route("o/:code", "routes/short-link.tsx", { id: "short-org" }),
   route("u/:code", "routes/short-link.tsx", { id: "short-user" }),
+  route("welcome", "routes/landing.tsx"),
   layout("providers/guards/auth-guard.tsx", [
     index("routes/home.tsx"),
     route("feed", "routes/feed.tsx"),

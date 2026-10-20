@@ -1,0 +1,10 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="1280" height="200" viewBox="0 0 1280 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="skyline" clip-path="url(#clip0_0_25)">
+<path id="Vector" d="M0 200V120H70V80H130V110H190V50H250V95H320V70H380V130H600V60H660V90H720V30H790V100H860V75H930V40H1000V105H1080V70H1150V110H1280V200H0Z" fill="#3A30B8" stroke-width="2" stroke="#13142B"/>
+</g>
+<defs>
+<clipPath id="clip0_0_25">
+<rect width="1280" height="200" fill="white"/>
+</clipPath>
+</defs>
+</svg>

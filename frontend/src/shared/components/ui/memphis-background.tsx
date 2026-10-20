@@ -21,8 +21,18 @@ type Shape =
   | "grid"
   | "stripes"
   | "capsule"
+  | "football"
+  | "basketball"
+  | "tennis"
+  | "shuttlecock"
+  | "dumbbell"
+  | "whistle"
+  | "stopwatch"
+  | "medal"
 
 type Variant = "desktop" | "mobile" | "auth"
+/** Набор фигур: геометрия Memphis или спортивный инвентарь (лендинг). */
+type Theme = "memphis" | "sport"
 
 type Placed = { shape: Shape; x: number; y: number; size: number; rotate: number; color: string }
 
@@ -40,6 +50,13 @@ const TIERS: { share: number; size: [number, number]; shapes: Shape[] }[] = [
   { share: 0.38, size: [20, 32], shapes: ["plus", "disc", "ring", "plus"] },
 ]
 
+/** Спортивный набор: крупный инвентарь первым, мелкие мячи заполняют остаток. */
+const SPORT_TIERS: typeof TIERS = [
+  { share: 0.3, size: [64, 92], shapes: ["football", "basketball", "dumbbell", "stopwatch", "medal"] },
+  { share: 0.4, size: [40, 56], shapes: ["tennis", "shuttlecock", "whistle", "football", "medal"] },
+  { share: 0.3, size: [24, 34], shapes: ["tennis", "football", "basketball", "shuttlecock"] },
+]
+
 /** Доля размера фигуры, которую она реально занимает (радиус описанного круга). */
 const FOOTPRINT: Record<Shape, number> = {
   disc: 0.46,
@@ -53,9 +70,17 @@ const FOOTPRINT: Record<Shape, number> = {
   grid: 0.52,
   stripes: 0.48,
   capsule: 0.5,
+  football: 0.48,
+  basketball: 0.48,
+  tennis: 0.48,
+  shuttlecock: 0.5,
+  dumbbell: 0.52,
+  whistle: 0.5,
+  stopwatch: 0.5,
+  medal: 0.5,
 }
 
-const ROTATABLE = new Set<Shape>(["triangle", "halfdisc", "stripes", "capsule", "squiggle", "zigzag", "grid"])
+const ROTATABLE = new Set<Shape>(["shuttlecock", "dumbbell", "whistle", "medal", "triangle", "halfdisc", "stripes", "capsule", "squiggle", "zigzag", "grid"])
 const LINEAR = new Set<Shape>(["plus", "stripes", "dots"])
 
 /** Отступ фигуры от боковых сторон блоков, px. */
@@ -82,8 +107,8 @@ const CACHE_VERSION = 1
  * Ключ кэша: страница (seed), вариант и ширина с округлением. Высоту не берём: при первом рендере страница ещё
  * без данных и ниже итоговой — с высотой в ключе кэш почти не совпадал бы; лишние фигуры ниже края обрезаются.
  */
-function cacheKey(key: string, variant: Variant, width: number) {
-  return `memphis:v${CACHE_VERSION}:${variant}:${key}:${Math.round(width / 40) * 40}`
+function cacheKey(key: string, variant: Variant, width: number, theme: Theme) {
+  return `memphis:v${CACHE_VERSION}:${theme}:${variant}:${key}:${Math.round(width / 40) * 40}`
 }
 
 /** Готовая раскладка из кэша браузера; хранилище может быть недоступно (приватный режим) — тогда null. */
@@ -153,7 +178,14 @@ function layout(
   seed: string,
   scale: number,
   keep: Placed[] = [],
+  theme: Theme = "memphis",
 ): Placed[] {
+  const tiers = theme === "sport" ? SPORT_TIERS : TIERS
+  // спортивный фон не прячется за карточки: фигуры только на свободном месте
+  const straddle = theme === "sport" ? 0 : STRADDLE_SHARE
+  // спортивные фигуры плотнее: встают в узкие зазоры между секциями
+  const clear = theme === "sport" ? 18 : CLEAR
+  const spacing = theme === "sport" ? 48 : SPACING
   const rand = mulberry(hashSeed(seed))
   function pick<T>(list: readonly T[]): T {
     return list[Math.floor(rand() * list.length)]
@@ -171,7 +203,7 @@ function layout(
     kept[tierOf(p.size, scale)]++
   }
 
-  for (const [index, tier] of TIERS.entries()) {
+  for (const [index, tier] of tiers.entries()) {
     const want = Math.round(total * tier.share) - kept[index]
     for (let n = 0; n < want; n++) {
       const shape = pick(tier.shapes)
@@ -183,7 +215,7 @@ function layout(
         let cy = -size * 0.25 + rand() * (height + size * 0.5)
         let behind = false
         const mode = rand()
-        if (blocks.length && mode < STRADDLE_SHARE) {
+        if (blocks.length && mode < straddle) {
           // за блоком: центр на краю карточки, наружу выглядывает примерно две трети фигуры
           const o = pick(blocks)
           const side = Math.floor(rand() * 4)
@@ -202,16 +234,16 @@ function layout(
             cy = o.t + rand() * (o.b - o.t)
           }
           behind = true
-        } else if (blocks.length && mode < STRADDLE_SHARE + HUG_SHARE * (1 - STRADDLE_SHARE)) {
+        } else if (blocks.length && mode < straddle + HUG_SHARE * (1 - straddle)) {
           // прижимаемся к боковой стороне блока: край фигуры ровно в CLEAR px от него
           const o = pick(blocks)
-          cx = rand() < 0.5 ? o.r + r + CLEAR : o.l - r - CLEAR
+          cx = rand() < 0.5 ? o.r + r + clear : o.l - r - clear
           cy = o.t + rand() * (o.b - o.t)
         }
         if (obstacles.hard.some((o) => distToBox(cx, cy, o) < r + CLEAR_HARD - 0.5)) continue
         // сплошные блоки: фигура либо стоит от них на CLEAR, либо намеренно прячется за краем
-        if (!behind && obstacles.soft.some((o) => distToBox(cx, cy, o) < r + CLEAR - 0.5)) continue
-        if (placed.some((q) => Math.hypot(q.cx - cx, q.cy - cy) < q.r + r + SPACING)) continue
+        if (!behind && obstacles.soft.some((o) => distToBox(cx, cy, o) < r + clear - 0.5)) continue
+        if (placed.some((q) => Math.hypot(q.cx - cx, q.cy - cy) < q.r + r + spacing)) continue
         placed.push({
           cx,
           cy,
@@ -222,7 +254,7 @@ function layout(
             x: Math.round(cx - size / 2),
             y: Math.round(cy - size / 2),
             rotate: ROTATABLE.has(shape) ? Math.round((rand() - 0.5) * 50) : 0,
-            color: LINEAR.has(shape) && rand() < 0.4 ? INK : pick(PALETTE),
+            color: theme === "sport" ? SPORT_COLOR[shape] ?? pick(PALETTE) : LINEAR.has(shape) && rand() < 0.4 ? INK : pick(PALETTE),
           },
         })
         break
@@ -294,6 +326,15 @@ function collectObstacles(bg: HTMLElement, scope: HTMLElement): Obstacles {
 }
 
 /* ---------- Рисунки фигур ---------- */
+
+/** Узнаваемые цвета инвентаря; остальное — из общей палитры. */
+const SPORT_COLOR: Partial<Record<Shape, string>> = {
+  football: "#ffffff",
+  basketball: "var(--accent)",
+  tennis: "var(--secondary)",
+  shuttlecock: "#ffffff",
+  medal: "var(--sun)",
+}
 
 const SHADOW = 2.5
 
@@ -382,6 +423,88 @@ function Glyph({ shape, color }: { shape: Shape; color: string }) {
           <path d="M28 34 L38 6" />
         </g>,
       )
+    case "football":
+      return svg(
+        "0 0 40 40",
+        <>
+          <circle cx={20 + SHADOW} cy={20 + SHADOW} r="16" fill={INK} />
+          <circle cx="20" cy="20" r="16" fill={color} {...outline} />
+          <polygon points="20,13 26.7,17.8 24.1,25.6 15.9,25.6 13.3,17.8" fill={INK} />
+          <path d="M20 13 V5 M26.7 17.8 L34 15 M24.1 25.6 L29 32 M15.9 25.6 L11 32 M13.3 17.8 L6 15" stroke={INK} strokeWidth="2.5" />
+        </>,
+      )
+    case "basketball":
+      return svg(
+        "0 0 40 40",
+        <>
+          <circle cx={20 + SHADOW} cy={20 + SHADOW} r="16" fill={INK} />
+          <circle cx="20" cy="20" r="16" fill={color} {...outline} />
+          <path d="M4 20 H36 M20 4 V36 M9 8 Q16 20 9 32 M31 8 Q24 20 31 32" fill="none" stroke={INK} strokeWidth="2.5" />
+        </>,
+      )
+    case "tennis":
+      return svg(
+        "0 0 40 40",
+        <>
+          <circle cx={20 + SHADOW} cy={20 + SHADOW} r="16" fill={INK} />
+          <circle cx="20" cy="20" r="16" fill={color} {...outline} />
+          <path d="M8 9 Q17 20 8 31 M32 9 Q23 20 32 31" fill="none" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" />
+        </>,
+      )
+    case "shuttlecock":
+      return svg(
+        "0 0 40 40",
+        <>
+          <path d="M9 4 L31 4 L24 26 L16 26 Z" fill={INK} transform={`translate(${SHADOW} ${SHADOW})`} />
+          <path d="M9 4 L31 4 L24 26 L16 26 Z" fill={color} {...outline} />
+          <path d="M15 5 L18 25 M25 5 L22 25" stroke={INK} strokeWidth="2" />
+          <circle cx={20 + SHADOW} cy={31 + SHADOW} r="6" fill={INK} />
+          <circle cx="20" cy="31" r="6" fill="var(--accent)" {...outline} />
+        </>,
+      )
+    case "dumbbell":
+      return svg(
+        "0 0 48 24",
+        <>
+          <g transform={`translate(${SHADOW} ${SHADOW})`} fill={INK}>
+            <rect x="3" y="2" width="9" height="20" rx="3" />
+            <rect x="36" y="2" width="9" height="20" rx="3" />
+          </g>
+          <rect x="11" y="9.5" width="26" height="5" rx="2" fill={INK} />
+          <rect x="3" y="2" width="9" height="20" rx="3" fill={color} {...outline} />
+          <rect x="36" y="2" width="9" height="20" rx="3" fill={color} {...outline} />
+        </>,
+      )
+    case "whistle":
+      return svg(
+        "0 0 40 40",
+        <>
+          <path d="M6 20 A10 10 0 1 0 26 20 L36 14 L36 8 L14 10 A10 10 0 0 0 6 20 Z" fill={INK} transform={`translate(${SHADOW} ${SHADOW})`} />
+          <path d="M6 20 A10 10 0 1 0 26 20 L36 14 L36 8 L14 10 A10 10 0 0 0 6 20 Z" fill={color} {...outline} />
+          <circle cx="16" cy="20" r="3.5" fill={INK} />
+        </>,
+      )
+    case "stopwatch":
+      return svg(
+        "0 0 40 40",
+        <>
+          <rect x="16" y="2" width="8" height="6" rx="2" fill={INK} />
+          <circle cx={20 + SHADOW} cy={23 + SHADOW} r="14" fill={INK} />
+          <circle cx="20" cy="23" r="14" fill={color} {...outline} />
+          <circle cx="20" cy="23" r="9" fill="#ffffff" stroke={INK} strokeWidth="2.5" />
+          <path d="M20 23 L20 17 M20 23 L24 25" stroke={INK} strokeWidth="2.5" strokeLinecap="round" />
+        </>,
+      )
+    case "medal":
+      return svg(
+        "0 0 40 40",
+        <>
+          <path d="M11 2 L18 18 M29 2 L22 18" stroke="var(--primary)" strokeWidth="6" strokeLinecap="round" />
+          <circle cx={20 + SHADOW} cy={26 + SHADOW} r="11" fill={INK} />
+          <circle cx="20" cy="26" r="11" fill={color} {...outline} />
+          <path d="M20 20 L21.8 24 L26 24.3 L22.8 27 L23.8 31 L20 28.8 L16.2 31 L17.2 27 L14 24.3 L18.2 24 Z" fill={INK} />
+        </>,
+      )
     case "capsule":
       return svg(
         "0 0 40 40",
@@ -401,8 +524,10 @@ function MemphisBackground({
   variant = "desktop",
   className,
   seed,
+  theme = "memphis",
 }: {
   variant?: Variant
+  theme?: Theme
   /** Разный seed — разный рисунок; при той же вёрстке рисунок не меняется. */
   seed?: string | number
   className?: string
@@ -425,14 +550,14 @@ function MemphisBackground({
       const height = bg.offsetHeight
       if (!width || !height) return null
       const scale = variant === "mobile" || width < 640 ? 0.7 : 1
-      current = layout(width, height, collectObstacles(bg, scope), key, scale, keep)
+      current = layout(width, height, collectObstacles(bg, scope), key, scale, keep, theme)
       setShapes(current)
       return width
     }
 
     // Первый кадр: фигуры сразу — из кэша (страница этого размера уже раскладывалась) или посчитанные
     // по тому, что уже есть на экране. useLayoutEffect успевает до отрисовки, пустого фона не видно.
-    const cached = bg.offsetWidth ? readCache(cacheKey(key, variant, bg.offsetWidth)) : null
+    const cached = bg.offsetWidth ? readCache(cacheKey(key, variant, bg.offsetWidth, theme)) : null
     if (cached) {
       current = cached
       setShapes(cached)
@@ -449,7 +574,7 @@ function MemphisBackground({
         timer = window.setTimeout(refine, 200)
         return
       }
-      writeCache(cacheKey(key, variant, width), current)
+      writeCache(cacheKey(key, variant, width, theme), current)
       done = true
       mutations.disconnect()
     }
@@ -475,7 +600,7 @@ function MemphisBackground({
       mutations.disconnect()
       window.clearTimeout(timer)
     }
-  }, [key, variant])
+  }, [key, variant, theme])
 
   return (
     <div
