@@ -1,3 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50">
-  <!-- Кнопка карты «Где я». -->
-  <circle cx="25" cy="25" r="22" fill="#13142b"/><circle cx="22" cy="22" r="21" fill="#ffffff" stroke="#13142b" stroke-width="2"/><circle cx="22" cy="22" r="6" fill="none" stroke="#13142b" stroke-width="2.5"/><circle cx="22" cy="22" r="2" fill="#13142b"/><path d="M22 11 V15 M22 29 V33 M11 22 H15 M29 22 H33" stroke="#13142b" stroke-width="2.5" stroke-linecap="round"/></svg>

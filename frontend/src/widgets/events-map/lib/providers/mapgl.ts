@@ -103,8 +103,6 @@ async function createMap(container: HTMLElement, center: [number, number], zoom:
       mountControls(el, {
         zoomIn: () => m.setStyleZoom(Math.min(m.getMaxZoom(), m.getStyleZoom() + 1)),
         zoomOut: () => m.setStyleZoom(m.getStyleZoom() - 1),
-        goTo: (point) => { m.setCenter(point); m.setStyleZoom(Math.max(m.getStyleZoom(), 15)); },
-        center: () => m.getCenter() as [number, number],
       });
     }
     return { api, map, el };

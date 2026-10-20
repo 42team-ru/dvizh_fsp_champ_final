@@ -70,12 +70,10 @@ const mapOptions = (center: [number, number], zoom: number) => ({
   zoomControl: false,
 });
 
-/** Кнопки карты по макету: «Приблизить», «Отдалить», «Где я». */
+/** Кнопки карты по макету: «Приблизить», «Отдалить». */
 const controls = (el: HTMLElement, map: DgMap) => mountControls(el, {
   zoomIn: () => map.zoomIn(),
   zoomOut: () => map.zoomOut(),
-  goTo: (point) => map.setView([point[1], point[0]], Math.max(map.getZoom(), 15)),
-  center: () => { const c = map.getCenter(); return [c.lng, c.lat]; },
 });
 
 function readBbox(map: DgMap): Bbox {
