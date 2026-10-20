@@ -1,3 +1,4 @@
+import { RouteButton } from "@/features/route-button/ui/route-button";
 import { coverOf } from "@/entity/event/lib/cover";
 import { usePetName } from "@/entity/user/model/use-pet-name";
 import { Compass } from "lucide-react";
@@ -200,11 +201,13 @@ function Tip() {
           <Button asChild className="h-12 min-w-0 flex-1 px-5 text-sm">
             <a href={calendarUrl(e.id)} download>В календарь</a>
           </Button>
-          {e.format === "OFFLINE" && e.address && (
+          {e.format === "OFFLINE" && e.lat != null && e.lon != null ? (
+            <RouteButton to={{ lat: e.lat, lon: e.lon }} rough={false} className="h-12 min-w-0 flex-1 px-5 text-sm">Маршрут</RouteButton>
+          ) : e.format === "OFFLINE" && e.address ? (
             <Button asChild variant="soft" rough={false} className="h-12 min-w-0 flex-1 px-5 text-sm">
               <a href={routeUrl(e.address)} target="_blank" rel="noreferrer">Маршрут</a>
             </Button>
-          )}
+          ) : null}
         </div>
       </div>
     </div>
