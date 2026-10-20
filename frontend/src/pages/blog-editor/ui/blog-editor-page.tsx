@@ -169,7 +169,7 @@ export default function BlogEditorPage() {
   const wasPublished = existing.data?.status === 200 && existing.data.data.post.status === "PUBLISHED";
 
   return (
-    <BlogShell title={editing ? "Правка поста" : "Новый пост"}>
+    <BlogShell seed="blog-editor" title={editing ? "Правка поста" : "Новый пост"}>
       <div className="flex flex-wrap items-center gap-2">
         <Button asChild variant="outline" size="sm"><Link to={editing && id ? `/blog/${id}` : "/blog"}><ArrowLeft className="size-4" /> Отмена</Link></Button>
         <h1 className="hidden font-display text-2xl font-bold text-foreground lg:ml-3 lg:block">{editing ? "Правка поста" : "Новый пост"}</h1>

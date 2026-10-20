@@ -7,6 +7,7 @@ import { AppHeader } from "@/widgets/app-header/ui/app-header";
 import { MobileTabBar } from "@/widgets/mobile-shell/ui/mobile-tab-bar";
 import { Chip } from "./parts";
 import { useScrollActiveIntoView } from "@/shared/lib/use-scroll-active";
+import { MemphisBackground, routeSeed } from "@/shared/components/ui/memphis-background";
 
 const item =
   "flex items-center justify-between gap-2 rounded-[12px] px-3.5 py-[11px] text-sm leading-5 font-extrabold whitespace-nowrap text-foreground transition-colors hover:bg-muted";
@@ -77,8 +78,10 @@ function Rail() {
 
 /** Каркас админки: общая шапка, меню слева и содержимое. */
 export function AdminLayout({ children }: { children: ReactNode }) {
+  const { pathname } = useLocation();
   return (
-    <div className="min-h-dvh bg-background pb-24 lg:pb-0">
+    <div className="relative isolate min-h-dvh overflow-clip bg-background pb-24 lg:pb-0">
+      <MemphisBackground seed={routeSeed(pathname)} />
       <div className="hidden lg:block">
         <AppHeader current="admin" />
       </div>

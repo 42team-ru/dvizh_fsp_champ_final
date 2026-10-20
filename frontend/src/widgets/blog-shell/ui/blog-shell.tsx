@@ -9,15 +9,17 @@ import { MemphisBackground } from "@/shared/components/ui/memphis-background";
  * Каркас страниц блога: на компьютере — общая шапка, на телефоне — верхняя панель и нижнее меню.
  * Вёрстка резиновая: одна разметка для обоих размеров, колонки появляются с lg.
  */
-export function BlogShell({ title = "Блог", children, className, tabBar = true }: {
+export function BlogShell({ title = "Блог", children, className, tabBar = true, seed = "blog" }: {
   title?: string;
+  /** Ключ раскладки фона: у каждой страницы блога свой. */
+  seed?: string;
   children: ReactNode;
   className?: string;
   tabBar?: boolean;
 }) {
   return (
     <div className="relative isolate min-h-dvh overflow-clip bg-background">
-      <MemphisBackground seed="blog" className="hidden lg:block" />
+      <MemphisBackground seed={seed} className="hidden lg:block" />
       <div className="hidden lg:block">
         <AppHeader current="blog" />
       </div>

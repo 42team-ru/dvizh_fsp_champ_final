@@ -1,6 +1,6 @@
 import { profilePath } from "@/entity/user/lib/profile-path";
 import type { ReactNode } from "react";
-import { Link, NavLink } from "react-router";
+import { Link, NavLink, useLocation } from "react-router";
 import { ArrowUpRight } from "lucide-react";
 import { cn } from "cn";
 import { useUser } from "@/entity/user/model/use-user";
@@ -11,6 +11,7 @@ import { UserAvatar } from "@/shared/components/ui/user-avatar";
 import { AppHeader } from "@/widgets/app-header/ui/app-header";
 import { MobileTabBar } from "@/widgets/mobile-shell/ui/mobile-tab-bar";
 import { Chip } from "./parts";
+import { MemphisBackground, routeSeed } from "@/shared/components/ui/memphis-background";
 
 const item =
   "flex items-center justify-between gap-2 rounded-[12px] px-3.5 py-[11px] text-[15px] leading-5 font-extrabold whitespace-nowrap text-foreground transition-colors hover:bg-muted";
@@ -95,8 +96,10 @@ function Rail() {
 
 /** Каркас кабинета: шапка, меню слева и содержимое. */
 export function CabinetLayout({ children }: { children: ReactNode }) {
+  const { pathname } = useLocation();
   return (
-    <div className="min-h-dvh bg-background pb-24 lg:pb-0">
+    <div className="relative isolate min-h-dvh overflow-clip bg-background pb-24 lg:pb-0">
+      <MemphisBackground seed={routeSeed(pathname)} />
       <div className="hidden lg:block">
         <AppHeader current="cabinet" />
       </div>

@@ -27,6 +27,7 @@ import { MyBeaverBadge } from "@/widgets/beaver-pet/ui/my-beaver-badge";
 import { Chip, PillTabs, Warning, textareaClass } from "@/pages/cabinet/ui/parts";
 import { ago, hm } from "@/pages/cabinet/model/format";
 import { startOfDay, useOrganizerHome, type SeriesStat, type WeekSlot } from "../model/use-organizer-home";
+import { MemphisGlyph } from "@/shared/components/ui/memphis-background";
 
 const WEEKDAYS = ["ВС", "ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ"];
 const MONTHS = ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
@@ -68,16 +69,19 @@ function quorumTone(o: OccurrenceResponse) {
 const quorumDot = (o: OccurrenceResponse) =>
   !o.quorum ? undefined : o.quorum.status === "CONFIRMED" ? "bg-primary" : o.quorum.status === "REACHED" ? "bg-secondary" : "bg-orange";
 
-/** Мемфис-декор героя: волна, плюс, круг, треугольник. */
+/** Декор героя: немного спортивного инвентаря. */
 function HeroDecor() {
   return (
-    // фигуры расставлены под две колонки героя; в одной колонке (телефон, планшет) они легли бы на заголовок
+    // инвентарь — в середине героя и у левого края, под текстом; правую колонку с карточкой не трогает
     <div aria-hidden className="pointer-events-none absolute inset-0 hidden overflow-hidden lg:block">
-      <svg className="absolute top-6 left-[46%] h-4 w-24 text-secondary" viewBox="0 0 96 16"><path d="M2 12 10 4l8 8 8-8 8 8 8-8 8 8 8-8 8 8 8-8 8 8 8-8" fill="none" stroke="currentColor" strokeWidth="3" /></svg>
-      <Plus className="absolute top-7 left-[59%] size-6 text-white" strokeWidth={3} />
-      <motion.span animate={{ y: [0, -6, 0] }} transition={{ duration: 3, repeat: Infinity }} className="absolute top-12 left-[71%] size-7 rounded-full border-[3px] border-white" />
-      <motion.svg animate={{ rotate: [0, 12, 0] }} transition={{ duration: 4, repeat: Infinity }} className="absolute top-[150px] left-[66%] size-10 text-secondary" viewBox="0 0 40 36"><path d="M20 2 38 34H2Z" fill="currentColor" stroke="var(--ink)" strokeWidth="2.5" /></motion.svg>
-      <div className="absolute top-[245px] left-[61%] grid grid-cols-5 gap-2 opacity-40">{Array.from({ length: 15 }, (_, i) => <span key={i} className="size-1 rounded-full bg-white" />)}</div>
+      <span className="absolute -top-1 left-[50%] size-8 rotate-[18deg]"><MemphisGlyph shape="shuttlecock" color="#ffffff" /></span>
+      <motion.span animate={{ rotate: [0, 12, 0] }} transition={{ duration: 4, repeat: Infinity }} className="absolute top-[235px] left-[45%] size-11">
+        <MemphisGlyph shape="trophy" color="var(--sun)" />
+      </motion.span>
+      <motion.span animate={{ y: [0, -6, 0] }} transition={{ duration: 3, repeat: Infinity }} className="absolute bottom-10 left-[54%] size-8">
+        <MemphisGlyph shape="tennis" color="var(--secondary)" />
+      </motion.span>
+      <span className="absolute top-[46%] -left-3 size-10"><MemphisGlyph shape="football" color="#ffffff" /></span>
     </div>
   );
 }
