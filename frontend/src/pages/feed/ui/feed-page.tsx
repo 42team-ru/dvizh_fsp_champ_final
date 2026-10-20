@@ -59,12 +59,13 @@ function FilterBar({ chip, onChip, more, extraCount, onMore, count, view, onView
   onView(view: "list" | "map"): void;
 }) {
   return (
-    <div className="flex h-[50px] w-full min-w-[1216px] shrink-0 items-center gap-8">
-      <h1 className="font-display text-[40px] leading-[50px] font-extrabold tracking-[-1px] whitespace-nowrap text-foreground">
+    <div className="flex h-[50px] w-full min-w-0 shrink-0 items-center gap-6">
+      <h1 className="shrink-0 font-display text-[40px] leading-[50px] font-extrabold tracking-[-1px] whitespace-nowrap text-foreground">
         Лента
       </h1>
 
-      <div className="flex gap-2">
+      {/* Чипы не распирают строку: при узком окне прокручиваются, а счётчик и «Карта» всегда видны. */}
+      <div className="no-scrollbar -my-2 flex min-w-0 flex-1 gap-2 overflow-x-auto py-2 pr-6 [mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)]">
         {FEED_CHIPS.map((label) => (
           <Button
             key={label}
@@ -78,21 +79,21 @@ function FilterBar({ chip, onChip, more, extraCount, onMore, count, view, onView
             {label}
           </Button>
         ))}
-        <Button variant={more || extraCount > 0 ? "ink" : "soft"} size="chip" aria-expanded={more} onClick={onMore}
-          className={cn("px-[14px]", !more && extraCount === 0 && "border-dashed bg-transparent")}>
-          <Icon name="feed/icon-filter" className={cn("size-4", (more || extraCount > 0) && "invert")} />
-          Ещё{extraCount > 0 && ` · ${extraCount}`}
-        </Button>
       </div>
+      <Button variant={more || extraCount > 0 ? "ink" : "soft"} size="chip" aria-expanded={more} onClick={onMore}
+        className={cn("-ml-4 shrink-0 px-[14px]", !more && extraCount === 0 && "border-dashed bg-transparent")}>
+        <Icon name="feed/icon-filter" className={cn("size-4", (more || extraCount > 0) && "invert")} />
+        Ещё{extraCount > 0 && ` · ${extraCount}`}
+      </Button>
 
-      <span className="ml-auto text-sm leading-[19px] font-bold whitespace-nowrap text-muted-foreground">
+      <span className="ml-auto shrink-0 text-sm leading-[19px] font-bold whitespace-nowrap text-muted-foreground">
         {count === undefined ? "Загружаем…" : `${count} ${count % 10 === 1 && count % 100 !== 11 ? "событие" : count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 12 || count % 100 > 14) ? "события" : "событий"}`}
       </span>
       <Button
         variant={view === "map" ? "ink" : "soft"}
         aria-pressed={view === "map"}
         onClick={() => onView(view === "map" ? "list" : "map")}
-        className="-ml-2 h-10 w-[112px] gap-2 px-4 text-sm leading-[19px]"
+        className="-ml-2 h-10 w-[112px] shrink-0 gap-2 px-4 text-sm leading-[19px]"
       >
         {view === "map" ? <LayoutGrid className="size-[18px]" /> : <MapIcon className="size-[18px]" />}
         {view === "map" ? "Лента" : "Карта"}
@@ -197,6 +198,9 @@ function Slot({ events, i, placeOf, reasonOf, topReasonOf, onDismiss, ...props }
 const toMapFilters = ({ searchText, sportId, level, joinMode, organizationId, lat, lon, radiusKm }: EventsListParams): MapFilters =>
   ({ searchText, sportId, level, joinMode, organizationId, lat, lon, radiusKm });
 
+/** Чипы «Сегодня»/«Выходные» задают и окно времени на карте. */
+const presetOf = (chip: FeedChip) => chip === "Сегодня" ? "today" as const : chip === "Выходные" ? "weekend" as const : undefined;
+
 export default function FeedPage() {
   const filters = useFeedFilters();
   const [searchParams] = useSearchParams();
@@ -209,18 +213,19 @@ export default function FeedPage() {
   return (
     <>
     <FeedMobile />
-    <div className="relative isolate hidden min-h-dvh overflow-clip bg-background lg:block">
+    <div className={cn("relative isolate hidden min-h-dvh overflow-clip bg-background", view === "map" ? "lg:flex lg:h-dvh lg:flex-col" : "lg:block")}>
       <MemphisBackground seed="feed" />
       <AppHeader current="feed" />
-      <main className="mx-auto flex w-full max-w-[1440px] flex-col gap-7 px-8 pt-8 pb-12">
+      <main className={cn("mx-auto flex w-full max-w-[1440px] flex-col gap-7 px-8 pt-8", view === "map" ? "min-h-0 flex-1 pb-6" : "pb-12")}>
         <FilterBar chip={filters.chip} onChip={filters.setChip} more={more} extraCount={filters.extraCount}
           onMore={() => setMore((m) => !m)} count={list.totalElements} view={view} onView={setView} />
         {!filters.forYou && <FeedCityFilter city={filters.city} />}
         {more && <FeedExtraFilters value={filters.extra} onChange={filters.setExtra} className="w-full" />}
         {view === "map" ? (
-          <EventsMap key={filters.city.value} withHome filters={toMapFilters(filters.params)} className="h-[calc(100dvh-234px)] min-h-[640px] w-full" mapClassName="min-h-0" />
+          <EventsMap key={filters.city.value} withHome filters={toMapFilters(filters.params)} preset={presetOf(filters.chip)}
+            className="min-h-[420px] w-full flex-1" mapClassName="min-h-0" />
         ) : (
-        <div className="flex min-w-[1216px] flex-col gap-5">
+        <div className="flex min-w-0 flex-col gap-5">
           {events?.length === 0 && <FeedEmpty />}
           {list.isError && !list.isFetchNextPageError && <p role="alert" className="text-lg font-semibold text-destructive">Не удалось загрузить ленту.</p>}
           {/* Ряды — отдельные сетки: если событий мало, пустеет конец ряда, а не съезжает раскладка. */}

@@ -12,7 +12,7 @@ import { cn } from "cn";
 import { toMapParams } from "../lib/bbox";
 import { createEventsMap, hasMapKey, inBbox, type Bbox, type MapPoint, type MapProvider } from "../lib/map-provider";
 import {
-  DAY, LOOKBACK, MINUTE, SOON, dayShort, endOf, histogram, hhmm, isGoing, startOf, startOfDay, startsSoon,
+  DAY, LOOKBACK, MINUTE, SOON, dayShort, endOf, histogram, hhmm, isGoing, presetRange, startOf, startOfDay, startsSoon,
   type Selection, type Span,
 } from "../lib/timeline";
 import { TimeDock } from "./time-dock";
@@ -82,8 +82,10 @@ function Row({ p, now, at, selected, onPick }: { p: EventMapProperties; now: num
  * и лента справа. Док выбирает момент («что идёт в 15:30») или диапазон; подходящие события — цветные метки,
  * остальные из окна дока — серые точки.
  */
-export function EventsMap({ filters = {}, className, mapClassName, withHome = false }: {
+export function EventsMap({ filters = {}, className, mapClassName, withHome = false, preset }: {
   filters?: MapFilters;
+  /** Окно времени из чипов ленты («Сегодня», «Выходные»): док сразу выделяет этот диапазон. */
+  preset?: "today" | "weekend";
   className?: string;
   /** Показать дом из предпочтений и открыть карту на нём (лента). */
   withHome?: boolean;
@@ -103,6 +105,20 @@ export function EventsMap({ filters = {}, className, mapClassName, withHome = fa
   const [span, setSpan] = useState<Span>(3);
   const [chosen, setChosen] = useState<Selection>({ mode: "moment", at: now, live: true });
   const selection: Selection = chosen.mode === "moment" && chosen.live ? { ...chosen, at: now } : chosen;
+  // Чип ленты меняет окно времени на карте; «Все» и виды спорта возвращают «сейчас».
+  const presetApplied = useRef<typeof preset | null>(null);
+  useEffect(() => {
+    if (presetApplied.current === preset) return;
+    const first = presetApplied.current === null;
+    presetApplied.current = preset;
+    if (preset) {
+      const r = presetRange(preset, Date.now());
+      setSpan(r.span);
+      setChosen({ mode: "range", from: r.from, to: r.to });
+    } else if (!first) {
+      setChosen({ mode: "moment", at: Date.now(), live: true });
+    }
+  }, [preset]);
 
   const preferences = useUsersMyPreferences({ query: { enabled: withHome } });
   const homePoint = preferences.data?.status === 200 ? preferences.data.data.home : undefined;
