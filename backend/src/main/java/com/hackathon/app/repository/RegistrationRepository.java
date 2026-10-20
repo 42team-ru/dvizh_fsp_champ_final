@@ -69,6 +69,25 @@ public interface RegistrationRepository extends JpaRepository<Registration, UUID
 			order by r.createdAt""")
 	List<AppUser> findUsers(UUID eventId, RegistrationStatus status);
 
+    /** Участники всей страницы; у серий с выбранным занятием — только отметившиеся на него. */
+    interface PreviewParticipant {
+        UUID getEventId();
+        AppUser getUser();
+    }
+
+    @Query("""
+            select r.eventId as eventId, u as user from Registration r
+            join AppUser u on u.id = r.userId join Event e on e.id = r.eventId
+            where r.eventId in :eventIds
+              and r.status = com.hackathon.app.domain.enums.RegistrationStatus.CONFIRMED
+              and (e.recurring = false
+                or not exists (select o.id from EventOccurrence o where o.eventId = e.id and o.id in :occurrenceIds)
+                or exists (select a.id from OccurrenceAttendance a
+                    where a.eventId = e.id and a.userId = u.id and a.occurrenceId in :occurrenceIds))
+            order by r.createdAt, r.id
+            """)
+    List<PreviewParticipant> findPreviewParticipants(Collection<UUID> eventIds, Collection<UUID> occurrenceIds);
+
 	/**
 	 * Доверие к организатору: сколько разных людей подтверждённо записывались на его прошедшие встречи
 	 * (у мероприятия есть неотменённое занятие до now). Фильтр — как в EventOccurrenceRepository.countHosted.

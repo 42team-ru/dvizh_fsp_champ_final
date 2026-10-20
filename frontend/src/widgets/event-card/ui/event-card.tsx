@@ -1,7 +1,8 @@
+import type { EventParticipantResponse } from "@/shared/api/generated/core/appAPI.schemas";
 import { Badge } from "@/shared/components/ui/badge";
 import { Card } from "@/shared/components/ui/card";
 import { Icon } from "@/shared/components/ui/icon";
-import { Participants } from "@/shared/components/ui/participants";
+import { Participants } from "@/widgets/event-card/ui/card-participants";
 import { cn } from "cn";
 import { Link } from "react-router";
 import { Sparkles } from "lucide-react";
@@ -23,7 +24,7 @@ export type EventCardData = {
   distance: string;
   title: string;
   place: string;
-  people: string[];
+  people: EventParticipantResponse[];
   going: number;
   total?: number;
   tone?: "default" | "warning";

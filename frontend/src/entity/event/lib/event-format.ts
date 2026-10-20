@@ -32,7 +32,7 @@ export function toCardData(event: EventSummaryResponse, fallbackCover: EventCove
     distance: distance ?? (event.format === "ONLINE" ? "Онлайн" : event.address ?? "Место уточняется"),
     title: event.title,
     place: [event.scheduleDescription, EVENT_LEVEL_LABEL[event.level]].filter(Boolean).join(" · "),
-    people: Array.from({ length: Math.min(3, going) }, () => ""),
+    people: event.participantsPreview,
     going,
     total: event.capacity ?? undefined,
     tone: almostFull ? "warning" : "default",

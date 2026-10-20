@@ -15,7 +15,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
 import { Icon } from "@/shared/components/ui/icon";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
-import { Participants } from "@/shared/components/ui/participants";
+import { Participants } from "@/widgets/event-card/ui/card-participants";
 import { Sparkles } from "lucide-react";
 import { toCardData } from "@/entity/event/lib/event-format";
 import {

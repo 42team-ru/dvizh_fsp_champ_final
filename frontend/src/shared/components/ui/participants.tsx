@@ -1,7 +1,9 @@
 import * as React from "react"
 import { cn } from "cn"
-import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar"
 import { Progress } from "@/shared/components/ui/progress"
+
+import type { EventParticipantResponse } from "@/shared/api/generated/core/appAPI.schemas"
 
 const AVATAR_TONES = ["bg-sky", "bg-lime-soft", "bg-lavender-soft"]
 
@@ -12,12 +14,14 @@ function Participants({
   total,
   tone = "default",
   className,
+  renderBeaver,
 }: {
-  people: string[]
+  people: EventParticipantResponse[]
   going: number
   total?: number
   tone?: "default" | "warning"
   className?: string
+  renderBeaver: (person: EventParticipantResponse) => React.ReactNode
 }) {
   const warning = tone === "warning"
   return (
@@ -27,23 +31,25 @@ function Participants({
     >
       <div className="flex h-7 items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="relative h-7" style={{ width: 28 + (people.length - 1) * 20 }}>
-            {people.map((p, i) => (
-              <Avatar
-                key={p + i}
-                className="absolute top-0 size-7 after:hidden"
-                style={{ left: i * 20 }}
-              >
-                <AvatarFallback
-                  className={cn(
-                    "border-2 border-ink text-[10px] leading-[14px] font-extrabold text-foreground",
-                    AVATAR_TONES[i]
-                  )}
+          <div className="relative h-7" style={{ width: 28 + (Math.min(people.length, 3) - 1) * 20 }}>
+            {people.slice(0, 3).map((p, i) => {
+              const name = [p.firstName, p.lastName].filter(Boolean).join(" ") || p.username;
+              return (
+                <Avatar
+                  key={p.id}
+                  role="img"
+                  title={name}
+                  aria-label={name}
+                  className={cn("absolute top-0 size-7 overflow-hidden border-2 border-ink after:hidden", AVATAR_TONES[i])}
+                  style={{ left: i * 20 }}
                 >
-                  {p}
-                </AvatarFallback>
-              </Avatar>
-            ))}
+                  {p.avatarUrl && <AvatarImage src={p.avatarUrl} alt="" />}
+                  <AvatarFallback className={cn("relative overflow-hidden", AVATAR_TONES[i])}>
+                    {renderBeaver(p)}
+                  </AvatarFallback>
+                </Avatar>
+              );
+            })}
           </div>
           <span className="text-[13px] leading-[18px] font-bold whitespace-nowrap text-foreground">
             {total ? `Идут ${going} из ${total}` : `Идут ${going}`}

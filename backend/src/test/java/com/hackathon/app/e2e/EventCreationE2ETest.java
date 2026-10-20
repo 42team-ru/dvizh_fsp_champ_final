@@ -6,14 +6,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.HttpStatus.*;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import com.hackathon.app.domain.enums.NotificationType;
+import com.hackathon.app.domain.dto.PetRequest;
+import com.hackathon.app.domain.dto.ScheduleRequest;
+import com.hackathon.app.domain.dto.ScheduleRuleRequest;
+import com.hackathon.app.domain.dto.UpdateProfileRequest;
 import com.hackathon.app.domain.entity.Sport;
 import com.hackathon.app.domain.enums.EventStatus;
+import com.hackathon.app.domain.enums.NotificationType;
 import com.hackathon.app.domain.enums.OrganizationStatus;
 import com.hackathon.app.domain.enums.RegistrationStatus;
 import com.hackathon.app.e2e.support.Actor;
@@ -22,6 +31,7 @@ import com.hackathon.app.e2e.support.OrganizationForm;
 import com.hackathon.app.e2e.support.TestApi;
 import com.hackathon.app.repository.AppUserRepository;
 import com.hackathon.app.repository.SportRepository;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +40,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+
 import tools.jackson.databind.ObjectMapper;
 
 /** Сценарий приёмки 1: публикация, поиск и границы изменения события. */
@@ -233,6 +244,69 @@ class EventCreationE2ETest {
 		assertThat(all.items()).extracting(e -> e.id()).containsExactlyInAnyOrder(local.id(), moscow.id(), online.id());
 		assertThat(all.totalElements()).isEqualTo(3);
 	}
+
+    /**
+     * ФЛОУ: читатель ленты видит реальных подтверждённых участников и их публичные образы.
+     * ШАГИ:
+     *   1. Создать встречу по заявке, оставить ожидающую, отклонённую и отменённую записи.
+     *   2. Подтвердить четырёх людей; одному изменить имя и фамилию через профиль.
+     *   3. Прочитать ленту: сверить три превью с публичными данными участников и проверить пустую встречу.
+     *   4. Создать серию, записать двух людей; отметить их на разные занятия и снова прочитать ленту.
+     * ПРОВЕРЯЕМ: не больше трёх превью, только CONFIRMED, имена и питомец; у серии — участник ближайшего занятия.
+     * ПОЧЕМУ ВАЖНО: лица в карточке должны соответствовать людям и счётчику, а заявки не должны попадать в превью.
+     */
+    @Test
+    void feedPreviewsShowConfirmedPeopleAndNearestOccurrenceAttendees() {
+        var author = api.newUser("previewAuthor");
+        var reader = api.newUser("previewReader");
+        var title = uniqueName("Лица участников ");
+        var event = author.createEvent(EventForm.byRequest().title(title));
+        reader.joinEvent(event.id());
+        var rejected = api.newUser("previewRejected");
+        author.reject(rejected.joinEvent(event.id()).id(), "Другая группа");
+        var cancelled = api.newUser("previewCancelled");
+        cancelled.joinEvent(event.id());
+        cancelled.cancelRegistration(event.id());
+        var confirmed = new ArrayList<Actor>();
+        for (int n = 0; n < 4; n++) {
+            var person = api.newUser("previewConfirmed");
+            person.updateProfile(new UpdateProfileRequest("Анна", "Смирнова", null, null));
+            person.savePet(new PetRequest("none", Map.of("hat", "headband")));
+            if (n == 0) person.uploadAvatar(Base64.getDecoder().decode(
+                    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a9gAAAABJRU5ErkJggg=="));
+            author.approve(person.joinEvent(event.id()).id());
+            confirmed.add(person);
+        }
+        var card = reader.feed(Map.of("searchText", title)).getFirst();
+        assertThat(card.participantsCount()).isEqualTo(4);
+        assertThat(card.participantsPreview()).hasSize(3);
+        assertThat(card.participantsPreview()).extracting(p -> p.id())
+                .containsExactlyElementsOf(confirmed.subList(0, 3).stream().map(Actor::id).toList());
+        for (var person : card.participantsPreview()) {
+            var actor = confirmed.stream().filter(p -> p.id().equals(person.id())).findFirst().orElseThrow();
+            assertThat(person.username()).isEqualTo(actor.username());
+            assertThat(person.avatarUrl()).isEqualTo(actor.me().avatarUrl());
+            assertThat(person.firstName()).isEqualTo("Анна");
+            assertThat(person.lastName()).isEqualTo("Смирнова");
+            assertThat(person.pet().outfit()).isEqualTo(actor.pet().outfit());
+            assertThat(person.pet().name()).isEqualTo(actor.pet().name());
+        }
+        var empty = author.createEvent(EventForm.free().title(uniqueName("Без участников ")));
+        assertThat(reader.feed(Map.of("searchText", empty.title())).getFirst().participantsPreview()).isEmpty();
+
+        var start = LocalDate.now(ZoneOffset.UTC).plusDays(2);
+        var series = author.createEvent(EventForm.free().title(uniqueName("Лица серии "))
+                .schedule(new ScheduleRequest("UTC", start, start.plusDays(2), List.of(
+                        new ScheduleRuleRequest(start.atTime(18, 0), 60, "FREQ=DAILY")))));
+        var sessions = reader.occurrences(series.id());
+        confirmed.get(0).joinEvent(series.id());
+        confirmed.get(1).joinEvent(series.id());
+        confirmed.get(0).attend(series.id(), sessions.get(0).id());
+        confirmed.get(1).attend(series.id(), sessions.get(1).id());
+        var seriesCard = reader.feed(Map.of("searchText", series.title())).getFirst();
+        assertThat(seriesCard.occurrenceAttendeesCount()).isEqualTo(1);
+        assertThat(seriesCard.participantsPreview()).extracting(p -> p.id()).containsExactly(confirmed.get(0).id());
+    }
 
 	private void assertFoundAndPublished(Actor reader, UUID id, String title, UUID sportId) {
 		assertThat(reader.feed(Map.of("searchText", title, "sportId", sportId.toString())))

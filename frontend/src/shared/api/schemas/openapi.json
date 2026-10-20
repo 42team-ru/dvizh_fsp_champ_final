@@ -11182,6 +11182,13 @@
           "coverFocus": {
             "$ref": "#/components/schemas/FocusPoint",
             "description": "Точка фокуса обложки; null — центр или без фото (тогда у иллюстрации вида — sport.imageFocus)"
+          },
+          "participantsPreview": {
+            "type": "array",
+            "description": "До трёх подтверждённых участников; у серии с ближайшим занятием — отметившихся на него",
+            "items": {
+              "$ref": "#/components/schemas/EventParticipantResponse"
+            }
           }
         },
         "required": [
@@ -11193,6 +11200,7 @@
           "level",
           "organizer",
           "participantsCount",
+          "participantsPreview",
           "recurring",
           "sport",
           "startAt",

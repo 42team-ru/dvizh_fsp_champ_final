@@ -2111,6 +2111,8 @@ export interface EventSummaryResponse {
   participantsCount: number;
   /** У серии — сколько отметились на занятие occurrenceId («придут 7 из 10»); у разового — null */
   occurrenceAttendeesCount?: number;
+  /** До трёх подтверждённых участников; у серии с ближайшим занятием — отметившихся на него */
+  participantsPreview: EventParticipantResponse[];
   /** Кворум: состоится, если наберём столько; null — без кворума */
   minParticipants?: number;
   /** Кворум ближайшего подходящего занятия; null — без кворума или занятия нет */

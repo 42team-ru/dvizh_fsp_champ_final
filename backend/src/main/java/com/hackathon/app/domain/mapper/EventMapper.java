@@ -133,7 +133,8 @@ public interface EventMapper {
 	EventSummaryResponse toSummary(Event event, Sport sport, long participantsCount,
 			RegistrationStatus myRegistrationStatus, FileResponse cover, EventOccurrence nextOccurrence,
 			Long occurrenceAttendeesCount, String scheduleDescription, QuorumStatus quorumStatus,
-			boolean cancelledByOrganizer, AppUser organizer, Organization organization);
+			boolean cancelledByOrganizer, AppUser organizer, Organization organization,
+			List<EventParticipantResponse> participantsPreview);
 
 	/** Точка на карте (GeoJSON Feature); на карту попадают только мероприятия с координатами. */
 	@Mapping(target = "type", constant = "Feature")
