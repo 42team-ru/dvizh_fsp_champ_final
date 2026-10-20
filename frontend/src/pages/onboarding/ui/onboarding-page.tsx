@@ -202,7 +202,7 @@ function Wizard(props: {
 
   if (split) {
     return (
-      <div className="grid min-h-0 flex-1 lg:grid-cols-[minmax(560px,700px)_1fr]">
+      <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-2 xl:grid-cols-[minmax(560px,700px)_1fr]">
         <div className="flex min-h-0 flex-col bg-background">
           <header className="flex shrink-0 items-center justify-between gap-4 px-4 pt-5 lg:px-12">{logo}{skip}</header>
           <main className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 lg:px-12">

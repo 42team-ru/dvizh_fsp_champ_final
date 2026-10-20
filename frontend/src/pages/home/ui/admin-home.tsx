@@ -52,7 +52,8 @@ function usePendingQueue() {
 
 function HeroDecor() {
   return (
-    <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+    // фигуры расставлены под две колонки героя; в одной колонке (телефон, планшет) они легли бы на заголовок
+    <div aria-hidden className="pointer-events-none absolute inset-0 hidden overflow-hidden lg:block">
       <svg className="absolute top-5 left-[27%] h-4 w-24 text-secondary" viewBox="0 0 96 16"><path d="M2 12 10 4l8 8 8-8 8 8 8-8 8 8 8-8 8 8 8-8 8 8 8-8" fill="none" stroke="currentColor" strokeWidth="3" /></svg>
       <Plus className="absolute top-8 left-[49%] size-6 text-secondary" strokeWidth={3} />
       <motion.span animate={{ y: [0, -6, 0] }} transition={{ duration: 3, repeat: Infinity }} className="absolute top-14 left-[57%] size-7 rounded-full border-[3px] border-primary" />
@@ -203,7 +204,7 @@ export function AdminHome() {
   return (
     <div className="flex w-full flex-col gap-6">
       {/* Герой: сколько решений ждут */}
-      <section className="relative grid items-center gap-8 overflow-hidden rounded-[28px] border-2 border-ink bg-ink p-6 text-white sm:p-8 lg:grid-cols-[minmax(0,1fr)_360px]">
+      <section className="relative grid grid-cols-1 items-center gap-8 overflow-hidden rounded-[28px] border-2 border-ink bg-ink p-6 text-white sm:p-8 lg:grid-cols-[minmax(0,1fr)_360px]">
         <HeroDecor />
         <div className="relative flex min-w-0 flex-col gap-4">
           <p className="text-[13px] font-bold text-secondary">Админка · {WEEKDAYS[today.getDay()]}, {today.getDate()} {MONTHS[today.getMonth()]}</p>
@@ -231,7 +232,7 @@ export function AdminHome() {
       {proposed && award && (
         <section className="relative flex flex-wrap items-center gap-4 rounded-[24px] border-2 border-ink bg-lime-soft py-5 pr-5 pl-5 sm:pl-[140px]">
           <MyBeaverBadge className="absolute top-[-18px] left-3 hidden h-[110px] w-[120px] sm:block" />
-          <div className="min-w-0 flex-1">
+          <div className="min-w-[min(100%,260px)] flex-1">
             <p className={LABEL}>Бублик подсказывает</p>
             <p className="mt-1 font-display text-[17px] leading-[22px] font-bold text-foreground">
               За {monthTitle(award.period).split(" ")[0].toLowerCase()} предложена «Организация месяца»: {award.organizationName}, {award.score} очков
@@ -244,7 +245,7 @@ export function AdminHome() {
 
       {/* Здоровье платформы */}
       {monthData && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className={cn(CARD, "flex flex-col gap-2 px-5 py-4")}>
             <p className={LABEL}>Пользователи</p>
             <p className="flex items-baseline gap-2"><span className="font-display text-[32px] leading-9 font-extrabold">{num(monthData.users)}</span><span className="text-xs font-medium text-muted-foreground">всего</span></p>
@@ -289,7 +290,7 @@ export function AdminHome() {
       )}
 
       {/* График и очередь */}
-      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
         <section className={cn(CARD, "flex min-w-0 flex-col gap-3 p-5 sm:p-6")}>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -339,7 +340,7 @@ export function AdminHome() {
       </div>
 
       {/* Пьедестал и свежие мероприятия */}
-      <div className="grid items-start gap-5 lg:grid-cols-2">
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-2">
         <section className={cn(CARD, "flex flex-col gap-4 p-5 sm:p-6")}>
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -354,7 +355,7 @@ export function AdminHome() {
             <>
               <Podium candidates={awardData!.candidates} />
               {awardData!.candidates.length > 3 && (
-                <div className="grid gap-2 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {awardData!.candidates.slice(3, 5).map((c, i) => (
                     <div key={c.organizationId} className="flex items-center gap-2 rounded-pill border-2 border-track px-3 py-1.5 text-xs font-bold text-foreground">
                       <span className="font-display font-extrabold text-muted-foreground">{i + 4}</span>
@@ -366,8 +367,8 @@ export function AdminHome() {
               )}
               <div className="flex flex-wrap items-center justify-between gap-3">
                 {proposed && award ? (
-                  <Button variant="ink" rough={false} className="shadow-none" onClick={() => setConfirmOpen(true)}>
-                    <Check className="size-4" strokeWidth={3} />Подтвердить «{award.organizationName}»
+                  <Button variant="ink" rough={false} className="max-w-full shadow-none" onClick={() => setConfirmOpen(true)}>
+                    <Check className="size-4" strokeWidth={3} /><span className="truncate">Подтвердить «{award.organizationName}»</span>
                   </Button>
                 ) : <Button asChild variant="outline" rough={false} className="shadow-none"><Link to="/admin/awards">Все кандидаты</Link></Button>}
                 <span className="text-[11px] font-medium text-muted-foreground">пришли ×3 + вернулись ×5 − 30 за снятое</span>
@@ -409,7 +410,7 @@ export function AdminHome() {
       </div>
 
       {/* Гардероб и новенькие */}
-      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
         <section className={cn(CARD, "flex flex-col gap-4 bg-sky-soft p-5 sm:p-6")}>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">

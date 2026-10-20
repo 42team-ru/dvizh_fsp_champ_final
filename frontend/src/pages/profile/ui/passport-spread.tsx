@@ -36,7 +36,7 @@ import {
 import { ProfileShare } from "./profile-share";
 import { handle } from "@/shared/lib/handle";
 import { PassportWaves } from "@/features/share-link/ui/share-posters";
-import { PassportMrz, PassportPageHeader } from "./passport-decoration";
+import { PassportPageHeader } from "./passport-decoration";
 
 const CHIP_TONES = [
   "bg-sky-soft",
@@ -197,9 +197,11 @@ function PetPage() {
             // Размер бобра следует за сценой, а лапы бобра на 30px выше нижнего края (рисунок уходит на ~30% размера ниже центра): бобёр стоит на траве.
             className="absolute! bottom-[calc(30px_-_min(100cqw,85cqh)*0.2)] left-1/2 h-[min(100cqw,85cqh)] w-[min(100cqw,85cqh)] -translate-x-1/2 [&_.beaver-pet]:h-full [&_svg]:h-full"
           />
+          {/* Облачко прямо над головой: низ — над шапкой (верх рисунка + 3% размера бобра), хвостик (18px от левого края)
+              — над серединой головы (37% ширины рисунка). Длинная реплика растёт вверх, не выше края сцены. */}
           <div
             ref={setSpeechContainer}
-            className="beaver-speech-corner absolute top-3 right-3 left-20 z-10 flex items-start [&_.beaver-speech--card]:text-[15px]! [&_.beaver-speech--card]:leading-5!"
+            className="beaver-speech-corner absolute top-3 right-3 bottom-[calc(40px_+_min(100cqw,85cqh)*0.768)] left-[max(12px,calc(50%_-_min(100cqw,85cqh)*0.125_-_24px))] z-10 flex flex-col justify-end-safe [&_.beaver-speech--card]:text-[15px]! [&_.beaver-speech--card]:leading-5!"
           />
         </div>
         <p className="relative truncate text-[13px] leading-5 font-bold" title={`Образ: ${outfit}`}>Образ: {outfit}</p>
@@ -213,28 +215,37 @@ function PetPage() {
 
 type StampType = "round" | "rect" | "oval" | "star";
 
-/** Форма и цвет печати: четыре вида по кругу. */
-const STAMP: Record<StampType, { width: number; shape: string; color: string }> = {
-  round: { width: 72, shape: "rounded-full", color: "text-primary" },
-  rect: { width: 80, shape: "rounded-xl", color: "text-accent" },
-  oval: { width: 92, shape: "rounded-[48px]", color: "text-green" },
-  star: { width: 72, shape: "rounded-full", color: "text-ink" },
+/** Оттиск печати: картинка, положение строк внутри и цвет — как в макете. */
+const STAMP: Record<
+  StampType,
+  { w: number; h: number; img: string; color: string; kind: number; sport: number; date: number; place?: number; sportSize: number }
+> = {
+  round: { w: 132, h: 132, img: "stamp-round", color: "text-primary", kind: 26, sport: 42, date: 70, place: 90, sportSize: 19 },
+  rect: { w: 172, h: 104, img: "stamp-rect", color: "text-accent", kind: 16, sport: 30, date: 62, sportSize: 19 },
+  oval: { w: 168, h: 104, img: "stamp-oval", color: "text-green", kind: 20, sport: 34, date: 62, sportSize: 18 },
+  star: { w: 136, h: 136, img: "stamp-star", color: "text-ink", kind: 34, sport: 48, date: 72, place: 90, sportSize: 15 },
 };
 
-/** Какие формы печатей идут подряд: от них же зависит, сколько печатей помещается в ряд. */
-const STAMP_SLOTS: { type: StampType; rotate: number }[] = [
-  { type: "round", rotate: 4 },
-  { type: "rect", rotate: -3 },
-  { type: "oval", rotate: 2 },
-  { type: "star", rotate: -5 },
+/** Ряд печатей рисуется на холсте 640×148 и уменьшается до ширины страницы паспорта (≥ 384px). */
+const STAMP_SCALE = 0.6;
+const STAMP_CANVAS = { w: 640, h: 148 };
+
+/** Четыре места под печати: центр на холсте, поворот и вид оттиска. */
+const STAMP_SLOTS: { type: StampType; cx: number; cy: number; rotate: number }[] = [
+  { type: "round", cx: 68, cy: 74, rotate: 6 },
+  { type: "rect", cx: 230, cy: 70, rotate: -4 },
+  { type: "oval", cx: 408, cy: 70, rotate: 3 },
+  { type: "star", cx: 570, cy: 74, rotate: -7 },
 ];
 
 /** Сколько виз (записей на будущие события) показываем. */
 const MAX_VISAS = 2;
 
-/** Название вида спорта в печати: чем длиннее слово и уже печать, тем мельче шрифт, но не меньше 8px. */
-function sportSize(length: number, width: number) {
-  return Math.max(8, Math.min(11, (width - 14) / (length * 0.82)));
+/** Название вида спорта в оттиске: чем длиннее, тем мельче, чтобы влезло. */
+function sportSize(length: number, base: number) {
+  if (length <= 6) return base;
+  if (length <= 8) return base - 6;
+  return base - 9;
 }
 
 function Stamp({
@@ -247,25 +258,55 @@ function Stamp({
   const s = STAMP[slot.type];
   const sport = item.event.sport.name.toUpperCase();
   const kind = item.event.kind ? KIND_LABEL[item.event.kind] : "ЗАНЯТИЕ";
-  const place = item.event.address ?? item.event.locationNote;
+  const place = item.event.address ?? item.event.locationNote ?? "";
   const date = dateShort(item.startAt);
+  const inline = s.place === undefined;
   return (
     <div
       title={[kind, item.event.sport.name, date, place].filter(Boolean).join(" · ")}
-      className={cn(
-        "flex h-[72px] shrink-0 flex-col items-center justify-center gap-[2px] border-[2.5px] border-dashed border-current px-1 text-center",
-        s.shape,
-        s.color,
-      )}
-      style={{ width: s.width, transform: `rotate(${slot.rotate}deg)` }}
+      className={cn("absolute", s.color)}
+      style={{
+        width: s.w,
+        height: s.h,
+        left: slot.cx - s.w / 2,
+        top: slot.cy - s.h / 2,
+        transform: `rotate(${slot.rotate}deg)`,
+      }}
     >
-      <span
-        className="max-w-full truncate font-sans font-extrabold tracking-[0.3px]"
-        style={{ fontSize: sportSize(sport.length, s.width) }}
+      <img
+        src={`/profile/${s.img}.svg`}
+        alt=""
+        className="absolute inset-0 size-full max-w-none"
+      />
+      <p
+        className="absolute inset-x-0 text-center text-[9px] font-extrabold tracking-[1.5px]"
+        style={{ top: s.kind }}
+      >
+        {kind}
+      </p>
+      <p
+        className="absolute inset-x-3 truncate text-center font-display font-extrabold"
+        style={{ top: s.sport, fontSize: sportSize(sport.length, s.sportSize) }}
       >
         {sport}
-      </span>
-      <span className="text-[10px] font-extrabold tracking-[0.5px]">{date}</span>
+      </p>
+      <p
+        className={cn(
+          "absolute inset-x-3 truncate text-center font-extrabold",
+          inline ? "text-[11px] tracking-[0.5px]" : "text-xs tracking-[1px]",
+        )}
+        style={{ top: s.date }}
+      >
+        {inline ? [date, place].filter(Boolean).join(" · ") : date}
+      </p>
+      {!inline && place ? (
+        <p
+          className="absolute inset-x-3 truncate text-center text-[10px] font-bold"
+          style={{ top: s.place }}
+        >
+          {place}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -386,20 +427,31 @@ function StampsView({
         </span>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 py-1 pr-1">
-        {shown.map((item, i) => (
-          <Stamp key={item.occurrenceId} slot={STAMP_SLOTS[i]} item={item} />
-        ))}
-        {nextStamp && shown.length < STAMP_SLOTS.length && (
-          <div className="flex size-[72px] shrink-0 flex-col items-center justify-center rounded-full border-[2.5px] border-dashed border-ultramarine bg-white text-[10px] leading-[12px] font-extrabold text-foreground">
-            <span className="font-display text-[24px] leading-[26px] text-ultramarine">+</span>
-            <span>следующая</span>
+      {shown.length === 0 && !nextStamp ? (
+        <span className="text-[13px] font-semibold text-muted-foreground">{hint}</span>
+      ) : (
+        <div className="relative w-full" style={{ height: STAMP_CANVAS.h * STAMP_SCALE }}>
+          <div
+            className="absolute top-0 left-0 origin-top-left"
+            style={{ width: STAMP_CANVAS.w, height: STAMP_CANVAS.h, transform: `scale(${STAMP_SCALE})` }}
+          >
+            {shown.map((item, i) => (
+              <Stamp key={item.occurrenceId} slot={STAMP_SLOTS[i]} item={item} />
+            ))}
+            {/* пустая печать «следующая» — на первом свободном месте */}
+            {nextStamp && shown.length < STAMP_SLOTS.length && (
+              <div
+                className="absolute flex size-[116px] flex-col items-center justify-center rounded-full border-[2.5px] border-dashed border-ultramarine bg-white text-[11px] leading-[14px] font-extrabold text-foreground"
+                style={{ left: STAMP_SLOTS[shown.length].cx - 58, top: STAMP_SLOTS[shown.length].cy - 58 }}
+              >
+                <span className="font-display text-[30px] leading-[34px] text-ultramarine">+</span>
+                <span>следующая</span>
+                <span>печать</span>
+              </div>
+            )}
           </div>
-        )}
-        {shown.length === 0 && !nextStamp && (
-          <span className="text-[13px] font-semibold text-muted-foreground">{hint}</span>
-        )}
-      </div>
+        </div>
+      )}
 
       {visas.length > 0 && (
         <div className="grid grid-cols-2 gap-3">
@@ -509,16 +561,16 @@ function DataPage() {
         <div className="relative mt-auto">
           <Stamps />
         </div>
-        <PassportMrz user={user} className="rounded-[10px] border-0 bg-muted px-3 py-2 text-[10px] tracking-[0.6px]" />
       </div>
     </section>
   );
 }
 
 /** Разворот паспорта спортсмена: данные и отметки слева, питомец справа. Ширину задаёт родитель, высоту — содержимое. */
-export function PassportSpread({ className }: { className?: string }) {
+export function PassportSpread({ className, ref }: { className?: string; ref?: React.Ref<HTMLDivElement> }) {
   return (
     <div
+      ref={ref}
       className={cn(
         "relative flex min-h-[520px] overflow-hidden rounded-[24px] border-2 border-ink bg-card shadow-hard",
         className,

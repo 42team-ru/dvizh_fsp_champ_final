@@ -1,11 +1,12 @@
 import type { ReactNode } from "react";
-import { NavLink } from "react-router";
+import { NavLink, useLocation } from "react-router";
 import { ShieldCheck } from "lucide-react";
 import { cn } from "cn";
 import { useAdminListAwards, useAdminStats } from "@/shared/api/generated/core/admin/admin";
 import { AppHeader } from "@/widgets/app-header/ui/app-header";
 import { MobileTabBar } from "@/widgets/mobile-shell/ui/mobile-tab-bar";
 import { Chip } from "./parts";
+import { useScrollActiveIntoView } from "@/shared/lib/use-scroll-active";
 
 const item =
   "flex items-center justify-between gap-2 rounded-[12px] px-3.5 py-[11px] text-sm leading-5 font-extrabold whitespace-nowrap text-foreground transition-colors hover:bg-muted";
@@ -24,6 +25,7 @@ export function useAdminAttention() {
 /** Левое меню админки; на телефоне — строка вкладок над содержимым. */
 function Rail() {
   const { pending, moderation, awardWaiting } = useAdminAttention();
+  const nav = useScrollActiveIntoView<HTMLElement>(useLocation().pathname);
   const links: { to: string; label: string; end?: boolean; badge?: ReactNode }[] = [
     { to: "/admin", label: "Обзор", end: true },
     {
@@ -58,7 +60,7 @@ function Rail() {
         </div>
       </div>
       <div className="h-2" />
-      <nav className="no-scrollbar flex gap-1.5 overflow-x-auto lg:flex-col lg:overflow-visible">
+      <nav ref={nav} className="no-scrollbar flex gap-1.5 overflow-x-auto lg:flex-col lg:overflow-visible">
         {links.map((l) => (
           <NavLink key={l.to} to={l.to} end={l.end} className={({ isActive }) => cn("group", item, isActive && active)}>
             {l.label}

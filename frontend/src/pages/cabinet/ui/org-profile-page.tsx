@@ -180,7 +180,7 @@ export default function OrgProfilePage() {
 
             <div className="flex flex-col gap-2">
               <FieldLabel>Контакты — хотя бы один</FieldLabel>
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {CONTACT_TYPES.map((c) => (
                   <label key={c.key} className="flex flex-col gap-1 text-sm font-bold text-foreground">
                     {c.label}

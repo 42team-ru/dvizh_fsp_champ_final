@@ -53,7 +53,7 @@ export function FocusPickerDialog({ open, src, initial, busy, title = "Что г
         <DialogDescription>
           Нажмите на главное — лицо, мяч, сцену. Превью в ленте и на главной обрежутся так, чтобы эта точка осталась в кадре.
         </DialogDescription>
-        <div className="grid gap-5 sm:grid-cols-[minmax(0,1fr)_240px]">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-[minmax(0,1fr)_240px]">
           <div
             ref={area}
             role="slider"

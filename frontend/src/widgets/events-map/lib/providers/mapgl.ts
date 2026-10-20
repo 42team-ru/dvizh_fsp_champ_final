@@ -1,7 +1,7 @@
 import { load } from "@2gis/mapgl";
 import { Clusterer } from "@2gis/mapgl-clusterer";
 import { DEFAULT_CENTER, KEY, type Bbox, type MapPoint, type MapProvider, type PointPicker } from "../map-contract";
-import { HOME_PIN, clusterHtml, contains, mount, mountControls, pad, pinHtml } from "../map-utils";
+import { HOME_PIN, clusterHtml, contains, mount, mountControls, pad, pinHtml, vpZoom } from "../map-utils";
 
 type MapglApi = Awaited<ReturnType<typeof load>>;
 type MapglMap = InstanceType<MapglApi["Map"]>;
@@ -138,8 +138,8 @@ export async function createEventsMap(container: HTMLElement, center = DEFAULT_C
     // Серые точки не поглощают цветные. Выбранный пин рисуем отдельно и всегда видимым.
     for (const muted of [true, false]) {
       const clusterer = new Clusterer(map, {
-        radius: 56,
-        clusterStyle: (count) => ({ type: "html", html: clusterHtml(count, muted), anchor: [20, 20], zIndex: muted ? 0 : 1 }),
+        radius: 56 * vpZoom(),
+        clusterStyle: (count) => ({ type: "html", html: clusterHtml(count, muted), anchor: [20 * vpZoom(), 20 * vpZoom()], zIndex: muted ? 0 : 1 }),
       });
       clusterers.push(clusterer);
       clusterer.on("click", (event) => {
@@ -215,7 +215,7 @@ export async function createEventsMap(container: HTMLElement, center = DEFAULT_C
     setHome(point) {
       home?.destroy();
       home = point ? new api.HtmlMarker(map, {
-        coordinates: point, anchor: HOME_PIN.anchor, zIndex: 3,
+        coordinates: point, anchor: [HOME_PIN.anchor[0] * vpZoom(), HOME_PIN.anchor[1] * vpZoom()], zIndex: 3,
         html: HOME_PIN.html,
         preventMapInteractions: false,
       }) : undefined;

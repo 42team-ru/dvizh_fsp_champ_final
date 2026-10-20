@@ -69,7 +69,8 @@ function SportRow({ sport: s, onAction, onApprove, onRestore, busy }: {
   ].filter(Boolean).join(" · ");
   return (
     <article className={cn("flex w-full flex-col gap-3 rounded-[24px] border-2 border-ink p-4 sm:p-[18px]", inactive ? "bg-background" : "bg-card")}>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+      {/* в строку — только когда влезают все четыре кнопки (до xl они уходят под описание) */}
+      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:gap-4">
         <Cover sport={s} />
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -88,7 +89,7 @@ function SportRow({ sport: s, onAction, onApprove, onRestore, busy }: {
             )}
           </div>
         </div>
-        <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end">
+        <div className="flex shrink-0 flex-col items-start gap-2 xl:items-end">
           <Chip tone={status.tone} className="text-[10px]">{status.label}</Chip>
           <div className="flex flex-wrap gap-2">
             {s.status === "PENDING" && (

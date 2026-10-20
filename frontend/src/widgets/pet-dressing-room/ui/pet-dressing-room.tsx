@@ -293,7 +293,7 @@ function DressingContent({
           </Link>
         </nav>
       </div>
-      <div className="grid min-w-0 items-start gap-7 md:grid-cols-[minmax(240px,300px)_minmax(0,1fr)] min-[1180px]:grid-cols-[380px_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 min-w-0 items-start gap-7 md:grid-cols-[minmax(240px,300px)_minmax(0,1fr)] min-[1180px]:grid-cols-[380px_minmax(0,1fr)]">
         <aside className="flex min-w-0 flex-col gap-4 rounded-[24px] border-2 border-ink bg-card p-4 shadow-hard md:sticky md:top-5 md:max-h-[calc(100dvh-40px)] md:overflow-y-auto lg:top-[96px] lg:max-h-[calc(100dvh-116px)]">
           <LookPreview
             look={look}

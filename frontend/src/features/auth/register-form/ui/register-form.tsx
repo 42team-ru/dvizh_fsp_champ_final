@@ -58,7 +58,7 @@ export default function RegisterForm() {
             <form.Field
               name="accountType"
               children={(field) => (
-                <div role="radiogroup" aria-label="Тип аккаунта" className="grid gap-3 sm:grid-cols-2">
+                <div role="radiogroup" aria-label="Тип аккаунта" className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {ACCOUNT_TYPES.map((t) => {
                     const active = field.state.value === t.value;
                     return (
@@ -93,7 +93,7 @@ export default function RegisterForm() {
               )}
             />
 
-            <div className="grid gap-[14px] sm:grid-cols-2 lg:gap-4">
+            <div className="grid grid-cols-1 gap-[14px] sm:grid-cols-2 lg:gap-4">
               <form.Field
                 name="firstName"
                 children={(field) => (

@@ -167,7 +167,7 @@ export default function EventCreatePage() {
                 </div>
               ) : <SportPicker onPick={setSport} />}
             </div>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <label className={field}>Формат встречи
                 <select className={select} value={f.kind} onChange={(e) => set({ kind: e.target.value as EventRequestKind | "" })}>
                   <option value="">Не указан</option>
@@ -194,7 +194,7 @@ export default function EventCreatePage() {
           </Section>
 
           <Section title="Когда">
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <label className={field}>{repeat ? "Первое занятие" : "Дата"}
                 <Input type="date" required value={f.date} min={localDate(new Date())} onChange={(e) => set({ date: e.target.value })} />
               </label>
@@ -250,7 +250,7 @@ export default function EventCreatePage() {
           </Section>
 
           <Section title="Условия">
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <label className={field}>Запись
                 <select className={select} value={f.joinMode} onChange={(e) => set({ joinMode: e.target.value as EventRequestJoinMode })}>
                   {Object.entries(JOIN_MODE_LABEL).map(([value, label]) => <option key={value} value={value}>{label}</option>)}

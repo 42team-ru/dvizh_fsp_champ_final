@@ -44,7 +44,7 @@ export function TeamTab({ event, refresh }: { event: ManagedEvent; refresh: () =
       {event.organizers.map((o) => (
         <div key={o.user.id} className="flex flex-wrap items-center gap-3 rounded-[14px] border-[1.5px] border-ink bg-card px-3 py-2.5">
           <Avatar user={o.user} className="size-10" />
-          <div className="min-w-0 flex-1">
+          <div className="min-w-[min(100%,160px)] flex-1">
             <PersonLine user={o.user} extra={o.organization?.name ?? ""} />
           </div>
           {o.author ? (

@@ -249,6 +249,8 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* слово длиннее строки переносится, а не вылезает из карточки на узком экране */
+    overflow-wrap: break-word;
   }
 }
 

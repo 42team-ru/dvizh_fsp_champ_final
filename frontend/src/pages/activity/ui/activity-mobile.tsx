@@ -8,6 +8,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Disc } from "@/shared/components/ui/disc";
 import { Icon } from "@/shared/components/ui/icon";
 import { cn } from "cn";
+import { useScrollActiveIntoView } from "@/shared/lib/use-scroll-active";
 import type { LucideIcon } from "lucide-react";
 import { MyEventsMap } from "@/widgets/events-map/ui/my-events-map";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
@@ -84,6 +85,7 @@ function Label({ children }: { children: string }) {
 export function ActivityMobile({ m }: { m: ActivityModel }) {
   const invites = usePendingInvites();
   const totals = { going: m.goingTotal, requests: m.pendingTotal };
+  const tabs = useScrollActiveIntoView<HTMLDivElement>(m.tab);
   return (
     <div className="relative isolate flex min-h-dvh overflow-clip flex-col gap-4 bg-background pb-[110px] lg:hidden">
       <MemphisBackground variant="mobile" seed="activity" />
@@ -103,7 +105,7 @@ export function ActivityMobile({ m }: { m: ActivityModel }) {
         </button>
       </div>
 
-      <div className="no-scrollbar flex gap-2 overflow-x-auto px-4" role="tablist" aria-label="Тип активности">
+      <div ref={tabs} className="no-scrollbar flex gap-2 overflow-x-auto px-4" role="tablist" aria-label="Тип активности">
         {m.tabs.map((t) => {
           const unread = m.unreadOf(t.key);
           return (

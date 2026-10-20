@@ -183,11 +183,11 @@ export default function BlogEditorPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,808px)_minmax(0,1fr)] lg:gap-8">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,808px)_minmax(0,1fr)] lg:gap-8">
         <Card className="gap-6 p-5 shadow-hard sm:p-9">
           <section className="flex flex-col gap-3">
             <Eyebrow>Что пишем</Eyebrow>
-            <div role="radiogroup" className="grid gap-3 sm:grid-cols-2">
+            <div role="radiogroup" className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {([
                 ["EVENT_REPORT", "С тренировки", "Фото и впечатления. Привязан к встрече и появится на её странице."],
                 ["GUIDE", "Гайд", "Совет без даты: как начать, что взять, куда пойти."],

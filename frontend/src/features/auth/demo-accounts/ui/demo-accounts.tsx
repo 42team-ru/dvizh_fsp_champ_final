@@ -77,7 +77,7 @@ export default function DemoAccounts({ onPick, disabled }: DemoAccountsProps) {
                 textClassName="text-sm"
               />
               <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <p className="text-[15px] leading-5 font-extrabold break-words text-foreground">
+                <p className="text-[15px] leading-5 font-extrabold break-words hyphens-auto text-foreground">
                   {first} {last}
                 </p>
                 <p className="text-xs leading-4 font-semibold text-muted-foreground">{label}</p>

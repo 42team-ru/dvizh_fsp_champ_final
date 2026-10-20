@@ -125,7 +125,7 @@ function ViewerBody({
   });
 
   return (
-    <div className="grid lg:h-[600px] lg:grid-cols-[1fr_2px_358px]">
+    <div className="grid grid-cols-1 lg:h-[600px] lg:grid-cols-[1fr_2px_358px]">
       <div className={cn("relative h-[52dvh] min-h-[280px] lg:h-full", coverTone(photo.id))}>
         <img src={imageUrl(photo.url)} alt={photo.caption ?? `Фото с занятия «${photo.event.title}»`} className="size-full object-contain" />
         <span className="absolute top-[14px] left-[14px] rounded-pill border-[1.5px] border-ink bg-card px-3 py-[5px] text-xs font-extrabold text-foreground">

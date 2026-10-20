@@ -27,7 +27,8 @@ function useCount(status?: AdminListOrganizationsStatus) {
   return q.data?.status === 200 ? q.data.data.totalElements ?? 0 : 0;
 }
 
-const COLS = "grid grid-cols-[44px_minmax(0,1fr)_150px_64px_104px_128px_100px] items-center gap-3.5";
+/** На телефоне строка — логотип, название со статусом и кнопка; остальные колонки с md. */
+const COLS = "grid grid-cols-[44px_minmax(0,1fr)_auto] items-center gap-3 md:grid-cols-[44px_minmax(0,1fr)_150px_64px_104px_128px_100px] md:gap-3.5";
 
 function Row({ org: o, odd }: { org: AdminOrganizationResponse; odd: boolean }) {
   const status = o.status ? ORGANIZATION_STATUS[o.status] : undefined;
@@ -38,16 +39,17 @@ function Row({ org: o, odd }: { org: AdminOrganizationResponse; odd: boolean }) 
       <div className="flex min-w-0 flex-col gap-0.5">
         <Link to={`/admin/organizations/${o.id}`} className="truncate text-sm font-extrabold text-foreground hover:underline">{o.name}</Link>
         <span className="truncate text-xs font-medium text-muted-foreground">{o.city ?? "Город не указан"}</span>
+        {status && <Chip tone={status.tone} className="mt-1 self-start text-[10px] md:hidden">{status.label}</Chip>}
       </div>
-      <div className="flex min-w-0 flex-wrap gap-1">
+      <div className="hidden min-w-0 flex-wrap gap-1 md:flex">
         {(o.sports ?? []).slice(0, 2).map((s) => (
           <Chip key={s.id} tone={toneOf(s.name)} className="px-2 py-px text-[10px] normal-case">{s.name}</Chip>
         ))}
         {(o.sports?.length ?? 0) > 2 && <span className="text-[11px] font-bold text-muted-foreground">+{(o.sports?.length ?? 0) - 2}</span>}
       </div>
-      <span className="text-sm font-extrabold text-foreground">{o.eventsCount ?? 0}</span>
-      <span className="text-xs font-bold text-foreground">{o.submittedAt ? dateTime(o.submittedAt) : "—"}</span>
-      <span>{status && <Chip tone={status.tone} className="text-[10px]">{status.label}</Chip>}</span>
+      <span className="hidden text-sm font-extrabold text-foreground md:block">{o.eventsCount ?? 0}</span>
+      <span className="hidden text-xs font-bold text-foreground md:block">{o.submittedAt ? dateTime(o.submittedAt) : "—"}</span>
+      <span className="hidden md:block">{status && <Chip tone={status.tone} className="text-[10px]">{status.label}</Chip>}</span>
       <div className="flex justify-end">
         <Button asChild size="sm" variant={pending ? "secondary" : "outline"} className={cn("h-9 px-3.5 text-[13px]", !pending && "shadow-none")}>
           <Link to={`/admin/organizations/${o.id}`}>{pending ? "Проверить" : "Открыть"}</Link>
@@ -99,8 +101,8 @@ export default function AdminOrganizationsPage() {
           text={filter === "PENDING" ? "Новые заявки клубов появятся здесь." : "Попробуйте другой статус или название."} />
       ) : (
         <div className="w-full overflow-x-auto rounded-[20px] border-2 border-ink bg-card">
-          <div className="min-w-[900px]">
-            <div className={cn(COLS, "bg-background px-4 py-3")}>
+          <div className="md:min-w-[900px]">
+            <div className={cn(COLS, "hidden bg-background px-4 py-3 md:grid")}>
               <span />
               <span className={TH}>Организация</span>
               <span className={TH}>Виды спорта</span>

@@ -8,9 +8,16 @@ export function mount(container: HTMLElement) {
   const el = document.createElement("div");
   el.style.width = "100%";
   el.style.height = "100%";
+  // На 2K/4K страница увеличена zoom (ViewportScale), а карты считают курсор без него: клик ставил точку
+  // в 1,33–2 раза дальше от угла. Внутри карты зум снят — те же размеры на экране, верные координаты.
+  // Метки и кнопки возвращают зум сами (map-pins.css), их якоря — vpZoom().
+  el.style.zoom = "calc(1 / var(--vp-zoom, 1))";
   container.appendChild(el);
   return el;
 }
+
+/** Зум страницы на 2K/4K (ViewportScale): во столько раз увеличены метки внутри карты. */
+export const vpZoom = () => Number(document.documentElement.style.getPropertyValue("--vp-zoom")) || 1;
 
 const escape = (text: string) =>
   text.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);

@@ -136,8 +136,8 @@ export function ShareDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-[980px] gap-0 overflow-x-hidden overflow-y-auto bg-background p-5 sm:max-w-[980px] sm:p-8">
-        <div className="grid min-w-0 items-center gap-7 md:grid-cols-[minmax(0,360px)_minmax(0,1fr)] md:gap-9">
-          <div className="flex min-w-0 flex-col items-center gap-4 pt-5 md:pt-0">
+        <div className="grid grid-cols-1 min-w-0 items-center gap-7 md:grid-cols-[minmax(0,360px)_minmax(0,1fr)] md:gap-9">
+          <div className="flex min-w-0 flex-col items-center gap-4 pt-9 md:pt-0">
             <PosterPreview format={format} posterRef={poster}>
               {children(format)}
             </PosterPreview>

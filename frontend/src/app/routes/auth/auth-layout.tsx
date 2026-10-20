@@ -104,7 +104,8 @@ function MobileBanner({ brand }: { brand: Brand }) {
           Движ
         </span>
       </BrandPlate>
-      <p className="absolute top-[76px] left-4 w-[200px] break-words font-display text-[22px] leading-7 font-extrabold tracking-[-0.3px] text-white">
+      {/* ширина — до тела бобра, кегль от ширины экрана: «возвращением» целиком влезает и на 360px */}
+      <p className="absolute top-[76px] left-4 w-[calc(100%-176px)] font-display text-[clamp(16px,5vw,22px)] leading-[1.27] font-extrabold tracking-[-0.3px] hyphens-auto text-white">
         {brand.mobileTitle}
       </p>
       {/* живой бобр вместо статичной картинки, как на компьютере */}

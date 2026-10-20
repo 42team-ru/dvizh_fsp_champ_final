@@ -131,7 +131,7 @@ export function StepProfile({
           </label>
         </div>
       </motion.section>
-      <motion.div {...rise(2)} className="grid gap-3 sm:grid-cols-2">
+      <motion.div {...rise(2)} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
           <label htmlFor={ids.first} className={label}>ИМЯ *</label>
           <input id={ids.first} maxLength={100} value={profile.firstName} className={input}
@@ -218,7 +218,7 @@ export function StepSports({ sports, setSports }: { sports: SportRow[]; setSport
           ))}
         </div>
       )}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4">
         {tiles.map((s, i) => {
           const row = find({ sportId: s.id, name: s.name });
           const on = !!row;
@@ -338,7 +338,7 @@ export function StepSchedule({ prefs, setPrefs }: { prefs: Prefs; setPrefs(p: Pr
           ))}
         </div>
       </motion.section>
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
         <motion.section {...rise(2)} className={cn(card, "flex flex-col gap-3 p-4")}>
           <div className="flex items-center justify-between">
             <p className="text-base font-extrabold">Удобные дни</p>
@@ -469,7 +469,7 @@ export function StepPet({
         <div className="flex flex-col gap-2">
           <label htmlFor={nameId} className={label}>КАК ЗОВУТ БОБРА?</label>
           <div className="flex gap-3">
-            <div className="flex flex-1 items-center gap-2 rounded-[14px] border-2 border-primary bg-card px-4 focus-within:ring-[3px] focus-within:ring-ring/40">
+            <div className="flex min-w-0 flex-1 items-center gap-2 rounded-[14px] border-2 border-primary bg-card px-4 focus-within:ring-[3px] focus-within:ring-ring/40">
               <input id={nameId} value={pet.name} maxLength={PET_NAME_MAX} onChange={(e) => setPet({ ...pet, name: e.target.value })}
                 className="h-12 min-w-0 flex-1 bg-transparent text-base font-bold outline-none" />
               <span className="text-xs text-muted-foreground">{pet.name.length} / {PET_NAME_MAX}</span>

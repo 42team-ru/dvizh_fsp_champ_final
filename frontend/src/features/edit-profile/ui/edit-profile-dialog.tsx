@@ -139,7 +139,7 @@ function EditProfileForm({ user, onDone }: { user: UserResponse; onDone(): void 
         </section>
 
         <section aria-label="Основное" className="flex flex-col gap-4">
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-2">
               <label htmlFor={ids.first} className={label}>ИМЯ</label>
               <input id={ids.first} required minLength={2} maxLength={100} value={form.firstName} className={input}

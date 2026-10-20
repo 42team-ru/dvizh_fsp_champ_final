@@ -129,7 +129,7 @@ export default function BlogPostPage() {
       </div>
       <BlogShare data={data} open={shareOpen} onOpenChange={setShareOpen} />
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,808px)_minmax(0,1fr)] lg:gap-8">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,808px)_minmax(0,1fr)] lg:gap-8">
         <Card className="gap-6 p-5 shadow-hard sm:p-10">
           <PostTypeChips post={post} />
           <div className="-mt-2 flex flex-wrap gap-1.5">

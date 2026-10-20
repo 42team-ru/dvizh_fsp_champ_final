@@ -143,7 +143,7 @@ export default function PetPage() {
         <h1 className="text-3xl font-bold">{current?.name ?? "Питомец"}: гардероб</h1>
         <p className="mt-2 text-muted-foreground">Выбери готовый образ или собери свой из отдельных вещей.</p>
       </div>
-      <div className="grid items-start gap-8 md:grid-cols-2">
+      <div className="grid grid-cols-1 items-start gap-8 md:grid-cols-2">
         <div className="md:sticky md:top-6">
           <div className="rounded-[3rem] bg-[#F6EEE4] px-2 pb-5 pt-8 sm:px-4">
             {query.isPending ? <div className="aspect-square animate-pulse rounded-3xl bg-white/40" role="status" aria-label="Загружаем питомца" /> :
