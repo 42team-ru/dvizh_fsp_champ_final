@@ -77,14 +77,19 @@ app:
     # Маршруты 2ГИС для «Бублик подсказывает» (когда выходить). Тот же ключ, что у карты; пусто — оценка по расстоянию
     dgis-key: ${VITE_2GIS_KEY:}
   moderation:
-    # Модерация текстов (docs/moderation.md): словарь работает всегда, нейросеть — если включена.
+    # Модерация текстов (docs/moderation.md): словарь работает всегда, нейросеть и классификатор — если включены.
     llm:
-      # Qwen3-1.7B в llama.cpp (сервис llm в docker-compose, локально make llm); выключено — только словарь
+      # Qwen3.5-0.8B в llama.cpp (сервис llm в docker-compose, локально make llm); выключено — без её голоса
       enabled: ${MODERATION_LLM_ENABLED:false}
       url: ${MODERATION_LLM_URL:http://localhost:8091}
       timeout: 30s
       concurrency: 1
-    # Нейросеть сама скрывает явные угрозы, травлю и ненависть в сообщениях; админ может вернуть
+    classifier:
+      # rubert-tiny-toxicity в text-embeddings-inference (сервис toxicity, локально make llm); выключено — без его голоса
+      enabled: ${MODERATION_CLASSIFIER_ENABLED:false}
+      url: ${MODERATION_CLASSIFIER_URL:http://localhost:8093}
+      timeout: 5s
+    # Сообщение скрывается само, если серьёзное нарушение видят минимум 2 из 3 источников; админ может вернуть
     auto-hide: ${MODERATION_AUTO_HIDE:true}
     # Подметальщик проверок, которые не удались сразу (модель ещё качается, перезапуск)
     sweep-delay: PT1M

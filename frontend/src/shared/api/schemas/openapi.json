@@ -10934,6 +10934,7 @@
                 "THREAT",
                 "SEXUAL",
                 "SPAM",
+                "OFF_TOPIC",
                 "OTHER"
               ]
             },
@@ -12779,7 +12780,8 @@
             "description": "Кто оценил: словарь или нейросеть; null — ещё никто",
             "enum": [
               "HEURISTIC",
-              "LLM"
+              "LLM",
+              "CLASSIFIER"
             ]
           },
           "categories": {
@@ -12795,6 +12797,7 @@
                 "THREAT",
                 "SEXUAL",
                 "SPAM",
+                "OFF_TOPIC",
                 "OTHER"
               ]
             },

@@ -166,14 +166,14 @@ export const BLOG_POST_STATUS: Record<string, { label: string; tone: string }> =
 
 /** Модерация текстов (админка «Модерация»): состояние проверки. */
 export const MODERATION_STATUS: Record<string, { label: string; tone: string }> = {
-  PENDING: { label: "Ждёт нейросеть", tone: "bg-lavender-soft" },
+  PENDING: { label: "Ждёт проверки", tone: "bg-lavender-soft" },
   CLEAN: { label: "Чисто", tone: "bg-lime-soft" },
   FLAGGED: { label: "На проверке", tone: "bg-peach" },
   AUTO_HIDDEN: { label: "Скрыто автоматически", tone: "bg-salmon" },
   RESOLVED: { label: "Решено", tone: "bg-lime-soft" },
 };
 
-/** Вид нарушения, найденный словарём или нейросетью. */
+/** Вид нарушения, найденный словарём, классификатором или нейросетью. */
 export const MODERATION_CATEGORY_LABEL: Record<string, string> = {
   PROFANITY: "Мат",
   INSULT: "Оскорбление",
@@ -182,7 +182,15 @@ export const MODERATION_CATEGORY_LABEL: Record<string, string> = {
   THREAT: "Угроза",
   SEXUAL: "Непристойность",
   SPAM: "Реклама",
+  OFF_TOPIC: "Не по теме",
   OTHER: "Другое",
+};
+
+/** Кто поставил итоговую оценку; подробности по каждому источнику — в пояснении проверки. */
+export const MODERATION_SOURCE_LABEL: Record<string, string> = {
+  HEURISTIC: "словарь",
+  CLASSIFIER: "классификатор",
+  LLM: "нейросеть",
 };
 
 /** Что проверяли. */

@@ -90,7 +90,7 @@ class TextModerationE2ETest {
 		});
 		assertThatApi(() -> reader.moderationQueue(Map.of())).fails(FORBIDDEN);
 		assertThatApi(() -> admin.recheckModeration(rudeCheck.id())).fails(CONFLICT,
-				"Нейросеть выключена: включите MODERATION_LLM_ENABLED");
+				"Модели выключены: включите MODERATION_LLM_ENABLED или MODERATION_CLASSIFIER_ENABLED");
 
 		// Решённое и удалённое уходят из очереди, но различаются в истории проверок.
 		var approved = admin.approveModeration(rudeCheck.id());

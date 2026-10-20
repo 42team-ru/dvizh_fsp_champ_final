@@ -1339,6 +1339,7 @@ export const CommentModerationResponseCategoriesItem = {
   THREAT: 'THREAT',
   SEXUAL: 'SEXUAL',
   SPAM: 'SPAM',
+  OFF_TOPIC: 'OFF_TOPIC',
   OTHER: 'OTHER',
 } as const;
 
@@ -2412,6 +2413,7 @@ export type ModerationItemResponseSource = typeof ModerationItemResponseSource[k
 export const ModerationItemResponseSource = {
   HEURISTIC: 'HEURISTIC',
   LLM: 'LLM',
+  CLASSIFIER: 'CLASSIFIER',
 } as const;
 
 export type ModerationItemResponseCategoriesItem = typeof ModerationItemResponseCategoriesItem[keyof typeof ModerationItemResponseCategoriesItem];
@@ -2425,6 +2427,7 @@ export const ModerationItemResponseCategoriesItem = {
   THREAT: 'THREAT',
   SEXUAL: 'SEXUAL',
   SPAM: 'SPAM',
+  OFF_TOPIC: 'OFF_TOPIC',
   OTHER: 'OTHER',
 } as const;
 

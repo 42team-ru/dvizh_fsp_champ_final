@@ -38,7 +38,7 @@ public class ContentGuard {
 	public record ModerationRequested(UUID checkId) {}
 
 	/** Оценка словаря: мягкие признаки (грубость, спам) и пояснение для админа; пусто — ничего не нашлось. */
-	public record Heuristics(Set<ModerationCategory> categories, String explanation) {
+	public record Heuristics(Set<ModerationCategory> categories, String explanation, int severity) {
 		public boolean found() { return !categories.isEmpty(); }
 	}
 
@@ -84,7 +84,7 @@ public class ContentGuard {
 
 	/**
 	 * Поставить текст на проверку в текущей транзакции. Тот же текст повторно не проверяется
-	 * (в том числе уже одобренный админом). Без нейросети оценка — сразу по словарю.
+	 * (в том числе уже одобренный админом). Без нейросети и классификатора оценка — сразу по словарю.
 	 */
 	@Transactional(propagation = Propagation.MANDATORY)
 	public void submit(ModerationTarget target, UUID targetId, UUID eventId, UUID authorId, String snapshot) {
@@ -97,10 +97,11 @@ public class ContentGuard {
 		}
 		var check = existing.orElseGet(() -> mapper.toEntity(target, targetId, eventId, authorId));
 		var found = heuristics(target, snapshot);
-		boolean llm = properties.llm().enabled();
+		// хотя бы одна модель включена — оцениваем в фоне, иначе остаётся оценка словаря
+		boolean llm = properties.llm().enabled() || properties.classifier().enabled();
 		var status = llm ? ModerationStatus.PENDING
 				: found.found() ? ModerationStatus.FLAGGED : ModerationStatus.CLEAN;
-		mapper.submit(check, snapshot, authorId, status, found.categories(), found.found() ? 1 : 0,
+		mapper.submit(check, snapshot, authorId, status, found.categories(), found.severity(),
 				found.explanation(), found.found() ? ModerationSource.HEURISTIC : null, llm ? null : dbTime.now());
 		var saved = checks.saveAndFlush(check);
 		if (llm) {
@@ -112,10 +113,11 @@ public class ContentGuard {
 	public Heuristics heuristics(ModerationTarget target, String snapshot) {
 		var findings = filter.softSignals(snapshot, target == ModerationTarget.COMMENT);
 		if (findings.isEmpty()) {
-			return new Heuristics(EnumSet.noneOf(ModerationCategory.class), null);
+			return new Heuristics(EnumSet.noneOf(ModerationCategory.class), null, 0);
 		}
 		return new Heuristics(ProfanityFilter.categories(findings), "Словарь: " + findings.stream()
-				.map(f -> "«" + f.fragment() + "»").distinct().collect(Collectors.joining(", ")));
+				.map(f -> "«" + f.fragment() + "»").distinct().collect(Collectors.joining(", ")),
+				findings.stream().mapToInt(ProfanityFilter.Finding::severity).max().orElse(1));
 	}
 
 	/** Текста больше нет (автор удалил сообщение): проверка из очереди убирается. */
