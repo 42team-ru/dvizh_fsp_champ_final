@@ -98,8 +98,8 @@ function FilterBar({ chip, onChip, more, extraCount, onMore, count, view, onView
   );
 }
 
-function BikeCard({ event, className, onDismiss }: { event: EventSummaryResponse; className?: string; onDismiss?: (id: string) => void }) {
-  const data = toCardData(event, SLOT_COVERS[6]);
+function BikeCard({ event, placeOf, className, onDismiss }: { event: EventSummaryResponse; placeOf?: (e: EventSummaryResponse) => string; className?: string; onDismiss?: (id: string) => void }) {
+  const data = toCardData(event, SLOT_COVERS[6], placeOf?.(event));
   return (
     <Card className={cn("relative min-h-[330px] flex-row overflow-hidden p-0", className)}>
       <Link to={`/events/${event.id}`} aria-label={event.title} className="absolute inset-0 z-10" />
@@ -168,9 +168,11 @@ function CtaCard({ className }: { className?: string }) {
 }
 
 /** Карточка события из ленты по индексу; обложка-заглушка — по тому же слоту. */
-function Slot({ events, i, reasonOf, topReasonOf, onDismiss, ...props }: {
+function Slot({ events, i, placeOf, reasonOf, topReasonOf, onDismiss, ...props }: {
   events: EventSummaryResponse[] | undefined;
   i: number;
+  /** Расстояние до точки сбора вместо адреса. */
+  placeOf?: (e: EventSummaryResponse) => string;
   /** У рекомендаций под названием — главная причина «почему вам это». */
   reasonOf?: (id: string) => string | undefined;
   /** Есть у лучших рекомендаций: причина выделяется фиолетовым со звёздочками. */
@@ -180,7 +182,7 @@ function Slot({ events, i, reasonOf, topReasonOf, onDismiss, ...props }: {
 } & Omit<React.ComponentProps<typeof EventCard>, "event" | "href" | "action">) {
   const event = events?.[i];
   if (!event) return null;
-  const data = toCardData(event, SLOT_COVERS[i % SLOT_COVERS.length]);
+  const data = toCardData(event, SLOT_COVERS[i % SLOT_COVERS.length], placeOf?.(event));
   const reason = reasonOf?.(event.id);
   return <EventCard href={`/events/${event.id}`} event={reason ? { ...data, place: reason } : data}
     highlight={topReasonOf?.(event.id) != null} {...props}
@@ -197,7 +199,7 @@ export default function FeedPage() {
   const [view, setView] = useState<"list" | "map">("list");
   const [more, setMore] = useState(false);
   const list = useFeedEvents(filters.params, filters);
-  const { events, reasonOf, topReasonOf } = list;
+  const { events, reasonOf, topReasonOf, placeOf } = list;
   const { dismiss } = useDismissRecommendation();
   const onDismiss = filters.forYou ? dismiss : undefined;
   return (
@@ -218,23 +220,23 @@ export default function FeedPage() {
           {list.isError && <p role="alert" className="text-lg font-semibold text-destructive">Не удалось загрузить ленту.</p>}
           {/* Ряды — отдельные сетки: если событий мало, пустеет конец ряда, а не съезжает раскладка. */}
           <div className="grid grid-cols-12 gap-5">
-            <Slot reasonOf={reasonOf} topReasonOf={topReasonOf} onDismiss={onDismiss} events={events} i={0} size="lg" className="col-span-6" />
+            <Slot placeOf={placeOf} reasonOf={reasonOf} topReasonOf={topReasonOf} onDismiss={onDismiss} events={events} i={0} size="lg" className="col-span-6" />
             {/* В стопках обложки 2:1, чтобы ряд не вытягивал большую карточку и соседей в квадрат. */}
             <div className="col-span-3 flex flex-col gap-5">
-              <Slot reasonOf={reasonOf} topReasonOf={topReasonOf} onDismiss={onDismiss} events={events} i={1} coverClassName="aspect-[2/1]" className="grow" />
-              <Slot reasonOf={reasonOf} topReasonOf={topReasonOf} onDismiss={onDismiss} events={events} i={2} titleLines={2} coverClassName="aspect-[2/1]" className="grow" />
+              <Slot placeOf={placeOf} reasonOf={reasonOf} topReasonOf={topReasonOf} onDismiss={onDismiss} events={events} i={1} coverClassName="aspect-[2/1]" className="grow" />
+              <Slot placeOf={placeOf} reasonOf={reasonOf} topReasonOf={topReasonOf} onDismiss={onDismiss} events={events} i={2} titleLines={2} coverClassName="aspect-[2/1]" className="grow" />
             </div>
             <div className="col-span-3 flex flex-col gap-5">
-              <Slot reasonOf={reasonOf} topReasonOf={topReasonOf} onDismiss={onDismiss} events={events} i={3} coverClassName="aspect-[2/1]" className="grow" />
+              <Slot placeOf={placeOf} reasonOf={reasonOf} topReasonOf={topReasonOf} onDismiss={onDismiss} events={events} i={3} coverClassName="aspect-[2/1]" className="grow" />
             </div>
           </div>
           <div className="grid grid-cols-12 gap-5">
-            <Slot reasonOf={reasonOf} topReasonOf={topReasonOf} onDismiss={onDismiss} events={events} i={4} className="col-span-4" />
-            <Slot reasonOf={reasonOf} topReasonOf={topReasonOf} onDismiss={onDismiss} events={events} i={5} className="col-span-4" />
-            <Slot reasonOf={reasonOf} topReasonOf={topReasonOf} onDismiss={onDismiss} events={events} i={6} className="col-span-4" />
+            <Slot placeOf={placeOf} reasonOf={reasonOf} topReasonOf={topReasonOf} onDismiss={onDismiss} events={events} i={4} className="col-span-4" />
+            <Slot placeOf={placeOf} reasonOf={reasonOf} topReasonOf={topReasonOf} onDismiss={onDismiss} events={events} i={5} className="col-span-4" />
+            <Slot placeOf={placeOf} reasonOf={reasonOf} topReasonOf={topReasonOf} onDismiss={onDismiss} events={events} i={6} className="col-span-4" />
           </div>
           <div className="grid grid-cols-12 gap-5">
-            {events?.[7] && <BikeCard event={events[7]} className="col-span-7" onDismiss={onDismiss} />}
+            {events?.[7] && <BikeCard event={events[7]} placeOf={placeOf} className="col-span-7" onDismiss={onDismiss} />}
             <CtaCard className="col-span-5 col-start-8" />
           </div>
         </div>

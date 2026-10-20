@@ -221,7 +221,7 @@ function PetPage() {
         />
         <div
           ref={setSpeechContainer}
-          className="beaver-speech-corner absolute top-[68px] left-[150px] z-10 flex h-[104px] w-[248px] items-end"
+          className="beaver-speech-corner absolute top-[68px] left-[150px] z-10 flex h-[104px] w-[284px] items-end"
         />
         <div className="absolute bottom-[14px] left-[14px] flex items-center gap-2 rounded-pill border-[1.5px] border-ink bg-card py-[6px] pr-3 pl-[10px]">
           <span className="text-[9px] font-extrabold tracking-[1.5px] text-muted-foreground">
