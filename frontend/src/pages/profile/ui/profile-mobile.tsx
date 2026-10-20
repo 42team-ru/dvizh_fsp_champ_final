@@ -1,3 +1,4 @@
+import { PetDressLinks } from "@/features/pet-wardrobe/ui/pet-dress-links";
 import { BrandPlate } from "@/shared/components/ui/brand-plate";
 import { UserAvatar } from "@/shared/components/ui/user-avatar";
 import { useState } from "react";
@@ -213,15 +214,8 @@ function Pet() {
                   ? worn.map((item) => item.item).join(" + ")
                   : "без образа"}
               </p>
-              {!owner && (
-                <Link
-                  to="/profile/wardrobe"
-                  className="py-2 font-extrabold text-primary underline underline-offset-4"
-                >
-                  Изменить образ
-                </Link>
-              )}
             </div>
+            {!owner && <PetDressLinks />}
           </div>
         </div>
       </div>
