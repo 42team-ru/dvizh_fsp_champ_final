@@ -131,6 +131,15 @@ export const OCCURRENCE_STATUS_LABEL = {
   CANCELLED: "Отменено",
 } as const;
 
+/** Короткая метка занятия в расписании «Подробнее о встрече»: слово + цвет, иконку рисует компонент. */
+export const OCCURRENCE_BADGE = {
+  CANCELLED: { label: "Отменено", tone: "bg-peach text-orange-ink" },
+  RESCHEDULED: { label: "Перенесено", tone: "bg-sky-soft" },
+  TAKES_PLACE: { label: "Состоится", tone: "bg-mint" },
+  GATHERING: { label: "Набираем", tone: "bg-lavender-soft" },
+  ATTENDING: { label: "Вы придёте", tone: "bg-lime" },
+} as const;
+
 /** Текущий результат сбора кворума на занятие. */
 export const QUORUM_STATUS_LABEL = {
   GATHERING: "Собираем участников",
