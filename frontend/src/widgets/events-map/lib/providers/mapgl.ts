@@ -1,7 +1,7 @@
 import { load } from "@2gis/mapgl";
 import { Clusterer } from "@2gis/mapgl-clusterer";
 import { DEFAULT_CENTER, KEY, type Bbox, type MapPoint, type MapProvider, type PointPicker } from "../map-contract";
-import { clusterHtml, contains, mount, pad, pinHtml } from "../map-utils";
+import { HOME_PIN, clusterHtml, contains, mount, mountControls, pad, pinHtml } from "../map-utils";
 
 type MapglApi = Awaited<ReturnType<typeof load>>;
 type MapglMap = InstanceType<MapglApi["Map"]>;
@@ -81,7 +81,8 @@ async function createMap(container: HTMLElement, center: [number, number], zoom:
       disableRotationByUserInteraction: true,
       disableDragging: locked,
       disableZoomOnScroll: locked,
-      zoomControl: !locked,
+      // свои кнопки по макету (mountControls), стандартные MapGL не нужны
+      zoomControl: false,
       enableTrackResize: true,
     });
     const localStyle = STYLE ? undefined : map.setStyleFromUrl(localStyleUrl(), LOCAL_STYLE);
@@ -97,6 +98,15 @@ async function createMap(container: HTMLElement, center: [number, number], zoom:
       }
     }
     await waitForMap(map, localStyle);
+    if (!locked) {
+      const m = map;
+      mountControls(el, {
+        zoomIn: () => m.setStyleZoom(Math.min(m.getMaxZoom(), m.getStyleZoom() + 1)),
+        zoomOut: () => m.setStyleZoom(m.getStyleZoom() - 1),
+        goTo: (point) => { m.setCenter(point); m.setStyleZoom(Math.max(m.getStyleZoom(), 15)); },
+        center: () => m.getCenter() as [number, number],
+      });
+    }
     return { api, map, el };
   } catch (error) {
     try { map?.destroy(); } finally { el.remove(); }
@@ -207,8 +217,8 @@ export async function createEventsMap(container: HTMLElement, center = DEFAULT_C
     setHome(point) {
       home?.destroy();
       home = point ? new api.HtmlMarker(map, {
-        coordinates: point, anchor: [18, 46], zIndex: 3,
-        html: '<img class="map-home" src="/feed/map-home-pin.svg" width="40" height="50" alt="Мой дом" title="Мой дом">',
+        coordinates: point, anchor: HOME_PIN.anchor, zIndex: 3,
+        html: HOME_PIN.html,
         preventMapInteractions: false,
       }) : undefined;
       if (home) home.getContent().style.pointerEvents = "none";

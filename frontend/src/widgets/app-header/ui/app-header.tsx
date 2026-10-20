@@ -41,7 +41,7 @@ export function AppHeader({ current = "home" }: { current?: "home" | "feed" | "b
     <header className="sticky top-0 z-40 box-border h-[76px] border-b-2 border-ink bg-background">
       <div className="mx-auto flex h-full w-full max-w-[1280px] items-center px-4 xl:px-8 2xl:max-w-[1440px]">
         <Link to="/" aria-label="Движ — на главную">
-          <BrandPlate className="gap-[10px]">
+          <BrandPlate className="gap-[10px] py-0">
             <img src="/icon.svg" alt="" className="size-10 shrink-0" />
             <span className="font-display text-[17px] leading-[21px] font-bold text-foreground">
               Движ

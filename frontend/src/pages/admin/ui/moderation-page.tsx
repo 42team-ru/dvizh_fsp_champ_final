@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { ArrowUpRight, Bot, Check, Eraser, EyeOff, RefreshCw, RotateCcw, ShieldAlert, Sparkles } from "lucide-react";
+import { ArrowUpRight, Bot, Check, Eraser, RefreshCw, RotateCcw, ShieldAlert, Sparkles, Trash2 } from "lucide-react";
+import { RemoveCommentDialog, reasonForCategories } from "@/features/comment-moderation/ui/comment-moderation";
 import { cn } from "cn";
 import {
   useAdminApproveModeration,
@@ -16,7 +17,7 @@ import type {
   ModerationItemResponse,
 } from "@/shared/api/generated/core/appAPI.schemas";
 import {
-  MODERATION_CATEGORY_LABEL,
+  MODERATION_CATEGORY_LABEL, MODERATION_SOURCE_LABEL,
   MODERATION_DECISION_LABEL,
   MODERATION_STATUS,
   MODERATION_TARGET_LABEL,
@@ -37,7 +38,7 @@ type Action = { kind: "hide" | "clear"; item: ModerationItemResponse };
 const TABS: { key: Tab; label: string }[] = [
   { key: "QUEUE", label: "Ждут решения" },
   { key: "AUTO_HIDDEN", label: "Скрыто автоматически" },
-  { key: "PENDING", label: "Ждут нейросеть" },
+  { key: "PENDING", label: "Ждут проверки" },
   { key: "RESOLVED", label: "Решённые" },
 ];
 const KINDS: { key: Kind; label: string }[] = [
@@ -66,10 +67,6 @@ function sourceLink(m: ModerationItemResponse): { to: string; label: string } | 
   }
 }
 
-/** Причина скрытия по умолчанию — из найденных нарушений. */
-const defaultReason = (m: ModerationItemResponse) =>
-  m.categories.map((c) => MODERATION_CATEGORY_LABEL[c]).join(", ") || "Нарушение правил обсуждения";
-
 function ModerationCard({ m, onAction, onApprove, onRestore, onRecheck, busy }: {
   m: ModerationItemResponse;
   onAction: (a: Action) => void;
@@ -91,8 +88,8 @@ function ModerationCard({ m, onAction, onApprove, onRestore, onRecheck, busy }: 
         <Chip tone={status.tone} className="px-2 py-px text-[10px]">{status.label}</Chip>
         {m.source && (
           <span className="flex items-center gap-1 text-xs font-bold text-muted-foreground">
-            {m.source === "LLM" ? <Bot className="size-3.5" strokeWidth={2.4} /> : <Sparkles className="size-3.5" strokeWidth={2.4} />}
-            {m.source === "LLM" ? "нейросеть" : "словарь"}
+            {m.source === "HEURISTIC" ? <Sparkles className="size-3.5" strokeWidth={2.4} /> : <Bot className="size-3.5" strokeWidth={2.4} />}
+            {MODERATION_SOURCE_LABEL[m.source]}
           </span>
         )}
         <span className="text-xs font-medium text-muted-foreground">{dateTime(m.updatedAt)}</span>
@@ -147,8 +144,8 @@ function ModerationCard({ m, onAction, onApprove, onRestore, onRecheck, busy }: 
         {m.targetType === "COMMENT" && !m.hidden && (
           <Button variant="soft" size="sm" rough={{ color: "var(--orange)" }} className="h-9 text-[13px] text-orange-ink"
             onClick={() => onAction({ kind: "hide", item: m })}>
-            <EyeOff className="size-3.5" strokeWidth={2.6} />
-            Скрыть
+            <Trash2 className="size-3.5" strokeWidth={2.6} />
+            Удалить
           </Button>
         )}
         {m.targetType === "USER_PROFILE" && open && (
@@ -193,17 +190,11 @@ function ModerationDialogs({ action, onClose }: { action?: Action; onClose: () =
   const close = (o: boolean) => !o && onClose();
   return (
     <>
-      <DecisionDialog open={action?.kind === "hide"} onOpenChange={close} title="Скрыть сообщение" subject={subject}
-        reasonLabel="Причина" reasonHint="Её увидят автор и администраторы" placeholder={m ? defaultReason(m) : undefined}
-        confirmLabel="Скрыть" confirmClassName="bg-accent text-white" confirmIcon={<EyeOff className="size-4" strokeWidth={2.6} />}
-        pending={hide.isPending} error={hide.error?.detail}
-        onConfirm={(reason) => m && hide.mutate({ id: m.id, data: { reason } }, done)}>
-        <ul className="flex flex-col gap-2">
-          <Consequence>Вместо текста все увидят «Сообщение скрыто модератором»</Consequence>
-          <Consequence>Автор получит уведомление с причиной</Consequence>
-          <Consequence>Вернуть можно здесь или прямо в обсуждении</Consequence>
-        </ul>
-      </DecisionDialog>
+      {action?.kind === "hide" && m && (
+        <RemoveCommentDialog key={m.id} text={m.text} initialReason={reasonForCategories(m.categories)}
+          pending={hide.isPending} error={hide.error?.detail} onClose={onClose}
+          onRemove={(reason) => hide.mutate({ id: m.id, data: { reason } }, done)} />
+      )}
       <DecisionDialog open={action?.kind === "clear"} onOpenChange={close} title="Очистить «О себе»" subject={subject}
         confirmLabel="Очистить" confirmClassName="bg-accent text-white" confirmIcon={<Eraser className="size-4" strokeWidth={2.6} />}
         pending={clear.isPending} error={clear.error?.detail}
@@ -217,7 +208,7 @@ function ModerationDialogs({ action, onClose }: { action?: Action; onClose: () =
   );
 }
 
-/** Постмодерация: что словарь и нейросеть сочли сомнительным, и решения по этому. */
+/** Постмодерация: что словарь, классификатор и нейросеть сочли сомнительным, и решения по этому. */
 export default function AdminModerationPage() {
   const invalidate = useInvalidateAdmin();
   const [tab, setTab] = useState<Tab>("QUEUE");
@@ -244,7 +235,7 @@ export default function AdminModerationPage() {
   return (
     <AdminLayout>
       <PageHead title="Модерация"
-        text="Мат не даёт сохранить словарь. Остальное проверяет нейросеть уже после публикации: сомнительное попадает сюда, явные угрозы и травлю в обсуждениях она скрывает сама — проверьте и верните, если ошиблась." />
+        text="Мат не даёт сохранить словарь. Остальное после публикации проверяют классификатор токсичности и нейросеть. Сообщение скрывается само, только если серьёзное нарушение видят двое из трёх; всё остальное и сообщения не по теме попадают сюда. Проверьте и верните, если ошиблись." />
 
       <div className="flex w-full flex-wrap items-center gap-3">
         <PillTabs tabs={TABS} value={tab} onChange={(k) => { setTab(k); setPage(0); }} />

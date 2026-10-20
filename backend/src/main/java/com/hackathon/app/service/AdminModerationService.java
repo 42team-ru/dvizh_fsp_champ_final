@@ -54,7 +54,6 @@ public class AdminModerationService {
 	private final ModerationCheckRepository checks;
 	private final ModerationCheckMapper mapper;
 	private final ModerationService moderation;
-	private final LlmModerationClient llm;
 	private final AdminCommentService adminComments;
 	private final CommentRepository comments;
 	private final CommentMapper commentMapper;
@@ -126,12 +125,12 @@ public class AdminModerationService {
 	}
 
 	/**
-	 * Проверить нейросетью ещё раз, синхронно. Нейросеть выключена — 409. Без общей транзакции:
+	 * Проверить моделями ещё раз, синхронно. Обе модели выключены — 409. Без общей транзакции:
 	 * пока модель думает, строка проверки не заблокирована.
 	 */
 	public ModerationItemResponse recheck(UUID id) {
-		if (!llm.enabled()) {
-			throw new ConflictException("Нейросеть выключена: включите MODERATION_LLM_ENABLED");
+		if (!moderation.anyModel()) {
+			throw new ConflictException("Модели выключены: включите MODERATION_LLM_ENABLED или MODERATION_CLASSIFIER_ENABLED");
 		}
 		moderation.recheck(id);
 		// категории загружаются сразу (EAGER), остальное — отдельными запросами

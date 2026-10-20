@@ -1,0 +1,3 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50">
+  <!-- Кнопка карты «Приблизить»: белый круг с жёсткой тенью ink (Memphis). -->
+  <circle cx="25" cy="25" r="22" fill="#13142b"/><circle cx="22" cy="22" r="21" fill="#ffffff" stroke="#13142b" stroke-width="2"/><path d="M22 14 V30 M14 22 H30" stroke="#13142b" stroke-width="3" stroke-linecap="round"/></svg>

@@ -42,20 +42,20 @@ public interface ModerationCheckMapper {
 		check.setDecision(null);
 	}
 
-	/** Оценка нейросети: категории объединяются со словарными. */
+	/** Итог голосования моделей: категории объединяются со словарными; source — кто оценивал последним. */
 	default void assess(@MappingTarget ModerationCheck check, ModerationStatus status, Set<ModerationCategory> categories,
-			int severity, String explanation, Instant checkedAt) {
+			int severity, String explanation, ModerationSource source, Instant checkedAt) {
 		check.setStatus(status);
 		check.getCategories().addAll(categories);
 		check.setSeverity(Math.max(check.getSeverity(), severity));
 		if (explanation != null) {
 			check.setExplanation(explanation);
 		}
-		check.setSource(ModerationSource.LLM);
+		check.setSource(source);
 		check.setCheckedAt(checkedAt);
 	}
 
-	/** Нейросеть не ответила: попробуем ещё раз позже. */
+	/** Модель не ответила: попробуем ещё раз позже. */
 	default void failedAttempt(@MappingTarget ModerationCheck check) {
 		check.setAttempts(check.getAttempts() + 1);
 	}
@@ -72,11 +72,12 @@ public interface ModerationCheckMapper {
 	 * Сброс к проверке нейросетью (админ попросил «Проверить ещё раз»): прежняя оценка модели, решение
 	 * и попытки стираются, остаются только признаки словаря.
 	 */
-	default void recheck(@MappingTarget ModerationCheck check, Set<ModerationCategory> heuristic, String explanation) {
+	default void recheck(@MappingTarget ModerationCheck check, Set<ModerationCategory> heuristic, int severity,
+			String explanation) {
 		check.setStatus(ModerationStatus.PENDING);
 		check.getCategories().clear();
 		check.getCategories().addAll(heuristic);
-		check.setSeverity(heuristic.isEmpty() ? 0 : 1);
+		check.setSeverity(heuristic.isEmpty() ? 0 : severity);
 		check.setExplanation(explanation);
 		check.setSource(heuristic.isEmpty() ? null : ModerationSource.HEURISTIC);
 		check.setCheckedAt(null);

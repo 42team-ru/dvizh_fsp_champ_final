@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="40" height="50" viewBox="0 0 40 50">
-  <!-- Метка дома на карте ленты: капля ultramarine с жёсткой тенью ink, белый домик в центре круга (18,18); кончик — (18,46). -->
-  <path d="M18 46C14 40 2 30 2 18a16 16 0 0 1 32 0c0 12-12 22-16 28Z" transform="translate(2.5 2.5)" fill="#13142b"/>
-  <path d="M18 46C14 40 2 30 2 18a16 16 0 0 1 32 0c0 12-12 22-16 28Z" fill="#4b3fe0" stroke="#13142b" stroke-width="2.5" stroke-linejoin="round"/>
-  <path d="M12 3 2 11.5h3V21h5.5v-6h3v6H19v-9.5h3z" transform="translate(9 9) scale(.75)" fill="#ffffff"/>
-</svg>
