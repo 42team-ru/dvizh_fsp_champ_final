@@ -2,7 +2,6 @@ import { useEffect, useId, useImperativeHandle, useMemo, useRef, useState, type 
 import { createPortal } from "react-dom";
 import { Link } from "react-router";
 import beaverSvg from "./beaver.svg?raw";
-import { BACKGROUND_VIEWBOX, BEAVER_VIEWBOX } from "./beaver-backgrounds";
 import { createBeaverRig, type BeaverRig, type ReactOptions } from "./beaver-rig";
 import { usePetsCatalog } from "@/shared/api/generated/core/pets/pets";
 import { buildSlots, SLOTS, type BeaverActivity, type BeaverArts, type BeaverOutfit } from "./beaver-wardrobe";
@@ -92,7 +91,6 @@ export function BeaverPet({ mood = "idle", outfit = {}, activity = "none", follo
     const root = ref.current;
     if (!root) return;
     const content = buildSlots(JSON.parse(outfitKey) as BeaverOutfit, activity, arts);
-    root.querySelector("svg")?.setAttribute("viewBox", content["slot-background"] ? BACKGROUND_VIEWBOX : BEAVER_VIEWBOX);
     const referenceIds = new Set([...baseReferenceIds, ...svgResourceIds(Object.values(content).join(""))]);
     for (const id of SLOTS) {
       const slot = root.querySelector(`#${id}`);

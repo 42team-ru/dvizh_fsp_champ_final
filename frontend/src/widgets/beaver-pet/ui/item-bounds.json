@@ -65,13 +65,5 @@
   "prop:yogamat": "8 409 462 140",
   "paws:boxinggloves": "94 373 186 85",
   "paws:wristbands": "124 369 126 52",
-  "feet:sneakers": "53 478 268 58",
-  "background:meadow": "-14 -79 498 498",
-  "background:stadium": "-14 -79 498 498",
-  "background:rink": "-14 -79 498 498",
-  "background:river": "-14 -79 498 498",
-  "background:snowpark": "-14 -79 498 498",
-  "background:gym": "-14 -79 498 498",
-  "background:sunset": "-14 -79 498 498",
-  "background:nightcity": "-14 -79 498 498"
+  "feet:sneakers": "53 478 268 58"
 }

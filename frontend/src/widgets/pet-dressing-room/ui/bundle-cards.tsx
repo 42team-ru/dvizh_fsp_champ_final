@@ -26,7 +26,6 @@ const BUNDLE_PARTS: Record<string, string> = {
   hat: "головной убор",
   bottom: "шорты",
   activity: "инвентарь",
-  background: "фон",
   neck: "шарф",
 };
 

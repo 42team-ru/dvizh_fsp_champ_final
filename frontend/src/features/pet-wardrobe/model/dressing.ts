@@ -61,7 +61,6 @@ export const slotGroups = [
   { id: "torso", label: "Торс", slots: ["shirt"] },
   { id: "paw", label: "Лапа", slots: ["activity", "paws", "prop"] },
   { id: "legs", label: "Ноги", slots: ["bottom", "feet"] },
-  { id: "background", label: "Фон", slots: ["background"] },
 ];
 export const groupOf = (slot: string) =>
   slotGroups.find((group) => group.slots.includes(slot));

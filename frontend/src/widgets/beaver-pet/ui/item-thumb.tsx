@@ -17,7 +17,6 @@ export const slotTone = (slot: string) =>
     paws: "bg-peach",
     bottom: "bg-peach",
     feet: "bg-mint-soft",
-    background: "bg-sky-soft",
   })[slot] ?? "bg-lavender-soft";
 const measured = new Map<string, string>();
 

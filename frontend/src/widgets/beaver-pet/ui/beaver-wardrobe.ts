@@ -2,7 +2,6 @@ import programmingEmblem from "./emblems/programming.svg?raw";
 import type { PetArtResponse, PetArtResponseBodyPart } from "@/shared/api/generated/core/appAPI.schemas";
 import { CLUBS, type ClubId } from "./beaver-clubs";
 import { HOCKEY_CLUBS, type HockeyClubId } from "./beaver-hockey-clubs";
-import { BACKGROUNDS, type BackgroundId } from "./beaver-backgrounds";
 
 /*
  * Гардероб бобра. Каждая вещь — кусок SVG в координатах рисунка, который вставляется
@@ -31,19 +30,16 @@ export type BeaverOutfit = {
   prop?: PropId;
   paws?: PawsId;
   feet?: FeetId;
-  background?: BackgroundId;
 };
 
 /** Содержимое слотов: id слота → SVG-разметка. */
 export type SlotContent = Partial<Record<Slot, string>>;
 export type Slot =
-  | "slot-background"
   | "slot-shirt" | "slot-neck" | "slot-prop-back" | "slot-prop-front"
   | "slot-sleeve-left" | "slot-sleeve-right" | "slot-hold-left" | "slot-hold-right"
   | "slot-hold-front-right" | "slot-eyes" | "slot-hat" | "slot-bottom" | "slot-scene" | "slot-feet" | "slot-arm-cover-left" | "slot-arm-cover-right";
 
 export const SLOTS: Slot[] = [
-  "slot-background",
   "slot-shirt", "slot-neck", "slot-prop-back", "slot-prop-front",
   "slot-sleeve-left", "slot-sleeve-right", "slot-hold-left", "slot-hold-right",
   "slot-hold-front-right", "slot-eyes", "slot-hat", "slot-bottom", "slot-scene", "slot-feet", "slot-arm-cover-left", "slot-arm-cover-right",
@@ -673,7 +669,6 @@ export function buildSlots(outfit: BeaverOutfit, activity: BeaverActivity, arts:
     if (found) add(artSlotContent(found));
     return Boolean(found);
   };
-  if (outfit.background && !art("background", outfit.background)) add({ "slot-background": BACKGROUNDS[outfit.background]?.() ?? "" });
   if (outfit.shirt && !art("shirt", outfit.shirt)) add(SHIRTS[outfit.shirt]?.() ?? {});
   if (outfit.bottom === "hockeypants") add(hockeyPants());
   else if (outfit.bottom === "swimshorts") add({ "slot-bottom": swimshorts() });
@@ -688,7 +683,7 @@ export function buildSlots(outfit: BeaverOutfit, activity: BeaverActivity, arts:
   if (outfit.feet && !art("feet", outfit.feet) && outfit.feet === "sneakers") Object.assign(out, sneakers());
   // Admin-added slots use their supplied body-part placement as well.
   for (const [slot, code] of Object.entries(outfit)) {
-    if (!["background", "shirt", "bottom", "neck", "eyewear", "hat", "prop", "paws", "feet"].includes(slot)) art(slot, code);
+    if (!["shirt", "bottom", "neck", "eyewear", "hat", "prop", "paws", "feet"].includes(slot)) art(slot, code);
   }
   return out;
 }

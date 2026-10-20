@@ -160,11 +160,6 @@ function DressingContent({
   const selected = lookItems(items, look);
   const tried = selected.filter((item) => !item.owned);
   const { full, price } = setPrice(tried);
-  const background =
-    items.find(
-      (item) =>
-        item.slot === "background" && item.code === look.outfit.background,
-    )?.label ?? "Без фона";
   const owned = items.filter(
     (item) => item.owned && item.id !== "activity:none",
   );
@@ -315,9 +310,6 @@ function DressingContent({
           </LookPreview>
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h2 className="font-display text-xl font-extrabold">{pet.name}</h2>
-            <span className="text-xs font-medium text-muted-foreground">
-              фон: {background}
-            </span>
           </div>
           {selected.length > 0 && (
             <div className="flex flex-wrap gap-[6px]">
@@ -466,7 +458,7 @@ function DressingContent({
                 <LookPreview
                   look={{
                     activity: "none",
-                    outfit: { hat: "beanie", background: "meadow" },
+                    outfit: { hat: "beanie" },
                   }}
                   className="size-24 shrink-0 rounded-full border-2 border-ink"
                 />

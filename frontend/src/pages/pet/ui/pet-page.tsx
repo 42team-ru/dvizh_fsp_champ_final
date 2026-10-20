@@ -42,7 +42,6 @@ const LOOKS: Look[] = [
 type Option = { value: string; label: string };
 // Независимые категории гардероба.
 const WARDROBE = {
-  background: { label: "Фон", options: [] },
   prop: { label: "Предмет", options: [] },
   paws: { label: "На лапах", options: [] },
   feet: { label: "Обувь", options: [] },

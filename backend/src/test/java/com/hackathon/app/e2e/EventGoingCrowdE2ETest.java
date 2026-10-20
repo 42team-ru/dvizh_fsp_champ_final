@@ -56,7 +56,7 @@ class EventGoingCrowdE2ETest {
         wallet.apply(dressed.id(), 200, LedgerKind.ADJUSTMENT, "test:" + dressed.id(),
                 "Начальный баланс", null, null, Instant.now());
         dressed.buyPetItem("activity:juggle");
-        var outfit = Map.of("shirt", "training", "hat", "headband", "background", "meadow");
+        var outfit = Map.of("shirt", "training", "hat", "headband");
         dressed.savePet(new PetRequest("juggle", outfit));
         dressed.renamePet("Капитан");
         dressed.joinEvent(eventId);

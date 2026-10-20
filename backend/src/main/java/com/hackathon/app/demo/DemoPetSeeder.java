@@ -92,7 +92,6 @@ class DemoPetSeeder {
 		outfit.put("neck", "medal");
 		outfit.put("shirt", "beavers");
 		outfit.put("eyewear", "sunglasses");
-		outfit.put("background", "stadium");
 		dress(userId, "juggle", outfit);
 		pets.rename(userId, "Модник");
 	}

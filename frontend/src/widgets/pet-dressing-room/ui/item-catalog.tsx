@@ -154,7 +154,7 @@ export function ItemCatalog({
       {shown.length === 0 ? (
         <div className="flex flex-col items-center gap-4 rounded-2xl border-2 border-dashed border-ink bg-paper px-5 py-9 text-center">
           <LookPreview
-            look={{ activity: "none", outfit: { background: "meadow" } }}
+            look={{ activity: "none", outfit: {} }}
             className="size-[120px] rounded-full border-2 border-ink"
           />
           <h3 className="text-lg font-extrabold">

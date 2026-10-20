@@ -13,13 +13,12 @@ type Props = {
   className?: string;
 };
 
-/** Статичный рисунок: без рига, подписок, таймеров и слежения за курсором. Фон всегда общий у компании. */
+/** Статичный рисунок: без рига, подписок, таймеров и слежения за курсором. */
 export const StaticBeaver = memo(function StaticBeaver({ outfit = EMPTY_OUTFIT, activity = "none", arts = EMPTY_ARTS, className }: Props) {
   const id = useId();
   const outfitKey = JSON.stringify(outfit);
   const svg = useMemo(() => {
-    const { background: _background, ...clothes } = JSON.parse(outfitKey) as BeaverOutfit;
-    const slots = buildSlots(clothes, activity, arts);
+    const slots = buildSlots(JSON.parse(outfitKey) as BeaverOutfit, activity, arts);
     const markup = beaverSvg.replace(/<g id="(slot-[\w-]+)"><\/g>/g,
       (_, slot: keyof typeof slots) => `<g id="${slot}">${slots[slot] ?? ""}</g>`);
     // Статичному рисунку не нужны исходные id рига: изолируем также все структурные элементы и вещи.

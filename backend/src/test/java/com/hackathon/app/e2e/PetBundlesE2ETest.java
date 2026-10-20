@@ -143,20 +143,20 @@ class PetBundlesE2ETest {
     }
 
     /**
-     * ФЛОУ: выбрать спортивную категорию, купить комплект с фоном и сменить его на прозрачный образ.
+     * ФЛОУ: выбрать спортивную категорию, купить комплект и сменить его на другой образ.
      * ШАГИ: 1. Проверить категории, клубные формы и минимум два образа в каждой категории.
-     *   2. Попробовать надеть чужой фон целым образом и через один слот. 3. Начислить монеты,
-     *   купить комплект для пробежки, проверить владение, цену и сохранение фона.
-     *   4. Снять и вернуть фон, затем надеть комплект без фона и бесплатный базовый фон.
-     * ПРОВЕРЯЕМ: код и русское название категории; 409 без изменений при чужом фоне;
-     *   фон входит в число вещей и скидку, сохраняется в личном и публичном образе;
-     *   повторная покупка бесплатна, отсутствие слота снимает фон, базовый фон доступен сразу.
-     * ПОЧЕМУ ВАЖНО: категории помогают найти спорт, а фон подчиняется той же экономике
-     *   и правилам замены, что одежда: его нельзя получить бесплатно через PUT или комплект.
+     *   2. Попробовать надеть чужие кроссовки целым образом и через один слот. 3. Начислить монеты,
+     *   купить комплект для пробежки, проверить владение, цену и сохранение вещи.
+     *   4. Снять и вернуть вещь, затем надеть комплект без неё и бесплатную базовую повязку.
+     * ПРОВЕРЯЕМ: код и русское название категории; 409 без изменений при чужой вещи;
+     *   вещь входит в число вещей и скидку, сохраняется в личном и публичном образе;
+     *   повторная покупка бесплатна, отсутствие слота снимает вещь, базовая вещь доступна сразу.
+     * ПОЧЕМУ ВАЖНО: категории помогают найти спорт, а вещь комплекта подчиняется той же экономике
+     *   и правилам замены, что остальные: её нельзя получить бесплатно через PUT или комплект.
      */
     @Test
-    void groupsSportsAndBuysOwnsAndClearsBackground() {
-        var user = api.newUser("bundleBackground");
+    void groupsSportsAndBuysOwnsAndClearsItem() {
+        var user = api.newUser("bundleItem");
         var bundles = user.petBundles();
         assertThat(bundles).allSatisfy(bundle -> {
             assertThat(bundle.category().code()).isNotBlank();
@@ -169,33 +169,33 @@ class PetBundlesE2ETest {
         assertThat(bundles.stream().filter(b -> b.activity().equals("juggle")))
                 .hasSize(12).allMatch(b -> b.category().code().equals("football"));
         var initial = user.pet();
-        var reason = "Вещь «Набережная» ещё не твоя: купи её в магазине за 100 монет";
-        assertThatApi(() -> user.savePet(new PetRequest("none", Map.of("background", "river"))))
+        var reason = "Вещь «Кроссовки» ещё не твоя: купи её в магазине за 120 монет";
+        assertThatApi(() -> user.savePet(new PetRequest("none", Map.of("feet", "sneakers"))))
                 .fails(CONFLICT, reason);
-        assertThatApi(() -> user.equipPet("background", "river")).fails(CONFLICT, reason);
+        assertThatApi(() -> user.equipPet("feet", "sneakers")).fails(CONFLICT, reason);
         assertThat(user.pet().outfit()).isEqualTo(initial.outfit());
         wallet.apply(user.id(), 1000, LedgerKind.ADJUSTMENT, "test:" + user.id(), "Начальный баланс",
                 null, null, Instant.now());
         var running = bundles.stream().filter(b -> b.code().equals("river-run")).findFirst().orElseThrow();
         assertThat(running.category().label()).isEqualTo("Бег");
-        assertThat(running.items()).hasSize(4).anyMatch(i -> i.id().equals("background:river"));
-        assertThat(running.missingCount()).isEqualTo(4);
-        assertThat(running.fullPrice()).isEqualTo(420);
-        assertThat(running.price()).isEqualTo(336);
+        assertThat(running.items()).hasSize(3).anyMatch(i -> i.id().equals("feet:sneakers"));
+        assertThat(running.missingCount()).isEqualTo(3);
+        assertThat(running.fullPrice()).isEqualTo(320);
+        assertThat(running.price()).isEqualTo(256);
         assertThat(user.buyPetBundle("river-run").outfit()).isEqualTo(running.outfit());
         assertThat(user.petShop()).anySatisfy(item -> {
-            assertThat(item.id()).isEqualTo("background:river");
+            assertThat(item.id()).isEqualTo("feet:sneakers");
             assertThat(item.owned()).isTrue();
         });
-        assertThat(user.pet().outfit()).containsEntry("background", "river");
-        assertThat(user.petOf(user.id()).outfit()).containsEntry("background", "river");
-        assertThat(user.wallet().coins()).isEqualTo(664);
+        assertThat(user.pet().outfit()).containsEntry("feet", "sneakers");
+        assertThat(user.petOf(user.id()).outfit()).containsEntry("feet", "sneakers");
+        assertThat(user.wallet().coins()).isEqualTo(744);
         var paid = user.wallet();
         user.buyPetBundle("river-run");
         assertThat(user.wallet()).isEqualTo(paid);
-        assertThat(user.equipPet("background", null).outfit()).doesNotContainKey("background");
-        assertThat(user.equipPet("background", "river").outfit()).isEqualTo(running.outfit());
-        assertThat(user.buyPetBundle("basketball").outfit()).doesNotContainKey("background");
-        assertThat(user.equipPet("background", "meadow").outfit()).containsEntry("background", "meadow");
+        assertThat(user.equipPet("feet", null).outfit()).doesNotContainKey("feet");
+        assertThat(user.equipPet("feet", "sneakers").outfit()).isEqualTo(running.outfit());
+        assertThat(user.buyPetBundle("winter-walk").outfit()).doesNotContainKey("feet");
+        assertThat(user.equipPet("hat", "headband").outfit()).containsEntry("hat", "headband");
     }
 }
