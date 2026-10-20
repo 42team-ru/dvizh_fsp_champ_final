@@ -719,27 +719,29 @@ export function FinalSlide({ onNavigate }: { onNavigate: (n: number) => void }) 
         <At x={520} y={492} w={240} h={250} anim="up" d={300} className="relative w-[200px]">
           <LandingBeaver act="wave" outfit={{ hat: "cap" }} />
         </At>
+        {/* Размеры карточки в px, а не rem: сцена масштабируется целиком, и крупный шрифт браузера
+            не должен растягивать карточку на кнопки и подвал. */}
         <At x={840} y={492} w={350} className="w-full">
-          <Card className="flex flex-col gap-3 p-5">
-            <div className="flex items-center gap-3">
-              <div className="flex -space-x-2">
-                <Initials tone="bg-sky" className="size-10 text-xs">ОК</Initials>
-                <Initials tone="bg-sun" className="size-10 text-xs">МР</Initials>
-                <Initials tone="bg-mint" className="size-10 text-xs">ДВ</Initials>
+          <Card className="flex flex-col gap-[12px] p-[20px]">
+            <div className="flex items-center gap-[12px]">
+              <div className="flex -space-x-[8px]">
+                <Initials tone="bg-sky" className="size-[40px] text-[12px]">ОК</Initials>
+                <Initials tone="bg-sun" className="size-[40px] text-[12px]">МР</Initials>
+                <Initials tone="bg-mint" className="size-[40px] text-[12px]">ДВ</Initials>
               </div>
               <Kicker className="text-ultramarine">ТВОЯ КОМПАНИЯ РЯДОМ</Kicker>
             </div>
-            <p className="font-display text-xl leading-7 font-extrabold">Всё начинается<br />с «пойдём»</p>
-            <p className="text-sm leading-5 text-ink-muted">Выбери занятие по душе — и познакомься со своими людьми.</p>
-            <div className="flex flex-wrap gap-2">
-              <Chip className="bg-sky-soft px-3 py-1 text-xs">Бег</Chip>
-              <Chip className="bg-lime-soft px-3 py-1 text-xs">Футбол</Chip>
-              <Chip className="bg-peach px-3 py-1 text-xs">Йога</Chip>
+            <p className="font-display text-[20px] leading-[28px] font-extrabold">Всё начинается<br />с «пойдём»</p>
+            <p className="text-[14px] leading-[20px] text-ink-muted">Выбери занятие по душе — и познакомься со своими людьми.</p>
+            <div className="flex flex-wrap gap-[8px]">
+              <Chip className="bg-sky-soft px-[12px] py-[4px] text-[12px]">Бег</Chip>
+              <Chip className="bg-lime-soft px-[12px] py-[4px] text-[12px]">Футбол</Chip>
+              <Chip className="bg-peach px-[12px] py-[4px] text-[12px]">Йога</Chip>
             </div>
           </Card>
         </At>
-        <At x={800} y={748} w={400}>
-          <nav aria-label="Подвал" className="flex gap-6 text-xs font-extrabold whitespace-nowrap text-ink">
+        <At x={860} y={762} w={400}>
+          <nav aria-label="Подвал" className="flex gap-[24px] text-[12px] font-extrabold whitespace-nowrap text-ink">
             <button type="button" onClick={() => onNavigate(1)} className="pointer-events-auto hover:underline">
               О проекте
             </button>

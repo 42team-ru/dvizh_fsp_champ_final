@@ -126,6 +126,9 @@ export default function OrgPublicPage() {
                 <UpcomingMeetings id={id} overview={o} />
                 <OrganizationBlog organizationId={id} />
                 <PastMeetings key={id} id={id} overview={o} />
+              </div>
+              {/* Фото — отдельной строкой на всю ширину под обеими колонками; на телефоне — перед боковой панелью. */}
+              <div className="min-w-0 lg:col-span-2 lg:row-start-3">
                 <OrganizationPhotos id={id} overview={o} />
               </div>
               <div className="min-w-0 lg:col-start-2 lg:row-start-2">

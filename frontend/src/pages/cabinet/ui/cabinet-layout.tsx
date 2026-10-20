@@ -59,7 +59,7 @@ function Rail() {
   const org = useOrganizationsMe({ query: { enabled: isOrg, retry: false } });
   const mine = org.data?.status === 200 ? org.data.data : undefined;
   return (
-    <aside className="flex w-full shrink-0 flex-col gap-1.5 rounded-[24px] border-2 border-ink bg-card px-3.5 py-4 lg:sticky lg:top-6 lg:w-[232px]">
+    <aside className="flex w-full shrink-0 flex-col gap-1.5 rounded-[24px] border-2 border-ink bg-card px-3.5 py-4 lg:sticky lg:top-6 lg:w-[14.5rem]">
       <Owner />
       <div className="h-2" />
       <div className="flex flex-wrap gap-1.5 lg:flex-col">

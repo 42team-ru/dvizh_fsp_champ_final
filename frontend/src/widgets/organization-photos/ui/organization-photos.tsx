@@ -106,7 +106,7 @@ export function OrganizationPhotos({
           )}
         </div>
       ) : (
-        <div className="flex items-center gap-3 rounded-[20px] border-2 border-dashed border-muted-foreground p-5 text-sm font-semibold text-muted-foreground">
+        <div className="flex items-center gap-3 rounded-[20px] border-2 border-dashed border-muted-foreground bg-card p-5 text-sm font-semibold text-muted-foreground">
           <Camera className="size-6" />
           Фото появятся после встреч клуба.
         </div>
