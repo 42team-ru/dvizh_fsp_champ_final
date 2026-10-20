@@ -19,10 +19,13 @@ export function Markdown({ text, className, compact }: { text: string; className
 function renderBlock(block: Block, compact?: boolean): ReactNode {
   switch (block.kind) {
     case "heading": {
-      const size = block.level <= 2
-        ? compact ? "text-lg leading-6" : "text-[22px] leading-[30px]"
-        : "text-lg leading-6";
-      const Tag = block.level <= 2 ? "h2" : "h3";
+      // # — крупный, ## — средний, ### — малый; в разметке страницы на ступень ниже: h1 — заголовок поста
+      const size = block.level === 1
+        ? compact ? "text-xl leading-7" : "text-[28px] leading-[36px]"
+        : block.level === 2
+          ? compact ? "text-lg leading-6" : "text-[22px] leading-[30px]"
+          : compact ? "text-base leading-6" : "text-lg leading-6";
+      const Tag = block.level === 1 ? "h2" : block.level === 2 ? "h3" : "h4";
       return <Tag className={cn("mt-2 font-display font-bold text-foreground", size)}>{inline(block.text)}</Tag>;
     }
     case "quote":

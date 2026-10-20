@@ -1,3 +1,4 @@
+import { ENTER_HINT, enterToSend } from "@/shared/lib/enter-to-send";
 import { EventBlog } from "@/widgets/event-blog/ui/event-blog";
 import { profilePath } from "@/entity/user/lib/profile-path";
 import { coverOf } from "@/entity/event/lib/cover";
@@ -371,7 +372,7 @@ function RouteMap({ m }: { m: EventModel }) {
 function Chat({ m }: { m: EventModel }) {
   const [text, setText] = useState("");
   const [replyTo, setReplyTo] = useState<{ id: string; who: string } | null>(null);
-  const input = useRef<HTMLInputElement>(null);
+  const input = useRef<HTMLTextAreaElement>(null);
   const canComment = m.event!.viewer.canComment;
   // «Ответить»: сразу в поле ввода — фокус и прокрутка к нему, без второго клика
   const reply = (id: string, who: string) => {
@@ -424,7 +425,7 @@ function Chat({ m }: { m: EventModel }) {
                   {fullName(c.replyTo.author)}: {c.replyTo.deleted ? "сообщение удалено" : c.replyTo.text}
                 </p>
               )}
-              <p className="mt-0.5 text-[15px] leading-[22px] font-medium text-foreground">
+              <p className="mt-0.5 text-[15px] leading-[22px] font-medium whitespace-pre-line text-foreground">
                 {c.deleted ? <span className="text-muted-foreground italic">Сообщение удалено</span> : c.text}
               </p>
               {canComment && !c.deleted && (
@@ -443,9 +444,11 @@ function Chat({ m }: { m: EventModel }) {
               Ответ для {replyTo.who} <button type="button" className="underline" onClick={() => setReplyTo(null)}>отменить</button>
             </p>
           )}
-          <div className="box-border flex h-12 items-center gap-[10px] rounded-pill border-2 border-ink bg-background pr-1.5 pl-5">
-            <input ref={input} value={text} maxLength={2000} onChange={(event) => setText(event.target.value)} aria-label="Сообщение"
-              placeholder="Задайте вопрос или напишите участникам" className="min-w-0 flex-1 bg-transparent text-[15px] outline-none" />
+          <div className="box-border flex min-h-12 items-end gap-[10px] rounded-[24px] border-2 border-ink bg-background py-1.5 pr-1.5 pl-5">
+            <textarea ref={input} value={text} maxLength={2000} rows={1} onChange={(event) => setText(event.target.value)} aria-label="Сообщение"
+              onKeyDown={(event) => enterToSend(event, setText, () => event.currentTarget.form?.requestSubmit())} title={ENTER_HINT}
+              placeholder="Задайте вопрос или напишите участникам"
+              className="field-sizing-content max-h-32 min-h-8 min-w-0 flex-1 resize-none bg-transparent py-1 text-[15px] leading-[22px] outline-none" />
             <Button type="submit" size="sm" disabled={!text.trim() || m.commentPending}>Отправить</Button>
           </div>
           {m.commentError && <p role="alert" className="text-sm font-bold text-destructive">{m.commentError}</p>}

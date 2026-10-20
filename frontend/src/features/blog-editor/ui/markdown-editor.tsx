@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { EditorContent, useEditor, useEditorState, type Editor } from "@tiptap/react";
 import {
-  Bold, Check, Code, EyeOff, Heading2, Italic, Link2, List, ListOrdered, Quote, Strikethrough, X,
+  Bold, Check, Code, EyeOff, Heading1, Heading2, Heading3, Italic, Link2, List, ListOrdered, Quote, Strikethrough, X,
 } from "lucide-react";
 import { cn } from "cn";
 import { blogExtensions } from "../lib/extensions";
@@ -26,7 +26,9 @@ const INLINE: Tool[] = [
 ];
 
 const BLOCKS: Tool[] = [
-  { key: "heading", label: "Заголовок", icon: <Heading2 />, active: (e) => e.isActive("heading"), run: (e) => e.chain().focus().toggleHeading({ level: 2 }).run() },
+  { key: "h1", label: "Крупный заголовок", hint: "# в начале строки", icon: <Heading1 />, active: (e) => e.isActive("heading", { level: 1 }), run: (e) => e.chain().focus().toggleHeading({ level: 1 }).run() },
+  { key: "h2", label: "Заголовок", hint: "## в начале строки", icon: <Heading2 />, active: (e) => e.isActive("heading", { level: 2 }), run: (e) => e.chain().focus().toggleHeading({ level: 2 }).run() },
+  { key: "h3", label: "Подзаголовок", hint: "### в начале строки", icon: <Heading3 />, active: (e) => e.isActive("heading", { level: 3 }), run: (e) => e.chain().focus().toggleHeading({ level: 3 }).run() },
   { key: "quote", label: "Цитата", icon: <Quote />, active: (e) => e.isActive("blockquote"), run: (e) => e.chain().focus().toggleBlockquote().run() },
   { key: "list", label: "Список", icon: <List />, active: (e) => e.isActive("bulletList"), run: (e) => e.chain().focus().toggleBulletList().run() },
   { key: "numbered", label: "Нумерованный список", icon: <ListOrdered />, active: (e) => e.isActive("orderedList"), run: (e) => e.chain().focus().toggleOrderedList().run() },
@@ -80,8 +82,10 @@ export function MarkdownEditor({ value, onChange, placeholder = "", maxLength, i
         const start = e.view.coordsAtPos(from);
         const end = e.view.coordsAtPos(to);
         const rect = box.current.getBoundingClientRect();
+        const above = Math.min(start.top, end.top) - rect.top - 50;
         bubble = {
-          top: Math.min(start.top, end.top) - rect.top - 50,
+          // над выделением, а если там верхняя панель — под ним
+          top: above >= 56 ? above : Math.max(start.bottom, end.bottom) - rect.top + 8,
           left: Math.max(0, Math.min((start.left + end.left) / 2 - rect.left - 130, rect.width - 280)),
         };
       }

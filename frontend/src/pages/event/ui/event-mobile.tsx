@@ -1,3 +1,4 @@
+import { ENTER_HINT, enterToSend } from "@/shared/lib/enter-to-send";
 import { EventBlog } from "@/widgets/event-blog/ui/event-blog";
 import { profilePath } from "@/entity/user/lib/profile-path";
 import { coverOf } from "@/entity/event/lib/cover";
@@ -114,20 +115,21 @@ function MobileChat({ m }: { m: EventModel }) {
               {fullName(c.author)}{c.isOrganizer && " · Организатор"} · {new Date(c.createdAt).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}
             </span>
             {c.replyTo && <span className="border-l-2 border-ink pl-2 text-xs text-muted-foreground">{fullName(c.replyTo.author)}: {c.replyTo.text}</span>}
-            <span className="text-[13px] leading-[18px] font-medium text-foreground">
+            <span className="text-[13px] leading-[18px] font-medium whitespace-pre-line text-foreground">
               {c.deleted ? "Сообщение удалено" : c.text}
             </span>
           </div>
         </div>
       ))}
       {canComment ? (
-        <form className="flex items-center gap-2 rounded-[14px] border-2 border-ink px-[14px] py-2"
+        <form className="flex items-end gap-2 rounded-[14px] border-2 border-ink px-[14px] py-2"
           onSubmit={(event) => {
             event.preventDefault();
             if (text.trim()) void m.sendComment(text.trim()).then(() => setText("")).catch(() => undefined);
           }}>
-          <input value={text} onChange={(e) => setText(e.target.value)} aria-label="Сообщение" maxLength={2000}
-            placeholder="Задать вопрос" className="min-w-0 flex-1 bg-transparent text-sm outline-none" />
+          <textarea value={text} onChange={(e) => setText(e.target.value)} aria-label="Сообщение" maxLength={2000} rows={1}
+            onKeyDown={(e) => enterToSend(e, setText, () => e.currentTarget.form?.requestSubmit())}
+            placeholder="Задать вопрос" className="field-sizing-content max-h-28 min-h-8 min-w-0 flex-1 resize-none bg-transparent py-1.5 text-sm outline-none" />
           <Button type="submit" size="sm" disabled={!text.trim() || m.commentPending}>→</Button>
         </form>
       ) : (

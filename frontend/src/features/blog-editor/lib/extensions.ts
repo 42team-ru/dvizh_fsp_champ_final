@@ -46,7 +46,7 @@ const TelegramShortcuts = Extension.create({
 export function blogExtensions(placeholder: string) {
   return [
     StarterKit.configure({
-      heading: { levels: [2, 3] },
+      heading: { levels: [1, 2, 3] },
       horizontalRule: false,
       dropcursor: false,
     }),

@@ -31,7 +31,7 @@ export function markdownToDoc(markdown: string): JSONContent {
     switch (block.kind) {
       case "heading": {
         const inline = inlineToNodes(parseInline(block.text));
-        return { type: "heading", attrs: { level: block.level <= 2 ? 2 : 3 }, ...(inline.length ? { content: inline } : {}) };
+        return { type: "heading", attrs: { level: Math.min(Math.max(block.level, 1), 3) }, ...(inline.length ? { content: inline } : {}) };
       }
       case "quote": return { type: "blockquote", content: [paragraph(block.text)] };
       case "list":

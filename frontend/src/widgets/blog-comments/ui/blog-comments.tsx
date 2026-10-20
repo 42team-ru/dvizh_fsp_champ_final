@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent } from "react";
+import { useState, type ReactNode } from "react";
 import { Link } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { CornerDownRight, Send, X } from "lucide-react";
@@ -15,33 +15,17 @@ import { Button } from "@/shared/components/ui/button";
 import { Disc } from "@/shared/components/ui/disc";
 import { EmptyState } from "@/shared/components/ui/empty-state";
 import { toast } from "@/shared/lib/toast";
+import { ENTER_HINT, enterToSend } from "@/shared/lib/enter-to-send";
 import { MessageCircle } from "lucide-react";
 import { ago, authorHref, authorName } from "@/entity/blog/lib/post";
 import { useUser } from "@/entity/user/model/use-user";
 
 const MAX = 2000;
 
-/**
- * Как в мессенджере: Enter отправляет, Ctrl+Enter (или Shift+Enter) — перенос строки.
- * Во время набора через IME (японский, китайский) Enter подтверждает слово и ничего не отправляет.
- */
-function enterToSend(e: KeyboardEvent<HTMLTextAreaElement>, setValue: (v: string) => void, submit: () => void) {
-  if (e.key !== "Enter" || e.nativeEvent.isComposing) return;
-  e.preventDefault();
-  if (!(e.ctrlKey || e.metaKey || e.shiftKey)) {
-    submit();
-    return;
-  }
-  const el = e.currentTarget;
-  const { selectionStart: start, selectionEnd: end, value } = el;
-  setValue(value.slice(0, start) + "
-" + value.slice(end));
-  requestAnimationFrame(() => el.setSelectionRange(start + 1, start + 1));
-}
-
 function Composer({ onSend, busy, replyTo, onCancelReply, autoFocus }: {
   onSend(text: string): Promise<unknown>;
   busy: boolean;
+  /** Ответ на этот комментарий: форма стоит прямо под ним. */
   replyTo?: BlogCommentResponse | null;
   onCancelReply?(): void;
   autoFocus?: boolean;
@@ -62,7 +46,7 @@ function Composer({ onSend, busy, replyTo, onCancelReply, autoFocus }: {
       {replyTo && (
         <div className="flex items-center gap-2 rounded-[12px] bg-muted px-3 py-2 text-[13px] font-semibold text-muted-foreground">
           <CornerDownRight className="size-4 shrink-0" />
-          <span className="min-w-0 flex-1 truncate">Ответ {authorName(replyTo.author, replyTo.organization)}: «{replyTo.text}»</span>
+          <span className="min-w-0 flex-1 truncate">Ответ для {authorName(replyTo.author, replyTo.organization)}</span>
           <button type="button" onClick={onCancelReply} aria-label="Не отвечать" className="rounded-full p-1 hover:bg-card"><X className="size-4" /></button>
         </div>
       )}
@@ -74,9 +58,12 @@ function Composer({ onSend, busy, replyTo, onCancelReply, autoFocus }: {
           maxLength={MAX}
           rows={1}
           onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => enterToSend(e, setText, () => void send())}
-          placeholder="Напиши комментарий или задай вопрос автору…"
-          title="Enter — отправить, Ctrl+Enter — новая строка"
+          onKeyDown={(e) => {
+            if (e.key === "Escape" && replyTo) onCancelReply?.();
+            else enterToSend(e, setText, () => void send());
+          }}
+          placeholder={replyTo ? "Твой ответ…" : "Напиши комментарий или задай вопрос автору…"}
+          title={ENTER_HINT}
           aria-label="Комментарий"
           className="field-sizing-content max-h-40 min-h-9 flex-1 resize-none bg-transparent py-1.5 text-[15px] leading-[22px] font-medium outline-none placeholder:text-muted-foreground"
         />
@@ -88,17 +75,22 @@ function Composer({ onSend, busy, replyTo, onCancelReply, autoFocus }: {
   );
 }
 
-function CommentItem({ comment, onReply, onEdit, onDelete }: {
+function CommentItem({ comment, nested, onReply, onEdit, onDelete, replyBox }: {
   comment: BlogCommentResponse;
+  /** Ответ внутри ветки — со сдвигом вправо. */
+  nested: boolean;
   onReply(): void;
   onEdit(text: string): Promise<unknown>;
   onDelete(): void;
+  /** Форма ответа на этот комментарий — сразу под ним. */
+  replyBox?: ReactNode;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(comment.text ?? "");
   const name = authorName(comment.author, comment.organization);
   return (
-    <div className={cn("flex gap-3", comment.replyTo && "pl-6 sm:pl-12")}>
+    <div className={cn("flex flex-col gap-2", nested && "pl-6 sm:pl-12")}>
+    <div className="flex gap-3">
       <Link to={authorHref(comment.author, comment.organization)} className="shrink-0" aria-label={name}>
         <Disc initials="" user={comment.author} tone={comment.organization ? "bg-secondary" : "bg-sky"} className="size-9" textClassName="text-xs" />
       </Link>
@@ -142,7 +134,34 @@ function CommentItem({ comment, onReply, onEdit, onDelete }: {
         )}
       </div>
     </div>
+    {replyBox && <div className="pl-12">{replyBox}</div>}
+    </div>
   );
+}
+
+/**
+ * Ветки: комментарии в общем потоке по времени, под каждым — все ответы на него и на ответы к нему (по времени).
+ * Так ответ стоит рядом с тем, на что отвечает, а не теряется в конце ленты.
+ */
+function threads(comments: BlogCommentResponse[]) {
+  const byId = new Map(comments.map((c) => [c.id, c]));
+  const rootOf = (c: BlogCommentResponse): string => {
+    let cur = c;
+    const seen = new Set<string>();
+    while (cur.replyTo && byId.has(cur.replyTo.id) && !seen.has(cur.id)) {
+      seen.add(cur.id);
+      cur = byId.get(cur.replyTo.id)!;
+    }
+    return cur.id;
+  };
+  const replies = new Map<string, BlogCommentResponse[]>();
+  const roots: BlogCommentResponse[] = [];
+  for (const c of comments) {
+    const root = rootOf(c);
+    if (root === c.id) roots.push(c);
+    else replies.set(root, [...(replies.get(root) ?? []), c]);
+  }
+  return roots.flatMap((r) => [{ comment: r, nested: false }, ...(replies.get(r.id) ?? []).map((c) => ({ comment: c, nested: true }))]);
 }
 
 /** Комментарии под постом: по порядку, ответ с цитатой, правка и удаление своего. Метка «Автор» — у автора поста. */
@@ -168,8 +187,7 @@ export function BlogComments({ postId, canComment, blockedReason }: { postId: st
         <span className="box-border inline-flex h-[26px] min-w-[26px] items-center justify-center rounded-pill border-[1.5px] border-ink bg-secondary px-2 text-xs font-extrabold">{visible}</span>
       </div>
       {canComment ? (
-        <Composer busy={add.isPending} replyTo={replyTo} onCancelReply={() => setReplyTo(null)} autoFocus={Boolean(replyTo)}
-          onSend={(text) => add.mutateAsync({ id: postId, data: { text, replyToId: replyTo?.id } })} />
+        <Composer busy={add.isPending && !replyTo} onSend={(text) => add.mutateAsync({ id: postId, data: { text } })} />
       ) : (
         <p className="rounded-[16px] border-2 border-dashed border-ink/40 px-4 py-3 text-sm font-semibold text-muted-foreground">
           {blockedReason ?? "Комментарии закрыты"}
@@ -179,11 +197,15 @@ export function BlogComments({ postId, canComment, blockedReason }: { postId: st
         <EmptyState size="sm" icon={MessageCircle} tone="bg-sky" title="Пока без комментариев" text="Задай вопрос автору или просто скажи спасибо." />
       )}
       <div className="flex flex-col gap-3">
-        {comments.map((c) => (
-          <CommentItem key={c.id} comment={c}
-            onReply={() => setReplyTo(c)}
+        {threads(comments).map(({ comment: c, nested }) => (
+          <CommentItem key={c.id} comment={c} nested={nested}
+            onReply={() => setReplyTo(replyTo?.id === c.id ? null : c)}
             onEdit={(text) => update.mutateAsync({ id: postId, commentId: c.id, data: { text } })}
-            onDelete={() => remove.mutate({ id: postId, commentId: c.id })} />
+            onDelete={() => remove.mutate({ id: postId, commentId: c.id })}
+            replyBox={canComment && replyTo?.id === c.id ? (
+              <Composer key={c.id} busy={add.isPending} replyTo={c} autoFocus onCancelReply={() => setReplyTo(null)}
+                onSend={(text) => add.mutateAsync({ id: postId, data: { text, replyToId: c.id } })} />
+            ) : undefined} />
         ))}
       </div>
     </section>

@@ -1,3 +1,4 @@
+import { ENTER_HINT, enterToSend } from "@/shared/lib/enter-to-send";
 import { MessagesSquare } from "lucide-react";
 import { EmptyState } from "@/shared/components/ui/empty-state";
 import { useState, type FormEvent } from "react";
@@ -96,14 +97,17 @@ export function DiscussionTab({ event }: { event: ManagedEvent }) {
               <button type="button" className="underline" onClick={() => setReplyTo(undefined)}>отменить</button>
             </p>
           )}
-          <div className="flex gap-2.5">
-            <input
+          <div className="flex items-end gap-2.5">
+            <textarea
               value={text}
               maxLength={2000}
+              rows={1}
               onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => enterToSend(e, setText, () => e.currentTarget.form?.requestSubmit())}
+              title={ENTER_HINT}
               aria-label="Сообщение"
               placeholder="Ответить участникам…"
-              className="h-12 min-w-0 flex-1 rounded-pill border-2 border-ink bg-card px-4 text-[15px] font-medium text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-primary"
+              className="field-sizing-content max-h-32 min-h-12 min-w-0 flex-1 resize-none rounded-[24px] border-2 border-ink bg-card px-4 py-[11px] text-[15px] leading-[22px] font-medium text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-primary"
             />
             <Button type="submit" disabled={!text.trim() || create.isPending}>Отправить</Button>
           </div>

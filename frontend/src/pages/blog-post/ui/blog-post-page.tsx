@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, ArrowRight, MessageCircle, PenLine, Share2, Trash2 } from "lucide-react";
+import { ArrowRight, MessageCircle, PenLine, Trash2 } from "lucide-react";
 import { useBlogDelete, useBlogGet, useBlogList } from "@/shared/api/generated/core/blog/blog";
 import type { BlogPostResponse } from "@/shared/api/generated/core/appAPI.schemas";
 import { Button } from "@/shared/components/ui/button";
@@ -12,21 +12,16 @@ import { EmptyState } from "@/shared/components/ui/empty-state";
 import { Eyebrow } from "@/shared/components/ui/eyebrow";
 import { Markdown } from "@/shared/components/ui/markdown";
 import { toast } from "@/shared/lib/toast";
+import { Icon } from "@/shared/components/ui/icon";
+import { BlogShare } from "./blog-share";
+
+const TOP = "h-10 shrink-0 px-[18px] text-sm leading-[19px]";
 import { authorHref, authorName, eventDate, shortDate } from "@/entity/blog/lib/post";
 import { LikeButton } from "@/features/blog-like/ui/like-button";
 import { BlogShell } from "@/widgets/blog-shell/ui/blog-shell";
 import { BlogPostRow, PostTypeChips, WasThereBadge } from "@/widgets/blog-post-card/ui/blog-post-card";
 import { BlogTrainings } from "@/widgets/blog-trainings/ui/blog-trainings";
 import { BlogComments } from "@/widgets/blog-comments/ui/blog-comments";
-
-function share(title: string) {
-  const url = window.location.href;
-  if (navigator.share) {
-    void navigator.share({ title, url }).catch(() => undefined);
-    return;
-  }
-  void navigator.clipboard?.writeText(url).then(() => toast.success("Ссылка скопирована"));
-}
 
 /** Фото после текста: первое — обложка вверху, остальные — сеткой; нажатие открывает фото целиком. */
 function Gallery({ photos }: { photos: BlogPostResponse["photos"] }) {
@@ -88,6 +83,7 @@ export default function BlogPostPage() {
   const query = useBlogGet(id);
   const data = query.data?.status === 200 ? query.data.data : undefined;
   const [confirm, setConfirm] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const remove = useBlogDelete({ mutation: {
     onSuccess: () => {
       toast.success("Пост удалён");
@@ -111,16 +107,27 @@ export default function BlogPostPage() {
 
   return (
     <BlogShell>
+      {/* как верхняя панель встречи: «К блогу» слева, действия справа */}
       <div className="flex flex-wrap items-center gap-2">
-        <Button asChild variant="outline" size="sm"><Link to="/blog"><ArrowLeft className="size-4" /> Блог</Link></Button>
+        <Button asChild variant="soft" className={TOP}>
+          <Link to="/blog"><Icon name="event/icon-back" className="size-[18px]" />К блогу</Link>
+        </Button>
         <div className="ml-auto flex gap-2">
-          {data.viewer.canEdit && <Button asChild variant="outline" size="sm"><Link to={`/blog/${post.id}/edit`}><PenLine className="size-4" /> Изменить</Link></Button>}
-          {data.viewer.canDelete && (
-            <Button variant="outline" size="sm" onClick={() => setConfirm(true)} aria-label="Удалить пост"><Trash2 className="size-4" /><span className="hidden sm:inline">Удалить</span></Button>
+          {data.viewer.canEdit && (
+            <Button asChild variant="soft" className={TOP}><Link to={`/blog/${post.id}/edit`}><PenLine className="size-[18px]" /><span className="hidden sm:inline">Изменить</span></Link></Button>
           )}
-          <Button variant="outline" size="sm" onClick={() => share(post.title)}><Share2 className="size-4" /><span className="hidden sm:inline">Поделиться</span></Button>
+          {data.viewer.canDelete && (
+            <Button variant="soft" className={TOP} onClick={() => setConfirm(true)} aria-label="Удалить пост"><Trash2 className="size-[18px]" /><span className="hidden sm:inline">Удалить</span></Button>
+          )}
+          {post.status === "PUBLISHED" && (
+            <Button variant="soft" className={TOP} onClick={() => setShareOpen(true)}>
+              <Icon name="event/icon-share" className="size-[18px]" />
+              <span className="hidden sm:inline">Поделиться</span>
+            </Button>
+          )}
         </div>
       </div>
+      <BlogShare data={data} open={shareOpen} onOpenChange={setShareOpen} />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,808px)_minmax(0,1fr)] lg:gap-8">
         <Card className="gap-6 p-5 shadow-hard sm:p-10">
