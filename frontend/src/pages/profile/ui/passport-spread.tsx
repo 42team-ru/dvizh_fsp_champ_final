@@ -552,12 +552,12 @@ function StampsView({
 
           {nextStamp && (
             <div
-              className="absolute flex size-[116px] flex-col items-center justify-center rounded-full border-[2.5px] border-dashed border-track font-bold text-muted-foreground"
+              className="absolute flex size-[116px] flex-col items-center justify-center rounded-full border-[2.5px] border-dashed border-ultramarine bg-white text-[11px] leading-[14px] font-extrabold text-foreground"
               style={{ left: emptyAt.cx - 58, top: emptyAt.cy - 58 }}
             >
-              <span className="font-display text-[22px]">+</span>
-              <span className="text-[10px]">следующая</span>
-              <span className="text-[10px]">печать</span>
+              <span className="font-display text-[30px] leading-[34px] text-ultramarine">+</span>
+              <span>следующая</span>
+              <span>печать</span>
             </div>
           )}
         </div>
