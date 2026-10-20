@@ -53,24 +53,11 @@
   cursor: pointer;
 }
 
-/* Вне выбранного времени: серая точка и серый кластер. */
-.map-dot-muted {
-  display: block;
-  width: 12px;
-  height: 12px;
-  transform: translate(-50%, -50%);
-  border: 1.5px solid color-mix(in srgb, var(--ink-muted) 65%, white);
-  border-radius: 50%;
-  background: var(--card);
-  opacity: 0.85;
-  cursor: pointer;
-}
-.map-cluster--muted {
-  border-color: color-mix(in srgb, var(--ink-muted) 65%, white);
-  background: var(--card);
-  color: var(--muted-foreground);
-  box-shadow: none;
-}
+/* Вне выбранного времени: те же метка и кластер, что на карте активностей, только полупрозрачные. */
+.map-pin--muted,
+.map-cluster--muted { opacity: 0.5; }
+.map-pin--muted:hover,
+.map-cluster--muted:hover { opacity: 0.85; }
 
 /* Точка места на мини-карте формы и карточки события. */
 .map-dot {

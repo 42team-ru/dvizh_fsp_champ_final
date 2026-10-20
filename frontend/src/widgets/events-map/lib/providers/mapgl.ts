@@ -84,6 +84,8 @@ async function createMap(container: HTMLElement, center: [number, number], zoom:
       // свои кнопки по макету (mountControls), стандартные MapGL не нужны
       zoomControl: false,
       enableTrackResize: true,
+      // По умолчанию MapGL не сглаживает края: на чётком холсте видны лесенки у домов, воды и парков.
+      disableAntiAliasing: false,
     });
     const localStyle = STYLE ? undefined : map.setStyleFromUrl(localStyleUrl(), LOCAL_STYLE);
     // У MapGL нет общего флага запрета всех жестов. Останавливаем их до обработчиков SDK,

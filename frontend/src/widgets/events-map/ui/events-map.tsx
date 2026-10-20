@@ -251,7 +251,7 @@ export function EventsMap({ filters = {}, className, mapClassName, withHome = fa
             <span className="font-extrabold">
               {activeCount} {selection.mode === "moment" ? (selection.live ? "идут сейчас" : `идут в ${hhmm(selection.at)}`) : "в диапазоне"}
             </span>
-            <span className="size-2.5 rounded-full border-[1.5px] border-muted-foreground/60 bg-card" />
+            <span className="size-2.5 rounded-full border-[1.5px] border-ink bg-primary opacity-50" />
             <span className="font-bold text-muted-foreground">{Math.max(0, totalCount - activeCount)} вне</span>
           </div>
           {(overviewData?.truncated || activeData?.truncated) && (

@@ -27,14 +27,15 @@ export const contains = (outer: Bbox, inner: Bbox) =>
 export const inBbox = (b: Bbox, [lon, lat]: [number, number]) =>
   lon >= b.minLon && lon <= b.maxLon && lat >= b.minLat && lat <= b.maxLat;
 
-/** Метка события: вид спорта и время начала; «я записан» и выбранная — свои цвета. */
+/**
+ * Метка события: вид спорта и время начала; «я записан» и выбранная — свои цвета.
+ * Вне выбранного времени — та же метка, только приглушённая.
+ */
 export function pinHtml(point: MapPoint, active: boolean) {
-  if (point.muted && !active) {
-    return `<span class="map-dot-muted" title="${escape(point.data.title)}"></span>`;
-  }
   const time = point.note ?? new Date(point.data.startAt).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
   const mine = point.data.myRegistrationStatus === "CONFIRMED";
-  return `<span class="map-pin${mine ? " map-pin--mine" : ""}${active ? " map-pin--active" : ""}" title="${escape(point.data.title)}">`
+  const muted = point.muted && !active;
+  return `<span class="map-pin${mine ? " map-pin--mine" : ""}${active ? " map-pin--active" : ""}${muted ? " map-pin--muted" : ""}" title="${escape(point.data.title)}">`
       + `<span class="map-pin__sport">${escape(point.data.sport.name)}</span><span class="map-pin__time">${time}</span></span>`;
 }
 
