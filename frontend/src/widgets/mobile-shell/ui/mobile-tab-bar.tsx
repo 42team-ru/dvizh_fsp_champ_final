@@ -1,12 +1,12 @@
 import { Link } from "react-router";
-import { BriefcaseBusiness, ShieldCheck, type LucideIcon } from "lucide-react";
+import { BookOpen, BriefcaseBusiness, ShieldCheck, type LucideIcon } from "lucide-react";
 import { Icon } from "@/shared/components/ui/icon";
 import { cn } from "cn";
 import { motion } from "motion/react";
 import { useNavAccess } from "@/entity/user/model/use-nav-access";
 import { useCabinetAccess } from "@/entity/user/model/use-cabinet-access";
 
-export type MobileTab = "home" | "feed" | "activity" | "profile" | "admin" | "orgs";
+export type MobileTab = "home" | "feed" | "blog" | "activity" | "profile" | "admin" | "orgs";
 
 type Tab = { key: string; to: string; label: string; icon?: string; lucide?: LucideIcon; count?: number };
 
@@ -17,13 +17,14 @@ type Tab = { key: string; to: string; label: string; icon?: string; lucide?: Luc
  */
 export function MobileTabBar({ current }: { current: MobileTab }) {
   // У админки своей папки иконок нет: в папке «Профиля» (этой вкладки у админа нет) остальные иконки неактивные.
-  const dir = `m-${current === "admin" || current === "orgs" ? "profile" : current}`;
+  const dir = `m-${current === "admin" || current === "orgs" || current === "blog" ? "profile" : current}`;
   const nav = useNavAccess();
   const cabinet = useCabinetAccess();
 
   const left: Tab[] = [
     { key: "home", to: "/", label: "Главная", icon: "icon-home" },
     { key: "feed", to: "/feed", label: "Лента", icon: "icon-grid" },
+    { key: "blog", to: "/blog", label: "Блог", lucide: BookOpen },
   ];
   const right: Tab[] = [
     ...(nav.showActivity ? [{ key: "activity", to: "/activity", label: "Активность", icon: "icon-bell", count: nav.unread }] : []),

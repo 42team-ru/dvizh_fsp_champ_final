@@ -128,6 +128,7 @@ public class DemoSeeder {
 	private final DemoEconomySeeder economy;
 	private final DemoPetSeeder pets;
 	private final DemoAlbumSeeder album;
+	private final DemoBlogSeeder blog;
 	private final NotificationService notificationService;
 	private final AuthService authService;
 	private final UserProfileService profileService;
@@ -390,6 +391,7 @@ public class DemoSeeder {
 		pets.dressCollector(cast.id("vika"));
 		bulk.dress(people);
 		album.seed(cast);
+		blog.seed(cast);
 		log.info("Demo data seeded in {} ms", System.currentTimeMillis() - started);
 	}
 

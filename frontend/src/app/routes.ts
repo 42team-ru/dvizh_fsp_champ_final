@@ -14,6 +14,10 @@ export default [
   layout("providers/guards/auth-guard.tsx", [
     index("routes/home.tsx"),
     route("feed", "routes/feed.tsx"),
+    route("blog", "routes/blog.tsx"),
+    route("blog/new", "routes/blog-editor.tsx", { id: "blog-new" }),
+    route("blog/:id", "routes/blog-post.tsx"),
+    route("blog/:id/edit", "routes/blog-editor.tsx", { id: "blog-edit" }),
     route("profile", "routes/profile.tsx"),
     route("profile/wardrobe", "routes/profile-wardrobe.tsx"),
     route("profile/shop", "routes/profile-shop.tsx"),

@@ -6,6 +6,7 @@ import { ProfileMobile } from "./profile-mobile";
 import { useUser } from "@/entity/user/model/use-user";
 import { usePublicProfile } from "../model/public-profile";
 import { ProfileGallery } from "@/widgets/profile-gallery/ui/profile-gallery";
+import { ProfileBlog } from "@/widgets/profile-blog/ui/profile-blog";
 import { AppHeader } from "@/widgets/app-header/ui/app-header";
 import { Badge } from "@/shared/components/ui/badge";
 import { Card } from "@/shared/components/ui/card";
@@ -64,6 +65,7 @@ export default function ProfilePage() {
             aboutPhotos={owner?.user.photos}
           />
         )}
+        {user?.id && <ProfileBlog className="mt-12" userId={user.id} mine={!owner} />}
       </main>
     </div>
     </>

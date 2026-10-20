@@ -29,6 +29,10 @@
       "description": "Входящие, long polling, внешние каналы и Telegram"
     },
     {
+      "name": "blog",
+      "description": "Блог: гайды и посты с тренировок, фото, лайки, комментарии, виджет «Наши тренировки»"
+    },
+    {
       "name": "pets",
       "description": "Бобр-маскот: каталог вещей и образ"
     },
@@ -1436,6 +1440,248 @@
           },
           "403": {
             "description": "Не организатор",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/blog/posts/{id}": {
+      "get": {
+        "tags": [
+          "blog"
+        ],
+        "summary": "Пост целиком",
+        "description": "Черновик видит только автор. viewer — что я могу сделать.",
+        "operationId": "blog_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlogPostResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Поста нет или это чужой черновик",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "blog"
+        ],
+        "summary": "Исправить свой пост",
+        "description": "Заменяет пост целиком, включая фото.",
+        "operationId": "blog_update",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BlogPostRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlogPostResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Чужой пост",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Поста нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "blog"
+        ],
+        "summary": "Удалить пост",
+        "description": "Автор или админ; вместе с лайками и комментариями.",
+        "operationId": "blog_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "403": {
+            "description": "Чужой пост",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/blog/posts/{id}/comments/{commentId}": {
+      "put": {
+        "tags": [
+          "blog"
+        ],
+        "summary": "Исправить свой комментарий",
+        "operationId": "blog_updateComment",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "commentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BlogCommentUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlogCommentResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Чужой комментарий",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "blog"
+        ],
+        "summary": "Удалить свой комментарий",
+        "description": "Мягко: ответы остаются.",
+        "operationId": "blog_deleteComment",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "commentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "403": {
+            "description": "Чужой комментарий",
             "content": {
               "application/json": {
                 "schema": {
@@ -3796,6 +4042,377 @@
           },
           "409": {
             "description": "Мероприятие удалено или ответ на удалённое сообщение",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/blog/posts": {
+      "get": {
+        "tags": [
+          "blog"
+        ],
+        "summary": "Лента блога",
+        "description": "Только опубликованные, новые сверху. organizationId — «блог клуба»: посты его аккаунта и о его встречах; eventId — посты участников встречи; authorId — посты человека. size до 50.",
+        "operationId": "blog_list",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "GUIDE",
+                "EVENT_REPORT"
+              ]
+            }
+          },
+          {
+            "name": "sportId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "authorId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "eventId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "organizationId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "searchText",
+            "in": "query",
+            "description": "Поиск по заголовку и тексту",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseBlogPostSummaryResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "blog"
+        ],
+        "summary": "Написать пост",
+        "description": "Гайд — без встречи. Пост с тренировки — о начавшейся встрече, где я участник или организатор. publish = false — сохранить черновиком.",
+        "operationId": "blog_create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BlogPostRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlogPostResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Не заполнено, чужое фото, виджет и клуба и организатора",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Админ, неодобренный клуб или меня не было на встрече",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Встреча ещё не прошла или удалена",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/blog/posts/{id}/like": {
+      "post": {
+        "tags": [
+          "blog"
+        ],
+        "summary": "Лайкнуть пост",
+        "description": "Повторный лайк ничего не меняет.",
+        "operationId": "blog_like",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlogLikeResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Черновик или админ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "blog"
+        ],
+        "summary": "Убрать лайк",
+        "operationId": "blog_unlike",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlogLikeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/blog/posts/{id}/comments": {
+      "get": {
+        "tags": [
+          "blog"
+        ],
+        "summary": "Комментарии под постом",
+        "description": "Старые сверху; replyTo — цитата.",
+        "operationId": "blog_comments",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BlogCommentResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "blog"
+        ],
+        "summary": "Написать комментарий или ответить на комментарий",
+        "operationId": "blog_addComment",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BlogCommentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlogCommentResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Черновик, комментарии закрыты или ответ на удалённое",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/blog/photos": {
+      "post": {
+        "tags": [
+          "blog"
+        ],
+        "summary": "Загрузить фото для поста (JPG, PNG, WebP до 5 МБ)",
+        "description": "Файл попадёт в пост, когда его id придёт в photos при сохранении.",
+        "operationId": "blog_uploadPhoto",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Фото"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Неверный формат или размер",
             "content": {
               "application/json": {
                 "schema": {
@@ -6998,6 +7615,192 @@
         }
       }
     },
+    "/api/blog/prompt": {
+      "get": {
+        "tags": [
+          "blog"
+        ],
+        "summary": "«Как прошла встреча? Напиши пост»",
+        "description": "Последняя закончившаяся за неделю встреча, где я был и о которой ещё не писал. Пустой ответ — предлагать нечего.",
+        "operationId": "blog_prompt",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlogPromptResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/blog/posts/mine": {
+      "get": {
+        "tags": [
+          "blog"
+        ],
+        "summary": "Мои посты: черновики и опубликованные",
+        "description": "Свежие правки сверху.",
+        "operationId": "blog_mine",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DRAFT",
+                "PUBLISHED"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseBlogPostSummaryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/blog/events/{eventId}/photos": {
+      "get": {
+        "tags": [
+          "blog"
+        ],
+        "summary": "Фото встречи для поста",
+        "description": "Альбомы участников и фото мероприятия.",
+        "operationId": "blog_eventPhotos",
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FileResponse"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Меня не было на встрече",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/blog/eligible-events": {
+      "get": {
+        "tags": [
+          "blog"
+        ],
+        "summary": "О каких встречах я могу написать",
+        "description": "Начались, не удалены, я организатор или подтверждённый участник. Свежие сверху.",
+        "operationId": "blog_eligibleEvents",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BlogEventResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/blog/authors": {
+      "get": {
+        "tags": [
+          "blog"
+        ],
+        "summary": "Авторы недели",
+        "description": "Больше всех публиковали за последний месяц.",
+        "operationId": "blog_topAuthors",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 3
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BlogAuthorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/auth/users/check/username": {
       "get": {
         "tags": [
@@ -9940,6 +10743,697 @@
           "text"
         ]
       },
+      "BlogPhotoRequest": {
+        "type": "object",
+        "description": "Фото в посте: своё загруженное или из альбома этой встречи",
+        "properties": {
+          "fileId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Файл (id)"
+          },
+          "caption": {
+            "type": "string",
+            "description": "Подпись под фото",
+            "example": "Старт у таблички с картой острова",
+            "maxLength": 300,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "fileId"
+        ]
+      },
+      "BlogPostRequest": {
+        "type": "object",
+        "description": "Пост целиком: создание и правка заменяют все поля",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Гайд или пост с тренировки",
+            "enum": [
+              "GUIDE",
+              "EVENT_REPORT"
+            ]
+          },
+          "eventId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Встреча (обязательна для поста с тренировки, у гайда не хранится)"
+          },
+          "sportId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Вид спорта гайда; у поста с тренировки берётся вид встречи"
+          },
+          "title": {
+            "type": "string",
+            "description": "Заголовок",
+            "example": "Первые 8 км вокруг Татышева",
+            "maxLength": 120,
+            "minLength": 0
+          },
+          "body": {
+            "type": "string",
+            "description": "Текст в Markdown",
+            "maxLength": 20000,
+            "minLength": 0
+          },
+          "photos": {
+            "type": "array",
+            "description": "Фото по порядку, первое — обложка; до 10",
+            "items": {
+              "$ref": "#/components/schemas/BlogPhotoRequest"
+            },
+            "maxItems": 10,
+            "minItems": 0
+          },
+          "widgetOrganizationId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Виджет в конце поста: ближайшие встречи этой организации"
+          },
+          "widgetUserId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Виджет в конце поста: ближайшие встречи этого организатора"
+          },
+          "commentsEnabled": {
+            "type": "boolean",
+            "description": "Разрешить комментарии; по умолчанию да"
+          },
+          "publish": {
+            "type": "boolean",
+            "description": "true — опубликовать, false — сохранить черновиком"
+          }
+        },
+        "required": [
+          "body",
+          "publish",
+          "title",
+          "type"
+        ]
+      },
+      "BlogEventResponse": {
+        "type": "object",
+        "description": "Встреча, о которой пост: плашка «Написано после встречи»",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "description": "Название",
+            "example": "Пробежка вокруг Татышева"
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Начало (у серии — первое занятие)"
+          },
+          "status": {
+            "type": "string",
+            "description": "Статус мероприятия",
+            "enum": [
+              "PUBLISHED",
+              "UNPUBLISHED",
+              "DELETED"
+            ]
+          },
+          "sport": {
+            "$ref": "#/components/schemas/SportResponse"
+          },
+          "organizer": {
+            "$ref": "#/components/schemas/UserShortResponse",
+            "description": "Кто организует (у события организации — её аккаунт)"
+          },
+          "organization": {
+            "$ref": "#/components/schemas/OrganizationShortResponse",
+            "description": "Организация; null — от частного лица"
+          },
+          "coverUrl": {
+            "type": "string",
+            "description": "Обложка встречи: /api/files/{id}; null — без фото"
+          }
+        },
+        "required": [
+          "id",
+          "organizer",
+          "sport",
+          "startAt",
+          "status",
+          "title"
+        ]
+      },
+      "BlogPhotoResponse": {
+        "type": "object",
+        "description": "Фото в посте",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Файл (id)"
+          },
+          "url": {
+            "type": "string",
+            "description": "Адрес картинки: /api/files/{id}"
+          },
+          "caption": {
+            "type": "string",
+            "description": "Подпись"
+          },
+          "focus": {
+            "$ref": "#/components/schemas/FocusPoint",
+            "description": "Точка фокуса для превью; null — центр"
+          }
+        },
+        "required": [
+          "id",
+          "url"
+        ]
+      },
+      "BlogPostResponse": {
+        "type": "object",
+        "description": "Пост целиком: текст, фото, виджет и мои права",
+        "properties": {
+          "post": {
+            "$ref": "#/components/schemas/BlogPostSummaryResponse",
+            "description": "То же, что в списке"
+          },
+          "body": {
+            "type": "string",
+            "description": "Текст в Markdown"
+          },
+          "photos": {
+            "type": "array",
+            "description": "Фото по порядку, первое — обложка",
+            "items": {
+              "$ref": "#/components/schemas/BlogPhotoResponse"
+            }
+          },
+          "widget": {
+            "$ref": "#/components/schemas/BlogWidgetResponse",
+            "description": "Виджет «Наши тренировки»; null — автор его не добавил"
+          },
+          "widgetOrganizationId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Виджет: организация (для формы правки)"
+          },
+          "widgetUserId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Виджет: организатор-человек (для формы правки)"
+          },
+          "commentsEnabled": {
+            "type": "boolean",
+            "description": "Комментарии разрешены"
+          },
+          "viewer": {
+            "$ref": "#/components/schemas/BlogViewerResponse"
+          }
+        },
+        "required": [
+          "body",
+          "commentsEnabled",
+          "photos",
+          "post",
+          "viewer"
+        ]
+      },
+      "BlogPostSummaryResponse": {
+        "type": "object",
+        "description": "Пост в списке: лента блога, профиль, страница встречи и клуба",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string",
+            "description": "Гайд или пост с тренировки",
+            "enum": [
+              "GUIDE",
+              "EVENT_REPORT"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "description": "Черновик или опубликован",
+            "enum": [
+              "DRAFT",
+              "PUBLISHED"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "description": "Заголовок"
+          },
+          "excerpt": {
+            "type": "string",
+            "description": "Начало текста без разметки"
+          },
+          "readMinutes": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Минут чтения"
+          },
+          "cover": {
+            "$ref": "#/components/schemas/BlogPhotoResponse",
+            "description": "Обложка — первое фото; null — без фото"
+          },
+          "photosCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Сколько фото в посте"
+          },
+          "sport": {
+            "$ref": "#/components/schemas/SportResponse",
+            "description": "Вид спорта; null — без вида"
+          },
+          "event": {
+            "$ref": "#/components/schemas/BlogEventResponse",
+            "description": "Встреча; null — у гайда"
+          },
+          "author": {
+            "$ref": "#/components/schemas/UserShortResponse",
+            "description": "Автор"
+          },
+          "organization": {
+            "$ref": "#/components/schemas/OrganizationShortResponse",
+            "description": "Организация, если пишет её аккаунт"
+          },
+          "authorWasThere": {
+            "type": "boolean",
+            "description": "Автор был на встрече (участник или организатор) — плашка «был на встрече»"
+          },
+          "likesCount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Лайков"
+          },
+          "likedByMe": {
+            "type": "boolean",
+            "description": "Я лайкнул"
+          },
+          "commentsCount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Комментариев (без удалённых)"
+          },
+          "publishedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Когда опубликован; null — черновик"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "author",
+          "authorWasThere",
+          "commentsCount",
+          "createdAt",
+          "excerpt",
+          "id",
+          "likedByMe",
+          "likesCount",
+          "photosCount",
+          "readMinutes",
+          "status",
+          "title",
+          "type",
+          "updatedAt"
+        ]
+      },
+      "BlogViewerResponse": {
+        "type": "object",
+        "description": "Что я могу сделать с постом: кнопки рисуются по этим флагам",
+        "properties": {
+          "isMine": {
+            "type": "boolean",
+            "description": "Мой пост"
+          },
+          "canEdit": {
+            "type": "boolean",
+            "description": "Могу править"
+          },
+          "canDelete": {
+            "type": "boolean",
+            "description": "Могу удалить (автор или админ)"
+          },
+          "canLike": {
+            "type": "boolean",
+            "description": "Могу лайкнуть"
+          },
+          "canComment": {
+            "type": "boolean",
+            "description": "Могу комментировать"
+          },
+          "commentBlockedReason": {
+            "type": "string",
+            "description": "Почему нельзя комментировать; null — можно"
+          }
+        },
+        "required": [
+          "canComment",
+          "canDelete",
+          "canEdit",
+          "canLike",
+          "isMine"
+        ]
+      },
+      "BlogWidgetResponse": {
+        "type": "object",
+        "description": "Виджет «Наши тренировки» в конце поста: ближайшие встречи клуба или организатора",
+        "properties": {
+          "organization": {
+            "$ref": "#/components/schemas/OrganizationShortResponse",
+            "description": "Клуб; null — виджет организатора-человека"
+          },
+          "organizer": {
+            "$ref": "#/components/schemas/UserShortResponse",
+            "description": "Организатор-человек; null — виджет клуба"
+          },
+          "events": {
+            "type": "array",
+            "description": "До трёх ближайших встреч; пусто — скоро новые",
+            "items": {
+              "$ref": "#/components/schemas/EventSummaryResponse"
+            }
+          }
+        },
+        "required": [
+          "events"
+        ]
+      },
+      "EventSummaryResponse": {
+        "type": "object",
+        "description": "Мероприятие в списке: лента, мои мероприятия, мои записи",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "description": "Название"
+          },
+          "sport": {
+            "$ref": "#/components/schemas/SportResponse",
+            "description": "Вид спорта"
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Начало; у серии — ближайшего подходящего занятия"
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Окончание; у серии — ближайшего подходящего занятия"
+          },
+          "occurrenceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Занятие, к которому относятся startAt и endAt; null — подходящих нет"
+          },
+          "recurring": {
+            "type": "boolean",
+            "description": "Повторяющееся мероприятие (серия занятий)"
+          },
+          "scheduleDescription": {
+            "type": "string",
+            "description": "Расписание словами; null — разовое",
+            "example": "по вторникам в 20:00"
+          },
+          "format": {
+            "type": "string",
+            "description": "Очно или онлайн",
+            "enum": [
+              "OFFLINE",
+              "ONLINE"
+            ]
+          },
+          "address": {
+            "type": "string",
+            "description": "Адрес"
+          },
+          "locationNote": {
+            "type": "string",
+            "description": "Как найти место"
+          },
+          "lat": {
+            "type": "number",
+            "format": "double",
+            "description": "Широта; у онлайн-мероприятия null"
+          },
+          "lon": {
+            "type": "number",
+            "format": "double",
+            "description": "Долгота; у онлайн-мероприятия null"
+          },
+          "level": {
+            "type": "string",
+            "description": "Для какого уровня",
+            "enum": [
+              "ANY",
+              "BEGINNER",
+              "AMATEUR",
+              "PRO"
+            ]
+          },
+          "kind": {
+            "type": "string",
+            "description": "Вид мероприятия",
+            "enum": [
+              "TRAINING",
+              "GAME",
+              "MEETUP",
+              "AMATEUR_TOURNAMENT"
+            ]
+          },
+          "joinMode": {
+            "type": "string",
+            "description": "Режим записи",
+            "enum": [
+              "FREE",
+              "REQUEST"
+            ]
+          },
+          "capacity": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Лимит мест; null — без лимита. У серии — на каждое занятие"
+          },
+          "participantsCount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Подтверждённых участников («записались 8 из 16»); у серии — принятых в серию"
+          },
+          "occurrenceAttendeesCount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "У серии — сколько отметились на занятие occurrenceId («придут 7 из 10»); у разового — null"
+          },
+          "participantsPreview": {
+            "type": "array",
+            "description": "До трёх подтверждённых участников; у серии с ближайшим занятием — отметившихся на него",
+            "items": {
+              "$ref": "#/components/schemas/EventParticipantResponse"
+            }
+          },
+          "minParticipants": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Кворум: состоится, если наберём столько; null — без кворума"
+          },
+          "quorumStatus": {
+            "type": "string",
+            "description": "Кворум ближайшего подходящего занятия; null — без кворума или занятия нет",
+            "enum": [
+              "GATHERING",
+              "REACHED",
+              "CONFIRMED"
+            ]
+          },
+          "cancelledByOrganizer": {
+            "type": "boolean",
+            "description": "Разовое мероприятие отменено организатором (у серии отменяются отдельные занятия)"
+          },
+          "status": {
+            "type": "string",
+            "description": "Статус мероприятия",
+            "enum": [
+              "PUBLISHED",
+              "UNPUBLISHED",
+              "DELETED"
+            ]
+          },
+          "moderationReason": {
+            "type": "string",
+            "description": "Причина снятия с публикации или удаления"
+          },
+          "authorId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Организатор-человек"
+          },
+          "organizationId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Организация; null — от частного лица"
+          },
+          "organizer": {
+            "$ref": "#/components/schemas/UserShortResponse",
+            "description": "Кто организует: автор мероприятия (у события организации — её аккаунт)"
+          },
+          "organization": {
+            "$ref": "#/components/schemas/OrganizationShortResponse",
+            "description": "Организация для подписи «Шахматный клуб «Ладья»»; null — от частного лица"
+          },
+          "myRegistrationStatus": {
+            "type": "string",
+            "description": "Статус моей записи; null — не записан",
+            "enum": [
+              "CONFIRMED",
+              "PENDING",
+              "REJECTED",
+              "CANCELLED",
+              "WAITLISTED"
+            ]
+          },
+          "coverUrl": {
+            "type": "string",
+            "description": "Обложка (первое фото): /api/files/{id}; null — без фото"
+          },
+          "coverFocus": {
+            "$ref": "#/components/schemas/FocusPoint",
+            "description": "Точка фокуса обложки; null — центр или без фото (тогда у иллюстрации вида — sport.imageFocus)"
+          }
+        },
+        "required": [
+          "authorId",
+          "cancelledByOrganizer",
+          "format",
+          "id",
+          "joinMode",
+          "level",
+          "organizer",
+          "participantsCount",
+          "participantsPreview",
+          "recurring",
+          "sport",
+          "startAt",
+          "status",
+          "title"
+        ]
+      },
+      "BlogCommentUpdateRequest": {
+        "type": "object",
+        "description": "Исправленный текст своего комментария",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Текст",
+            "maxLength": 2000,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "text"
+        ]
+      },
+      "BlogCommentReplyResponse": {
+        "type": "object",
+        "description": "Цитата над ответом: на какой комментарий ответили",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "author": {
+            "$ref": "#/components/schemas/UserShortResponse"
+          },
+          "text": {
+            "type": "string",
+            "description": "Начало текста; null — удалено"
+          },
+          "deleted": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "author",
+          "deleted",
+          "id"
+        ]
+      },
+      "BlogCommentResponse": {
+        "type": "object",
+        "description": "Комментарий под постом",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "author": {
+            "$ref": "#/components/schemas/UserShortResponse"
+          },
+          "organization": {
+            "$ref": "#/components/schemas/OrganizationShortResponse",
+            "description": "Организация, если пишет её аккаунт"
+          },
+          "isPostAuthor": {
+            "type": "boolean",
+            "description": "Автор поста — метка «Автор»"
+          },
+          "text": {
+            "type": "string",
+            "description": "Текст; null — удалено"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "editedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Когда исправлено; null — не менялось"
+          },
+          "deleted": {
+            "type": "boolean"
+          },
+          "replyTo": {
+            "$ref": "#/components/schemas/BlogCommentReplyResponse",
+            "description": "Цитата комментария, на который это ответ"
+          },
+          "isMine": {
+            "type": "boolean",
+            "description": "Мой комментарий"
+          },
+          "canEdit": {
+            "type": "boolean",
+            "description": "Могу исправить или удалить"
+          }
+        },
+        "required": [
+          "author",
+          "canEdit",
+          "createdAt",
+          "deleted",
+          "id",
+          "isMine",
+          "isPostAuthor"
+        ]
+      },
       "RenameSportRequest": {
         "type": "object",
         "description": "Новое название вида спорта",
@@ -10461,6 +11955,46 @@
             "type": "string",
             "format": "uuid",
             "description": "Ответ на сообщение (id); пусто — в общий поток"
+          }
+        },
+        "required": [
+          "text"
+        ]
+      },
+      "BlogLikeResponse": {
+        "type": "object",
+        "description": "Лайки поста после нажатия",
+        "properties": {
+          "likesCount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Лайков"
+          },
+          "likedByMe": {
+            "type": "boolean",
+            "description": "Я лайкнул"
+          }
+        },
+        "required": [
+          "likedByMe",
+          "likesCount"
+        ]
+      },
+      "BlogCommentRequest": {
+        "type": "object",
+        "description": "Новый комментарий под постом",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Текст",
+            "example": "А сколько по времени заняли 8 км?",
+            "maxLength": 2000,
+            "minLength": 0
+          },
+          "replyToId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Ответ на комментарий (id); пусто — в общий поток"
           }
         },
         "required": [
@@ -11004,208 +12538,6 @@
           "period",
           "score",
           "status"
-        ]
-      },
-      "EventSummaryResponse": {
-        "type": "object",
-        "description": "Мероприятие в списке: лента, мои мероприятия, мои записи",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "title": {
-            "type": "string",
-            "description": "Название"
-          },
-          "sport": {
-            "$ref": "#/components/schemas/SportResponse",
-            "description": "Вид спорта"
-          },
-          "startAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "Начало; у серии — ближайшего подходящего занятия"
-          },
-          "endAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "Окончание; у серии — ближайшего подходящего занятия"
-          },
-          "occurrenceId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Занятие, к которому относятся startAt и endAt; null — подходящих нет"
-          },
-          "recurring": {
-            "type": "boolean",
-            "description": "Повторяющееся мероприятие (серия занятий)"
-          },
-          "scheduleDescription": {
-            "type": "string",
-            "description": "Расписание словами; null — разовое",
-            "example": "по вторникам в 20:00"
-          },
-          "format": {
-            "type": "string",
-            "description": "Очно или онлайн",
-            "enum": [
-              "OFFLINE",
-              "ONLINE"
-            ]
-          },
-          "address": {
-            "type": "string",
-            "description": "Адрес"
-          },
-          "locationNote": {
-            "type": "string",
-            "description": "Как найти место"
-          },
-          "lat": {
-            "type": "number",
-            "format": "double",
-            "description": "Широта; у онлайн-мероприятия null"
-          },
-          "lon": {
-            "type": "number",
-            "format": "double",
-            "description": "Долгота; у онлайн-мероприятия null"
-          },
-          "level": {
-            "type": "string",
-            "description": "Для какого уровня",
-            "enum": [
-              "ANY",
-              "BEGINNER",
-              "AMATEUR",
-              "PRO"
-            ]
-          },
-          "kind": {
-            "type": "string",
-            "description": "Вид мероприятия",
-            "enum": [
-              "TRAINING",
-              "GAME",
-              "MEETUP",
-              "AMATEUR_TOURNAMENT"
-            ]
-          },
-          "joinMode": {
-            "type": "string",
-            "description": "Режим записи",
-            "enum": [
-              "FREE",
-              "REQUEST"
-            ]
-          },
-          "capacity": {
-            "type": "integer",
-            "format": "int32",
-            "description": "Лимит мест; null — без лимита. У серии — на каждое занятие"
-          },
-          "participantsCount": {
-            "type": "integer",
-            "format": "int64",
-            "description": "Подтверждённых участников («записались 8 из 16»); у серии — принятых в серию"
-          },
-          "occurrenceAttendeesCount": {
-            "type": "integer",
-            "format": "int64",
-            "description": "У серии — сколько отметились на занятие occurrenceId («придут 7 из 10»); у разового — null"
-          },
-          "minParticipants": {
-            "type": "integer",
-            "format": "int32",
-            "description": "Кворум: состоится, если наберём столько; null — без кворума"
-          },
-          "quorumStatus": {
-            "type": "string",
-            "description": "Кворум ближайшего подходящего занятия; null — без кворума или занятия нет",
-            "enum": [
-              "GATHERING",
-              "REACHED",
-              "CONFIRMED"
-            ]
-          },
-          "cancelledByOrganizer": {
-            "type": "boolean",
-            "description": "Разовое мероприятие отменено организатором (у серии отменяются отдельные занятия)"
-          },
-          "status": {
-            "type": "string",
-            "description": "Статус мероприятия",
-            "enum": [
-              "PUBLISHED",
-              "UNPUBLISHED",
-              "DELETED"
-            ]
-          },
-          "moderationReason": {
-            "type": "string",
-            "description": "Причина снятия с публикации или удаления"
-          },
-          "authorId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Организатор-человек"
-          },
-          "organizationId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Организация; null — от частного лица"
-          },
-          "organizer": {
-            "$ref": "#/components/schemas/UserShortResponse",
-            "description": "Кто организует: автор мероприятия (у события организации — её аккаунт)"
-          },
-          "organization": {
-            "$ref": "#/components/schemas/OrganizationShortResponse",
-            "description": "Организация для подписи «Шахматный клуб «Ладья»»; null — от частного лица"
-          },
-          "myRegistrationStatus": {
-            "type": "string",
-            "description": "Статус моей записи; null — не записан",
-            "enum": [
-              "CONFIRMED",
-              "PENDING",
-              "REJECTED",
-              "CANCELLED",
-              "WAITLISTED"
-            ]
-          },
-          "coverUrl": {
-            "type": "string",
-            "description": "Обложка (первое фото): /api/files/{id}; null — без фото"
-          },
-          "coverFocus": {
-            "$ref": "#/components/schemas/FocusPoint",
-            "description": "Точка фокуса обложки; null — центр или без фото (тогда у иллюстрации вида — sport.imageFocus)"
-          },
-          "participantsPreview": {
-            "type": "array",
-            "description": "До трёх подтверждённых участников; у серии с ближайшим занятием — отметившихся на него",
-            "items": {
-              "$ref": "#/components/schemas/EventParticipantResponse"
-            }
-          }
-        },
-        "required": [
-          "authorId",
-          "cancelledByOrganizer",
-          "format",
-          "id",
-          "joinMode",
-          "level",
-          "organizer",
-          "participantsCount",
-          "participantsPreview",
-          "recurring",
-          "sport",
-          "startAt",
-          "status",
-          "title"
         ]
       },
       "PublicUserResponse": {
@@ -13401,6 +14733,94 @@
             ]
           }
         }
+      },
+      "BlogPromptResponse": {
+        "type": "object",
+        "description": "«Как прошла встреча? Напиши пост»: последняя закончившаяся встреча, о которой я ещё не писал",
+        "properties": {
+          "event": {
+            "$ref": "#/components/schemas/BlogEventResponse"
+          },
+          "endedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Когда закончилась"
+          },
+          "photos": {
+            "type": "array",
+            "description": "Первые фото альбома и мероприятия — их можно взять в пост",
+            "items": {
+              "$ref": "#/components/schemas/FileResponse"
+            }
+          },
+          "photosCount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Сколько всего фото со встречи"
+          }
+        },
+        "required": [
+          "endedAt",
+          "event",
+          "photos",
+          "photosCount"
+        ]
+      },
+      "PageResponseBlogPostSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BlogPostSummaryResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "size",
+          "totalElements",
+          "totalPages"
+        ]
+      },
+      "BlogAuthorResponse": {
+        "type": "object",
+        "description": "Автор блога: «Авторы недели»",
+        "properties": {
+          "author": {
+            "$ref": "#/components/schemas/UserShortResponse"
+          },
+          "organization": {
+            "$ref": "#/components/schemas/OrganizationShortResponse",
+            "description": "Организация, если пишет её аккаунт"
+          },
+          "postsCount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Опубликованных постов всего"
+          }
+        },
+        "required": [
+          "author",
+          "postsCount"
+        ]
       },
       "AvailabilityCheckResponse": {
         "type": "object",

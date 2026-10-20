@@ -1,3 +1,4 @@
+import { BlogPrompt } from "@/widgets/blog-prompt/ui/blog-prompt";
 import { NotificationSettingsButton } from "@/features/notification-settings/ui/notification-settings-dialog";
 import { BellRing, Hourglass, Ticket } from "lucide-react";
 import { EmptyState } from "@/shared/components/ui/empty-state";
@@ -116,6 +117,8 @@ export function ActivityMobile({ m }: { m: ActivityModel }) {
         })}
         <NotificationSettingsButton className="h-11 shrink-0 px-[18px]" />
       </div>
+
+      <div className="px-4 empty:hidden"><BlogPrompt compact /></div>
 
       {m.totalUnread > 0 && (
         <div className="px-4">

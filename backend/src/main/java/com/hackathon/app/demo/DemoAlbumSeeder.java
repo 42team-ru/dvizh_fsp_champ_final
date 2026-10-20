@@ -57,7 +57,7 @@ class DemoAlbumSeeder {
 		return event.sport().slug();
 	}
 
-	private static FileUpload image(String slug) {
+	static FileUpload image(String slug) {
 		var resource = new ClassPathResource("sport-images/" + slug + ".webp");
 		if (!resource.exists()) {
 			resource = new ClassPathResource("sport-images/default.webp");

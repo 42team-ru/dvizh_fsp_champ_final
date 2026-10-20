@@ -3,6 +3,8 @@ import { Linkified } from "@/shared/lib/linkify";
 import { CommentModerationAction, CommentModerationDialog } from "@/features/comment-moderation/ui/comment-moderation";
 import { MessageActionsSheet, MessageGestures } from "@/features/comment-gestures/ui/message-gestures";
 import type { CommentResponse } from "@/shared/api/generated/core/appAPI.schemas";
+import { ENTER_HINT, enterToSend } from "@/shared/lib/enter-to-send";
+import { EventBlog } from "@/widgets/event-blog/ui/event-blog";
 import { profilePath } from "@/entity/user/lib/profile-path";
 import { coverOf } from "@/entity/event/lib/cover";
 import { MessageCircleQuestion } from "lucide-react";
@@ -382,7 +384,7 @@ function Chat({ m }: { m: EventModel }) {
   const [text, setText] = useState("");
   const [replyTo, setReplyTo] = useState<{ id: string; who: string } | null>(null);
   const [held, setHeld] = useState<CommentResponse>();
-  const input = useRef<HTMLInputElement>(null);
+  const input = useRef<HTMLTextAreaElement>(null);
   const canComment = m.event!.viewer.canComment;
   const canReply = (c: CommentResponse) => canComment && !c.deleted && !c.hidden;
   const canRemove = (c: CommentResponse) => m.moderation.isAdmin && !c.deleted && !c.hidden;
@@ -440,7 +442,7 @@ function Chat({ m }: { m: EventModel }) {
                   {fullName(c.replyTo.author)}: {c.replyTo.hidden ? "Удалено администратором" : c.replyTo.deleted ? "Сообщение удалено" : c.replyTo.text}
                 </p>
               )}
-              <p className="mt-0.5 text-[15px] leading-[22px] font-medium text-foreground">
+              <p className="mt-0.5 text-[15px] leading-[22px] font-medium whitespace-pre-line text-foreground">
                 <CommentContent comment={c} isAdmin={m.moderation.isAdmin} />
               </p>
               <CommentModerationAction comment={c} moderation={m.moderation} />
@@ -464,9 +466,11 @@ function Chat({ m }: { m: EventModel }) {
               Ответ для {replyTo.who} <button type="button" className="underline" onClick={() => setReplyTo(null)}>отменить</button>
             </p>
           )}
-          <div className="box-border flex h-12 items-center gap-[10px] rounded-pill border-2 border-ink bg-background pr-1.5 pl-5">
-            <input ref={input} value={text} maxLength={2000} onChange={(event) => setText(event.target.value)} aria-label="Сообщение"
-              placeholder="Задайте вопрос или напишите участникам" className="min-w-0 flex-1 bg-transparent text-[15px] outline-none" />
+          <div className="box-border flex min-h-12 items-end gap-[10px] rounded-[24px] border-2 border-ink bg-background py-1.5 pr-1.5 pl-5">
+            <textarea ref={input} value={text} maxLength={2000} rows={1} onChange={(event) => setText(event.target.value)} aria-label="Сообщение"
+              onKeyDown={(event) => enterToSend(event, setText, () => event.currentTarget.form?.requestSubmit())} title={ENTER_HINT}
+              placeholder="Задайте вопрос или напишите участникам"
+              className="field-sizing-content max-h-32 min-h-8 min-w-0 flex-1 resize-none bg-transparent py-1 text-[15px] leading-[22px] outline-none" />
             <Button type="submit" size="sm" disabled={!text.trim() || m.commentPending}>Отправить</Button>
           </div>
           {m.commentError && <p role="alert" className="text-sm font-bold text-destructive">{m.commentError}</p>}
@@ -536,6 +540,7 @@ export default function EventPage() {
             <div className="grid w-[1216px] shrink-0 grid-cols-[701px_495px] items-start gap-5">
               <div className="flex min-w-0 flex-col gap-5">
                 <About m={m} />
+                <EventBlog event={m.event} />
                 <Chat m={m} />
               </div>
               <div className="flex min-w-0 flex-col gap-5">

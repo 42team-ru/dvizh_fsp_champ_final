@@ -3,6 +3,8 @@ import { Linkified } from "@/shared/lib/linkify";
 import { CommentModerationAction } from "@/features/comment-moderation/ui/comment-moderation";
 import { MessageActionsSheet, MessageGestures } from "@/features/comment-gestures/ui/message-gestures";
 import type { CommentResponse } from "@/shared/api/generated/core/appAPI.schemas";
+import { ENTER_HINT, enterToSend } from "@/shared/lib/enter-to-send";
+import { EventBlog } from "@/widgets/event-blog/ui/event-blog";
 import { profilePath } from "@/entity/user/lib/profile-path";
 import { coverOf } from "@/entity/event/lib/cover";
 import { MessageCircleQuestion } from "lucide-react";
@@ -99,7 +101,7 @@ function MobileChat({ m }: { m: EventModel }) {
   const [text, setText] = useState("");
   const [replyTo, setReplyTo] = useState<{ id: string; who: string } | null>(null);
   const [held, setHeld] = useState<CommentResponse>();
-  const input = useRef<HTMLInputElement>(null);
+  const input = useRef<HTMLTextAreaElement>(null);
   const canComment = m.event!.viewer.canComment;
   const reply = (c: CommentResponse) => {
     setReplyTo({ id: c.id, who: fullName(c.author) });
@@ -131,7 +133,7 @@ function MobileChat({ m }: { m: EventModel }) {
               {fullName(c.author)}{c.isOrganizer && " · Организатор"} · {new Date(c.createdAt).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}
             </span>
             {!c.hidden && c.replyTo && <span className="border-l-2 border-ink pl-2 text-xs text-muted-foreground">{fullName(c.replyTo.author)}: {c.replyTo.hidden ? "Удалено администратором" : c.replyTo.deleted ? "Сообщение удалено" : c.replyTo.text}</span>}
-            <span className="text-[13px] leading-[18px] font-medium text-foreground">
+            <span className="text-[13px] leading-[18px] font-medium whitespace-pre-line text-foreground">
               <CommentContent comment={c} isAdmin={m.moderation.isAdmin} />
             </span>
             <CommentModerationAction comment={c} moderation={m.moderation} />
@@ -151,13 +153,14 @@ function MobileChat({ m }: { m: EventModel }) {
             <button type="button" className="shrink-0 font-extrabold underline" onClick={() => setReplyTo(null)}>отменить</button>
           </p>
         )}
-        <form className="flex items-center gap-2 rounded-[14px] border-2 border-ink px-[14px] py-2"
+        <form className="flex items-end gap-2 rounded-[14px] border-2 border-ink px-[14px] py-2"
           onSubmit={(event) => {
             event.preventDefault();
             if (text.trim()) void m.sendComment(text.trim(), replyTo?.id).then(() => { setText(""); setReplyTo(null); }).catch(() => undefined);
           }}>
-          <input ref={input} value={text} onChange={(e) => setText(e.target.value)} aria-label="Сообщение" maxLength={2000}
-            placeholder="Задать вопрос" className="min-w-0 flex-1 bg-transparent text-sm outline-none" />
+          <textarea ref={input} value={text} onChange={(e) => setText(e.target.value)} aria-label="Сообщение" maxLength={2000} rows={1}
+            onKeyDown={(e) => enterToSend(e, setText, () => e.currentTarget.form?.requestSubmit())}
+            placeholder="Задать вопрос" className="field-sizing-content max-h-28 min-h-8 min-w-0 flex-1 resize-none bg-transparent py-1.5 text-sm outline-none" />
           <Button type="submit" size="sm" disabled={!text.trim() || m.commentPending}>→</Button>
         </form>
         </>
@@ -393,6 +396,8 @@ export function EventMobile({ m, onDetails }: { m: EventModel; onDetails: (secti
       <div className="px-4">
         <EventGoingCrowd participants={e.participants} sample={m.crowd} authorId={e.author.id} organizers={e.organizers} going={m.going} capacity={e.capacity} className="rounded-[22px]" />
       </div>
+
+      <EventBlog event={e} className="px-4" />
 
       <div id="event-chat-mobile" className="px-4">
         <MobileChat m={m} />

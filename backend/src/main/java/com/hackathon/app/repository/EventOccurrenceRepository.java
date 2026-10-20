@@ -171,4 +171,19 @@ public interface EventOccurrenceRepository extends JpaRepository<EventOccurrence
         """)
     List<UUID> attendedOrganizations(Collection<UUID> organizationIds, UUID userId, Instant now);
 
+    /**
+     * Занятия, закончившиеся в окне [from, now] (без конца — по началу): человек организатор или подтверждённый
+     * участник, мероприятие не удалено. Свежие сверху — для «Как прошло? Напиши пост».
+     */
+    @Query("""
+        select o from EventOccurrence o join Event e on e.id = o.eventId
+        where o.status = com.hackathon.app.domain.enums.OccurrenceStatus.SCHEDULED
+          and e.status <> com.hackathon.app.domain.enums.EventStatus.DELETED
+          and coalesce(o.endAt, o.startAt) <= :now and coalesce(o.endAt, o.startAt) >= :from
+          and (e.authorId = :userId
+            or e.id in (select x.eventId from EventOrganizer x where x.userId = :userId)
+            or e.id in (select r.eventId from Registration r where r.userId = :userId
+                and r.status = com.hackathon.app.domain.enums.RegistrationStatus.CONFIRMED))
+        order by coalesce(o.endAt, o.startAt) desc, o.id""")
+    List<EventOccurrence> findFinishedFor(UUID userId, Instant from, Instant now, Pageable limit);
 }

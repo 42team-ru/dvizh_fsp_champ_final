@@ -123,6 +123,13 @@ morning/day/evening → MORNING/DAY/EVENING; radius → radiusKm.
 и радиус не меняют, но их читает подборка `recommendations_*`; помощники не запускают уведомления или реакции.
 Имя/наряд питомца и статус завершения онбординга этим API не управляются.
 
+## Блог
+
+Посты `BlogPost` (`blog_posts`, V37): `type` `GUIDE | EVENT_REPORT`, `status` `DRAFT | PUBLISHED`, `eventId?` (у поста с тренировки), `sportId?`, `title` ≤120, `body` (Markdown ≤20000), `widgetOrganizationId?` / `widgetUserId?` (виджет «Наши тренировки» в конце поста, не оба сразу), `commentsEnabled`, `publishedAt?`. Фото — `BlogPostPhoto` (порядок, первое — обложка, подпись), файлы `BLOG_PHOTO` или фото альбома/мероприятия этой встречи, до 10. Лайк — `BlogPostLike` (unique пост+человек), счётчик считается. Комментарии — `BlogComment` (ответ через `parentId`, правка, мягкое удаление).
+Правила — `BlogAccessPolicy`: пишут USER и одобренный ORG (админ — 403); пост с тренировки — только о начавшейся неудалённой встрече, где автор организатор или CONFIRMED-участник (403/409); черновик виден только автору (остальным 404); править — автор, удалить — автор или админ; лайкают и комментируют опубликованное.
+API (тег `blog`): `GET/POST /api/blog/posts` (`blog_list` с `type, sportId, authorId, eventId, organizationId, searchText`; `blog_create`) · `GET /api/blog/posts/mine` · `GET/PUT/DELETE /api/blog/posts/{id}` · `POST/DELETE …/{id}/like` · `POST /api/blog/photos` (multipart) · `GET /api/blog/eligible-events` · `GET /api/blog/events/{eventId}/photos` · `GET /api/blog/prompt` — «Как прошла встреча?» (последняя закончившаяся за неделю встреча без моего поста, пустой ответ — нечего) · `GET /api/blog/authors` · комментарии `GET/POST /api/blog/posts/{id}/comments`, `PUT/DELETE …/comments/{commentId}`.
+Фронт: `/blog`, `/blog/:id`, `/blog/new?eventId=`, `/blog/:id/edit`; Markdown разбирает `shared/lib/markdown.ts`, пост рисует `shared/components/ui/markdown.tsx` (без HTML). Редактор `features/blog-editor` — визуальный (TipTap): разметку пользователь не видит, набранные `**…**`, `## `, `> `, `- ` сразу становятся оформлением, панель на выделении, Ctrl+B/I/K, Ctrl+Shift+X/M/P; наружу отдаёт Markdown (`lib/markdown-doc.ts`). Бобр в подсказках — `MyBeaverBadge` (статичный бобр пользователя). Демо — `DemoBlogSeeder`.
+
 ## Бизнес-правила (инварианты)
 
 Каждое правило проверяется на сервере. Скрыть кнопку в UI недостаточно.

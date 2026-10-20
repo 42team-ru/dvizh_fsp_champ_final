@@ -79,4 +79,7 @@ public interface StoredFileRepository extends JpaRepository<StoredFile, UUID> {
         """)
     List<PhotoCount> photoCounts(Collection<UUID> eventIds);
 
+
+	/** Фото встречи для поста: альбомы участников и фото мероприятия, по времени загрузки. */
+	List<StoredFile> findByEventIdAndKindInOrderByCreatedAtAscIdAsc(UUID eventId, java.util.Collection<FileKind> kinds);
 }
