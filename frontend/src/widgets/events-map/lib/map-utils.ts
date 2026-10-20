@@ -29,7 +29,7 @@ export const inBbox = (b: Bbox, [lon, lat]: [number, number]) =>
 
 /**
  * Метка события: вид спорта и время начала; «я записан» и выбранная — свои цвета.
- * Вне выбранного времени — та же метка, только приглушённая.
+ * Вне выбранного времени — та же метка (класс `map-pin--muted` оставлен для стилей).
  */
 export function pinHtml(point: MapPoint, active: boolean) {
   const time = point.note ?? new Date(point.data.startAt).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });

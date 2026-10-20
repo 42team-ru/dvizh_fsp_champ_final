@@ -53,11 +53,6 @@
   cursor: pointer;
 }
 
-/* Вне выбранного времени: те же метка и кластер, что на карте активностей, только полупрозрачные. */
-.map-pin--muted,
-.map-cluster--muted { opacity: 0.5; }
-.map-pin--muted:hover,
-.map-cluster--muted:hover { opacity: 0.85; }
 
 /* Точка места на мини-карте формы и карточки события. */
 .map-dot {
