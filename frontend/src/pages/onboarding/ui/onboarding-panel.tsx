@@ -1,6 +1,6 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Bell, Check, Clock, Home, Map as MapIcon, PartyPopper, Shirt, Star, Trophy, User } from "lucide-react";
+import { Bell, Check, Clock, Home, Shirt, Star, Trophy, User } from "lucide-react";
 import { BeaverPet, type BeaverMood, type BeaverPetHandle } from "@/widgets/beaver-pet/ui/beaver-pet";
 import type { BeaverActivity, BeaverOutfit } from "@/widgets/beaver-pet/ui/beaver-wardrobe";
 import { cn } from "cn";
@@ -206,28 +206,8 @@ function Floating({ step, profile, sports, prefs, pet }: PanelData) {
       </>
     );
   }
-  const notes = [
-    { on: prefs.helpers.reminders, icon: Bell, tone: "bg-secondary", title: "Через 2 часа — тренировка", text: "Не забудь форму и воду", when: "16:30" },
-    { on: prefs.helpers.nearby, icon: MapIcon, tone: "bg-sky", title: "Рядом новая встреча", text: "По твоему виду спорта", when: "вчера" },
-    { on: prefs.helpers.cheer, icon: PartyPopper, tone: "bg-peach", title: "Серия 3 недели!", text: "Держи новый штамп в паспорт", when: "пн" },
-  ];
-  return (
-    <>
-      {notes.map((n, i) => (
-        <Float key={n.title} delay={0.08 * i}
-          className={cn("right-[20px] flex w-[290px] items-center gap-3 shadow-[4px_4px_0_var(--primary)]", !n.on && "opacity-50 shadow-none")}
-          style={{ top: 250 + i * 100 }}>
-          {!n.on && <span className="absolute -top-3 right-4 rounded-pill border-[1.5px] border-ink bg-card px-2 text-[10px] font-bold">выключено</span>}
-          <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-[10px] border-2 border-ink", n.tone)}><n.icon className="size-4" /></span>
-          <span className="min-w-0 flex-1">
-            <span className="flex justify-between text-[11px] font-bold text-muted-foreground"><span>Бобр</span><span>{n.when}</span></span>
-            <span className="block truncate text-sm font-extrabold">{n.title}</span>
-            <span className="block truncate text-xs text-muted-foreground">{n.text}</span>
-          </span>
-        </Float>
-      ))}
-    </>
-  );
+  // шаг 4: карточки уведомлений закрывали бобра — оставляем его одного
+  return null;
 }
 
 function Float({ className, style, delay = 0, children }: { className?: string; style?: React.CSSProperties; delay?: number; children: ReactNode }) {
@@ -254,18 +234,22 @@ function Tracker({ step }: { step: number }) {
       <p className="shrink-0 text-sm leading-tight font-extrabold">
         <span className="block text-[10px] tracking-[1.2px] text-primary">БОБР</span>о тебе знает
       </p>
-      <ol className="flex flex-1 justify-between">
+      <ol className="flex flex-1 items-start">
         {TRACK.map((t, i) => {
           const done = i + 1 < step;
           const now = i + 1 === step;
           return (
-            <li key={t.label} className="flex flex-col items-center gap-1">
+            <li key={t.label} className="relative flex flex-1 flex-col items-center gap-1">
+              {i > 0 && (
+                <span aria-hidden className={cn("absolute top-5 right-1/2 w-full -translate-y-1/2 border-t-2 border-dashed",
+                  done || now ? "border-ink" : "border-track")} />
+              )}
               <motion.span
                 animate={now ? { scale: [1, 1.08, 1] } : { scale: 1 }}
                 transition={now ? { duration: 1.6, repeat: Infinity } : undefined}
                 className={cn(
-                  "flex size-10 items-center justify-center rounded-full border-2",
-                  done ? "border-ink bg-secondary" : now ? "border-ink bg-primary text-white" : "border-dashed border-track text-muted-foreground",
+                  "relative z-10 flex size-10 items-center justify-center rounded-full border-2",
+                  done ? "border-ink bg-secondary" : now ? "border-ink bg-primary text-white" : "border-dashed border-track bg-card text-muted-foreground",
                 )}
               >
                 {done ? <Check className="size-4" strokeWidth={3} /> : <t.icon className="size-4" />}

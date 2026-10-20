@@ -26,6 +26,8 @@ export const BIO_MAX = 1000;
 export const PET_NAME_MAX = 20;
 export const SPORTS_MAX = 30;
 const ACTIVITY = "activity";
+/** Общая картинка вида без своей иллюстрации (как у пользовательских видов на сервере). */
+const CUSTOM_SPORT_IMAGE = "/api/sport-images/default.webp";
 const NONE = "none";
 
 const label = "text-[11px] font-extrabold tracking-[1.5px] text-foreground";
@@ -195,7 +197,41 @@ export function StepSports({ sports, setSports }: { sports: SportRow[]; setSport
     add(match ? { sportId: match.id, name: match.name } : { name });
     setCustom("");
   };
-  // свои и найденные поиском виды, которых нет среди плиток, — чипами под плитками
+  // свои и найденные поиском виды, которых нет среди плиток, — такими же плитками следом
+  const tile = (key: string, name: string, image: string, row: SportRow | undefined, toggle: () => void, i: number) => {
+    const on = !!row;
+    return (
+      <motion.div key={key} {...rise(i)} whileHover={{ y: -3 }}
+        className={cn(
+          "relative flex h-[140px] flex-col rounded-[18px] border-2 border-ink p-3 text-left transition-colors",
+          on ? "bg-primary text-white shadow-hard-sm" : "bg-card text-foreground",
+        )}>
+        <button type="button" aria-pressed={on} aria-label={name}
+          onClick={toggle}
+          className="absolute inset-0 rounded-[16px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring" />
+        <img src={image} alt="" className="pointer-events-none size-9 rounded-lg border-[1.5px] border-ink object-cover" />
+        <span className="pointer-events-none mt-2 truncate font-display text-base font-bold">{name}</span>
+        <span className={cn("pointer-events-none absolute top-3 right-3 flex size-6 items-center justify-center rounded-full border-2",
+          on ? "border-ink bg-secondary" : "border-track")}>
+          {on && <Check className="size-3.5 text-ink" strokeWidth={3} />}
+        </span>
+        {row ? (
+          <div className="relative mt-auto grid grid-cols-3 rounded-pill bg-white/15 p-0.5" role="radiogroup" aria-label={`Уровень: ${name}`}>
+            {TILE_LEVELS.map((l) => (
+              <button key={l.id} type="button" role="radio" aria-checked={row.level === l.id}
+                onClick={() => setLevel(row, row.level === l.id ? undefined : l.id)}
+                className={cn("h-7 rounded-pill text-[11px] font-bold", row.level === l.id ? "bg-secondary text-ink" : "text-white/80")}>
+                {l.short}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <span className="pointer-events-none mt-auto text-[11px] font-semibold text-muted-foreground">нажми, чтобы выбрать</span>
+        )}
+      </motion.div>
+    );
+  };
+
   const extra = sports.filter((r) => !tiles.some((t) => t.id === r.sportId));
 
   return (
@@ -221,55 +257,11 @@ export function StepSports({ sports, setSports }: { sports: SportRow[]; setSport
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4">
         {tiles.map((s, i) => {
           const row = find({ sportId: s.id, name: s.name });
-          const on = !!row;
-          return (
-            <motion.div key={s.id} {...rise(i)} whileHover={{ y: -3 }}
-              className={cn(
-                "relative flex h-[140px] flex-col rounded-[18px] border-2 border-ink p-3 text-left transition-colors",
-                on ? "bg-primary text-white shadow-hard-sm" : "bg-card text-foreground",
-              )}>
-              <button type="button" aria-pressed={on} aria-label={s.name}
-                onClick={() => (row ? remove(row) : add({ sportId: s.id, name: s.name }))}
-                className="absolute inset-0 rounded-[16px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring" />
-              <img src={s.imageUrl} alt="" className="pointer-events-none size-9 rounded-lg border-[1.5px] border-ink object-cover" />
-              <span className="pointer-events-none mt-2 truncate font-display text-base font-bold">{s.name}</span>
-              <span className={cn("pointer-events-none absolute top-3 right-3 flex size-6 items-center justify-center rounded-full border-2",
-                on ? "border-ink bg-secondary" : "border-track")}>
-                {on && <Check className="size-3.5 text-ink" strokeWidth={3} />}
-              </span>
-              {row ? (
-                <div className="relative mt-auto grid grid-cols-3 rounded-pill bg-white/15 p-0.5" role="radiogroup" aria-label={`Уровень: ${s.name}`}>
-                  {TILE_LEVELS.map((l) => (
-                    <button key={l.id} type="button" role="radio" aria-checked={row.level === l.id}
-                      onClick={() => setLevel(row, row.level === l.id ? undefined : l.id)}
-                      className={cn("h-7 rounded-pill text-[11px] font-bold", row.level === l.id ? "bg-secondary text-ink" : "text-white/80")}>
-                      {l.short}
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <span className="pointer-events-none mt-auto text-[11px] font-semibold text-muted-foreground">нажми, чтобы выбрать</span>
-              )}
-            </motion.div>
-          );
+          return tile(s.id, s.name, s.imageUrl, row, () => (row ? remove(row) : add({ sportId: s.id, name: s.name })), i);
         })}
+        {extra.map((r, i) => tile(r.sportId ?? r.name, r.name, CUSTOM_SPORT_IMAGE, r, () => remove(r), tiles.length + i))}
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        {extra.map((r) => (
-          <span key={r.sportId ?? r.name} className="inline-flex items-center gap-1 rounded-pill border-2 border-ink bg-secondary py-1 pr-1 pl-3 text-sm font-bold">
-            <Check className="size-3.5" strokeWidth={3} />
-            {r.name}{!r.sportId && " · свой"}
-            <select aria-label={`Уровень: ${r.name}`} value={r.level ?? ""}
-              onChange={(e) => setLevel(r, (e.target.value || undefined) as UserSportRequestLevel | undefined)}
-              className="ml-1 rounded-pill bg-card px-1 text-xs font-bold outline-none">
-              <option value="">любой</option>
-              {TILE_LEVELS.map((l) => <option key={l.id} value={l.id}>{SPORT_LEVEL_LABEL[l.id]}</option>)}
-            </select>
-            <button type="button" aria-label={`Убрать: ${r.name}`} onClick={() => remove(r)} className="rounded-full p-1 hover:bg-white/50">
-              <X className="size-3.5" />
-            </button>
-          </span>
-        ))}
         <label className="flex h-11 min-w-[240px] flex-1 items-center gap-2 rounded-pill border-2 border-dashed border-ink bg-card px-4">
           <Plus className="size-4 text-muted-foreground" />
           <input value={custom} maxLength={100} onChange={(e) => setCustom(e.target.value)}
