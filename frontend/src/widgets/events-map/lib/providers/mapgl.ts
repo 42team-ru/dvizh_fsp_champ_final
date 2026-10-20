@@ -8,6 +8,12 @@ type MapglMap = InstanceType<MapglApi["Map"]>;
 type HtmlMarker = InstanceType<MapglApi["HtmlMarker"]>;
 
 const STYLE = (import.meta.env.VITE_2GIS_STYLE_ID as string | undefined)?.trim();
+/**
+ * Свой стиль из public/map-style (собирает scripts/build-map-style.mjs): не зависит от Редактора стилей.
+ * Пути внутри — относительно базового URL. ID из Редактора, если задан, важнее.
+ */
+const LOCAL_STYLE = { stylePath: "style.json", iconsPath: "icons/", fontsPath: "fonts/", modelsPath: "models/" };
+const localStyleUrl = () => `${window.location.origin}/map-style/`;
 const INIT_TIMEOUT = 15_000;
 let loading: Promise<MapglApi> | null = null;
 
@@ -26,8 +32,11 @@ function loadMapgl(): Promise<MapglApi> {
   return loading;
 }
 
-/** Ждём отрисовки тайлов, а не только конструктора: неверный ключ может проявиться асинхронно. */
-function waitForMap(map: MapglMap): Promise<void> {
+/**
+ * Ждём отрисовки тайлов, а не только конструктора: неверный ключ может проявиться асинхронно.
+ * `localStyle` — загрузка своего стиля: она прерывает стандартный, и его styleloaderror — не ошибка.
+ */
+function waitForMap(map: MapglMap, localStyle?: Promise<unknown>): Promise<void> {
   return new Promise((resolve, reject) => {
     const canvas = map.getCanvas();
     let styleLoaded = false;
@@ -48,8 +57,11 @@ function waitForMap(map: MapglMap): Promise<void> {
       reject(new Error("2GIS MapGL: map initialization timed out (check key permissions)"));
     }, INIT_TIMEOUT);
     map.on("idle", ready);
-    map.on("styleload", loaded);
-    map.on("styleloaderror", failed);
+    if (localStyle) localStyle.then(loaded, failed);
+    else {
+      map.on("styleload", loaded);
+      map.on("styleloaderror", failed);
+    }
     canvas.addEventListener("webglcontextlost", failed);
   });
 }
@@ -62,7 +74,8 @@ async function createMap(container: HTMLElement, center: [number, number], zoom:
   try {
     map = new api.Map(el, {
       center, zoom, key: KEY,
-      ...(STYLE ? { style: STYLE, styleZoom: zoom } : {}),
+      ...(STYLE ? { style: STYLE } : {}),
+      styleZoom: zoom,
       pitch: 0, rotation: 0,
       disablePitchByUserInteraction: true,
       disableRotationByUserInteraction: true,
@@ -71,6 +84,7 @@ async function createMap(container: HTMLElement, center: [number, number], zoom:
       zoomControl: !locked,
       enableTrackResize: true,
     });
+    const localStyle = STYLE ? undefined : map.setStyleFromUrl(localStyleUrl(), LOCAL_STYLE);
     // У MapGL нет общего флага запрета всех жестов. Останавливаем их до обработчиков SDK,
     // сохраняя ссылки копирайта и прокрутку страницы интерактивными.
     if (locked) {
@@ -82,7 +96,7 @@ async function createMap(container: HTMLElement, center: [number, number], zoom:
         el.addEventListener(event, stopGesture, { capture: true, passive: true });
       }
     }
-    await waitForMap(map);
+    await waitForMap(map, localStyle);
     return { api, map, el };
   } catch (error) {
     try { map?.destroy(); } finally { el.remove(); }
