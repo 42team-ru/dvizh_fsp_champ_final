@@ -12,6 +12,7 @@
     "start": "react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc",
     "orval": "orval",
+    "prebuild:memphis": "node scripts/prebuild-memphis.mjs",
     "prepare": "node -e \"try{require('child_process').execSync('git config core.hooksPath .githooks',{stdio:'ignore'})}catch(e){}\""
   },
   "dependencies": {
@@ -56,6 +57,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "orval": "^8.12.3",
+    "playwright-core": "1.63.0",
     "react-grab": "^0.1.37",
     "shadcn": "^4.10.0",
     "tailwindcss": "^4.2.2",

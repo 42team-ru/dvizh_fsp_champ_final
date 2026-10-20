@@ -15,7 +15,7 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
 import { Icon } from "@/shared/components/ui/icon";
-import { MemphisBackground } from "@/shared/components/ui/memphis-background";
+import { MemphisBackground, MemphisGlyph } from "@/shared/components/ui/memphis-background";
 import { Participants } from "@/widgets/event-card/ui/card-participants";
 import { Sparkles } from "lucide-react";
 import { toCardData } from "@/entity/event/lib/event-format";
@@ -85,6 +85,21 @@ function SectionHeading({
 }
 
 /** Герой главной: ближайшая встреча пользователя или приглашение найти/создать свою. */
+/**
+ * Инвентарь в герое: немного, в зазоре между заголовком (до 744 px) и билетом и справа от кнопок.
+ * Только с xl: на узком экране билет подъезжает к тексту и места нет.
+ */
+function HeroGear() {
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-0 hidden xl:block">
+      <span className="absolute top-[12px] left-[380px] size-9 rotate-[16deg]"><MemphisGlyph shape="shuttlecock" color="#ffffff" /></span>
+      <span className="absolute top-[150px] left-[758px] size-10"><MemphisGlyph shape="football" color="#ffffff" /></span>
+      <span className="absolute bottom-[34px] left-[600px] size-12 -rotate-12"><MemphisGlyph shape="dumbbell" color="var(--secondary)" /></span>
+      <span className="absolute bottom-[26px] left-[700px] size-8"><MemphisGlyph shape="tennis" color="var(--secondary)" /></span>
+    </div>
+  );
+}
+
 function Hero() {
   const { user, next, isLoading } = useNextTicket();
   const name = user?.firstName ?? "";
@@ -94,7 +109,7 @@ function Hero() {
   return (
     // Поток вместо абсолютных координат: при крупном шрифте браузера блок растёт, а не обрезает кнопки.
     <section className="relative box-border flex min-h-[330px] items-center justify-between gap-8 overflow-hidden rounded-[28px] border-2 border-ink bg-primary px-[44px] py-[32px]">
-      <img src="/home/memphis.svg" alt="" className="absolute top-0 left-0 h-full w-[1216px] max-w-none object-cover object-left-top" />
+      <HeroGear />
 
       <div className="relative w-[700px] min-w-0 shrink">
         <p className="text-[15px] leading-[21px] font-bold text-white opacity-90">
@@ -315,7 +330,8 @@ function Recommendations() {
 /** Главная клуба и админа: свой экран, один на телефон и компьютер. */
 function RoleHome({ role }: { role: "ORG" | "ADMIN" }) {
   return (
-    <div className="relative isolate min-h-dvh overflow-hidden bg-background pb-24 lg:pb-0">
+    <div className="relative isolate min-h-dvh overflow-clip bg-background pb-24 lg:pb-0">
+      <MemphisBackground seed={role === "ADMIN" ? "admin-home" : "org-home"} />
       <div className="hidden lg:block">
         <AppHeader current="home" />
       </div>

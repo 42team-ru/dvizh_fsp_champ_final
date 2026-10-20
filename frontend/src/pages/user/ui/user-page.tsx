@@ -40,7 +40,7 @@ export default function UserPage() {
 
   return (
     <div className="relative isolate min-h-dvh overflow-clip bg-background">
-      <MemphisBackground seed="user" />
+      <MemphisBackground seed="user-loading" />
       <div className="hidden lg:block">
         <AppHeader current="feed" />
       </div>

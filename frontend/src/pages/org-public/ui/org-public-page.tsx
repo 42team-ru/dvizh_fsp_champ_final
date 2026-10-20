@@ -18,6 +18,7 @@ import { Card } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { AccountMenu } from "@/features/auth/sign-out/ui/account-menu";
 import { OrganizationShare } from "./organization-share";
+import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 
 /** Публичная организация: два запроса при открытии, архив и галерея догружаются по действию. */
 export default function OrgPublicPage() {
@@ -37,7 +38,8 @@ export default function OrgPublicPage() {
     ["photos", `Фото ${o?.photosCount ?? ""}`],
   ];
   return (
-    <div className="min-h-dvh bg-background pb-[110px] lg:pb-16">
+    <div className="relative isolate min-h-dvh overflow-clip bg-background pb-[110px] lg:pb-16">
+      <MemphisBackground seed="org" />
       <div className="hidden lg:block">
         <AppHeader current="orgs" />
       </div>

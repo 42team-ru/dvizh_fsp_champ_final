@@ -1,8 +1,10 @@
 import * as React from "react"
 import { cn } from "cn"
+import prebuiltLayouts from "./memphis-layouts.json"
 
 /* ---------------------------------------------------------------------------
- * Фон Memphis. Фигуры раскладываются по свободному месту страницы: фон замеряет
+ * Фон Memphis со спортивным инвентарём: мячи, гантели, гиря, фишка, ракетка, кубок
+ * в цветах проекта, с чернильной обводкой и жёсткой тенью. Фигуры раскладываются по свободному месту страницы: фон замеряет
  * блоки, текст, поля и кнопки и ставит фигуры только туда, где они ни на что не
  * залезают и не наслаиваются друг на друга. Часть фигур выходит за края экрана
  * и садится в зазоры между блоками. Раскладка детерминирована seed: при той же
@@ -29,9 +31,15 @@ type Shape =
   | "whistle"
   | "stopwatch"
   | "medal"
+  | "volleyball"
+  | "kettlebell"
+  | "cone"
+  | "pawn"
+  | "racket"
+  | "trophy"
 
 type Variant = "desktop" | "mobile" | "auth"
-/** Набор фигур: геометрия Memphis или спортивный инвентарь (лендинг). */
+/** Набор фигур: спортивный инвентарь (по умолчанию) или геометрия Memphis. */
 type Theme = "memphis" | "sport"
 
 type Placed = { shape: Shape; x: number; y: number; size: number; rotate: number; color: string }
@@ -52,9 +60,17 @@ const TIERS: { share: number; size: [number, number]; shapes: Shape[] }[] = [
 
 /** Спортивный набор: крупный инвентарь первым, мелкие мячи заполняют остаток. */
 const SPORT_TIERS: typeof TIERS = [
-  { share: 0.3, size: [64, 92], shapes: ["football", "basketball", "dumbbell", "stopwatch", "medal"] },
-  { share: 0.4, size: [40, 56], shapes: ["tennis", "shuttlecock", "whistle", "football", "medal"] },
-  { share: 0.3, size: [24, 34], shapes: ["tennis", "football", "basketball", "shuttlecock"] },
+  {
+    share: 0.26,
+    size: [66, 96],
+    shapes: ["football", "basketball", "volleyball", "kettlebell", "dumbbell", "stopwatch", "trophy", "racket"],
+  },
+  {
+    share: 0.38,
+    size: [42, 60],
+    shapes: ["tennis", "shuttlecock", "whistle", "medal", "pawn", "cone", "racket", "volleyball", "dumbbell"],
+  },
+  { share: 0.36, size: [22, 32], shapes: ["tennis", "football", "basketball", "volleyball", "shuttlecock"] },
 ]
 
 /** Доля размера фигуры, которую она реально занимает (радиус описанного круга). */
@@ -78,9 +94,15 @@ const FOOTPRINT: Record<Shape, number> = {
   whistle: 0.5,
   stopwatch: 0.5,
   medal: 0.5,
+  volleyball: 0.48,
+  kettlebell: 0.5,
+  cone: 0.5,
+  pawn: 0.5,
+  racket: 0.52,
+  trophy: 0.5,
 }
 
-const ROTATABLE = new Set<Shape>(["shuttlecock", "dumbbell", "whistle", "medal", "triangle", "halfdisc", "stripes", "capsule", "squiggle", "zigzag", "grid"])
+const ROTATABLE = new Set<Shape>(["shuttlecock", "dumbbell", "whistle", "medal", "racket", "cone", "kettlebell", "pawn", "trophy", "triangle", "halfdisc", "stripes", "capsule", "squiggle", "zigzag", "grid"])
 const LINEAR = new Set<Shape>(["plus", "stripes", "dots"])
 
 /** Отступ фигуры от боковых сторон блоков, px. */
@@ -181,11 +203,10 @@ function layout(
   theme: Theme = "memphis",
 ): Placed[] {
   const tiers = theme === "sport" ? SPORT_TIERS : TIERS
-  // спортивный фон не прячется за карточки: фигуры только на свободном месте
-  const straddle = theme === "sport" ? 0 : STRADDLE_SHARE
-  // спортивные фигуры плотнее: встают в узкие зазоры между секциями
-  const clear = theme === "sport" ? 18 : CLEAR
-  const spacing = theme === "sport" ? 48 : SPACING
+  // спортивный и геометрический фоны раскладываются одинаково: тот же ритм, что был у Memphis
+  const straddle = STRADDLE_SHARE
+  const clear = CLEAR
+  const spacing = SPACING
   const rand = mulberry(hashSeed(seed))
   function pick<T>(list: readonly T[]): T {
     return list[Math.floor(rand() * list.length)]
@@ -334,13 +355,39 @@ const SPORT_COLOR: Partial<Record<Shape, string>> = {
   tennis: "var(--secondary)",
   shuttlecock: "#ffffff",
   medal: "var(--sun)",
+  volleyball: "var(--sun)",
+  cone: "var(--accent)",
+  trophy: "var(--sun)",
 }
 
 const SHADOW = 2.5
 
-function Glyph({ shape, color }: { shape: Shape; color: string }) {
+function Glyph({
+  shape,
+  color,
+  ink = INK,
+  shadow,
+}: {
+  shape: Shape
+  color: string
+  /** Цвет линий и деталей; на тёмном фоне — светлый (`var(--paper)`). */
+  ink?: string
+  /** Цвет жёсткой тени; по умолчанию как линии. */
+  shadow?: string
+}) {
+  // светлый вариант для тёмных блоков: линии, детали и тень берутся из пропсов, а не из чернил
+  const INK = ink
+  const SH = shadow ?? ink
   const line = { stroke: color, strokeLinecap: "round", strokeLinejoin: "round", fill: "none" } as const
   const outline = { stroke: INK, strokeWidth: 3, strokeLinejoin: "round" } as const
+  /** Сплошная фигура с жёсткой тенью: сначала чернильная копия со сдвигом, сверху — цветная с обводкой. */
+  type Paint = { fill: string; stroke: string; strokeWidth: number; strokeLinejoin: "round" }
+  const solid = (draw: (paint: Paint) => React.ReactNode, fill = color) => (
+    <>
+      <g transform={`translate(${SHADOW} ${SHADOW})`}>{draw({ fill: SH, stroke: SH, strokeWidth: 3, strokeLinejoin: "round" })}</g>
+      {draw({ fill, ...outline })}
+    </>
+  )
   const svg = (viewBox: string, children: React.ReactNode) => (
     <svg viewBox={viewBox} className="size-full overflow-visible">
       {children}
@@ -352,7 +399,7 @@ function Glyph({ shape, color }: { shape: Shape; color: string }) {
       return svg(
         "0 0 40 40",
         <>
-          <circle cx={20 + SHADOW} cy={20 + SHADOW} r="16" fill={INK} />
+          <circle cx={20 + SHADOW} cy={20 + SHADOW} r="16" fill={SH} />
           <circle cx="20" cy="20" r="16" fill={color} {...outline} />
         </>,
       )
@@ -364,10 +411,10 @@ function Glyph({ shape, color }: { shape: Shape; color: string }) {
         <>
           <polygon
             points="4,36 36,36 20,5"
-            fill={INK}
+            fill={SH}
             transform={`translate(${SHADOW} ${SHADOW})`}
             strokeLinejoin="round"
-            stroke={INK}
+            stroke={SH}
             strokeWidth="3"
           />
           <polygon points="4,36 36,36 20,5" fill={color} {...outline} />
@@ -379,9 +426,9 @@ function Glyph({ shape, color }: { shape: Shape; color: string }) {
         <>
           <path
             d="M3 30 A17 17 0 0 1 37 30 Z"
-            fill={INK}
+            fill={SH}
             transform={`translate(${SHADOW} ${SHADOW})`}
-            stroke={INK}
+            stroke={SH}
             strokeWidth="3"
             strokeLinejoin="round"
           />
@@ -427,7 +474,7 @@ function Glyph({ shape, color }: { shape: Shape; color: string }) {
       return svg(
         "0 0 40 40",
         <>
-          <circle cx={20 + SHADOW} cy={20 + SHADOW} r="16" fill={INK} />
+          <circle cx={20 + SHADOW} cy={20 + SHADOW} r="16" fill={SH} />
           <circle cx="20" cy="20" r="16" fill={color} {...outline} />
           <polygon points="20,13 26.7,17.8 24.1,25.6 15.9,25.6 13.3,17.8" fill={INK} />
           <path d="M20 13 V5 M26.7 17.8 L34 15 M24.1 25.6 L29 32 M15.9 25.6 L11 32 M13.3 17.8 L6 15" stroke={INK} strokeWidth="2.5" />
@@ -437,7 +484,7 @@ function Glyph({ shape, color }: { shape: Shape; color: string }) {
       return svg(
         "0 0 40 40",
         <>
-          <circle cx={20 + SHADOW} cy={20 + SHADOW} r="16" fill={INK} />
+          <circle cx={20 + SHADOW} cy={20 + SHADOW} r="16" fill={SH} />
           <circle cx="20" cy="20" r="16" fill={color} {...outline} />
           <path d="M4 20 H36 M20 4 V36 M9 8 Q16 20 9 32 M31 8 Q24 20 31 32" fill="none" stroke={INK} strokeWidth="2.5" />
         </>,
@@ -446,7 +493,7 @@ function Glyph({ shape, color }: { shape: Shape; color: string }) {
       return svg(
         "0 0 40 40",
         <>
-          <circle cx={20 + SHADOW} cy={20 + SHADOW} r="16" fill={INK} />
+          <circle cx={20 + SHADOW} cy={20 + SHADOW} r="16" fill={SH} />
           <circle cx="20" cy="20" r="16" fill={color} {...outline} />
           <path d="M8 9 Q17 20 8 31 M32 9 Q23 20 32 31" fill="none" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" />
         </>,
@@ -455,10 +502,10 @@ function Glyph({ shape, color }: { shape: Shape; color: string }) {
       return svg(
         "0 0 40 40",
         <>
-          <path d="M9 4 L31 4 L24 26 L16 26 Z" fill={INK} transform={`translate(${SHADOW} ${SHADOW})`} />
+          <path d="M9 4 L31 4 L24 26 L16 26 Z" fill={SH} transform={`translate(${SHADOW} ${SHADOW})`} />
           <path d="M9 4 L31 4 L24 26 L16 26 Z" fill={color} {...outline} />
           <path d="M15 5 L18 25 M25 5 L22 25" stroke={INK} strokeWidth="2" />
-          <circle cx={20 + SHADOW} cy={31 + SHADOW} r="6" fill={INK} />
+          <circle cx={20 + SHADOW} cy={31 + SHADOW} r="6" fill={SH} />
           <circle cx="20" cy="31" r="6" fill="var(--accent)" {...outline} />
         </>,
       )
@@ -466,7 +513,7 @@ function Glyph({ shape, color }: { shape: Shape; color: string }) {
       return svg(
         "0 0 48 24",
         <>
-          <g transform={`translate(${SHADOW} ${SHADOW})`} fill={INK}>
+          <g transform={`translate(${SHADOW} ${SHADOW})`} fill={SH}>
             <rect x="3" y="2" width="9" height="20" rx="3" />
             <rect x="36" y="2" width="9" height="20" rx="3" />
           </g>
@@ -479,7 +526,7 @@ function Glyph({ shape, color }: { shape: Shape; color: string }) {
       return svg(
         "0 0 40 40",
         <>
-          <path d="M6 20 A10 10 0 1 0 26 20 L36 14 L36 8 L14 10 A10 10 0 0 0 6 20 Z" fill={INK} transform={`translate(${SHADOW} ${SHADOW})`} />
+          <path d="M6 20 A10 10 0 1 0 26 20 L36 14 L36 8 L14 10 A10 10 0 0 0 6 20 Z" fill={SH} transform={`translate(${SHADOW} ${SHADOW})`} />
           <path d="M6 20 A10 10 0 1 0 26 20 L36 14 L36 8 L14 10 A10 10 0 0 0 6 20 Z" fill={color} {...outline} />
           <circle cx="16" cy="20" r="3.5" fill={INK} />
         </>,
@@ -489,7 +536,7 @@ function Glyph({ shape, color }: { shape: Shape; color: string }) {
         "0 0 40 40",
         <>
           <rect x="16" y="2" width="8" height="6" rx="2" fill={INK} />
-          <circle cx={20 + SHADOW} cy={23 + SHADOW} r="14" fill={INK} />
+          <circle cx={20 + SHADOW} cy={23 + SHADOW} r="14" fill={SH} />
           <circle cx="20" cy="23" r="14" fill={color} {...outline} />
           <circle cx="20" cy="23" r="9" fill="#ffffff" stroke={INK} strokeWidth="2.5" />
           <path d="M20 23 L20 17 M20 23 L24 25" stroke={INK} strokeWidth="2.5" strokeLinecap="round" />
@@ -500,41 +547,197 @@ function Glyph({ shape, color }: { shape: Shape; color: string }) {
         "0 0 40 40",
         <>
           <path d="M11 2 L18 18 M29 2 L22 18" stroke="var(--primary)" strokeWidth="6" strokeLinecap="round" />
-          <circle cx={20 + SHADOW} cy={26 + SHADOW} r="11" fill={INK} />
+          <circle cx={20 + SHADOW} cy={26 + SHADOW} r="11" fill={SH} />
           <circle cx="20" cy="26" r="11" fill={color} {...outline} />
           <path d="M20 20 L21.8 24 L26 24.3 L22.8 27 L23.8 31 L20 28.8 L16.2 31 L17.2 27 L14 24.3 L18.2 24 Z" fill={INK} />
+        </>,
+      )
+    case "volleyball":
+      return svg(
+        "0 0 40 40",
+        <>
+          {solid((p) => <circle cx="20" cy="20" r="16" {...p} />)}
+          <path
+            d="M20 20 Q19 10 12 6 M20 20 Q29 15 35.5 17 M20 20 Q14 28 15 35.5 M8 26 Q14 22 20 20 M28 33 Q26 25 20 20"
+            fill="none"
+            stroke={INK}
+            strokeWidth="2.5"
+            strokeLinecap="round"
+          />
+        </>,
+      )
+    case "kettlebell":
+      return svg(
+        "0 0 40 40",
+        <>
+          <path d="M12 18 V12 A8 8 0 0 1 28 12 V18" fill="none" stroke={INK} strokeWidth="5" strokeLinecap="round" />
+          {solid((p) => <path d="M6 26 A14 12 0 0 1 34 26 A14 11 0 0 1 6 26 Z" {...p} />)}
+          <rect x="15" y="22" width="10" height="6" rx="2" fill="#ffffff" stroke={INK} strokeWidth="2" />
+        </>,
+      )
+    case "cone":
+      return svg(
+        "0 0 40 40",
+        <>
+          {solid((p) => <rect x="4" y="31" width="32" height="6" rx="2" {...p} />, "var(--card)")}
+          {solid((p) => <path d="M16 4 L24 4 L32 31 L8 31 Z" {...p} />)}
+          <path d="M13.3 14 L26.7 14 L28.4 20 L11.6 20 Z" fill="#ffffff" stroke={INK} strokeWidth="2" strokeLinejoin="round" />
+        </>,
+      )
+    case "pawn":
+      return svg(
+        "0 0 40 40",
+        solid((p) => (
+          <>
+            <rect x="9" y="31" width="22" height="6" rx="2" {...p} />
+            <path d="M15 17 H25 L23 22 L27 31 H13 L17 22 Z" {...p} />
+            <circle cx="20" cy="11" r="6.5" {...p} />
+          </>
+        )),
+      )
+    case "racket":
+      return svg(
+        "0 0 40 40",
+        <>
+          <path d="M26 26 L35 35" stroke={INK} strokeWidth="9" strokeLinecap="round" />
+          <path d="M26 26 L35 35" stroke="var(--sun)" strokeWidth="4" strokeLinecap="round" />
+          {solid((p) => <circle cx="17" cy="17" r="13" {...p} />)}
+          <circle cx="12.5" cy="12.5" r="3" fill="#ffffff" />
+        </>,
+      )
+    case "trophy":
+      return svg(
+        "0 0 40 40",
+        <>
+          <path d="M11 8 H5 Q5 17 13 18 M29 8 H35 Q35 17 27 18" fill="none" stroke={INK} strokeWidth="3" strokeLinecap="round" />
+          {solid((p) => (
+            <>
+              <rect x="11" y="31" width="18" height="6" rx="2" {...p} />
+              <rect x="17" y="22" width="6" height="9" {...p} />
+              <path d="M10 4 H30 V12 A10 10 0 0 1 10 12 Z" {...p} />
+            </>
+          ))}
+          <path d="M20 8 L21.3 10.8 L24.3 11 L22 13 L22.7 16 L20 14.4 L17.3 16 L18 13 L15.7 11 L18.7 10.8 Z" fill={INK} />
         </>,
       )
     case "capsule":
       return svg(
         "0 0 40 40",
         <>
-          <rect x={3 + SHADOW} y={12 + SHADOW} width="34" height="16" rx="8" fill={INK} />
+          <rect x={3 + SHADOW} y={12 + SHADOW} width="34" height="16" rx="8" fill={SH} />
           <rect x="3" y="12" width="34" height="16" rx="8" fill={color} {...outline} />
         </>,
       )
   }
 }
 
+/* ---------- Готовые раскладки (пребилд) ---------- */
+
 /**
- * Фон в стиле Memphis. Кладётся первым ребёнком в `relative isolate overflow-hidden`
+ * Порядок фигур и цветов в упакованной раскладке. Только дописывать в конец: иначе готовые раскладки
+ * из `memphis-layouts.json` прочитаются неверно — тогда поднять PREBUILT_VERSION и пересобрать скриптом.
+ */
+const SHAPE_LIST: Shape[] = [
+  "disc", "ring", "triangle", "halfdisc", "plus", "squiggle", "zigzag", "dots", "grid", "stripes", "capsule",
+  "football", "basketball", "tennis", "shuttlecock", "dumbbell", "whistle", "stopwatch", "medal",
+  "volleyball", "kettlebell", "cone", "pawn", "racket", "trophy",
+]
+const COLOR_LIST = [INK, ...PALETTE, "#ffffff", "var(--sun)"]
+const PREBUILT_VERSION = 1
+
+type Prebuilt = { version: number; layouts: Record<string, Record<string, number[]>> }
+const PREBUILT = prebuiltLayouts as Prebuilt
+
+/** Ширина округляется до 40 px: под каждую такую ширину в пребилде своя раскладка. */
+function widthBucket(width: number) {
+  return Math.round(width / 40) * 40
+}
+
+function prebuiltId(theme: Theme, variant: Variant, key: string) {
+  return `${theme}:${variant}:${key}`
+}
+
+function pack(shapes: Placed[]): number[] {
+  return shapes.flatMap((p) => [
+    SHAPE_LIST.indexOf(p.shape),
+    p.x,
+    p.y,
+    p.size,
+    p.rotate,
+    Math.max(0, COLOR_LIST.indexOf(p.color)),
+  ])
+}
+
+function unpack(data: number[]): Placed[] {
+  const shapes: Placed[] = []
+  for (let i = 0; i + 5 < data.length; i += 6) {
+    const shape = SHAPE_LIST[data[i]]
+    if (!shape) continue
+    shapes.push({ shape, x: data[i + 1], y: data[i + 2], size: data[i + 3], rotate: data[i + 4], color: COLOR_LIST[data[i + 5]] })
+  }
+  return shapes
+}
+
+/** Готовая раскладка из пребилда для этой страницы и ширины, если есть. */
+function readPrebuilt(theme: Theme, variant: Variant, key: string, width: number): Placed[] | null {
+  if (PREBUILT.version !== PREBUILT_VERSION) return null
+  const data = PREBUILT.layouts[prebuiltId(theme, variant, key)]?.[widthBucket(width)]
+  return data ? unpack(data) : null
+}
+
+/**
+ * Для скрипта пребилда (только dev): каждый видимый фон на странице заново раскладывается по текущему DOM
+ * и отдаёт упакованную раскладку. Скрипт `scripts/prebuild-memphis.mjs` собирает их в `memphis-layouts.json`.
+ */
+const prebuildSources = new Set<() => { id: string; width: number; data: number[] } | null>()
+if (import.meta.env.DEV && typeof window !== "undefined") {
+  ;(window as unknown as { __memphisPrebuild?: () => unknown }).__memphisPrebuild = () =>
+    Array.from(prebuildSources, (collect) => collect()).filter(Boolean)
+}
+
+/**
+ * Фон со спортивным инвентарём. Кладётся первым ребёнком в `relative isolate overflow-hidden`
  * контейнер страницы — фигуры окажутся под контентом и займут свободное место.
+ *
+ * Раскладка статичная: она заранее посчитана по готовым страницам (`yarn prebuild:memphis`) и ставится
+ * с первого кадра, ничего не перекладывается. Если под эту ширину раскладки нет — считается на месте, как раньше.
  */
 function MemphisBackground({
   variant = "desktop",
   className,
   seed,
-  theme = "memphis",
+  theme = "sport",
 }: {
   variant?: Variant
   theme?: Theme
-  /** Разный seed — разный рисунок; при той же вёрстке рисунок не меняется. */
+  /** Ключ страницы: у каждой страницы свой, рисунок одной страницы всегда одинаковый. */
   seed?: string | number
   className?: string
 }) {
   const ref = React.useRef<HTMLDivElement>(null)
   const [shapes, setShapes] = React.useState<Placed[]>([])
+  /** Фигуры готовой раскладки, на которые всё же наехал текст (другие данные, чем при пребилде): тихо гасим. */
+  const [covered, setCovered] = React.useState<ReadonlySet<number>>(() => new Set())
+  /** Откуда раскладка: готовая из пребилда или посчитанная на месте (видно в DevTools). */
+  const [source, setSource] = React.useState<"prebuilt" | "live">("live")
   const key = String(seed ?? variant)
+
+  React.useEffect(() => {
+    if (!import.meta.env.DEV) return
+    const collect = () => {
+      const bg = ref.current
+      const scope = bg?.parentElement
+      if (!bg || !scope || !bg.offsetWidth || !bg.offsetHeight || getComputedStyle(bg).display === "none") return null
+      const width = bg.offsetWidth
+      const scale = variant === "mobile" || width < 640 ? 0.7 : 1
+      const placed = layout(width, bg.offsetHeight, collectObstacles(bg, scope), key, scale, [], theme)
+      return { id: prebuiltId(theme, variant, key), width: widthBucket(width), data: pack(placed) }
+    }
+    prebuildSources.add(collect)
+    return () => {
+      prebuildSources.delete(collect)
+    }
+  }, [key, variant, theme])
 
   React.useLayoutEffect(() => {
     const bg = ref.current
@@ -555,9 +758,15 @@ function MemphisBackground({
       return width
     }
 
-    // Первый кадр: фигуры сразу — из кэша (страница этого размера уже раскладывалась) или посчитанные
-    // по тому, что уже есть на экране. useLayoutEffect успевает до отрисовки, пустого фона не видно.
-    const cached = bg.offsetWidth ? readCache(cacheKey(key, variant, bg.offsetWidth, theme)) : null
+    // Готовая раскладка: ставим сразу и больше не двигаем. Когда страница догрузится, только гасим фигуры,
+    // на которые наехал текст или кнопки, — новых не добавляем.
+    const prebuilt = bg.offsetWidth ? readPrebuilt(theme, variant, key, bg.offsetWidth) : null
+    setCovered(new Set())
+    setSource(prebuilt ? "prebuilt" : "live")
+
+    // Первый кадр без пребилда: из кэша браузера или посчитанные по тому, что уже есть на экране.
+    // useLayoutEffect успевает до отрисовки, пустого фона не видно.
+    const cached = prebuilt ?? (bg.offsetWidth ? readCache(cacheKey(key, variant, bg.offsetWidth, theme)) : null)
     if (cached) {
       current = cached
       setShapes(cached)
@@ -565,16 +774,27 @@ function MemphisBackground({
       place([])
     }
 
-    // Дочистка один раз, когда подгрузятся данные: убираем фигуры, на которые наехал контент, и добираем
-    // свободное место. Остальные фигуры не двигаются; дальше рисунок не трогаем до ухода со страницы.
     const refine = () => {
       if (done) return
-      const width = place(current)
-      if (!width) {
-        timer = window.setTimeout(refine, 200)
-        return
+      if (prebuilt) {
+        const hard = collectObstacles(bg, scope).hard
+        const hidden = new Set<number>()
+        prebuilt.forEach((p, i) => {
+          const r = p.size * FOOTPRINT[p.shape]
+          const cx = p.x + p.size / 2
+          const cy = p.y + p.size / 2
+          if (hard.some((o) => distToBox(cx, cy, o) < r + CLEAR_HARD - 0.5)) hidden.add(i)
+        })
+        setCovered(hidden)
+      } else {
+        // Без пребилда — дочистка один раз: убираем фигуры, на которые наехал контент, добираем свободное место.
+        const width = place(current)
+        if (!width) {
+          timer = window.setTimeout(refine, 200)
+          return
+        }
+        writeCache(cacheKey(key, variant, width, theme), current)
       }
-      writeCache(cacheKey(key, variant, width, theme), current)
       done = true
       mutations.disconnect()
     }
@@ -607,18 +827,20 @@ function MemphisBackground({
       ref={ref}
       aria-hidden="true"
       data-slot="memphis-background"
+      data-layout={`${prebuiltId(theme, variant, key)}@${source}`}
       className={cn("pointer-events-none absolute inset-0 -z-10 overflow-hidden", className)}
     >
       {shapes.map((p, i) => (
         <div
           key={i}
-          className="absolute"
+          className="absolute transition-opacity duration-300"
           style={{
             left: p.x,
             top: p.y,
             width: p.size,
             height: p.size,
             transform: `rotate(${p.rotate}deg)`,
+            opacity: covered.has(i) ? 0 : 1,
           }}
         >
           <Glyph shape={p.shape} color={p.color} />
@@ -628,4 +850,9 @@ function MemphisBackground({
   )
 }
 
-export { MemphisBackground, Glyph as MemphisGlyph }
+/** Ключ фона по адресу страницы: id в пути заменяются на `:id`, чтобы у всех карточек одного вида был один рисунок. */
+function routeSeed(pathname: string) {
+  return pathname.replace(/\/[0-9a-f]{8}-[0-9a-f-]{27,}/gi, "/:id").replace(/\/+$/, "") || "/"
+}
+
+export { MemphisBackground, Glyph as MemphisGlyph, routeSeed }

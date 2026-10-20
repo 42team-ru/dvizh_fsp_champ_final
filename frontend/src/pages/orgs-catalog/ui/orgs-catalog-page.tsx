@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/shared/components/ui/select";
 import { monthLabel } from "@/shared/lib/date-ru";
+import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 
 export default function OrgsCatalogPage() {
   const [mine, setMine] = useState(false);
@@ -42,7 +43,8 @@ export default function OrgsCatalogPage() {
   });
   const data = query.data?.data;
   return (
-    <div className="min-h-dvh bg-background pb-[110px] lg:pb-16">
+    <div className="relative isolate min-h-dvh overflow-clip bg-background pb-[110px] lg:pb-16">
+      <MemphisBackground seed="orgs" />
       <div className="hidden lg:block">
         <AppHeader current="orgs" />
       </div>

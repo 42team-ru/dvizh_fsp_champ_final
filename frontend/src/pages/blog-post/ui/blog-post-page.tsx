@@ -89,10 +89,10 @@ export default function BlogPostPage() {
     onError: (e) => toast.error(e.detail ?? "Не удалось удалить пост"),
   } });
 
-  if (query.isPending) return <BlogShell><p role="status" className="font-semibold text-muted-foreground">Загружаем пост…</p></BlogShell>;
+  if (query.isPending) return <BlogShell seed="blog-post"><p role="status" className="font-semibold text-muted-foreground">Загружаем пост…</p></BlogShell>;
   if (!data) {
     return (
-      <BlogShell>
+      <BlogShell seed="blog-post">
         <EmptyState icon={MessageCircle} title="Пост не найден" text="Возможно, автор его удалил или ещё не опубликовал."
           action={<Button asChild><Link to="/blog">В блог</Link></Button>} />
       </BlogShell>
@@ -102,7 +102,7 @@ export default function BlogPostPage() {
   const cover = data.photos[0];
 
   return (
-    <BlogShell>
+    <BlogShell seed="blog-post">
       {/* как верхняя панель встречи: «К блогу» слева, действия справа */}
       <div className="flex flex-wrap items-center gap-2">
         <Button asChild variant="soft" className={TOP}>

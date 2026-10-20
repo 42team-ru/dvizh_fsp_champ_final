@@ -4,9 +4,8 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Icon } from "@/shared/components/ui/icon";
 import { AccountMenu } from "@/features/auth/sign-out/ui/account-menu";
-import { useCabinetAccess } from "@/entity/user/model/use-cabinet-access";
 import { useNavAccess } from "@/entity/user/model/use-nav-access";
-import { BookOpen, Building2, BriefcaseBusiness, ShieldCheck } from "lucide-react";
+import { BookOpen, Building2, ShieldCheck } from "lucide-react";
 import { SearchPalette } from "@/widgets/search-palette/ui/search-palette";
 
 const NAV = [
@@ -29,10 +28,9 @@ const iconFolder = (current: string, key: string) =>
 
 /**
  * Шапка одна и та же на всех страницах: ширина контейнера не зависит от страницы, шапка прилипает к верху —
- * при переходах ничего не прыгает. Вкладка «Кабинет» — только организаторам.
+ * при переходах ничего не прыгает. «Кабинет» — в меню аккаунта справа.
  */
 export function AppHeader({ current = "home" }: { current?: "home" | "feed" | "blog" | "profile" | "activity" | "cabinet" | "admin" | "orgs" }) {
-  const cabinet = useCabinetAccess();
   const nav = useNavAccess();
   // «Профиль» — только в меню аккаунта справа
   const items = NAV.filter((item) => item.key !== "activity" || nav.showActivity);
@@ -79,14 +77,6 @@ export function AppHeader({ current = "home" }: { current?: "home" | "feed" | "b
               <Link to="/admin" title="Админка" aria-current={current === "admin" ? "page" : undefined}>
                 <ShieldCheck className="size-[19px] shrink-0" strokeWidth={2.2} />
                 <span className={NAV_LABEL}>Админка</span>
-              </Link>
-            </Button>
-          )}
-          {cabinet.allowed && (
-            <Button asChild variant="nav" size="nav" className={NAV_ITEM}>
-              <Link to="/my/events" title="Кабинет" aria-current={current === "cabinet" ? "page" : undefined}>
-                <BriefcaseBusiness className="size-[19px] shrink-0" strokeWidth={2.2} />
-                <span className={NAV_LABEL}>Кабинет</span>
               </Link>
             </Button>
           )}

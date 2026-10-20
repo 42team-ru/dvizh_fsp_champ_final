@@ -23,6 +23,7 @@ import { SignupsChart } from "@/pages/admin/ui/overview-page";
 import { ModerationDialogs, type Action } from "@/pages/admin/ui/events-page";
 import { Chip, Consequence, DecisionDialog, LetterTile, PillTabs, useInvalidateAdmin } from "@/pages/admin/ui/parts";
 import { monthTitle } from "@/pages/admin/ui/format";
+import { MemphisGlyph } from "@/shared/components/ui/memphis-background";
 
 const CARD = "rounded-[24px] border-2 border-ink bg-card";
 const TITLE = "font-display text-[22px] leading-7 font-extrabold text-foreground";
@@ -50,16 +51,22 @@ function usePendingQueue() {
   return [...items].sort((a, b) => (a.submittedAt ?? "").localeCompare(b.submittedAt ?? ""));
 }
 
+/** Светлые линии и ультрамариновая тень: на чернильном фоне героя обычный инвентарь с чернильной обводкой сливается. */
+const ON_DARK = { ink: "var(--paper)", shadow: "var(--primary)" } as const
+
 function HeroDecor() {
   return (
-    // фигуры расставлены под две колонки героя; в одной колонке (телефон, планшет) они легли бы на заголовок
+    // инвентарь расставлен под две колонки героя, в зазоре между текстом и веером заявок; в одной колонке он лёг бы на заголовок
     <div aria-hidden className="pointer-events-none absolute inset-0 hidden overflow-hidden lg:block">
-      <svg className="absolute top-5 left-[27%] h-4 w-24 text-secondary" viewBox="0 0 96 16"><path d="M2 12 10 4l8 8 8-8 8 8 8-8 8 8 8-8 8 8 8-8 8 8 8-8" fill="none" stroke="currentColor" strokeWidth="3" /></svg>
-      <Plus className="absolute top-8 left-[49%] size-6 text-secondary" strokeWidth={3} />
-      <motion.span animate={{ y: [0, -6, 0] }} transition={{ duration: 3, repeat: Infinity }} className="absolute top-14 left-[57%] size-7 rounded-full border-[3px] border-primary" />
-      <motion.svg animate={{ rotate: [0, 14, 0] }} transition={{ duration: 4, repeat: Infinity }} className="absolute top-[140px] left-[53%] size-9 text-orange" viewBox="0 0 40 36"><path d="M20 2 38 34H2Z" fill="currentColor" /></motion.svg>
-      <svg className="absolute bottom-10 left-[45%] h-4 w-24 text-primary" viewBox="0 0 96 16"><path d="M2 12 10 4l8 8 8-8 8 8 8-8 8 8 8-8 8 8 8-8 8 8 8-8" fill="none" stroke="currentColor" strokeWidth="3" /></svg>
-      <div className="absolute top-[200px] left-[49%] grid grid-cols-5 gap-2 opacity-40">{Array.from({ length: 15 }, (_, i) => <span key={i} className="size-1 rounded-full bg-lilac" />)}</div>
+      <span className="absolute top-6 left-[49%] size-9 rotate-[18deg]"><MemphisGlyph shape="shuttlecock" color="var(--sky)" {...ON_DARK} /></span>
+      <motion.span animate={{ y: [0, -6, 0] }} transition={{ duration: 3, repeat: Infinity }} className="absolute top-14 left-[57%] size-9">
+        <MemphisGlyph shape="tennis" color="var(--secondary)" {...ON_DARK} />
+      </motion.span>
+      <motion.span animate={{ rotate: [0, 14, 0] }} transition={{ duration: 4, repeat: Infinity }} className="absolute top-[140px] left-[53%] size-12">
+        <MemphisGlyph shape="whistle" color="var(--accent)" {...ON_DARK} />
+      </motion.span>
+      <span className="absolute bottom-9 left-[51%] size-10"><MemphisGlyph shape="football" color="var(--ink)" {...ON_DARK} /></span>
+      <span className="absolute bottom-[86px] left-[60%] size-12 -rotate-12"><MemphisGlyph shape="dumbbell" color="var(--mint)" {...ON_DARK} /></span>
     </div>
   );
 }
