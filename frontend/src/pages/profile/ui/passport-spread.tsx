@@ -193,7 +193,7 @@ function PetPage() {
 <PetBackdrop />
         <ProfileBeaverPet
           speechContainer={speechContainer}
-          className="absolute bottom-[-172px] left-1/2 h-[420px] w-[420px] -translate-x-1/2 [&_.beaver-pet]:h-full [&_svg]:h-full"
+          className="absolute bottom-[-268px] left-1/2 h-[420px] w-[420px] -translate-x-1/2 [&_.beaver-pet]:h-full [&_svg]:h-full"
         />
         <div
           ref={setSpeechContainer}
