@@ -20,7 +20,8 @@ import { Progress } from "@/shared/components/ui/progress";
 import { RoughBorder } from "@/shared/components/ui/rough-border";
 import { cn } from "cn";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
-import { QrCode } from "@/shared/components/ui/qr-code";
+import { TicketStrip } from "@/entity/event/ui/ticket-strip";
+import { TicketQrStamp } from "@/entity/event/ui/ticket-qr-stamp";
 import { EventShare } from "./event-share";
 import { InviteActions } from "@/features/organizer-invite/ui/invite-actions";
 import { EventGoingCrowd } from "@/widgets/event-going-crowd/ui/event-going-crowd";
@@ -115,6 +116,7 @@ function RegisterAction({ m, className, hintClassName }: { m: EventModel; classN
 function TicketHero({ m }: { m: EventModel }) {
   const e = m.event!;
   const cover = coverOf(e);
+  const showQrStamp = !m.moderated && e.singleOccurrence?.status !== "CANCELLED" && (e.viewer.registrationStatus === "CONFIRMED" || e.viewer.isOrganizer);
   return (
     // Тень — drop-shadow на обёртке (box-shadow маска срезала бы целиком). Внешняя обёртка
     // шире на тень и вырезает те же дыры уже из тени, чтобы сквозь вырез был виден фон.
@@ -135,13 +137,8 @@ function TicketHero({ m }: { m: EventModel }) {
       </div>
 
       {/* полоса «посадочного талона» над основной частью билета */}
-      <div className="absolute top-0 left-[270px] z-10 flex h-10 w-[642px] items-center justify-between bg-primary px-8 text-[11px] font-extrabold whitespace-nowrap">
-        <span className="tracking-[2px] text-secondary">ПОСАДОЧНЫЙ ТАЛОН · {m.kindLabel.toUpperCase()}</span>
-        <img src="/event/dots.svg" alt="" className="absolute left-[340px] h-[26px] w-[40px] max-w-none" />
-        <span className="tracking-[1.5px] text-white">
-          БИЛЕТ № {e.id.slice(0, 4).toUpperCase()} · {m.joinLabel.toUpperCase()}
-        </span>
-      </div>
+      <TicketStrip id={e.id} kind={m.kindLabel} joinMode={e.joinMode}
+        className="absolute top-0 left-[270px] z-10 h-10 w-[642px]" />
 
       <div className="flex h-[396px] w-[642px] shrink-0 flex-col items-start justify-between pt-[64px] pr-[30px] pb-[26px] pl-[10px]">
         <div className="relative h-[86px] w-[602px]">
@@ -169,38 +166,22 @@ function TicketHero({ m }: { m: EventModel }) {
         </div>
       </div>
 
-      <div className="relative flex h-[396px] w-[300px] shrink-0 flex-col items-start justify-between overflow-hidden bg-secondary pt-[50px] pr-[26px] pb-[26px] pl-8">
-        <Img src="memphis.svg" className="top-0 left-0 h-[400px] w-[300px]" />
+      <div className="relative flex h-[396px] w-[300px] shrink-0 flex-col items-start justify-between overflow-hidden bg-secondary pt-[44px] pr-[26px] pb-[18px] pl-8">
         <span className="absolute top-[14px] left-8 text-[10px] font-extrabold tracking-[2px] text-foreground">
           КОНТРОЛЬ
         </span>
         <span className="absolute top-[14px] right-[26px] text-[10px] font-extrabold tracking-[1px] text-foreground">
           № {e.id.slice(0, 4).toUpperCase()}
         </span>
-        {!m.moderated && <QrCode path={`/events/${e.id}`} label="QR-код: страница встречи" className="absolute top-[46px] right-[26px] z-10 size-[68px]" />}
-        {/* штамп организатора: только пока моя запись подтверждена — после «Отменить» пропадает */}
         {(e.status !== "PUBLISHED" || e.singleOccurrence?.status === "CANCELLED") && (
           <CancelledStamp big className="top-[220px] left-[34px] h-[66px] w-[178px] rotate-[9deg]" />
         )}
-        {e.viewer.registrationStatus === "CONFIRMED" && e.status === "PUBLISHED" && e.singleOccurrence?.status !== "CANCELLED" && (
-          <div className="pointer-events-none absolute top-[220px] left-[34px] h-[66px] w-[178px] rotate-[9deg] text-primary">
-            <img src="/event/stamp-admitted.svg" alt="" className="absolute inset-0 size-full max-w-none" />
-            <p className="absolute inset-x-0 top-3 text-center font-display text-[20px] font-extrabold">ДОПУЩЕН</p>
-            <p className="absolute inset-x-0 top-10 truncate px-3 text-center text-[9px] font-extrabold tracking-[1px]">
-              орг. {e.organization?.name ?? `${e.author.firstName} ${e.author.lastName?.[0] ?? ""}.`} · {new Date(e.startAt).toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit" })}
-            </p>
-          </div>
-        )}
-        <div className="relative h-[143px] w-[242px]">
+        <div className="relative h-[143px] w-[242px] shrink-0">
           <Eyebrow className="text-foreground">УЧАСТНИКИ</Eyebrow>
-          <p className="absolute top-[14px] left-0 font-display text-[54px] leading-[67px] font-extrabold text-foreground">
-            {m.going}
-          </p>
-          {e.capacity != null && (
-            <span className="absolute top-[47px] left-[81px] text-xl leading-[27px] font-bold text-foreground">
-              / {e.capacity}
-            </span>
-          )}
+          <div className="absolute top-[14px] left-0 flex max-w-full items-baseline gap-2 text-foreground">
+            <p className="font-display text-[54px] leading-[67px] font-extrabold">{m.going}</p>
+            {e.capacity != null && <span className="text-xl leading-[27px] font-bold">/ {e.capacity}</span>}
+          </div>
           <Progress value={m.percent} className="absolute top-[89px] left-0 h-3" />
           <div className="absolute top-[113px] left-0 h-[30px] w-[242px]">
             {e.participants.slice(0, 4).map((p, i) => (
@@ -221,14 +202,15 @@ function TicketHero({ m }: { m: EventModel }) {
             )}
           </div>
         </div>
-        <div className="relative h-[81px] w-[242px]">
+        {showQrStamp && <TicketQrStamp eventId={e.id} />}
+        <div className={cn("relative w-[242px] shrink-0", showQrStamp ? "h-[76px]" : "h-[81px]")}>
           {m.moderated ? (
             <p className="rounded-2xl border-2 border-ink bg-destructive px-4 py-3 text-sm font-bold text-destructive-foreground">
               Запись закрыта
             </p>
           ) : (
-            <RegisterAction m={m} className="h-[54px] w-[242px] px-7 text-base leading-[22px]"
-              hintClassName="absolute top-[60px] left-0 line-clamp-2 w-full text-center text-xs leading-[15px] font-bold text-foreground" />
+            <RegisterAction m={m} className={cn("w-[242px] px-7 text-base leading-[22px]", showQrStamp ? "h-11" : "h-[54px]")}
+              hintClassName={cn("absolute left-0 line-clamp-2 w-full text-center text-xs leading-[15px] font-bold text-foreground", showQrStamp ? "top-[48px]" : "top-[60px]")} />
           )}
         </div>
       </div>
