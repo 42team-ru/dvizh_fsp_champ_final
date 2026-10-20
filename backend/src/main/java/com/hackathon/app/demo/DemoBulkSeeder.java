@@ -5,6 +5,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -71,7 +72,6 @@ class DemoBulkSeeder {
     private static final int ONLINE_EVENTS = 16;
     /** Доля людей с фото в профиле: портрет или снимок с тренировки. */
     private static final double PORTRAIT_SHARE = 0.4;
-    private static final double SPORT_AVATAR_SHARE = 0.12;
     /** Доля мероприятий, к которым организатор загрузил фото. */
     private static final double EVENT_PHOTO_SHARE = 0.6;
     private static final List<String> OUTDOOR_NOTES = List.of("Встречаемся у главного входа",
@@ -107,7 +107,8 @@ class DemoBulkSeeder {
     }
 
     /** Что и когда произойдёт: автор, клуб (если от имени клуба), город, шаблон, начало. */
-    private record Plan(Person author, UUID organizationId, City city, Template template, Instant startAt) {
+    private record Plan(Person author, UUID organizationId, City city, Template template, Instant startAt, Venue venue,
+            int photos) {
     }
 
     /** Подвинуть запись или заявку во времени: когда подана и когда решена. */
@@ -204,7 +205,18 @@ class DemoBulkSeeder {
             var author = run.pick(people);
             plans.add(plan(run, author, null, author.city(), run.pick(onlineTemplates)));
         }
-        for (var plan : plans) {
+        // Фото раздаются заранее и вперемешку: иначе их разобрали бы самые ранние по времени встречи.
+        var withPhotos = new ArrayList<Plan>();
+        var shuffled = new ArrayList<>(plans);
+        Collections.shuffle(shuffled, run.random);
+        for (var plan : shuffled) {
+            int wanted = run.chance(EVENT_PHOTO_SHARE) ? run.between(1, 2) : 0;
+            var indoor = plan.venue() == null || plan.venue().indoor();
+            int granted = wanted == 0 ? 0 : photos.reserveBulk(plan.template().sport(), indoor, wanted);
+            withPhotos.add(new Plan(plan.author(), plan.organizationId(), plan.city(), plan.template(), plan.startAt(),
+                    plan.venue(), granted));
+        }
+        for (var plan : withPhotos) {
             var endAt = plan.startAt().plus(Duration.ofMinutes(plan.template().durationMinutes()));
             history.add(plan.startAt(), endAt, () -> execute(run, plan, endAt));
         }
@@ -273,7 +285,7 @@ class DemoBulkSeeder {
                 case PENDING -> {
                 }
             }
-            var logo = photos.one(club.sport(), run.random.nextInt(100));
+            var logo = photos.clubLogo(club.sport());
             if (logo != null) {
                 organizationService.uploadLogo(account.getId(), logo);
             }
@@ -302,7 +314,10 @@ class DemoBulkSeeder {
             // автор присоединился позже — переносим в будущее
             startAt = today.plusDays(run.between(2, 30)).atTime(run.pick(template.hours()), 0).atZone(zone).toInstant();
         }
-        return new Plan(author, organizationId, city, template, startAt);
+        // площадка под вид спорта; точка — сама площадка, без случайного сдвига (иначе метка уезжает в реку)
+        Venue venue = template.online() ? null
+                : run.pick(city.venues().stream().filter(v -> v.fits(template)).toList());
+        return new Plan(author, organizationId, city, template, startAt, venue, 0);
     }
 
     /** Одно мероприятие со всем, что вокруг него происходит, в порядке настоящей жизни (через сервисы). */
@@ -321,9 +336,7 @@ class DemoBulkSeeder {
         }
         createdAt = clamp(createdAt, earliestCreated, latestCreated);
 
-        // площадка под вид спорта; точка — сама площадка, без случайного сдвига (иначе метка уезжает в реку)
-        Venue venue = template.online() ? null
-                : run.pick(city.venues().stream().filter(v -> v.fits(template)).toList());
+        var venue = plan.venue();
         Integer capacity = template.maxCapacity() > 0 ? run.between(template.minCapacity(), template.maxCapacity()) : null;
         var joinMode = run.chance(template.requestShare()) ? JoinMode.REQUEST : JoinMode.FREE;
         // Сервис не создаёт прошедшую встречу: она рождается с датой в будущем и переезжает в прошлое в самом конце.
@@ -343,11 +356,8 @@ class DemoBulkSeeder {
                 null, null);
         var eventId = eventService.create(author.id(), request).id();
         // организатор загрузил фото: обложка в ленте и галерея в карточке
-        if (run.chance(EVENT_PHOTO_SHARE)) {
-            var indoor = venue == null || venue.indoor();
-            for (var photo : photos.pick(template.sport(), indoor, run.random.nextInt(100), run.between(1, 3))) {
-                eventService.addPhoto(eventId, author.id(), photo, null);
-            }
+        for (var photo : photos.bulk(template.sport(), venue == null || venue.indoor(), plan.photos())) {
+            eventService.addPhoto(eventId, author.id(), photo, null);
         }
 
         // соорганизатор у части событий частных лиц
@@ -558,7 +568,7 @@ class DemoBulkSeeder {
     // --- Фото профиля ---
 
     /**
-     * Аватары, как их ставят люди: у части — портрет, у части — снимок с любимой тренировки, остальные без фото.
+     * Аватары, как их ставят люди: у части — портрет, остальные без фото.
      * Портреты не повторяются, пока не кончится запас.
      */
     private void avatars(Run run, List<Person> people) {
@@ -576,11 +586,6 @@ class DemoBulkSeeder {
                     nextWoman++;
                 } else {
                     nextMan++;
-                }
-            } else if (roll < PORTRAIT_SHARE + SPORT_AVATAR_SHARE) {
-                var photo = photos.one(run.pick(DemoBulkData.TEMPLATES).sport(), run.random.nextInt(100));
-                if (photo != null) {
-                    profileService.uploadAvatar(person.id(), photo);
                 }
             }
         }

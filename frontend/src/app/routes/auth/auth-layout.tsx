@@ -1,5 +1,7 @@
 import { BeaverPet } from "@/widgets/beaver-pet/ui/beaver-pet";
-import { useLocation } from "react-router";
+import { Link, useLocation } from "react-router";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/shared/components/ui/button";
 import { PageTransition } from "@/shared/components/ui/page-transition";
 import { BrandPlate } from "@/shared/components/ui/brand-plate";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
@@ -46,6 +48,10 @@ export default function AuthLayout() {
       <MobileBanner brand={brand} />
       <BrandPanel brand={brand} />
       <div className={`relative flex-1 px-4 pt-[18px] pb-5 lg:flex lg:items-center-safe lg:justify-center-safe lg:overflow-y-auto lg:px-6 lg:py-10`}>
+        {/* вернуться на лендинг: вход не тупик, если зашёл посмотреть */}
+        <Button asChild variant="outline" size="sm" className="mb-4 lg:absolute lg:top-6 lg:left-6 lg:mb-0">
+          <Link to="/welcome"><ArrowLeft className="size-4" /> На главную</Link>
+        </Button>
         <PageTransition />
       </div>
     </div>
@@ -61,12 +67,14 @@ function BrandPanel({ brand }: { brand: Brand }) {
         alt=""
         className="absolute top-0 left-0 h-[820px] w-[420px] max-w-none"
       />
-      <BrandPlate className="absolute top-10 left-10 gap-[10px]">
-        <img src="/icon.svg" alt="" className="size-10 shrink-0" />
-        <span className="font-display text-[17px] font-bold whitespace-nowrap text-foreground">
-          Движ
-        </span>
-      </BrandPlate>
+      <Link to="/welcome" aria-label="Движ — на главную" className="absolute top-10 left-10">
+        <BrandPlate className="gap-[10px]">
+          <img src="/icon.svg" alt="" className="size-10 shrink-0" />
+          <span className="font-display text-[17px] font-bold whitespace-nowrap text-foreground">
+            Движ
+          </span>
+        </BrandPlate>
+      </Link>
       <h2 className="absolute top-[130px] left-10 w-[340px] font-display text-[32px] leading-10 font-extrabold tracking-[-0.5px] text-white">
         {brand.title}
       </h2>
@@ -98,12 +106,14 @@ function MobileBanner({ brand }: { brand: Brand }) {
       style={{ height: banner.height }}
     >
       <img src={`${dir}/memphis-decor.svg`} alt="" className="absolute inset-0 size-full max-w-none" />
-      <BrandPlate className="absolute top-[18px] left-4">
-        <img src="/icon.svg" alt="" className="size-9 shrink-0" />
-        <span className="font-display text-base leading-[normal] font-bold whitespace-nowrap text-foreground">
-          Движ
-        </span>
-      </BrandPlate>
+      <Link to="/welcome" aria-label="Движ — на главную" className="absolute top-[18px] left-4">
+        <BrandPlate>
+          <img src="/icon.svg" alt="" className="size-9 shrink-0" />
+          <span className="font-display text-base leading-[normal] font-bold whitespace-nowrap text-foreground">
+            Движ
+          </span>
+        </BrandPlate>
+      </Link>
       {/* ширина — до тела бобра, кегль от ширины экрана: «возвращением» целиком влезает и на 360px */}
       <p className="absolute top-[76px] left-4 w-[calc(100%-176px)] font-display text-[clamp(16px,5vw,22px)] leading-[1.27] font-extrabold tracking-[-0.3px] hyphens-auto text-white">
         {brand.mobileTitle}

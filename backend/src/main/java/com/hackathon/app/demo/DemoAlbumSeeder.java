@@ -51,23 +51,23 @@ class DemoAlbumSeeder {
 			var event = events.get(i);
 			for (int j = 0; j < 1 + (maxPerFolder - 1 + i) % maxPerFolder; j++, n++) {
 				var caption = n % 3 == 2 ? null : CAPTIONS.get(n % CAPTIONS.size());
-				album.add(userId, event.id(), caption, photo(event.sport().name(), event.sport().slug(), n));
+				var photo = photos.featuredOne(event.sport().name());
+				if (photo != null) {
+					album.add(userId, event.id(), caption, photo);
+				}
 			}
 		}
 	}
 
 	private void about(UUID userId, String... sports) {
-		int n = userId.hashCode();
 		for (var sport : sports) {
-			profiles.addPhoto(userId, photo(sport, null, n++));
+			var photo = photos.featuredOne(sport);
+			if (photo != null) {
+				profiles.addPhoto(userId, photo);
+			}
 		}
 	}
 
-	/** Настоящее фото вида спорта, иначе — иллюстрация по slug. */
-	private FileUpload photo(String sportName, String slug, int n) {
-		var real = photos.one(sportName, n);
-		return real != null ? real : image(slug == null ? "default" : slug);
-	}
 
 	static FileUpload image(String slug) {
 		var resource = new ClassPathResource("sport-images/" + slug + ".webp");

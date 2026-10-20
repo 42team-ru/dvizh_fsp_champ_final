@@ -213,7 +213,7 @@ public class DemoSeeder {
 				null, 56.01064, 92.88004, EventLevel.AMATEUR, EventKind.AMATEUR_TOURNAMENT,
 				"Знать правила и нотацию", "Ничего: доски и часы клуба",
 				16, JoinMode.REQUEST, "Жеребьёвка и чат участников: https://t.me/ladya_tournament", null, null));
-		eventPhotos(clubTournament, cast.id("ladya"), "Шахматы", 0, 3);
+		eventPhotos(clubTournament, cast.id("ladya"), "Шахматы", 2);
 		join(clubTournament, cast.id("olga"), "Играла в молодости, хочу вспомнить");
 		join(clubTournament, cast.id("nikolai"), "Есть второй разряд");
 		join(clubTournament, cast.id("dmitry"), null);
@@ -235,7 +235,7 @@ public class DemoSeeder {
 				null, 56.01064, 92.88004, EventLevel.BEGINNER, EventKind.TRAINING,
 				"Никаких: учим с нуля", null,
 				12, JoinMode.FREE, null, null, null));
-		eventPhotos(chessLesson, cast.id("ladya"), "Шахматы", 3, 2);
+		eventPhotos(chessLesson, cast.id("ladya"), "Шахматы", 1);
 		join(chessLesson, cast.id("anna"), null);
 		join(chessLesson, cast.id("elena"), null);
 		var kidsQuestion = comment(chessLesson, cast.id("sergey"), "Можно привести сына, ему 9 лет?");
@@ -250,7 +250,7 @@ public class DemoSeeder {
 				null, 56.03659, 92.92620, EventLevel.ANY, EventKind.TRAINING,
 				"Уверенно стоять на коньках", "Коньки и шлем обязательно; клюшки и краги дадим", null, JoinMode.FREE,
 				null, null, null));
-		eventPhotos(beaversTraining, cast.id("bobry"), "Хоккей", 0, 2);
+		eventPhotos(beaversTraining, cast.id("bobry"), "Хоккей", 2);
 		var skatesQuestion = comment(beaversTraining, cast.id("dmitry"), "Коньки можно взять в прокат на арене?");
 		reply(beaversTraining, cast.id("bobry"), "Да, прокат у входа на лёд, размеры с 36 по 47.", skatesQuestion);
 
@@ -263,7 +263,7 @@ public class DemoSeeder {
 				null, 56.02757, 92.93819, EventLevel.AMATEUR, EventKind.GAME,
 				"Уверенно держите мяч, играем без грубости", "Сменная обувь (шиповки или сороконожки), вода",
 				14, JoinMode.FREE, "Чат игры: https://t.me/demo_football_tatyshev", null, null));
-		eventPhotos(football, cast.id("dmitry"), "Футбол", 0, 3);
+		eventPhotos(football, cast.id("dmitry"), "Футбол", 3);
 		// соорганизатора приглашают, он принимает — как живые пользователи
 		organizerService.add(football, cast.id("dmitry"), "nikolai");
 		organizerService.accept(football, cast.id("nikolai"));
@@ -293,7 +293,7 @@ public class DemoSeeder {
 				null, 56.01254, 92.86003, EventLevel.ANY, EventKind.GAME,
 				null, "Своя ракетка и мячи",
 				2, JoinMode.FREE, null, null, null));
-		eventPhotos(tableTennis, cast.id("sergey"), "Настольный теннис", 0, 1);
+		eventPhotos(tableTennis, cast.id("sergey"), "Настольный теннис", 1);
 		join(tableTennis, cast.id("dmitry"), null);
 		join(tableTennis, cast.id("nikolai"), null);
 		join(tableTennis, cast.id("olga"), null);
@@ -310,7 +310,7 @@ public class DemoSeeder {
 				null, 56.01018, 92.85520, EventLevel.AMATEUR, EventKind.AMATEUR_TOURNAMENT,
 				"Знать правила и уметь пользоваться часами", "Доски и часы есть, свои тоже приносите",
 				12, JoinMode.REQUEST, "Точная аудитория и жеребьёвка: https://t.me/demo_chess_blitz", null, null));
-		eventPhotos(chess, cast.id("petr"), "Шахматы", 5, 2);
+		eventPhotos(chess, cast.id("petr"), "Шахматы", 1);
 		join(chess, cast.id("anna"), "Играю с дедушкой, хочу попробовать турнир");
 		join(chess, cast.id("dmitry"), "Рейтинг на lichess около 1500");
 		join(chess, cast.id("elena"), null);
@@ -326,7 +326,7 @@ public class DemoSeeder {
 				null, 56.00784, 92.88194, EventLevel.BEGINNER, EventKind.TRAINING,
 				null, "Удобные кроссовки, вода",
 				null, JoinMode.FREE, null, null, null));
-		eventPhotos(run, cast.id("elena"), "Бег", 0, 2);
+		eventPhotos(run, cast.id("elena"), "Бег", 2);
 		join(run, cast.id("anna"), null);
 		join(run, cast.id("dmitry"), null);
 		// Модерация в фоне (docs/moderation.md): обычные вопросы остаются; угроза и реклама заработка скрываются сами —
@@ -346,7 +346,7 @@ public class DemoSeeder {
 				null, 56.01254, 92.86003, EventLevel.ANY, EventKind.TRAINING,
 				"Никаких: подойдёт любой уровень и возраст", "Коврик по желанию",
 				null, JoinMode.FREE, null, null, null));
-		eventPhotos(morningExercise, cast.id("olga"), "Зарядка", 0, 2);
+		eventPhotos(morningExercise, cast.id("olga"), "Зарядка", 2);
 		join(morningExercise, cast.id("nikolai"), null);
 		join(morningExercise, cast.id("elena"), null);
 		var musicQuestion = comment(morningExercise, cast.id("nikolai"), "Ольга, а музыку какую ставите? Могу принести колонку");
@@ -364,7 +364,7 @@ public class DemoSeeder {
 				null, 56.00771, 92.85305, EventLevel.BEGINNER, EventKind.MEETUP,
 				null, null,
 				10, JoinMode.FREE, null, null, 4));
-		eventPhotos(petanque, cast.id("nikolai"), "Петанк", 0, 3);
+		eventPhotos(petanque, cast.id("nikolai"), "Петанк", 3);
 		join(petanque, cast.id("olga"), null);
 		join(petanque, cast.id("anna"), null);
 		var rulesQuestion = comment(petanque, cast.id("anna"), "Никогда не слышала про петанк. Это сложно?");
@@ -389,7 +389,7 @@ public class DemoSeeder {
 				new ScheduleRequest(CITY_ZONE.getId(), today, today.plusMonths(3), List.of(
 						new ScheduleRuleRequest(firstTuesday.atTime(20, 0), 90, "FREQ=WEEKLY;BYDAY=TU"),
 						new ScheduleRuleRequest(firstSunday.atTime(14, 0), 120, "FREQ=WEEKLY;INTERVAL=2;BYDAY=SU"))), 3));
-		eventPhotos(basketball, cast.id("petr"), "Баскетбол", 0, 2);
+		eventPhotos(basketball, cast.id("petr"), "Баскетбол", 2);
 		join(basketball, cast.id("anna"), null);
 		join(basketball, cast.id("sergey"), null);
 		join(basketball, cast.id("dmitry"), null);
@@ -442,8 +442,10 @@ public class DemoSeeder {
 		pets.dressCore(cast);
 		pets.dressCollector(cast.id("vika"));
 		bulk.dress(people);
+		// гайды — раньше альбомов: им достаются снимки витрины; отчёты со встреч — после, они берут фото из альбома
+		blog.guides(cast, Map.of("ladya", ladya, "bobry", beavers));
 		album.seed(cast);
-		blog.seed(cast, ladya, beavers);
+		blog.reports(cast);
 		log.info("Demo data seeded in {} ms", System.currentTimeMillis() - started);
 	}
 
@@ -459,15 +461,15 @@ public class DemoSeeder {
 
 	/** Логотип клуба — снимок его вида спорта. */
 	private void logo(UUID accountId, String sport) {
-		var logo = photos.one(sport, 1);
+		var logo = photos.clubLogo(sport);
 		if (logo != null) {
 			organizationService.uploadLogo(accountId, logo);
 		}
 	}
 
 	/** Фото мероприятия от организатора; фокус чуть выше центра — на лицах, а не на траве. */
-	private void eventPhotos(UUID eventId, UUID organizerId, String sport, int from, int count) {
-		for (var photo : photos.pick(sport, true, from, count)) {
+	private void eventPhotos(UUID eventId, UUID organizerId, String sport, int count) {
+		for (var photo : photos.featured(sport, true, count)) {
 			eventService.addPhoto(eventId, organizerId, photo, new FocusPoint(50, 40));
 		}
 	}

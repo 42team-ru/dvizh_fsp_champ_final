@@ -71,10 +71,7 @@ class DemoEconomySeeder {
 	private final OrganizationAwardService awards;
 	private final DemoDataRepository data;
 	private final DemoHistory history;
-	private final DemoPhotos photos;
 	private final Clock clock;
-	/** Сколько прошедших встреч создано: фото загружают к каждой второй. */
-	private int created;
 
 	/** Прошедшие встречи основных персонажей ставятся в историю; people — массовка, из неё приходят в «Ладью». */
 	void schedulePast(DemoCast cast, List<Person> people) {
@@ -223,10 +220,6 @@ class DemoEconomySeeder {
 				temporaryStart.plus(Duration.ofHours(hours)), EventFormat.OFFLINE, spot.address(), null, null,
 				spot.lat(), spot.lon(), EventLevel.ANY, EventKind.GAME, null, null, null, JoinMode.FREE, null, null, null);
 		var eventId = eventService.create(authorId, request).id();
-		var photo = created++ % 2 == 0 ? photos.one(sport, created) : null;
-		if (photo != null) {
-			eventService.addPhoto(eventId, authorId, photo, null);
-		}
 		var createdAt = start.minus(Duration.ofDays(5));
 		var authorSince = cast.since(authorId).plus(Duration.ofHours(2));
 		if (createdAt.isBefore(authorSince)) {
