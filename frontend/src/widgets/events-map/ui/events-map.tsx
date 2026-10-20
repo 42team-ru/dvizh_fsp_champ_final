@@ -27,8 +27,10 @@ const toPoint = (f: EventMapFeature): MapPoint => ({
 const LIST_LIMIT = 6;
 
 // Контейнер не перерисовывается React-ом, иначе карта пересоздастся.
+// Холст лежит поверх рамки (absolute) и не влияет на её высоту: иначе карта с отслеживанием размера
+// растила холст, холст растил рамку — и так до 33 млн px, браузер подвисал.
 const MapContainer = memo(({ onReady }: { onReady(el: HTMLDivElement): void }) => (
-  <div ref={(el) => { if (el) onReady(el); }} className="size-full" />
+  <div ref={(el) => { if (el) onReady(el); }} className="absolute inset-0" />
 ), () => true);
 
 /** Текущее время, раз в минуту: метка «Сейчас» следует за часами. */
@@ -244,7 +246,8 @@ export function EventsMap({ filters = {}, className, mapClassName, withHome = fa
   return (
     <div className={cn("flex flex-col gap-4 lg:flex-row lg:items-stretch", className)}>
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-[24px] border-2 border-ink bg-card">
-        <div className={cn("relative min-h-[320px] flex-1", mapClassName)}>
+        {/* flex-auto, а не flex-1: в колонке без заданной высоты flex-1 игнорирует высоту из mapClassName. */}
+        <div className={cn("relative min-h-[320px] flex-auto", mapClassName)}>
           <MapContainer onReady={(el) => { container.current = el; }} />
           <div className="pointer-events-none absolute top-3.5 right-3.5 z-[400] flex items-center gap-2 rounded-pill border-[1.5px] border-ink bg-card px-3 py-1.5 text-[11px] whitespace-nowrap">
             <span className="size-2.5 rounded-full border-[1.5px] border-ink bg-primary" />
