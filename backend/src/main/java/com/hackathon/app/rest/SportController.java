@@ -26,7 +26,7 @@ class SportController {
 
 	@GetMapping
 	@Operation(operationId = "sports_search", summary = "Виды спорта",
-			description = "Без query — весь справочник по алфавиту; с query — поиск по подстроке без учёта регистра, пробелов и ё/е.")
+			description = "Без query — весь справочник по алфавиту; с query — поиск по подстроке без учёта регистра, пробелов и ё/е, затем похожие с опечаткой («падэл» → «Падел»).")
 	List<SportResponse> search(@Parameter(description = "Часть названия", example = "фут")
 			@RequestParam(required = false) String query) {
 		log.info("Endpoint called: GET /api/sports, query={}", query);

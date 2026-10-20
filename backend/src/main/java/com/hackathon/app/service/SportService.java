@@ -3,6 +3,9 @@ package com.hackathon.app.service;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.hackathon.app.domain.dto.SportResponse;
 import com.hackathon.app.domain.entity.Sport;
@@ -10,6 +13,7 @@ import com.hackathon.app.domain.enums.SportStatus;
 import com.hackathon.app.domain.exception.BadRequestException;
 import com.hackathon.app.domain.mapper.SportMapper;
 import com.hackathon.app.repository.SportRepository;
+import com.hackathon.app.repository.SportSearchRepository;
 import com.hackathon.app.util.Strings;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,17 +23,29 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class SportService {
 
+    private static final int SIMILAR_LIMIT = 5;
+
     private final SportRepository sports;
+    private final SportSearchRepository similar;
     private final SportMapper mapper;
 
-    /** Пустой запрос — весь справочник, иначе поиск по подстроке без учёта регистра, пробелов и ё/е. */
+    /**
+     * Пустой запрос — весь справочник, иначе поиск по подстроке без учёта регистра, пробелов и ё/е.
+     * После точных совпадений идут похожие с опечаткой («падэл» → «Падел»), чтобы человек не завёл дубль.
+     */
     @Transactional(readOnly = true)
     public List<SportResponse> search(String query) {
         var normalized = normalize(query);
-        var found = normalized == null
-                ? sports.findAllByOrderByNameAsc()
-                : sports.findByNormalizedNameContainingOrderByNameAsc(normalized);
-        return found.stream().filter(SportService::selectable).map(mapper::toResponse).toList();
+        if (normalized == null) {
+            return sports.findAllByOrderByNameAsc().stream().filter(SportService::selectable).map(mapper::toResponse).toList();
+        }
+        var exact = sports.findByNormalizedNameContainingOrderByNameAsc(normalized).stream().filter(SportService::selectable).toList();
+        var similarIds = similar.findSimilarIds(normalized, SIMILAR_LIMIT);
+        var byId = sports.findAllById(similarIds).stream().collect(Collectors.toMap(Sport::getId, Function.identity()));
+        var similarSports = similarIds.stream().map(byId::get)
+                .filter(sport -> sport != null && selectable(sport) && !exact.contains(sport))
+                .toList();
+        return Stream.concat(exact.stream(), similarSports.stream()).map(mapper::toResponse).toList();
     }
 
     @Transactional(readOnly = true)
