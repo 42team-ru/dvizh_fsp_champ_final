@@ -1,6 +1,6 @@
 import { Link } from "react-router";
 import { DropdownMenu } from "radix-ui";
-import { Building2, BriefcaseBusiness, LogOut, RefreshCw, User } from "lucide-react";
+import { Building2, BriefcaseBusiness, LogOut, RefreshCw, User, Shirt } from "lucide-react";
 import { useUser } from "@/entity/user/model/use-user";
 import { useCabinetAccess } from "@/entity/user/model/use-cabinet-access";
 import { UserAvatar } from "@/shared/components/ui/user-avatar";
@@ -42,6 +42,11 @@ export function AccountMenu() {
           {user?.systemRole === "USER" && (
             <DropdownMenu.Item asChild className={item}>
               <Link to="/profile"><User className="size-[18px]" strokeWidth={2.4} />Профиль</Link>
+            </DropdownMenu.Item>
+          )}
+          {user?.systemRole === "USER" && (
+            <DropdownMenu.Item asChild className={item}>
+              <Link to="/profile/wardrobe"><Shirt className="size-[18px]" strokeWidth={2.4} />Гардероб и магазин</Link>
             </DropdownMenu.Item>
           )}
           <DropdownMenu.Item asChild className={item}>

@@ -21,6 +21,7 @@ import { CancelledStamp } from "@/shared/components/ui/cancelled-stamp";
 import { useWardrobe } from "../model/use-wardrobe";
 import { usePublicProfile } from "../model/public-profile";
 import { ProfileBeaverPet, ProfilePetName } from "./profile-pet";
+import { PetDressLinks } from "@/features/pet-wardrobe/ui/pet-dress-links";
 import {
   KIND_LABEL,
   LEVEL_PIPS,
@@ -200,10 +201,8 @@ function PetPage() {
           className="beaver-speech-corner absolute top-[68px] left-[150px] z-10 flex h-[104px] w-[284px] items-end"
         />
       </div>
-      <div className="relative flex items-start gap-3 text-[14px] leading-5 font-semibold">
-        <p className="min-w-0 flex-1">Образ: {outfit}</p>
-        {!owner && <Link to="/profile/wardrobe" className="shrink-0 py-1 font-extrabold text-primary underline underline-offset-4">Изменить образ</Link>}
-      </div>
+      <p className="relative truncate text-[14px] leading-5 font-semibold" title={`Образ: ${outfit}`}>Образ: {outfit}</p>
+      {!owner && <PetDressLinks className="relative" />}
     </section>
   );
 }
