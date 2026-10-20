@@ -26,10 +26,10 @@ export default function OrgPublicPage() {
   const unavailable = profile.isError || overview.isError;
   const sections = [
     ["overview", "Обзор"],
+    ["about", "О клубе"],
     ["upcoming", `Ближайшие ${o?.upcoming.totalElements ?? ""}`],
     ["past", `Проведённые ${o?.hostedMeetings ?? ""}`],
     ["photos", `Фото ${o?.photosCount ?? ""}`],
-    ["about", "О клубе"],
   ];
   return (
     <div className="min-h-dvh bg-background pb-[110px] lg:pb-16">
@@ -92,21 +92,24 @@ export default function OrgPublicPage() {
                 </Button>
               ))}
             </nav>
+            {/* «О клубе» видно сразу: на телефоне — над встречами, на компьютере — первым в правой колонке. */}
             <div className="grid min-w-0 items-start gap-7 lg:grid-cols-[minmax(0,1fr)_380px]">
-              <div className="flex min-w-0 flex-col gap-9">
+              <Card id="about" className="scroll-mt-6 gap-3 p-5 lg:col-start-2 lg:row-start-1">
+                <h2 className="font-display text-[23px] font-extrabold">
+                  О клубе
+                </h2>
+                <p className="text-base leading-7 whitespace-pre-wrap break-words">
+                  {org.description || "Клуб пока не добавил описание."}
+                </p>
+              </Card>
+              <div className="flex min-w-0 flex-col gap-9 lg:col-start-1 lg:row-span-2 lg:row-start-1">
                 <UpcomingMeetings id={id} overview={o} />
                 <PastMeetings key={id} id={id} overview={o} />
                 <OrganizationPhotos id={id} overview={o} />
-                <Card id="about" className="gap-3 p-5">
-                  <h2 className="font-display text-[23px] font-extrabold">
-                    О клубе
-                  </h2>
-                  <p className="text-base leading-7 whitespace-pre-wrap break-words">
-                    {org.description || "Клуб пока не добавил описание."}
-                  </p>
-                </Card>
               </div>
-              <OrganizationSidebar org={org} overview={o} />
+              <div className="min-w-0 lg:col-start-2 lg:row-start-2">
+                <OrganizationSidebar org={org} overview={o} />
+              </div>
             </div>
           </>
         )}
