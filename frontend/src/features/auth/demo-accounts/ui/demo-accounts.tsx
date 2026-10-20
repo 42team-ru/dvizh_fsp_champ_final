@@ -16,6 +16,7 @@ const DEMO_PICK: { username: string; label: string }[] = [
   { username: "admin", label: "администратор" },
   { username: "anna", label: "пользователь" },
   { username: "petr", label: "пользователь · организатор" },
+  { username: "vika", label: "пользователь · весь гардероб бобра" },
   { username: "ladya", label: "клуб «Ладья» · допущен" },
   { username: "enisey", label: "клуб «Енисей» · заявка на проверке" },
 ];
