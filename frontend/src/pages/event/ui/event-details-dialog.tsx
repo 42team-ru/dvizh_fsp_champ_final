@@ -14,6 +14,7 @@ import { plural } from "@/shared/lib/plural";
 import { toast } from "@/shared/lib/toast";
 import { LocationPicker } from "@/widgets/events-map/ui/location-picker";
 import { placeName, privateNote } from "../model/use-event";
+import { RouteButton, dgisPlace } from "@/features/route-button/ui/route-button";
 
 export type EventDetailsSection = "when" | "where" | "registration";
 
@@ -325,11 +326,12 @@ function WhereTab({ e }: { e: EventResponse }) {
 
       {point && (
         <div className="flex flex-col gap-3 sm:flex-row">
-          <Button asChild variant="ink" className="h-auto min-h-12 flex-1 whitespace-normal">
-            <a href={`https://2gis.ru/directions/points/|${point[0]},${point[1]}`} target="_blank" rel="noreferrer"><Navigation />Построить маршрут</a>
-          </Button>
+          {/* от дома из профиля; без дома — просто точка встречи, свой адрес человек введёт в 2ГИС */}
+          <RouteButton to={{ lon: point[0], lat: point[1] }} variant="ink" className="h-auto min-h-12 flex-1 whitespace-normal">
+            <Navigation />Построить маршрут
+          </RouteButton>
           <Button asChild variant="soft" className="h-auto min-h-12 flex-1 whitespace-normal shadow-hard-sm">
-            <a href={`https://2gis.ru/geo/${point[0]},${point[1]}`} target="_blank" rel="noreferrer"><ExternalLink />Открыть в 2ГИС</a>
+            <a href={dgisPlace({ lon: point[0], lat: point[1] })} target="_blank" rel="noreferrer"><ExternalLink />Открыть в 2ГИС</a>
           </Button>
         </div>
       )}

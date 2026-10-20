@@ -1,3 +1,4 @@
+import { RouteButton } from "@/features/route-button/ui/route-button";
 import { coverOf } from "@/entity/event/lib/cover";
 import { OrganizerHome } from "./organizer-home";
 import { AdminHome } from "./admin-home";
@@ -205,11 +206,13 @@ function Tip() {
               В календарь
             </a>
           </Button>
-          {e.format === "OFFLINE" && e.address && (
+          {e.format === "OFFLINE" && e.lat != null && e.lon != null ? (
+            <RouteButton to={{ lat: e.lat, lon: e.lon }} rough={false}>Как добраться</RouteButton>
+          ) : e.format === "OFFLINE" && e.address ? (
             <Button asChild variant="soft" rough={false}>
               <a href={routeUrl(e.address)} target="_blank" rel="noreferrer">Как добраться</a>
             </Button>
-          )}
+          ) : null}
         </>
       ) : (
         <Button asChild variant="ink" rough>
