@@ -158,14 +158,14 @@ function TicketHero({ m, onDetails }: { m: EventModel; onDetails: (section: Even
           {m.facts.map((f, i) => (
             <button type="button" key={f.label} aria-label={`Подробнее: ${f.label.toLowerCase()}`} aria-haspopup="dialog" onClick={() => onDetails(f.section)} className={cn(
                 "group relative h-[87px] shrink-0 cursor-pointer text-left outline-none",
-                // подложка-карточка с отступом от пунктира, а не заливка всего прямоугольника
-                "before:absolute before:-inset-y-2 before:inset-x-2 before:rounded-2xl before:border-2 before:border-transparent before:transition-colors",
-                "hover:before:border-ink hover:before:bg-lavender-soft hover:before:shadow-hard-sm focus-visible:before:border-ink focus-visible:before:bg-lavender-soft focus-visible:before:ring-[3px] focus-visible:before:ring-ring/50",
+                // как у пунктов меню и ghost-кнопок: мягкая заливка muted со скруглением, с отступом от пунктира
+                "before:absolute before:-inset-y-2 before:inset-x-2 before:rounded-2xl before:transition-colors",
+                "hover:before:bg-muted focus-visible:before:bg-muted focus-visible:before:ring-[3px] focus-visible:before:ring-ring/50",
                 FACT_WIDTHS[i],
               )}>
               <div className="absolute top-0 left-5 flex h-4 items-center gap-[6px]">
                 <Icon name={`event/${f.icon}`} className="size-4" />
-                <Eyebrow>{f.label}</Eyebrow><span aria-hidden className="text-lg leading-none transition-transform group-hover:translate-x-1 group-focus-visible:translate-x-1">›</span>
+                <Eyebrow>{f.label}</Eyebrow><span aria-hidden className="text-lg leading-none">›</span>
               </div>
               <p title={f.value} className="absolute top-[23px] left-5 w-[164px] truncate font-display text-[19px] leading-6 font-bold text-foreground">
                 {f.value}
