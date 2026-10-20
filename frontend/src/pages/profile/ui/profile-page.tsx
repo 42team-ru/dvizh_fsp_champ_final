@@ -54,8 +54,8 @@ export default function ProfilePage() {
           <PassportSpread />
           <HistoryCard />
           <Attendance />
-          <AchievementsColumn className="absolute top-0 left-[944px] w-[272px]" style={{ height: SPREAD_H }} />
         </div>
+        <AchievementsColumn wide className="mt-6 w-[1216px]" />
         {user?.id && (
           <ProfileGallery
             className="mt-6"
