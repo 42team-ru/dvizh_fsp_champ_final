@@ -1,24 +1,29 @@
 package com.hackathon.app.service;
 
-import com.hackathon.app.domain.entity.StoredFile;
-import com.hackathon.app.domain.dto.FocusPoint;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.hackathon.app.domain.dto.CreatePermissionResponse;
 import com.hackathon.app.domain.dto.EventFilter;
+import com.hackathon.app.domain.dto.EventParticipantResponse;
 import com.hackathon.app.domain.dto.EventRequest;
 import com.hackathon.app.domain.dto.EventResponse;
 import com.hackathon.app.domain.dto.EventSummaryResponse;
 import com.hackathon.app.domain.dto.FileUpload;
+import com.hackathon.app.domain.dto.FocusPoint;
 import com.hackathon.app.domain.dto.PageResponse;
 import com.hackathon.app.domain.entity.AppUser;
 import com.hackathon.app.domain.entity.Event;
+import com.hackathon.app.domain.entity.EventOccurrence;
+import com.hackathon.app.domain.entity.StoredFile;
 import com.hackathon.app.domain.enums.EventFormat;
 import com.hackathon.app.domain.enums.EventStatus;
 import com.hackathon.app.domain.enums.FileKind;
@@ -40,7 +45,9 @@ import com.hackathon.app.repository.RegistrationRepository;
 import com.hackathon.app.repository.StoredFileRepository;
 import com.hackathon.app.util.IcsCalendar;
 import com.hackathon.app.util.Strings;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -376,12 +383,24 @@ public class EventService {
         }
         var lookups = listLookups.load(eventList, userId, from, to != null ? to : OccurrenceService.FAR_FUTURE);
         var coverByEventId = files.eventCovers(eventList.stream().map(Event::getId).toList());
+        var previewUsers = new LinkedHashMap<UUID, List<AppUser>>();
+        var occurrenceIds = eventList.stream().filter(Event::isRecurring).map(lookups::next)
+                .filter(Objects::nonNull).map(EventOccurrence::getId).toList();
+        registrations.findPreviewParticipants(eventList.stream().map(Event::getId).toList(), occurrenceIds)
+                .forEach(row -> {
+                    var group = previewUsers.computeIfAbsent(row.getEventId(), ignored -> new ArrayList<>());
+                    if (group.size() < 3) group.add(row.getUser());
+                });
+        var petByUser = pets.participants(previewUsers.values().stream().flatMap(List::stream)
+                        .distinct().toList()).stream()
+                .collect(Collectors.toMap(EventParticipantResponse::id, Function.identity()));
         return eventList.stream()
                 .map(event -> mapper.toSummary(event, lookups.sport(event), lookups.confirmed(event),
                         lookups.myStatus(event), coverByEventId.get(event.getId()), lookups.next(event),
                         lookups.occurrenceAttendees(event), lookups.scheduleDescription(event),
                         lookups.quorumStatus(event), lookups.cancelledSingle(event), lookups.author(event),
-                        lookups.organization(event)))
+                        lookups.organization(event), previewUsers.getOrDefault(event.getId(), List.of()).stream()
+                                .map(user -> petByUser.get(user.getId())).toList()))
                 .toList();
     }
 

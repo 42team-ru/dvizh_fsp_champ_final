@@ -3,6 +3,7 @@ package com.hackathon.app.domain.dto;
 import static io.swagger.v3.oas.annotations.media.Schema.RequiredMode.REQUIRED;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 import com.hackathon.app.domain.enums.EventFormat;
@@ -39,6 +40,8 @@ public record EventSummaryResponse(
 				requiredMode = REQUIRED) long participantsCount,
 		@Schema(description = "У серии — сколько отметились на занятие occurrenceId («придут 7 из 10»); у разового — null")
 		Long occurrenceAttendeesCount,
+		@Schema(description = "До трёх подтверждённых участников; у серии с ближайшим занятием — отметившихся на него",
+				requiredMode = REQUIRED) List<EventParticipantResponse> participantsPreview,
 		@Schema(description = "Кворум: состоится, если наберём столько; null — без кворума") Integer minParticipants,
 		@Schema(description = "Кворум ближайшего подходящего занятия; null — без кворума или занятия нет")
 		QuorumStatus quorumStatus,
