@@ -1,11 +1,16 @@
 package com.hackathon.app.domain.mapper;
 
 import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
 import com.hackathon.app.domain.dto.PetArtResponse;
 import com.hackathon.app.domain.dto.PetItemResponse;
+import com.hackathon.app.domain.dto.PetLookResponse;
+import com.hackathon.app.domain.dto.PetResponse;
+import com.hackathon.app.domain.dto.PetStatusResponse;
+import com.hackathon.app.domain.dto.EventParticipantResponse;
 import com.hackathon.app.domain.dto.PetSlotResponse;
 import com.hackathon.app.domain.dto.PetSavedLookResponse;
 import com.hackathon.app.domain.entity.AppUser;
@@ -16,12 +21,40 @@ import com.hackathon.app.domain.entity.UserPetEquipment;
 import com.hackathon.app.domain.enums.PetItemKind;
 import com.hackathon.app.domain.enums.PetBodyPart;
 import com.hackathon.app.domain.enums.PetSlotKind;
+import com.hackathon.app.domain.enums.PetMood;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
 @Mapper(config = MappingConfig.class)
 public interface PetMapper {
+
+    /** Один и тот же публичный образ для профиля и общей поляны; отсутствующие вещи пропускаются. */
+    default PetLookResponse toLook(AppUser user, List<UserPetEquipment> equipment,
+            List<PetSlot> slots, Map<UUID, PetItem> itemsById) {
+        var equippedBySlot = new LinkedHashMap<UUID, PetItem>();
+        for (var entry : equipment) {
+            var item = itemsById.get(entry.getItemId());
+            if (item != null) equippedBySlot.put(entry.getSlotId(), item);
+        }
+        var activity = "none";
+        var outfit = new LinkedHashMap<String, String>();
+        for (var slot : slots) {
+            var item = equippedBySlot.get(slot.getId());
+            if (item == null) continue;
+            switch (slot.getKind()) {
+                case ACTIVITY -> activity = item.getCode();
+                case OUTFIT -> outfit.put(slot.getCode(), item.getCode());
+            }
+        }
+        return new PetLookResponse(user.getPetName() == null ? "Бублик" : user.getPetName(), activity, outfit);
+    }
+
+    @Mapping(target = "mood", source = "mood")
+    @Mapping(target = "status", source = "status")
+    PetResponse toResponse(PetLookResponse look, PetMood mood, PetStatusResponse status);
+
+    EventParticipantResponse toParticipant(AppUser user, PetLookResponse pet);
 
     /** Новый личный образ из уже проверенных вещей. */
     PetSavedLook toSavedLook(UUID userId, String name, String activity, Map<String, String> outfit);

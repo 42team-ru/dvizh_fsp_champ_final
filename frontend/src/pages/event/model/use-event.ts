@@ -6,6 +6,8 @@ import { useRegistrationsCancel, useRegistrationsCreate } from "@/shared/api/gen
 import type { EventResponse, UserShortResponse } from "@/shared/api/generated/core/appAPI.schemas";
 import { EVENT_KIND_LABEL, EVENT_LEVEL_LABEL, FORMAT_LABEL, JOIN_MODE_LABEL, REGISTRATION_STATUS } from "@/shared/lib/statuses";
 import { plural } from "@/shared/lib/plural";
+import { useUser } from "@/entity/user/model/use-user";
+import { useCrowdSample } from "@/widgets/event-going-crowd/model/use-crowd-sample";
 
 const WEEKDAYS = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
 const MONTHS = ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
@@ -86,6 +88,8 @@ export function useEvent() {
   const queryClient = useQueryClient();
   const query = useEventsGet(id);
   const event = query.data?.status === 200 ? query.data.data : undefined;
+  const { user } = useUser();
+  const crowd = useCrowdSample(event?.participants ?? [], user?.id);
   const comments = useCommentsList(id, undefined, { query: { enabled: Boolean(event), refetchInterval: 15_000 } });
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: getEventsGetQueryKey(id) });
@@ -111,6 +115,7 @@ export function useEvent() {
     joinLabel: event ? JOIN_MODE_LABEL[event.joinMode] : "",
     organizerName,
     going,
+    crowd,
     percent: event?.capacity ? Math.min(100, Math.round((going / event.capacity) * 100)) : 100,
     status,
     /** Снято или удалено: красная плашка вместо записи (правило 5). */

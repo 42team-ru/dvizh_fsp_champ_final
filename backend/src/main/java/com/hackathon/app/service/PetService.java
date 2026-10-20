@@ -1,6 +1,7 @@
 package com.hackathon.app.service;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
@@ -9,6 +10,8 @@ import java.util.stream.Collectors;
 import com.hackathon.app.domain.dto.PetRequest;
 import com.hackathon.app.util.Strings;
 import com.hackathon.app.domain.dto.PetResponse;
+import com.hackathon.app.domain.dto.EventParticipantResponse;
+import com.hackathon.app.domain.entity.AppUser;
 import com.hackathon.app.domain.enums.PetMood;
 import com.hackathon.app.domain.entity.PetItem;
 import com.hackathon.app.domain.entity.PetSlot;
@@ -63,6 +66,18 @@ public class PetService {
             throw new NoSuchElementException("Пользователь не найден");
         }
         return toResponse(userId, catalogService.load(), false);
+    }
+
+    /** Образы всех участников: каталог общий, надетые вещи загружаются одним запросом. */
+    @Transactional(readOnly = true)
+    public List<EventParticipantResponse> participants(List<AppUser> participants) {
+        if (participants.isEmpty()) return List.of();
+        var catalog = catalogService.load();
+        var itemsById = catalog.itemsById();
+        var byUser = equipment.findByUserIdIn(participants.stream().map(AppUser::getId).toList()).stream()
+                .collect(Collectors.groupingBy(UserPetEquipment::getUserId));
+        return participants.stream().map(user -> mapper.toParticipant(user,
+                mapper.toLook(user, byUser.getOrDefault(user.getId(), List.of()), catalog.slots(), itemsById))).toList();
     }
 
     /**
@@ -160,24 +175,9 @@ public class PetService {
      * Образ из надетого; удалённые из каталога вещи просто не попадают в ответ.
      */
     private PetResponse toResponse(UUID userId, Catalog catalog, boolean own) {
-        var itemsById = catalog.itemsById();
-        Map<UUID, PetItem> equippedBySlot = equipment.findByUserId(userId).stream()
-                .filter(e -> itemsById.containsKey(e.getItemId()))
-                .collect(Collectors.toMap(UserPetEquipment::getSlotId, e -> itemsById.get(e.getItemId())));
-        var activity = PetCatalogService.NO_ACTIVITY;
-        var outfit = new LinkedHashMap<String, String>();
-        for (var slot : catalog.slots()) { // уже по порядку конструктора
-            var item = equippedBySlot.get(slot.getId());
-            if (item == null) {
-                continue;
-            }
-            switch (slot.getKind()) {
-                case ACTIVITY -> activity = item.getCode();
-                case OUTFIT -> outfit.put(slot.getCode(), item.getCode());
-            }
-        }
         var status = own ? moods.compute(userId) : null;
-        var name = users.findById(userId).orElseThrow(() -> new NoSuchElementException("Пользователь не найден")).getPetName();
-        return new PetResponse(name == null ? "Бублик" : name, status == null ? PetMood.IDLE : status.mood(), activity, outfit, status);
+        var user = users.findById(userId).orElseThrow(() -> new NoSuchElementException("Пользователь не найден"));
+        var look = mapper.toLook(user, equipment.findByUserId(userId), catalog.slots(), catalog.itemsById());
+        return mapper.toResponse(look, status == null ? PetMood.IDLE : status.mood(), status);
     }
 }

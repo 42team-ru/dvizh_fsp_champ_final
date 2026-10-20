@@ -1125,6 +1125,36 @@ export interface OccurrenceResponse {
 }
 
 /**
+ * Надетые вещи по кодам слотов
+ */
+export type PetLookResponseOutfit = {[key: string]: string};
+
+export interface PetLookResponse {
+  /** Имя питомца; по умолчанию Бублик */
+  name: string;
+  /** Инвентарь; none — без инвентаря */
+  activity: string;
+  /** Надетые вещи по кодам слотов */
+  outfit: PetLookResponseOutfit;
+}
+
+export interface EventParticipantResponse {
+  id: string;
+  /** Логин */
+  username: string;
+  /** Имя */
+  firstName: string;
+  /** Фамилия */
+  lastName: string;
+  /** Ссылка на аватар */
+  avatarUrl?: string;
+  /** Город */
+  city?: string;
+  /** Публичный образ питомца */
+  pet: PetLookResponse;
+}
+
+/**
  * Статус моей записи; null — не записан
  */
 export type ViewerResponseRegistrationStatus = typeof ViewerResponseRegistrationStatus[keyof typeof ViewerResponseRegistrationStatus];
@@ -1244,7 +1274,7 @@ export interface EventResponse {
   /** Подтверждённых участников (у серии — принятых в серию) */
   participantsCount: number;
   /** Подтверждённые участники (у серии — принятые в серию) */
-  participants: UserShortResponse[];
+  participants: EventParticipantResponse[];
   /** Режим записи */
   joinMode: EventResponseJoinMode;
   /** Статус мероприятия */

@@ -23,6 +23,7 @@ import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 import { QrCode } from "@/shared/components/ui/qr-code";
 import { EventShare } from "./event-share";
 import { InviteActions } from "@/features/organizer-invite/ui/invite-actions";
+import { EventGoingCrowd } from "@/widgets/event-going-crowd/ui/event-going-crowd";
 
 type EventModel = ReturnType<typeof useEvent>;
 
@@ -477,46 +478,7 @@ function Chat({ m }: { m: EventModel }) {
 
 function Going({ m }: { m: EventModel }) {
   const e = m.event!;
-  const shown = e.participants.slice(0, e.participants.length > 8 ? 7 : 8);
-  const rest = m.going - shown.length;
-  return (
-    <Card className="relative min-h-[249px] shrink-0 gap-[18px] overflow-hidden p-6">
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="font-display text-xl leading-[25px] font-bold text-foreground">Кто идёт</h2>
-        <span className="text-[13px] leading-[18px] font-bold text-muted-foreground">
-          {m.going}{e.capacity != null ? ` из ${e.capacity}` : ""}
-        </span>
-      </div>
-      {shown.length === 0 && <p className="text-sm font-semibold text-muted-foreground">Пока никого — будьте первым.</p>}
-      {/* Четыре колонки, каждый участник по центру своей: ряды растут под шрифт, а не наезжают. */}
-      <div className="grid grid-cols-4 gap-y-3">
-        {shown.map((g, i) => (
-          <Link
-            key={g.id}
-            to={`/users/${g.id}`}
-            className="flex min-w-0 flex-col items-center gap-[6px]"
-          >
-            <Disc
-              initials={initials(g)}
-              user={g}
-              tone={TONES[i % TONES.length]}
-              className="size-12"
-              textClassName="text-base leading-[22px] tracking-[-0.5px]"
-            />
-            <span className="max-w-full truncate text-xs leading-[17px] font-bold text-foreground">{g.firstName || g.username}</span>
-          </Link>
-        ))}
-        {rest > 0 && (
-          <div className="col-start-4 flex flex-col items-center gap-[6px]">
-            <span className="flex size-12 items-center justify-center rounded-full border-2 border-dashed border-ink text-sm leading-[19px] font-extrabold text-foreground">
-              +{rest}
-            </span>
-            <span className="text-xs leading-[17px] font-bold text-muted-foreground">ещё</span>
-          </div>
-        )}
-      </div>
-    </Card>
-  );
+  return <EventGoingCrowd participants={e.participants} sample={m.crowd} authorId={e.author.id} organizers={e.organizers} going={m.going} capacity={e.capacity} />;
 }
 
 export default function EventPage() {

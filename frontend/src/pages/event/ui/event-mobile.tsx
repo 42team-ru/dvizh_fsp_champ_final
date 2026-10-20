@@ -18,6 +18,7 @@ import { QrCode } from "@/shared/components/ui/qr-code";
 import { plural } from "@/shared/lib/plural";
 import { EventShare } from "./event-share";
 import { InviteActions } from "@/features/organizer-invite/ui/invite-actions";
+import { EventGoingCrowd } from "@/widgets/event-going-crowd/ui/event-going-crowd";
 
 const dir = "m-event";
 const TONES = ["bg-sky", "bg-mint", "bg-peach", "bg-secondary", "bg-lavender-soft"];
@@ -357,29 +358,7 @@ export function EventMobile({ m }: { m: EventModel }) {
       )}
 
       <div className="px-4">
-        <Card className="gap-[14px] rounded-[22px] p-[18px]">
-          <div className="flex items-center justify-between leading-[normal] font-bold whitespace-nowrap">
-            <h2 className="font-display text-[17px] text-foreground">Кто идёт</h2>
-            <span className="text-[13px] text-muted-foreground">{m.going}{e.capacity != null ? ` из ${e.capacity}` : ""}</span>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            {e.participants.length === 0 && <p className="text-[13px] font-medium text-muted-foreground">Пока никого — будьте первым.</p>}
-            {e.participants.map((g, i) => (
-              <Link key={g.id} to={`/users/${g.id}`} className="flex w-[46px] flex-col items-center gap-1">
-                <Disc
-                  initials={initials(g)}
-                  user={g}
-                  tone={TONES[i % TONES.length]}
-                  className="size-[46px]"
-                  textClassName="text-xs leading-[normal]"
-                />
-                <span className="max-w-[46px] truncate text-[11px] leading-[normal] font-bold text-muted-foreground">
-                  {g.firstName || g.username}
-                </span>
-              </Link>
-            ))}
-          </div>
-        </Card>
+        <EventGoingCrowd participants={e.participants} sample={m.crowd} authorId={e.author.id} organizers={e.organizers} going={m.going} capacity={e.capacity} className="rounded-[22px]" />
       </div>
 
       <div id="event-chat-mobile" className="px-4">
