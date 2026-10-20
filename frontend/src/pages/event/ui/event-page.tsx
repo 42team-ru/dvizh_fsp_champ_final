@@ -148,7 +148,7 @@ function TicketHero({ m, onDetails }: { m: EventModel; onDetails: (section: Even
         </div>
       </div>
 
-      {/* полоса «посадочного талона» над основной частью билета */}
+      {/* полоса «тусовочного талона» над основной частью билета */}
       <TicketStrip id={e.id} kind={m.kindLabel} joinMode={e.joinMode}
         className="absolute top-0 left-[270px] z-10 h-10 w-[642px]" />
 

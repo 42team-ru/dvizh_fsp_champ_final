@@ -127,7 +127,7 @@ export function PendingRow({ reg }: { reg: MyRegistrationResponse }) {
   );
 }
 
-/** Подтверждённая запись как посадочный талон: дата, встреча, место; у отменённой — штамп отмены. `compact` — без колонки с QR (узкий экран). */
+/** Подтверждённая запись как тусовочный талон: дата, встреча, место; у отменённой — штамп отмены. `compact` — без колонки с QR (узкий экран). */
 export function TicketRow({ reg, index, compact }: { reg: MyRegistrationResponse; index: number; compact?: boolean }) {
   const start = new Date(reg.myNextOccurrence?.startAt ?? reg.event.startAt);
   const cancelled = reg.event.cancelledByOrganizer || reg.event.status !== "PUBLISHED";
@@ -143,7 +143,7 @@ export function TicketRow({ reg, index, compact }: { reg: MyRegistrationResponse
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex h-[22px] shrink-0 items-center justify-between bg-primary px-3 text-[9px] font-extrabold whitespace-nowrap">
-          <span className="tracking-[1.5px] text-secondary">ПОСАДОЧНЫЙ ТАЛОН</span>
+          <span className="tracking-[1.5px] text-secondary">ТУСОВОЧНЫЙ ТАЛОН</span>
           <span className="tracking-[1px] text-white">№ {reg.event.id.slice(0, 4).toUpperCase()}</span>
         </div>
         <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 px-4">

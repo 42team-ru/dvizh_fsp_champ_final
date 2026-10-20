@@ -206,7 +206,7 @@ export function ShareTicket({
   return (
     <div className="flex size-full flex-col bg-card text-ink">
       <header className="flex h-[100px] shrink-0 items-center justify-between gap-6 border-b-[4px] border-ink bg-ultramarine px-[46px] text-[25px] font-extrabold tracking-[2px] text-lime">
-        <span className="min-w-0 truncate whitespace-nowrap">ДВИЖ · ПОСАДОЧНЫЙ ТАЛОН</span>
+        <span className="min-w-0 truncate whitespace-nowrap">ДВИЖ · ТУСОВОЧНЫЙ ТАЛОН</span>
         <span className="shrink-0 whitespace-nowrap text-[24px] text-primary-foreground">
           № {number}
         </span>

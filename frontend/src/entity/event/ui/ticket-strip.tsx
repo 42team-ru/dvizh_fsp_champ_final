@@ -11,8 +11,8 @@ export function TicketStrip({ id, kind, joinMode, compact = false, className }: 
 }) {
   return (
     <div className={cn("flex min-w-0 gap-3 bg-primary text-[11px] font-extrabold tracking-[1px]", compact ? "flex-col px-5 py-4" : "items-center justify-between px-6", className)}>
-      <span title={`Посадочный талон · ${kind}`} className="min-w-0 truncate text-lime">
-        ПОСАДОЧНЫЙ ТАЛОН · {kind.toUpperCase()}
+      <span title={`Тусовочный талон · ${kind}`} className="min-w-0 truncate text-lime">
+        ТУСОВОЧНЫЙ ТАЛОН · {kind.toUpperCase()}
       </span>
       <div className="flex shrink-0 items-center justify-between gap-3">
         <span className="text-primary-foreground">{JOIN_MODE_LABEL[joinMode].toUpperCase()}</span>
