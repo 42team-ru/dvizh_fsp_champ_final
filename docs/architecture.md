@@ -4,7 +4,7 @@
 backend/                Spring Boot 4.1, Java 25, Gradle Kotlin DSL
 frontend/               React Router 7 (SPA), Vite, Tailwind 4, Yarn
 deploy/                 docker-compose.yml для сервера (образы из GHCR) и Caddyfile
-scripts/                dev.mjs (локальный запуск), hygiene.mjs (проверка коммитов), demo_photos.py
+scripts/                dev.mjs (локальный запуск), demo_photos.py
 docker-compose.yml      всё из исходников одной командой
 docker-compose.dev.yml  только Postgres и MinIO для разработки
 ```

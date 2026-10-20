@@ -256,7 +256,7 @@ fails(CONFLICT, "Вы уже записаны на это мероприятие
 | [docs/organizations.md](docs/organizations.md)                       | каталог и страница организации, подписки             |
 | [docs/economy.md](docs/economy.md)                                   | монеты, магазин, достижения, «Организация месяца»    |
 | [docs/notifications.md](docs/notifications.md)                       | уведомления, Telegram, «когда выходить»              |
-| [docs/development.md](docs/development.md)                           | локальная разработка, тесты, git-хуки                |
+| [docs/development.md](docs/development.md)                           | локальная разработка, тесты                |
 | [docs/deploy.md](docs/deploy.md), [docs/dev-faq.md](docs/dev-faq.md) | деплой и частые вопросы                              |
 
 Полный список — [docs/README.md](docs/README.md).

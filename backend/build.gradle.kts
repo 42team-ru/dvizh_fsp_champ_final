@@ -91,21 +91,3 @@ tasks.check {
 	dependsOn(postgresTest)
 }
 
-// Включает git-хуки репозитория при первой сборке (молча пропускает, если нет git, например в Docker)
-val installGitHooks by tasks.registering {
-	val repoRoot: File = project.rootDir.parentFile
-	doLast {
-		try {
-			ProcessBuilder("git", "config", "core.hooksPath", ".githooks")
-				.directory(repoRoot)
-				.redirectErrorStream(true)
-				.start()
-				.waitFor()
-		} catch (_: Exception) {
-		}
-	}
-}
-
-tasks.compileJava {
-	dependsOn(installGitHooks)
-}

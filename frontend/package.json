@@ -12,8 +12,7 @@
     "start": "react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc",
     "orval": "orval",
-    "prebuild:memphis": "node scripts/prebuild-memphis.mjs",
-    "prepare": "node -e \"try{require('child_process').execSync('git config core.hooksPath .githooks',{stdio:'ignore'})}catch(e){}\""
+    "prebuild:memphis": "node scripts/prebuild-memphis.mjs"
   },
   "dependencies": {
     "@2gis/mapgl": "1.78.1",

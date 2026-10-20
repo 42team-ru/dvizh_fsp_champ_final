@@ -22,10 +22,9 @@
 
 | Документ | Содержание |
 |---|---|
-| [development.md](development.md) | локальный запуск, демо, тесты, файлы, git-хуки |
+| [development.md](development.md) | локальный запуск, демо, тесты, файлы |
 | [frontend.md](frontend.md) | структура фронта, спортивный фон, PWA |
 | [orval.md](orval.md) | клиент API для фронта |
 | [postman.md](postman.md) | проверка шести сценариев через API |
 | [deploy.md](deploy.md) | CI/CD через GitHub Actions и GHCR |
 | [dev-faq.md](dev-faq.md) | рецепты для сервера: деплой, откат, домен, перенос базы, ошибки |
-| [final.md](final.md) | финальный день: проверка и очистка репозитория |
