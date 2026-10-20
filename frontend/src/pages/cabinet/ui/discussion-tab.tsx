@@ -1,3 +1,4 @@
+import { ENTER_HINT, enterToSend } from "@/shared/lib/enter-to-send";
 import { MessagesSquare } from "lucide-react";
 import { EmptyState } from "@/shared/components/ui/empty-state";
 import { useState, type FormEvent } from "react";
@@ -6,6 +7,7 @@ import { cn } from "cn";
 import { getCommentsListQueryKey, useCommentsCreate, useCommentsList } from "@/shared/api/generated/core/comments/comments";
 import type { CommentResponse } from "@/shared/api/generated/core/appAPI.schemas";
 import { Button } from "@/shared/components/ui/button";
+import { COMMENT_DELETED_TEXT, COMMENT_HIDDEN_TEXT, quoteText } from "@/shared/lib/statuses";
 import { fullName } from "@/pages/event/model/use-event";
 import type { ManagedEvent } from "../model/use-manage-event";
 import { ago } from "../model/format";
@@ -16,7 +18,7 @@ const shortName = (u: CommentResponse["author"]) => (u.lastName ? `${u.firstName
 
 function Message({ c, onReply }: { c: CommentResponse; onReply?: () => void }) {
   const mine = c.isMine;
-  const body = c.deleted ? "Сообщение удалено" : c.hidden ? "Скрыто администратором" : c.text;
+  const body = c.deleted ? COMMENT_DELETED_TEXT : c.hidden ? COMMENT_HIDDEN_TEXT : c.text;
   return (
     <div className={cn("flex items-start gap-2.5", mine && "flex-row-reverse")}>
       <Avatar user={c.author} className="size-[34px]" />
@@ -36,10 +38,11 @@ function Message({ c, onReply }: { c: CommentResponse; onReply?: () => void }) {
         </div>
         {c.replyTo && (
           <p className={cn("rounded-[8px] px-2 py-1 text-xs font-medium", mine ? "bg-white/15" : "bg-paper text-muted-foreground")}>
-            {shortName(c.replyTo.author)}: {c.replyTo.deleted ? "сообщение удалено" : c.replyTo.text}
+            {shortName(c.replyTo.author)}: {quoteText(c.replyTo)}
           </p>
         )}
-        <p className={cn("text-[15px] leading-[21px] font-bold whitespace-pre-line", (c.deleted || c.hidden) && "font-medium italic opacity-70")}>{body}</p>
+        <p className={cn("text-[15px] leading-[21px] font-bold whitespace-pre-line", (c.deleted || c.hidden) && (mine ? "font-medium italic opacity-70" : "font-medium italic text-muted-foreground"))}>{body}</p>
+        {c.hidden && c.hiddenReason && <p className="text-xs font-semibold italic opacity-70">Причина: {c.hiddenReason}</p>}
         {onReply && !c.deleted && !c.hidden && !mine && (
           <button type="button" onClick={onReply} className="self-start text-xs font-bold text-muted-foreground underline">
             Ответить
@@ -96,14 +99,17 @@ export function DiscussionTab({ event }: { event: ManagedEvent }) {
               <button type="button" className="underline" onClick={() => setReplyTo(undefined)}>отменить</button>
             </p>
           )}
-          <div className="flex gap-2.5">
-            <input
+          <div className="flex items-end gap-2.5">
+            <textarea
               value={text}
               maxLength={2000}
+              rows={1}
               onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => enterToSend(e, setText, () => e.currentTarget.form?.requestSubmit())}
+              title={ENTER_HINT}
               aria-label="Сообщение"
               placeholder="Ответить участникам…"
-              className="h-12 min-w-0 flex-1 rounded-pill border-2 border-ink bg-card px-4 text-[15px] font-medium text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-primary"
+              className="field-sizing-content max-h-32 min-h-12 min-w-0 flex-1 resize-none rounded-[24px] border-2 border-ink bg-card px-4 py-[11px] text-[15px] leading-[22px] font-medium text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-primary"
             />
             <Button type="submit" disabled={!text.trim() || create.isPending}>Отправить</Button>
           </div>

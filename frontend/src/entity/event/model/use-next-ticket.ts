@@ -88,6 +88,3 @@ export function untilStart(iso: string) {
 
 /** Ссылка «Как добраться» в 2ГИС по адресу. */
 export const routeUrl = (address: string) => `https://2gis.ru/search/${encodeURIComponent(address)}`;
-
-/** Календарь встречи (.ics) — настоящий эндпоинт events_calendar. */
-export const calendarUrl = (eventId: string) => `/api/events/${eventId}/calendar.ics`;

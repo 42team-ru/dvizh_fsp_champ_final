@@ -1,5 +1,5 @@
 import { DEFAULT_CENTER, KEY, type Bbox, type MapPoint, type MapProvider, type PointPicker } from "../map-contract";
-import { clusterHtml, contains, inBbox, mount, pad, pinHtml } from "../map-utils";
+import { HOME_PIN, clusterHtml, contains, inBbox, mount, mountControls, pad, pinHtml } from "../map-utils";
 
 /** RasterJS: координаты SDK [lat, lng], наружу всегда [lon, lat]. */
 /* Минимальные типы того, что используем из глобального DG (RasterJS). */
@@ -10,6 +10,9 @@ interface DgMap {
   getBounds(): { getSouthWest(): LatLng; getNorthEast(): LatLng };
   getZoom(): number;
   setView(center: [number, number], zoom: number, options?: object): DgMap;
+  zoomIn(): DgMap;
+  getCenter(): LatLng;
+  zoomOut(): DgMap;
   latLngToContainerPoint(latlng: [number, number]): Point;
   containerPointToLatLng(point: [number, number]): LatLng;
   on(event: string, cb: (e: { latlng: LatLng }) => void): DgMap;
@@ -55,7 +58,7 @@ function loadDg(): Promise<{ dg: DgApi }> {
   return loading;
 }
 
-/** Минимализм: без значков POI, геокликера, полноэкранной кнопки и выбора проекта; зум — кнопками и колесом. */
+/** Минимализм: без значков POI, геокликера, полноэкранной кнопки и выбора проекта; зум — своими кнопками (mountControls) и колесом. */
 const mapOptions = (center: [number, number], zoom: number) => ({
   center: [center[1], center[0]],
   zoom,
@@ -64,7 +67,13 @@ const mapOptions = (center: [number, number], zoom: number) => ({
   geoclicker: false,
   fullscreenControl: false,
   projectDetector: false,
-  zoomControl: true,
+  zoomControl: false,
+});
+
+/** Кнопки карты по макету: «Приблизить», «Отдалить». */
+const controls = (el: HTMLElement, map: DgMap) => mountControls(el, {
+  zoomIn: () => map.zoomIn(),
+  zoomOut: () => map.zoomOut(),
 });
 
 function readBbox(map: DgMap): Bbox {
@@ -92,6 +101,7 @@ export async function createEventsMap(container: HTMLElement, center = DEFAULT_C
   const { dg } = await loadDg();
   const el = mount(container);
   const map = dg.map(el, mapOptions(center, zoom));
+  controls(el, map);
   let points: MapPoint[] = [];
   let activeId: string | null = null;
   let layers: DgLayer[] = [];
@@ -165,9 +175,7 @@ export async function createEventsMap(container: HTMLElement, center = DEFAULT_C
       home?.remove();
       home = point
         ? dg.marker([point[1], point[0]], {
-            // Капля 40×50 из public/feed, кончик — в точке (18, 46).
-            icon: dg.divIcon({ className: "map-pin-host", iconSize: [40, 50], iconAnchor: [18, 46],
-              html: '<img class="map-home" src="/feed/map-home-pin.svg" width="40" height="50" alt="Мой дом" title="Мой дом">' }),
+            icon: dg.divIcon({ className: "map-pin-host", iconSize: HOME_PIN.size, iconAnchor: HOME_PIN.anchor, html: HOME_PIN.html }),
             interactive: false,
             zIndexOffset: 2000,
           }).addTo(map)
@@ -200,6 +208,7 @@ export async function createPointPicker(container: HTMLElement, initial: [number
   const { dg } = await loadDg();
   const el = mount(container);
   const map = dg.map(el, { ...mapOptions(initial ?? DEFAULT_CENTER, initial ? 15 : 12), ...(onPick ? {} : LOCKED) });
+  if (onPick) controls(el, map);
   const icon = dg.divIcon({ className: "map-pin-host", iconSize: null, html: '<span class="map-dot"></span>' });
   let marker: DgLayer | undefined;
   const setPoint = (point: [number, number] | null) => {

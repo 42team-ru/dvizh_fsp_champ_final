@@ -16,19 +16,25 @@ export function useAdminAttention() {
   const stats = useAdminStats({ days: 30 });
   const awards = useAdminListAwards();
   const pending = stats.data?.status === 200 ? stats.data.data.organizationsPending : 0;
+  const moderation = stats.data?.status === 200 ? stats.data.data.moderationQueue : 0;
   const award = awards.data?.status === 200 ? awards.data.data.award : undefined;
-  return { pending, awardWaiting: award?.status === "PROPOSED", award };
+  return { pending, moderation, awardWaiting: award?.status === "PROPOSED", award };
 }
 
 /** Левое меню админки; на телефоне — строка вкладок над содержимым. */
 function Rail() {
-  const { pending, awardWaiting } = useAdminAttention();
+  const { pending, moderation, awardWaiting } = useAdminAttention();
   const links: { to: string; label: string; end?: boolean; badge?: ReactNode }[] = [
     { to: "/admin", label: "Обзор", end: true },
     {
       to: "/admin/organizations",
       label: "Организации",
       badge: pending > 0 && <span className="rounded-pill bg-peach px-2 py-px text-[11px] font-extrabold text-foreground group-aria-[current=page]:bg-secondary">{pending}</span>,
+    },
+    {
+      to: "/admin/moderation",
+      label: "Модерация",
+      badge: moderation > 0 && <span className="rounded-pill bg-peach px-2 py-px text-[11px] font-extrabold text-foreground group-aria-[current=page]:bg-secondary">{moderation}</span>,
     },
     { to: "/admin/events", label: "Мероприятия" },
     { to: "/admin/sports", label: "Виды спорта" },

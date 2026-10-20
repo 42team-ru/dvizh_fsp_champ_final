@@ -11,7 +11,12 @@ import { cn } from "cn";
 import { useUser } from "@/entity/user/model/use-user";
 import { useEventsAnnounce, useEventsClearAnnouncement, useEventsGet, getEventsGetQueryKey } from "@/shared/api/generated/core/events/events";
 import { useOccurrencesAttendees, useOccurrencesConfirm, getOccurrencesListQueryKey } from "@/shared/api/generated/core/occurrences/occurrences";
-import { useNotificationsList, useNotificationsReadAll, useNotificationsUnreadCounts } from "@/shared/api/generated/core/notifications/notifications";
+import {
+  getNotificationsListQueryKey, getNotificationsUnreadCountsQueryKey, useNotificationsList, useNotificationsRead, useNotificationsReadAll,
+} from "@/shared/api/generated/core/notifications/notifications";
+import {
+  HOST_REGISTRATION_TYPES, QUORUM_TYPES, REPLY_TYPES, useUnreadNotifications,
+} from "@/entity/notification/model/use-unread-notifications";
 import { useOrganizationsFeatured, useOrganizationsMe } from "@/shared/api/generated/core/organizations/organizations";
 import type { EventSummaryResponse, NotificationResponse, NotificationsListTypesItem, OccurrenceResponse } from "@/shared/api/generated/core/appAPI.schemas";
 import { JOIN_MODE_LABEL } from "@/shared/lib/statuses";
@@ -309,11 +314,12 @@ function Week({ week, series }: { week: WeekSlot[]; series: SeriesStat[] }) {
 }
 
 type InboxTab = "ALL" | "REG" | "DISC" | "QUORUM";
+/** «Все» — без фильтра, как вкладка «Все» в «Активности». */
 const INBOX_TYPES: Record<InboxTab, NotificationsListTypesItem[] | undefined> = {
   ALL: undefined,
-  REG: ["REGISTRATION_CREATED", "REGISTRATION_CANCELLED"],
-  DISC: ["COMMENT_CREATED", "COMMENT_REPLY"],
-  QUORUM: ["QUORUM_REACHED", "QUORUM_LOST", "OCCURRENCE_CONFIRMED"],
+  REG: HOST_REGISTRATION_TYPES,
+  DISC: REPLY_TYPES,
+  QUORUM: QUORUM_TYPES,
 };
 const inboxIcon = (n: NotificationResponse) =>
   n.type === "REGISTRATION_CREATED" ? { icon: UserPlus, tone: "bg-peach" }
@@ -322,17 +328,22 @@ const inboxIcon = (n: NotificationResponse) =>
   : n.category === "DISCUSSIONS" ? { icon: MessageCircle, tone: "bg-sky-soft" }
   : { icon: Users, tone: "bg-mint-soft" };
 
-/** Входящие: записи, обсуждения и кворум — настоящие уведомления. */
+/** Входящие: записи, обсуждения и кворум — настоящие уведомления, тот же поток, что в «Активности». */
 function Inbox() {
   const [tab, setTab] = useState<InboxTab>("ALL");
-  const list = useNotificationsList({ size: 6, types: INBOX_TYPES[tab] });
-  const counts = useNotificationsUnreadCounts();
-  const readAll = useNotificationsReadAll();
+  const list = useNotificationsList({ size: 6, types: INBOX_TYPES[tab] }, { query: { refetchInterval: 30_000 } });
+  const { unreadOf, all } = useUnreadNotifications();
   const client = useQueryClient();
-  const items = list.data?.status === 200 ? list.data.data.items : [];
-  const unread = (types?: string[]) =>
-    (counts.data?.status === 200 ? counts.data.data : []).filter((c) => !types || types.includes(c.type)).reduce((s, c) => s + c.unread, 0);
-  const total = unread();
+  const refresh = () => {
+    void client.invalidateQueries({ queryKey: getNotificationsListQueryKey() });
+    void client.invalidateQueries({ queryKey: getNotificationsUnreadCountsQueryKey() });
+  };
+  const read = useNotificationsRead({ mutation: { onSuccess: refresh } });
+  const readAll = useNotificationsReadAll({ mutation: { onSuccess: refresh } });
+  const page = list.data?.status === 200 ? list.data.data : undefined;
+  const items = page?.items ?? [];
+  const markRead = (n: NotificationResponse) => { if (!n.readAt) read.mutate({ id: n.id }); };
+  const total = all;
   return (
     <section className={cn(CARD, "flex min-w-0 flex-col gap-4 p-5 sm:p-6")}>
       <div className="flex items-center justify-between gap-3">
@@ -342,9 +353,9 @@ function Inbox() {
       <PillTabs value={tab} onChange={setTab} className="self-start"
         tabs={[
           { key: "ALL", label: "Все", count: total },
-          { key: "REG", label: "Записи", count: unread(INBOX_TYPES.REG) },
-          { key: "DISC", label: "Обсуждения", count: unread(INBOX_TYPES.DISC) },
-          { key: "QUORUM", label: "Кворум", count: unread(INBOX_TYPES.QUORUM) },
+          { key: "REG", label: "Записи", count: unreadOf(HOST_REGISTRATION_TYPES) },
+          { key: "DISC", label: "Обсуждения", count: unreadOf(REPLY_TYPES) },
+          { key: "QUORUM", label: "Кворум", count: unreadOf(QUORUM_TYPES) },
         ]} />
       <div className="flex flex-col">
         {list.isPending ? (
@@ -354,21 +365,28 @@ function Inbox() {
         ) : items.map((n) => {
           const { icon: Icon, tone } = inboxIcon(n);
           return (
-            <Link key={n.id} to={n.targetPath} className="flex items-start gap-3 border-b-[1.5px] border-track py-3 last:border-0">
-              <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-[10px] border-2 border-ink", tone)}><Icon className="size-4" strokeWidth={2.4} /></span>
-              <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <span className="text-[13px] font-extrabold text-foreground">{n.title}</span>
-                <span className="line-clamp-2 text-xs font-medium text-muted-foreground">{n.body}</span>
-                <span className="text-[11px] font-medium text-muted-foreground">{ago(n.createdAt)}</span>
-              </span>
-              {!n.readAt && <span className="mt-1 size-2 shrink-0 rounded-full bg-orange" aria-label="не прочитано" />}
-            </Link>
+            <div key={n.id} className="flex items-start gap-3 border-b-[1.5px] border-track py-3 last:border-0">
+              <Link to={n.targetPath} onClick={() => markRead(n)} className="flex min-w-0 flex-1 items-start gap-3">
+                <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-[10px] border-2 border-ink", tone)}><Icon className="size-4" strokeWidth={2.4} /></span>
+                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <span className="text-[13px] font-extrabold text-foreground">{n.title}</span>
+                  <span className="line-clamp-2 text-xs font-medium text-muted-foreground">{n.body}</span>
+                  <span className="text-[11px] font-medium text-muted-foreground">{ago(n.createdAt)}</span>
+                </span>
+              </Link>
+              {!n.readAt && (
+                <button type="button" onClick={() => markRead(n)} title="Отметить прочитанным" aria-label="Отметить прочитанным"
+                  className="-m-2 shrink-0 rounded-full p-2 hover:bg-track">
+                  <span className="block size-2 rounded-full bg-orange" />
+                </button>
+              )}
+            </div>
           );
         })}
       </div>
       <div className="mt-auto flex items-center justify-between gap-3 text-[13px] font-extrabold">
-        <button type="button" disabled={total === 0 || readAll.isPending} className="text-primary disabled:opacity-40"
-          onClick={() => readAll.mutate(undefined as never, { onSuccess: () => void client.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith("/api/notifications") }) })}>
+        <button type="button" disabled={total === 0 || !page || readAll.isPending} className="text-primary disabled:opacity-40"
+          onClick={() => page && readAll.mutate({ data: { throughRevision: page.revision } })}>
           Прочитать всё
         </button>
         <Link to="/activity" className="flex items-center gap-1 text-foreground hover:underline">Все уведомления <ArrowRight className="size-3.5" strokeWidth={2.6} /></Link>
@@ -537,8 +555,7 @@ export function OrganizerHome() {
   const orgName = me.data?.status === 200 ? me.data.data.name : undefined;
   const [tab, setTab] = useState<"UPCOMING" | "PAST">("UPCOMING");
   const list = tab === "UPCOMING" ? m.events : m.pastEvents;
-  const unreadCounts = useNotificationsUnreadCounts();
-  const unread = (unreadCounts.data?.status === 200 ? unreadCounts.data.data : []).reduce((s, c) => s + c.unread, 0);
+  const unread = useUnreadNotifications().all;
   const weekLoad = Array.from({ length: 7 }, (_, i) => {
     const day = startOfDay(new Date()).getTime() + i * 86_400_000;
     return m.week.filter((s) => s.occurrence.status === "SCHEDULED" && startOfDay(new Date(s.occurrence.startAt)).getTime() === day)

@@ -308,7 +308,7 @@ export function FeedMobile() {
 
       {view === "map" ? (
         <div className="px-4">
-          <EventsMap key={filters.city.value} withHome filters={{ searchText: params.searchText, sportId: params.sportId, level: params.level, joinMode: params.joinMode, organizationId: params.organizationId, lat: params.lat, lon: params.lon, radiusKm: params.radiusKm }} preset={filters.chip === "Сегодня" ? "today" : filters.chip === "Выходные" ? "weekend" : undefined} className="w-full" mapClassName="h-[45dvh]" />
+          <EventsMap key={filters.city.value} withHome filters={{ searchText: params.searchText, sportId: params.sportId, level: params.level, joinMode: params.joinMode, forMe: params.forMe, organizationId: params.organizationId, lat: params.lat, lon: params.lon, radiusKm: params.radiusKm }} preset={filters.chip === "Сегодня" ? "today" : filters.chip === "Выходные" ? "weekend" : undefined} className="w-full" mapClassName="h-[45dvh]" />
         </div>
       ) : (
         <>
@@ -341,6 +341,7 @@ function FeedEmpty() {
     <div className="px-4">
       <EmptyState
         icon={SearchX}
+        bublik="think"
         tone="bg-sky"
         title="Ничего не нашлось"
         text="Попробуйте другой фильтр — или соберите свою встречу."

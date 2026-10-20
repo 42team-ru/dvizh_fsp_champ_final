@@ -128,6 +128,7 @@ public class DemoSeeder {
 	private final DemoEconomySeeder economy;
 	private final DemoPetSeeder pets;
 	private final DemoAlbumSeeder album;
+	private final DemoBlogSeeder blog;
 	private final NotificationService notificationService;
 	private final AuthService authService;
 	private final UserProfileService profileService;
@@ -256,6 +257,9 @@ public class DemoSeeder {
 		// Модерация обсуждения: реклама скрыта админом, остальное обсуждение на месте.
 		var spam = comment(football, cast.id("elena"), "Продаю абонементы в фитнес-клуб со скидкой 50%, пишите в личку!");
 		adminCommentService.hide(spam, adminId, "Реклама не по теме мероприятия");
+		// Очередь модерации (/admin/moderation): грубость и реклама проходят словарь, но ждут решения админа.
+		comment(football, cast.id("dmitry"), "Кто опоздает — тот лох, ждать никого не будем");
+		comment(football, cast.id("elena"), "Ставки на футбол с бонусом 200%, переходи t.me/bet_bonus_win и пиши в лс");
 
 		// Лист ожидания: два места заняты, Ольга ждёт; Анна при записи тоже встанет в очередь.
 		var tableTennis = event(cast.id("sergey"), "Настольный теннис", new EventRequest(
@@ -296,6 +300,13 @@ public class DemoSeeder {
 				null, JoinMode.FREE, null, null, null));
 		join(run, cast.id("anna"), null);
 		join(run, cast.id("dmitry"), null);
+		// Модерация в фоне (docs/moderation.md): обычные вопросы остаются; угроза и реклама заработка скрываются сами —
+		// их видят словарь и модели (2 из 3 голосов); ненависть видит только нейросеть — она ждёт админа в очереди.
+		comment(run, cast.id("anna"), "Во сколько сбор? Мяч брать?");
+		comment(run, cast.id("anna"), "Порвём их в субботу, ребята!");
+		comment(run, cast.id("sergey"), "Если ещё раз придёшь, я тебе ноги переломаю и найду где ты живёшь");
+		comment(run, cast.id("nikolai"), "Заработок от 5000 в день без вложений, пиши в лс t.me/money_fast");
+		comment(run, cast.id("dmitry"), "Все приезжие тут лишние, пусть валят к себе");
 
 		var morningExercise = event(cast.id("olga"), "Зарядка", new EventRequest(
 				"Зарядка во дворе для всех возрастов",
@@ -390,6 +401,7 @@ public class DemoSeeder {
 		pets.dressCollector(cast.id("vika"));
 		bulk.dress(people);
 		album.seed(cast);
+		blog.seed(cast);
 		log.info("Demo data seeded in {} ms", System.currentTimeMillis() - started);
 	}
 

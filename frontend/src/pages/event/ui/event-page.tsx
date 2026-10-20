@@ -1,3 +1,10 @@
+import { CommentContent } from "./comment-content";
+import { Linkified } from "@/shared/lib/linkify";
+import { CommentModerationAction, CommentModerationDialog } from "@/features/comment-moderation/ui/comment-moderation";
+import { MessageActionsSheet, MessageGestures } from "@/features/comment-gestures/ui/message-gestures";
+import type { CommentResponse } from "@/shared/api/generated/core/appAPI.schemas";
+import { ENTER_HINT, enterToSend } from "@/shared/lib/enter-to-send";
+import { EventBlog } from "@/widgets/event-blog/ui/event-blog";
 import { profilePath } from "@/entity/user/lib/profile-path";
 import { coverOf } from "@/entity/event/lib/cover";
 import { MessageCircleQuestion } from "lucide-react";
@@ -21,9 +28,10 @@ import { Icon } from "@/shared/components/ui/icon";
 import { Progress } from "@/shared/components/ui/progress";
 import { RoughBorder } from "@/shared/components/ui/rough-border";
 import { cn } from "cn";
+import { quoteText } from "@/shared/lib/statuses";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 import { TicketStrip } from "@/entity/event/ui/ticket-strip";
-import { TicketQrStamp } from "@/entity/event/ui/ticket-qr-stamp";
+import { TicketAdmittedStamp } from "@/entity/event/ui/ticket-admitted-stamp";
 import { EventShare } from "./event-share";
 import { InviteActions } from "@/features/organizer-invite/ui/invite-actions";
 import { EventGoingCrowd } from "@/widgets/event-going-crowd/ui/event-going-crowd";
@@ -118,7 +126,7 @@ function RegisterAction({ m, className, hintClassName }: { m: EventModel; classN
 function TicketHero({ m, onDetails }: { m: EventModel; onDetails: (section: EventDetailsSection) => void }) {
   const e = m.event!;
   const cover = coverOf(e);
-  const showQrStamp = !m.moderated && e.singleOccurrence?.status !== "CANCELLED" && (e.viewer.registrationStatus === "CONFIRMED" || e.viewer.isOrganizer);
+  const admitted = !m.moderated && e.singleOccurrence?.status !== "CANCELLED" && e.viewer.registrationStatus === "CONFIRMED";
   return (
     // Тень — drop-shadow на обёртке (box-shadow маска срезала бы целиком). Внешняя обёртка
     // шире на тень и вырезает те же дыры уже из тени, чтобы сквозь вырез был виден фон.
@@ -152,15 +160,21 @@ function TicketHero({ m, onDetails }: { m: EventModel; onDetails: (section: Even
 
         <div className="flex h-[87px] w-[602px]">
           {m.facts.map((f, i) => (
-            <button type="button" key={f.label} aria-label={`Подробнее: ${f.label.toLowerCase()}`} aria-haspopup="dialog" onClick={() => onDetails(f.section)} className={cn("relative h-[87px] shrink-0 cursor-pointer text-left transition-colors hover:bg-lavender-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring", FACT_WIDTHS[i])}>
+            <button type="button" key={f.label} aria-label={`Подробнее: ${f.label.toLowerCase()}`} aria-haspopup="dialog" onClick={() => onDetails(f.section)} className={cn(
+                "group relative h-[87px] shrink-0 cursor-pointer text-left outline-none",
+                // как у пунктов меню и ghost-кнопок: мягкая заливка muted со скруглением, с отступом от пунктира
+                "before:absolute before:-inset-y-2 before:inset-x-2 before:rounded-2xl before:transition-colors",
+                "hover:before:bg-muted focus-visible:before:bg-muted focus-visible:before:ring-[3px] focus-visible:before:ring-ring/50",
+                FACT_WIDTHS[i],
+              )}>
               <div className="absolute top-0 left-5 flex h-4 items-center gap-[6px]">
                 <Icon name={`event/${f.icon}`} className="size-4" />
                 <Eyebrow>{f.label}</Eyebrow><span aria-hidden className="text-lg leading-none">›</span>
               </div>
-              <p title={f.value} className="absolute top-[23px] left-5 w-[175px] truncate font-display text-[19px] leading-6 font-bold text-foreground">
+              <p title={f.value} className="absolute top-[23px] left-5 w-[164px] truncate font-display text-[19px] leading-6 font-bold text-foreground">
                 {f.value}
               </p>
-              <p className="absolute top-[51px] left-5 w-[175px] text-[13px] leading-[18px] font-semibold text-muted-foreground">
+              <p className="absolute top-[51px] left-5 w-[164px] text-[13px] leading-[18px] font-semibold text-muted-foreground">
                 <span title={f.lines[0]} className="block truncate">{f.lines[0]}</span>
                 <span title={f.lines[1]} className="block truncate">{f.lines[1]}</span>
               </p>
@@ -179,13 +193,15 @@ function TicketHero({ m, onDetails }: { m: EventModel; onDetails: (section: Even
         {(e.status !== "PUBLISHED" || e.singleOccurrence?.status === "CANCELLED") && (
           <CancelledStamp big className="top-[220px] left-[34px] h-[66px] w-[178px] rotate-[9deg]" />
         )}
+        {admitted && <TicketAdmittedStamp event={e} className="top-[214px] left-[34px] z-10" />}
         <div className="relative h-[143px] w-[242px] shrink-0">
           <Eyebrow className="text-foreground">УЧАСТНИКИ</Eyebrow>
           <div className="absolute top-[14px] left-0 flex max-w-full items-baseline gap-2 text-foreground">
             <p className="font-display text-[54px] leading-[67px] font-extrabold">{m.going}</p>
             {e.capacity != null && <span className="text-xl leading-[27px] font-bold">/ {e.capacity}</span>}
           </div>
-          <Progress value={m.percent} className="absolute top-[89px] left-0 h-3" />
+          {/* без лимита заполнять нечего */}
+          {e.capacity != null && <Progress value={m.percent} className="absolute top-[89px] left-0 h-3" />}
           <div className="absolute top-[113px] left-0 h-[30px] w-[242px]">
             {e.participants.slice(0, 4).map((p, i) => (
               <Disc
@@ -205,15 +221,14 @@ function TicketHero({ m, onDetails }: { m: EventModel; onDetails: (section: Even
             )}
           </div>
         </div>
-        {showQrStamp && <TicketQrStamp eventId={e.id} />}
-        <div className={cn("relative w-[242px] shrink-0", showQrStamp ? "h-[76px]" : "h-[81px]")}>
+        <div className="relative h-[81px] w-[242px] shrink-0">
           {m.moderated ? (
             <p className="rounded-2xl border-2 border-ink bg-destructive px-4 py-3 text-sm font-bold text-destructive-foreground">
               Запись закрыта
             </p>
           ) : (
-            <RegisterAction m={m} className={cn("w-[242px] px-7 text-base leading-[22px]", showQrStamp ? "h-11" : "h-[54px]")}
-              hintClassName={cn("absolute left-0 line-clamp-2 w-full text-center text-xs leading-[15px] font-bold text-foreground", showQrStamp ? "top-[48px]" : "top-[60px]")} />
+            <RegisterAction m={m} className="h-[54px] w-[242px] px-7 text-base leading-[22px]"
+              hintClassName="absolute top-[60px] left-0 line-clamp-2 w-full text-center text-xs leading-[15px] font-bold text-foreground" />
           )}
         </div>
       </div>
@@ -255,7 +270,7 @@ function About({ m }: { m: EventModel }) {
           </div>
         )}
         <div className="relative rounded-[18px] border-2 border-ink bg-card px-4 py-2">
-          <p className="break-words text-sm leading-[20.5px] font-semibold text-foreground">{note}</p>
+          <p className="break-words text-sm leading-[20.5px] font-semibold text-foreground"><Linkified text={note} /></p>
           {/* хвостик облачка: квадрат, повёрнутый углом к бобру, — облачко «говорит» бобр */}
           <span aria-hidden className="absolute top-1/2 -right-[11px] box-border size-5 -translate-y-1/2 -rotate-45 rounded-br-[4px] border-r-2 border-b-2 border-ink bg-card" />
         </div>
@@ -370,8 +385,11 @@ function RouteMap({ m }: { m: EventModel }) {
 function Chat({ m }: { m: EventModel }) {
   const [text, setText] = useState("");
   const [replyTo, setReplyTo] = useState<{ id: string; who: string } | null>(null);
-  const input = useRef<HTMLInputElement>(null);
+  const [held, setHeld] = useState<CommentResponse>();
+  const input = useRef<HTMLTextAreaElement>(null);
   const canComment = m.event!.viewer.canComment;
+  const canReply = (c: CommentResponse) => canComment && !c.deleted && !c.hidden;
+  const canRemove = (c: CommentResponse) => m.moderation.isAdmin && !c.deleted && !c.hidden;
   // «Ответить»: сразу в поле ввода — фокус и прокрутка к нему, без второго клика
   const reply = (id: string, who: string) => {
     setReplyTo({ id, who });
@@ -406,8 +424,11 @@ function Chat({ m }: { m: EventModel }) {
             <Link to={profilePath(c.author)} aria-label={fullName(c.author)} className="shrink-0">
               <Disc user={c.author} initials={initials(c.author)} tone="bg-sky" className="size-9 shrink-0" textClassName="text-xs leading-[17px]" />
             </Link>
-            <div className={cn(
-              "box-border min-w-0 max-w-[580px] break-words rounded-tl-[4px] rounded-tr-[18px] rounded-br-[18px] rounded-bl-[18px] border-2 border-ink px-4 py-2.5",
+            <MessageGestures className="min-w-0 max-w-[580px]"
+              onReply={canReply(c) ? () => reply(c.id, fullName(c.author)) : undefined}
+              onHold={canReply(c) || canRemove(c) ? () => setHeld(c) : undefined}>
+            <div onDoubleClick={canReply(c) ? () => reply(c.id, fullName(c.author)) : undefined} className={cn(
+              "box-border min-w-0 break-words rounded-tl-[4px] rounded-tr-[18px] rounded-br-[18px] rounded-bl-[18px] border-2 border-ink px-4 py-2.5",
               c.isOrganizer ? "bg-lime-soft" : "bg-card",
             )}>
               <p className="text-[13px] leading-[18px]">
@@ -418,22 +439,27 @@ function Chat({ m }: { m: EventModel }) {
                   {c.editedAt && " · изменено"}
                 </span>
               </p>
-              {c.replyTo && (
+              {!c.hidden && c.replyTo && (
                 <p className="mt-1 border-l-2 border-ink pl-2 text-[13px] text-muted-foreground">
-                  {fullName(c.replyTo.author)}: {c.replyTo.deleted ? "сообщение удалено" : c.replyTo.text}
+                  {fullName(c.replyTo.author)}: {quoteText(c.replyTo)}
                 </p>
               )}
-              <p className="mt-0.5 text-[15px] leading-[22px] font-medium text-foreground">
-                {c.deleted ? <span className="text-muted-foreground italic">Сообщение удалено</span> : c.text}
+              <p className="mt-0.5 text-[15px] leading-[22px] font-medium whitespace-pre-line text-foreground">
+                <CommentContent comment={c} isAdmin={m.moderation.isAdmin} />
               </p>
-              {canComment && !c.deleted && (
+              <CommentModerationAction comment={c} moderation={m.moderation} />
+              {canComment && !c.deleted && !c.hidden && (
                 <button type="button" className="mt-1 text-xs font-bold text-muted-foreground underline"
                   onClick={() => reply(c.id, fullName(c.author))}>Ответить</button>
               )}
             </div>
+            </MessageGestures>
           </div>
         ))}
       </div>
+      <MessageActionsSheet open={held !== undefined} text={held && !held.deleted && !held.hidden ? held.text : undefined} onClose={() => setHeld(undefined)}
+        onReply={held && canReply(held) ? () => reply(held.id, fullName(held.author)) : undefined}
+        onRemove={held && canRemove(held) ? () => m.moderation.open(held) : undefined} />
       {canComment ? (
         <form className="flex shrink-0 flex-col gap-2"
           onSubmit={(event) => { event.preventDefault(); void send(); }}>
@@ -442,9 +468,11 @@ function Chat({ m }: { m: EventModel }) {
               Ответ для {replyTo.who} <button type="button" className="underline" onClick={() => setReplyTo(null)}>отменить</button>
             </p>
           )}
-          <div className="box-border flex h-12 items-center gap-[10px] rounded-pill border-2 border-ink bg-background pr-1.5 pl-5">
-            <input ref={input} value={text} maxLength={2000} onChange={(event) => setText(event.target.value)} aria-label="Сообщение"
-              placeholder="Задайте вопрос или напишите участникам" className="min-w-0 flex-1 bg-transparent text-[15px] outline-none" />
+          <div className="box-border flex min-h-12 items-end gap-[10px] rounded-[24px] border-2 border-ink bg-background py-1.5 pr-1.5 pl-5">
+            <textarea ref={input} value={text} maxLength={2000} rows={1} onChange={(event) => setText(event.target.value)} aria-label="Сообщение"
+              onKeyDown={(event) => enterToSend(event, setText, () => event.currentTarget.form?.requestSubmit())} title={ENTER_HINT}
+              placeholder="Задайте вопрос или напишите участникам"
+              className="field-sizing-content max-h-32 min-h-8 min-w-0 flex-1 resize-none bg-transparent py-1 text-[15px] leading-[22px] outline-none" />
             <Button type="submit" size="sm" disabled={!text.trim() || m.commentPending}>Отправить</Button>
           </div>
           {m.commentError && <p role="alert" className="text-sm font-bold text-destructive">{m.commentError}</p>}
@@ -476,8 +504,10 @@ export default function EventPage() {
   };
   return (
     <>
+    <CommentModerationDialog moderation={m.moderation} />
     <EventMobile m={m} onDetails={openDetails} />
-    {m.event && <EventDetailsDialog key={m.id} event={m.event} section={details} onClose={() => setDetails(undefined)} onRestoreFocus={() => detailsTrigger.current?.focus()} />}
+    {m.event && <EventDetailsDialog key={m.id} event={m.event} section={details} onClose={() => setDetails(undefined)} onRestoreFocus={() => detailsTrigger.current?.focus()}
+      action={!m.moderated && <RegisterAction m={m} className="h-11 px-6" hintClassName="min-w-0 flex-1 text-[13px] leading-[18px] font-bold text-muted-foreground" />} />}
     <div className="relative isolate hidden min-h-dvh overflow-clip bg-background lg:block">
       <MemphisBackground seed="event" />
       <AppHeader current="feed" />
@@ -512,6 +542,7 @@ export default function EventPage() {
             <div className="grid w-[1216px] shrink-0 grid-cols-[701px_495px] items-start gap-5">
               <div className="flex min-w-0 flex-col gap-5">
                 <About m={m} />
+                <EventBlog event={m.event} />
                 <Chat m={m} />
               </div>
               <div className="flex min-w-0 flex-col gap-5">

@@ -1,11 +1,12 @@
 import { useAttendance } from "./use-attendance";
-import { PassportSpread, SPREAD_H } from "./passport-spread";
+import { PassportSpread } from "./passport-spread";
 import { HistoryCard } from "./history-card";
 import { AchievementsColumn } from "./achievements";
 import { ProfileMobile } from "./profile-mobile";
 import { useUser } from "@/entity/user/model/use-user";
 import { usePublicProfile } from "../model/public-profile";
 import { ProfileGallery } from "@/widgets/profile-gallery/ui/profile-gallery";
+import { ProfileBlog } from "@/widgets/profile-blog/ui/profile-blog";
 import { AppHeader } from "@/widgets/app-header/ui/app-header";
 import { Badge } from "@/shared/components/ui/badge";
 import { Card } from "@/shared/components/ui/card";
@@ -22,18 +23,14 @@ function Img({ name, className }: { name: string; className?: string }) {
 function Attendance() {
   const { total, text, word } = useAttendance();
   return (
-    <Card style={{ top: SPREAD_H + 20 }} className="absolute left-[515px] h-[316px] w-[701px] justify-between overflow-hidden rounded-[28px] bg-primary px-[28px] py-[26px]">
-      <Img name="memphis2.svg" className="top-0 right-0 h-[260px] w-[400px]" />
-      <div className="relative h-[81px] w-[336px]">
-        <Eyebrow className="text-lilac">ПОСЕЩЕНО</Eyebrow>
-        <p className="absolute top-[18px] left-0 w-[167px] font-display font-extrabold whitespace-nowrap text-white">
-          <span className="text-[56px] leading-[56px]">{total} </span>
-          <span className="text-[22px] leading-[56px]">{word}</span>
-        </p>
-      </div>
-      <p className="relative w-[213.5px] text-sm leading-[19.5px] font-semibold text-white">
-        {text}
+    <Card className="relative shrink-0 gap-2 overflow-hidden rounded-[24px] bg-primary p-5">
+      <Img name="memphis2.svg" className="top-0 right-0 h-[140px] w-[216px] opacity-90" />
+      <Eyebrow className="relative text-lilac">ПОСЕЩЕНО</Eyebrow>
+      <p className="relative font-display font-extrabold whitespace-nowrap text-white">
+        <span className="text-[52px] leading-[56px]">{total} </span>
+        <span className="text-[18px] leading-[56px]">{word}</span>
       </p>
+      <p className="relative text-[13px] leading-[19px] font-semibold text-white">{text}</p>
     </Card>
   );
 }
@@ -50,12 +47,14 @@ export default function ProfilePage() {
       <MemphisBackground seed={owner ? "user" : "profile"} />
       <AppHeader current={owner ? "feed" : "profile"} />
       <main className="mx-auto w-full max-w-[1280px] px-8 pt-8 pb-12">
-        <div className="relative w-[1216px]" style={{ height: SPREAD_H + 20 + 316 }}>
+        <div className="grid grid-cols-1 items-stretch gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
           <PassportSpread />
-          <HistoryCard />
-          <Attendance />
-          <AchievementsColumn className="absolute top-0 left-[944px] w-[272px]" style={{ height: SPREAD_H }} />
+          <div className="grid min-w-0 grid-cols-2 items-start gap-4 xl:flex xl:flex-col xl:items-stretch">
+            <Attendance />
+            <HistoryCard />
+          </div>
         </div>
+        <AchievementsColumn wide className="mt-6 w-full" />
         {user?.id && (
           <ProfileGallery
             className="mt-12"
@@ -64,6 +63,7 @@ export default function ProfilePage() {
             aboutPhotos={owner?.user.photos}
           />
         )}
+        {user?.id && <ProfileBlog className="mt-12" userId={user.id} mine={!owner} />}
       </main>
     </div>
     </>

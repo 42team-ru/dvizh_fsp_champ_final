@@ -1,8 +1,10 @@
-.PHONY: hooks scan junk clean dev dev-down back front logs postman deploy prod prod-logs prod-down
+.PHONY: hooks scan junk clean dev dev-down llm back front logs postman deploy prod prod-logs prod-down
 dev:           ## Postgres для разработки (один раз, остаётся работать); бэк и фронт запускайте отдельно: make back / make front
 	node scripts/dev.mjs
 dev-down:      ## Остановить БД разработки (данные сохраняются)
 	docker compose -f docker-compose.dev.yml down
+llm:           ## Модели модерации для make back: нейросеть :8091 и классификатор :8093 (MODERATION_LLM_ENABLED / MODERATION_CLASSIFIER_ENABLED=true; docs/moderation.md)
+	docker compose -f docker-compose.dev.yml --profile llm up -d llm toxicity
 back:          ## Бэкенд :8080 (свой терминал, Ctrl+C и снова make back)
 	node scripts/dev.mjs back
 front:         ## Фронт :5173 (свой терминал)

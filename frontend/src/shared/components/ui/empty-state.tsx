@@ -10,12 +10,16 @@ const rise = (delay: number) => ({
   transition: { delay, duration: 0.3, ease: "easeOut" as const },
 })
 
+/** Картинки Бублика из `public/bublik`. Ставим точечно, в ключевые пустые состояния, а не везде. */
+export type BublikPose = "think" | "sad" | "point" | "ticket" | "cheer" | "ask" | "wave" | "jump" | "passport" | "love"
+
 /**
- * Пустое состояние: иконка в кружке, заголовок, пояснение и действие («Найти встречу»).
+ * Пустое состояние: иконка в кружке (или Бублик), заголовок, пояснение и действие («Найти встречу»).
  * `tone` — фон кружка токеном (`bg-secondary`), `size="sm"` — для узких карточек и боковых колонок.
  */
 export function EmptyState({
   icon: Icon,
+  bublik,
   title,
   text,
   action,
@@ -24,6 +28,8 @@ export function EmptyState({
   className,
 }: {
   icon: LucideIcon
+  /** Бублик вместо иконки в кружке. */
+  bublik?: BublikPose
   title: string
   text?: ReactNode
   action?: ReactNode
@@ -53,12 +59,14 @@ export function EmptyState({
           animate={{ y: [0, -5, 0] }}
           transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
           className={cn(
-            "grid place-items-center rounded-full border-2 border-ink text-ink shadow-hard-sm",
-            sm ? "size-11" : "size-16",
-            tone
+            !bublik && "grid place-items-center rounded-full border-2 border-ink text-ink shadow-hard-sm",
+            !bublik && (sm ? "size-11" : "size-16"),
+            !bublik && tone
           )}
         >
-          <Icon className={sm ? "size-5" : "size-7"} strokeWidth={2.2} aria-hidden />
+          {bublik
+            ? <img src={`/bublik/${bublik}.png`} alt="" className={cn("w-auto object-contain", sm ? "h-20" : "h-32")} />
+            : <Icon className={sm ? "size-5" : "size-7"} strokeWidth={2.2} aria-hidden />}
         </motion.div>
       </motion.div>
       <motion.p {...rise(0.14)} className={cn("font-display font-extrabold text-foreground", sm ? "text-[15px] leading-5" : "text-lg leading-6")}>

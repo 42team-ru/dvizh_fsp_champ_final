@@ -1317,6 +1317,45 @@ export interface CommentUpdateRequest {
   text: string;
 }
 
+export type CommentModerationResponseStatus = typeof CommentModerationResponseStatus[keyof typeof CommentModerationResponseStatus];
+
+
+export const CommentModerationResponseStatus = {
+  PENDING: 'PENDING',
+  CLEAN: 'CLEAN',
+  FLAGGED: 'FLAGGED',
+  AUTO_HIDDEN: 'AUTO_HIDDEN',
+  RESOLVED: 'RESOLVED',
+} as const;
+
+export type CommentModerationResponseCategoriesItem = typeof CommentModerationResponseCategoriesItem[keyof typeof CommentModerationResponseCategoriesItem];
+
+
+export const CommentModerationResponseCategoriesItem = {
+  PROFANITY: 'PROFANITY',
+  INSULT: 'INSULT',
+  HARASSMENT: 'HARASSMENT',
+  HATE: 'HATE',
+  THREAT: 'THREAT',
+  SEXUAL: 'SEXUAL',
+  SPAM: 'SPAM',
+  OFF_TOPIC: 'OFF_TOPIC',
+  OTHER: 'OTHER',
+} as const;
+
+/**
+ * Оценка сообщения модерацией — только администратору
+ */
+export interface CommentModerationResponse {
+  /** Id проверки в очереди */
+  checkId: string;
+  status: CommentModerationResponseStatus;
+  categories: CommentModerationResponseCategoriesItem[];
+  severity: number;
+  /** Пояснение оценки */
+  explanation?: string;
+}
+
 /**
  * Сообщение, на которое ответили: автор и начало текста
  */
@@ -1364,6 +1403,8 @@ export interface CommentResponse {
   hidden: boolean;
   /** Причина скрытия — только администратору и автору; иначе null */
   hiddenReason?: string;
+  /** Оценка модерации — только администратору; null — не проверялось или не админ */
+  moderation?: CommentModerationResponse;
 }
 
 /**
@@ -1376,6 +1417,431 @@ export interface AnnouncementRequest {
      * @maxLength 1000
      */
   text: string;
+}
+
+/**
+ * Фото в посте: своё загруженное или из альбома этой встречи
+ */
+export interface BlogPhotoRequest {
+  /** Файл (id) */
+  fileId: string;
+  /**
+     * Подпись под фото
+     * @minLength 0
+     * @maxLength 300
+     */
+  caption?: string;
+}
+
+/**
+ * Гайд или пост с тренировки
+ */
+export type BlogPostRequestType = typeof BlogPostRequestType[keyof typeof BlogPostRequestType];
+
+
+export const BlogPostRequestType = {
+  GUIDE: 'GUIDE',
+  EVENT_REPORT: 'EVENT_REPORT',
+} as const;
+
+/**
+ * Пост целиком: создание и правка заменяют все поля
+ */
+export interface BlogPostRequest {
+  /** Гайд или пост с тренировки */
+  type: BlogPostRequestType;
+  /** Встреча (обязательна для поста с тренировки, у гайда не хранится) */
+  eventId?: string;
+  /** Вид спорта гайда; у поста с тренировки берётся вид встречи */
+  sportId?: string;
+  /**
+     * Заголовок
+     * @minLength 0
+     * @maxLength 120
+     */
+  title: string;
+  /**
+     * Текст в Markdown
+     * @minLength 0
+     * @maxLength 20000
+     */
+  body: string;
+  /**
+     * Фото по порядку, первое — обложка; до 10
+     * @minItems 0
+     * @maxItems 10
+     */
+  photos?: BlogPhotoRequest[];
+  /** Виджет в конце поста: ближайшие встречи этой организации */
+  widgetOrganizationId?: string;
+  /** Виджет в конце поста: ближайшие встречи этого организатора */
+  widgetUserId?: string;
+  /** Разрешить комментарии; по умолчанию да */
+  commentsEnabled?: boolean;
+  /** true — опубликовать, false — сохранить черновиком */
+  publish: boolean;
+}
+
+/**
+ * Статус мероприятия
+ */
+export type BlogEventResponseStatus = typeof BlogEventResponseStatus[keyof typeof BlogEventResponseStatus];
+
+
+export const BlogEventResponseStatus = {
+  PUBLISHED: 'PUBLISHED',
+  UNPUBLISHED: 'UNPUBLISHED',
+  DELETED: 'DELETED',
+} as const;
+
+/**
+ * Встреча, о которой пост: плашка «Написано после встречи»
+ */
+export interface BlogEventResponse {
+  id: string;
+  /** Название */
+  title: string;
+  /** Начало (у серии — первое занятие) */
+  startAt: string;
+  /** Статус мероприятия */
+  status: BlogEventResponseStatus;
+  sport: SportResponse;
+  /** Кто организует (у события организации — её аккаунт) */
+  organizer: UserShortResponse;
+  /** Организация; null — от частного лица */
+  organization?: OrganizationShortResponse;
+  /** Обложка встречи: /api/files/{id}; null — без фото */
+  coverUrl?: string;
+}
+
+/**
+ * Фото в посте
+ */
+export interface BlogPhotoResponse {
+  /** Файл (id) */
+  id: string;
+  /** Адрес картинки: /api/files/{id} */
+  url: string;
+  /** Подпись */
+  caption?: string;
+  /** Точка фокуса для превью; null — центр */
+  focus?: FocusPoint;
+}
+
+/**
+ * Гайд или пост с тренировки
+ */
+export type BlogPostSummaryResponseType = typeof BlogPostSummaryResponseType[keyof typeof BlogPostSummaryResponseType];
+
+
+export const BlogPostSummaryResponseType = {
+  GUIDE: 'GUIDE',
+  EVENT_REPORT: 'EVENT_REPORT',
+} as const;
+
+/**
+ * Черновик или опубликован
+ */
+export type BlogPostSummaryResponseStatus = typeof BlogPostSummaryResponseStatus[keyof typeof BlogPostSummaryResponseStatus];
+
+
+export const BlogPostSummaryResponseStatus = {
+  DRAFT: 'DRAFT',
+  PUBLISHED: 'PUBLISHED',
+} as const;
+
+/**
+ * Пост в списке: лента блога, профиль, страница встречи и клуба
+ */
+export interface BlogPostSummaryResponse {
+  id: string;
+  /** Гайд или пост с тренировки */
+  type: BlogPostSummaryResponseType;
+  /** Черновик или опубликован */
+  status: BlogPostSummaryResponseStatus;
+  /** Заголовок */
+  title: string;
+  /** Начало текста без разметки */
+  excerpt: string;
+  /** Минут чтения */
+  readMinutes: number;
+  /** Обложка — первое фото; null — без фото */
+  cover?: BlogPhotoResponse;
+  /** Сколько фото в посте */
+  photosCount: number;
+  /** Вид спорта; null — без вида */
+  sport?: SportResponse;
+  /** Встреча; null — у гайда */
+  event?: BlogEventResponse;
+  /** Автор */
+  author: UserShortResponse;
+  /** Организация, если пишет её аккаунт */
+  organization?: OrganizationShortResponse;
+  /** Автор был на встрече (участник или организатор) — плашка «был на встрече» */
+  authorWasThere: boolean;
+  /** Лайков */
+  likesCount: number;
+  /** Я лайкнул */
+  likedByMe: boolean;
+  /** Комментариев (без удалённых) */
+  commentsCount: number;
+  /** Когда опубликован; null — черновик */
+  publishedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Очно или онлайн
+ */
+export type EventSummaryResponseFormat = typeof EventSummaryResponseFormat[keyof typeof EventSummaryResponseFormat];
+
+
+export const EventSummaryResponseFormat = {
+  OFFLINE: 'OFFLINE',
+  ONLINE: 'ONLINE',
+} as const;
+
+/**
+ * Для какого уровня
+ */
+export type EventSummaryResponseLevel = typeof EventSummaryResponseLevel[keyof typeof EventSummaryResponseLevel];
+
+
+export const EventSummaryResponseLevel = {
+  ANY: 'ANY',
+  BEGINNER: 'BEGINNER',
+  AMATEUR: 'AMATEUR',
+  PRO: 'PRO',
+} as const;
+
+/**
+ * Вид мероприятия
+ */
+export type EventSummaryResponseKind = typeof EventSummaryResponseKind[keyof typeof EventSummaryResponseKind];
+
+
+export const EventSummaryResponseKind = {
+  TRAINING: 'TRAINING',
+  GAME: 'GAME',
+  MEETUP: 'MEETUP',
+  AMATEUR_TOURNAMENT: 'AMATEUR_TOURNAMENT',
+} as const;
+
+/**
+ * Режим записи
+ */
+export type EventSummaryResponseJoinMode = typeof EventSummaryResponseJoinMode[keyof typeof EventSummaryResponseJoinMode];
+
+
+export const EventSummaryResponseJoinMode = {
+  FREE: 'FREE',
+  REQUEST: 'REQUEST',
+} as const;
+
+/**
+ * Кворум ближайшего подходящего занятия; null — без кворума или занятия нет
+ */
+export type EventSummaryResponseQuorumStatus = typeof EventSummaryResponseQuorumStatus[keyof typeof EventSummaryResponseQuorumStatus];
+
+
+export const EventSummaryResponseQuorumStatus = {
+  GATHERING: 'GATHERING',
+  REACHED: 'REACHED',
+  CONFIRMED: 'CONFIRMED',
+} as const;
+
+/**
+ * Статус мероприятия
+ */
+export type EventSummaryResponseStatus = typeof EventSummaryResponseStatus[keyof typeof EventSummaryResponseStatus];
+
+
+export const EventSummaryResponseStatus = {
+  PUBLISHED: 'PUBLISHED',
+  UNPUBLISHED: 'UNPUBLISHED',
+  DELETED: 'DELETED',
+} as const;
+
+/**
+ * Статус моей записи; null — не записан
+ */
+export type EventSummaryResponseMyRegistrationStatus = typeof EventSummaryResponseMyRegistrationStatus[keyof typeof EventSummaryResponseMyRegistrationStatus];
+
+
+export const EventSummaryResponseMyRegistrationStatus = {
+  CONFIRMED: 'CONFIRMED',
+  PENDING: 'PENDING',
+  REJECTED: 'REJECTED',
+  CANCELLED: 'CANCELLED',
+  WAITLISTED: 'WAITLISTED',
+} as const;
+
+/**
+ * Мероприятие в списке: лента, мои мероприятия, мои записи
+ */
+export interface EventSummaryResponse {
+  id: string;
+  /** Название */
+  title: string;
+  /** Вид спорта */
+  sport: SportResponse;
+  /** Начало; у серии — ближайшего подходящего занятия */
+  startAt: string;
+  /** Окончание; у серии — ближайшего подходящего занятия */
+  endAt?: string;
+  /** Занятие, к которому относятся startAt и endAt; null — подходящих нет */
+  occurrenceId?: string;
+  /** Повторяющееся мероприятие (серия занятий) */
+  recurring: boolean;
+  /** Расписание словами; null — разовое */
+  scheduleDescription?: string;
+  /** Очно или онлайн */
+  format: EventSummaryResponseFormat;
+  /** Адрес */
+  address?: string;
+  /** Как найти место */
+  locationNote?: string;
+  /** Широта; у онлайн-мероприятия null */
+  lat?: number;
+  /** Долгота; у онлайн-мероприятия null */
+  lon?: number;
+  /** Для какого уровня */
+  level: EventSummaryResponseLevel;
+  /** Вид мероприятия */
+  kind?: EventSummaryResponseKind;
+  /** Режим записи */
+  joinMode: EventSummaryResponseJoinMode;
+  /** Лимит мест; null — без лимита. У серии — на каждое занятие */
+  capacity?: number;
+  /** Подтверждённых участников («записались 8 из 16»); у серии — принятых в серию */
+  participantsCount: number;
+  /** У серии — сколько отметились на занятие occurrenceId («придут 7 из 10»); у разового — null */
+  occurrenceAttendeesCount?: number;
+  /** До трёх подтверждённых участников; у серии с ближайшим занятием — отметившихся на него */
+  participantsPreview: EventParticipantResponse[];
+  /** Кворум: состоится, если наберём столько; null — без кворума */
+  minParticipants?: number;
+  /** Кворум ближайшего подходящего занятия; null — без кворума или занятия нет */
+  quorumStatus?: EventSummaryResponseQuorumStatus;
+  /** Разовое мероприятие отменено организатором (у серии отменяются отдельные занятия) */
+  cancelledByOrganizer: boolean;
+  /** Статус мероприятия */
+  status: EventSummaryResponseStatus;
+  /** Причина снятия с публикации или удаления */
+  moderationReason?: string;
+  /** Организатор-человек */
+  authorId: string;
+  /** Организация; null — от частного лица */
+  organizationId?: string;
+  /** Кто организует: автор мероприятия (у события организации — её аккаунт) */
+  organizer: UserShortResponse;
+  /** Организация для подписи «Шахматный клуб «Ладья»»; null — от частного лица */
+  organization?: OrganizationShortResponse;
+  /** Статус моей записи; null — не записан */
+  myRegistrationStatus?: EventSummaryResponseMyRegistrationStatus;
+  /** Обложка (первое фото): /api/files/{id}; null — без фото */
+  coverUrl?: string;
+  /** Точка фокуса обложки; null — центр или без фото (тогда у иллюстрации вида — sport.imageFocus) */
+  coverFocus?: FocusPoint;
+}
+
+/**
+ * Виджет «Наши тренировки» в конце поста: ближайшие встречи клуба или организатора
+ */
+export interface BlogWidgetResponse {
+  /** Клуб; null — виджет организатора-человека */
+  organization?: OrganizationShortResponse;
+  /** Организатор-человек; null — виджет клуба */
+  organizer?: UserShortResponse;
+  /** До трёх ближайших встреч; пусто — скоро новые */
+  events: EventSummaryResponse[];
+}
+
+/**
+ * Что я могу сделать с постом: кнопки рисуются по этим флагам
+ */
+export interface BlogViewerResponse {
+  /** Мой пост */
+  isMine: boolean;
+  /** Могу править */
+  canEdit: boolean;
+  /** Могу удалить (автор или админ) */
+  canDelete: boolean;
+  /** Могу лайкнуть */
+  canLike: boolean;
+  /** Могу комментировать */
+  canComment: boolean;
+  /** Почему нельзя комментировать; null — можно */
+  commentBlockedReason?: string;
+}
+
+/**
+ * Пост целиком: текст, фото, виджет и мои права
+ */
+export interface BlogPostResponse {
+  /** То же, что в списке */
+  post: BlogPostSummaryResponse;
+  /** Текст в Markdown */
+  body: string;
+  /** Фото по порядку, первое — обложка */
+  photos: BlogPhotoResponse[];
+  /** Виджет «Наши тренировки»; null — автор его не добавил */
+  widget?: BlogWidgetResponse;
+  /** Виджет: организация (для формы правки) */
+  widgetOrganizationId?: string;
+  /** Виджет: организатор-человек (для формы правки) */
+  widgetUserId?: string;
+  /** Комментарии разрешены */
+  commentsEnabled: boolean;
+  viewer: BlogViewerResponse;
+}
+
+/**
+ * Исправленный текст своего комментария
+ */
+export interface BlogCommentUpdateRequest {
+  /**
+     * Текст
+     * @minLength 0
+     * @maxLength 2000
+     */
+  text: string;
+}
+
+/**
+ * Цитата над ответом: на какой комментарий ответили
+ */
+export interface BlogCommentReplyResponse {
+  id: string;
+  author: UserShortResponse;
+  /** Начало текста; null — удалено */
+  text?: string;
+  deleted: boolean;
+}
+
+/**
+ * Комментарий под постом
+ */
+export interface BlogCommentResponse {
+  id: string;
+  author: UserShortResponse;
+  /** Организация, если пишет её аккаунт */
+  organization?: OrganizationShortResponse;
+  /** Автор поста — метка «Автор» */
+  isPostAuthor: boolean;
+  /** Текст; null — удалено */
+  text?: string;
+  createdAt: string;
+  /** Когда исправлено; null — не менялось */
+  editedAt?: string;
+  deleted: boolean;
+  /** Цитата комментария, на который это ответ */
+  replyTo?: BlogCommentReplyResponse;
+  /** Мой комментарий */
+  isMine: boolean;
+  /** Могу исправить или удалить */
+  canEdit: boolean;
 }
 
 /**
@@ -1679,6 +2145,30 @@ export interface CommentRequest {
   replyToId?: string;
 }
 
+/**
+ * Лайки поста после нажатия
+ */
+export interface BlogLikeResponse {
+  /** Лайков */
+  likesCount: number;
+  /** Я лайкнул */
+  likedByMe: boolean;
+}
+
+/**
+ * Новый комментарий под постом
+ */
+export interface BlogCommentRequest {
+  /**
+     * Текст
+     * @minLength 0
+     * @maxLength 2000
+     */
+  text: string;
+  /** Ответ на комментарий (id); пусто — в общий поток */
+  replyToId?: string;
+}
+
 export type RegisterRequestAccountType = typeof RegisterRequestAccountType[keyof typeof RegisterRequestAccountType];
 
 
@@ -1891,6 +2381,119 @@ export interface AdminOrganizationResponse {
 }
 
 /**
+ * Что проверяли
+ */
+export type ModerationItemResponseTargetType = typeof ModerationItemResponseTargetType[keyof typeof ModerationItemResponseTargetType];
+
+
+export const ModerationItemResponseTargetType = {
+  COMMENT: 'COMMENT',
+  EVENT: 'EVENT',
+  USER_PROFILE: 'USER_PROFILE',
+  ORGANIZATION: 'ORGANIZATION',
+} as const;
+
+export type ModerationItemResponseStatus = typeof ModerationItemResponseStatus[keyof typeof ModerationItemResponseStatus];
+
+
+export const ModerationItemResponseStatus = {
+  PENDING: 'PENDING',
+  CLEAN: 'CLEAN',
+  FLAGGED: 'FLAGGED',
+  AUTO_HIDDEN: 'AUTO_HIDDEN',
+  RESOLVED: 'RESOLVED',
+} as const;
+
+/**
+ * Кто оценил: словарь или нейросеть; null — ещё никто
+ */
+export type ModerationItemResponseSource = typeof ModerationItemResponseSource[keyof typeof ModerationItemResponseSource];
+
+
+export const ModerationItemResponseSource = {
+  HEURISTIC: 'HEURISTIC',
+  LLM: 'LLM',
+  CLASSIFIER: 'CLASSIFIER',
+} as const;
+
+export type ModerationItemResponseCategoriesItem = typeof ModerationItemResponseCategoriesItem[keyof typeof ModerationItemResponseCategoriesItem];
+
+
+export const ModerationItemResponseCategoriesItem = {
+  PROFANITY: 'PROFANITY',
+  INSULT: 'INSULT',
+  HARASSMENT: 'HARASSMENT',
+  HATE: 'HATE',
+  THREAT: 'THREAT',
+  SEXUAL: 'SEXUAL',
+  SPAM: 'SPAM',
+  OFF_TOPIC: 'OFF_TOPIC',
+  OTHER: 'OTHER',
+} as const;
+
+/**
+ * Решение администратора
+ */
+export type ModerationItemResponseDecision = typeof ModerationItemResponseDecision[keyof typeof ModerationItemResponseDecision];
+
+
+export const ModerationItemResponseDecision = {
+  APPROVED: 'APPROVED',
+  HIDDEN: 'HIDDEN',
+  ACTION_TAKEN: 'ACTION_TAKEN',
+} as const;
+
+/**
+ * Проверка текста в очереди модерации
+ */
+export interface ModerationItemResponse {
+  id: string;
+  /** Что проверяли */
+  targetType: ModerationItemResponseTargetType;
+  /** Id объекта: сообщения, мероприятия, пользователя или организации */
+  targetId: string;
+  /** Мероприятие (у сообщения — его обсуждение); null — профиль или анкета */
+  eventId?: string;
+  /** Название мероприятия, организации или имя человека — подпись ссылки */
+  targetTitle?: string;
+  /** Автор текста; null — аккаунт удалён */
+  author?: UserShortResponse;
+  /** Проверенный текст; у мероприятия и анкеты — поля с подписями */
+  text: string;
+  status: ModerationItemResponseStatus;
+  /** Кто оценил: словарь или нейросеть; null — ещё никто */
+  source?: ModerationItemResponseSource;
+  /** Найденные нарушения */
+  categories: ModerationItemResponseCategoriesItem[];
+  /** 0 — нет нарушений, 3 — грубое */
+  severity: number;
+  /** Пояснение оценки */
+  explanation?: string;
+  /** Сообщение сейчас скрыто (только для сообщений) */
+  hidden: boolean;
+  /** Когда текст отправлен на проверку или изменён */
+  updatedAt: string;
+  /** Когда поставлена оценка */
+  checkedAt?: string;
+  /** Решение администратора */
+  decision?: ModerationItemResponseDecision;
+  /** Когда принято решение */
+  reviewedAt?: string;
+}
+
+/**
+ * Скрытие сообщения администратором
+ */
+export interface HideCommentRequest {
+  /**
+     * Причина: её увидят автор сообщения и администраторы
+     * @minLength 0
+     * @maxLength 1000
+     */
+  reason: string;
+}
+
+/**
  * Снятие с публикации или удаление мероприятия админом
  */
 export interface ModerateEventRequest {
@@ -1943,18 +2546,6 @@ export interface AdminEventResponse {
 }
 
 /**
- * Скрытие сообщения администратором
- */
-export interface HideCommentRequest {
-  /**
-     * Причина: её увидят автор сообщения и администраторы
-     * @minLength 0
-     * @maxLength 1000
-     */
-  reason: string;
-}
-
-/**
  * Предложена или подтверждена
  */
 export type OrganizationAwardResponseStatus = typeof OrganizationAwardResponseStatus[keyof typeof OrganizationAwardResponseStatus];
@@ -1982,161 +2573,6 @@ export interface OrganizationAwardResponse {
   status: OrganizationAwardResponseStatus;
   /** Когда подтверждена; null — ещё нет */
   confirmedAt?: string;
-}
-
-/**
- * Очно или онлайн
- */
-export type EventSummaryResponseFormat = typeof EventSummaryResponseFormat[keyof typeof EventSummaryResponseFormat];
-
-
-export const EventSummaryResponseFormat = {
-  OFFLINE: 'OFFLINE',
-  ONLINE: 'ONLINE',
-} as const;
-
-/**
- * Для какого уровня
- */
-export type EventSummaryResponseLevel = typeof EventSummaryResponseLevel[keyof typeof EventSummaryResponseLevel];
-
-
-export const EventSummaryResponseLevel = {
-  ANY: 'ANY',
-  BEGINNER: 'BEGINNER',
-  AMATEUR: 'AMATEUR',
-  PRO: 'PRO',
-} as const;
-
-/**
- * Вид мероприятия
- */
-export type EventSummaryResponseKind = typeof EventSummaryResponseKind[keyof typeof EventSummaryResponseKind];
-
-
-export const EventSummaryResponseKind = {
-  TRAINING: 'TRAINING',
-  GAME: 'GAME',
-  MEETUP: 'MEETUP',
-  AMATEUR_TOURNAMENT: 'AMATEUR_TOURNAMENT',
-} as const;
-
-/**
- * Режим записи
- */
-export type EventSummaryResponseJoinMode = typeof EventSummaryResponseJoinMode[keyof typeof EventSummaryResponseJoinMode];
-
-
-export const EventSummaryResponseJoinMode = {
-  FREE: 'FREE',
-  REQUEST: 'REQUEST',
-} as const;
-
-/**
- * Кворум ближайшего подходящего занятия; null — без кворума или занятия нет
- */
-export type EventSummaryResponseQuorumStatus = typeof EventSummaryResponseQuorumStatus[keyof typeof EventSummaryResponseQuorumStatus];
-
-
-export const EventSummaryResponseQuorumStatus = {
-  GATHERING: 'GATHERING',
-  REACHED: 'REACHED',
-  CONFIRMED: 'CONFIRMED',
-} as const;
-
-/**
- * Статус мероприятия
- */
-export type EventSummaryResponseStatus = typeof EventSummaryResponseStatus[keyof typeof EventSummaryResponseStatus];
-
-
-export const EventSummaryResponseStatus = {
-  PUBLISHED: 'PUBLISHED',
-  UNPUBLISHED: 'UNPUBLISHED',
-  DELETED: 'DELETED',
-} as const;
-
-/**
- * Статус моей записи; null — не записан
- */
-export type EventSummaryResponseMyRegistrationStatus = typeof EventSummaryResponseMyRegistrationStatus[keyof typeof EventSummaryResponseMyRegistrationStatus];
-
-
-export const EventSummaryResponseMyRegistrationStatus = {
-  CONFIRMED: 'CONFIRMED',
-  PENDING: 'PENDING',
-  REJECTED: 'REJECTED',
-  CANCELLED: 'CANCELLED',
-  WAITLISTED: 'WAITLISTED',
-} as const;
-
-/**
- * Мероприятие в списке: лента, мои мероприятия, мои записи
- */
-export interface EventSummaryResponse {
-  id: string;
-  /** Название */
-  title: string;
-  /** Вид спорта */
-  sport: SportResponse;
-  /** Начало; у серии — ближайшего подходящего занятия */
-  startAt: string;
-  /** Окончание; у серии — ближайшего подходящего занятия */
-  endAt?: string;
-  /** Занятие, к которому относятся startAt и endAt; null — подходящих нет */
-  occurrenceId?: string;
-  /** Повторяющееся мероприятие (серия занятий) */
-  recurring: boolean;
-  /** Расписание словами; null — разовое */
-  scheduleDescription?: string;
-  /** Очно или онлайн */
-  format: EventSummaryResponseFormat;
-  /** Адрес */
-  address?: string;
-  /** Как найти место */
-  locationNote?: string;
-  /** Широта; у онлайн-мероприятия null */
-  lat?: number;
-  /** Долгота; у онлайн-мероприятия null */
-  lon?: number;
-  /** Для какого уровня */
-  level: EventSummaryResponseLevel;
-  /** Вид мероприятия */
-  kind?: EventSummaryResponseKind;
-  /** Режим записи */
-  joinMode: EventSummaryResponseJoinMode;
-  /** Лимит мест; null — без лимита. У серии — на каждое занятие */
-  capacity?: number;
-  /** Подтверждённых участников («записались 8 из 16»); у серии — принятых в серию */
-  participantsCount: number;
-  /** У серии — сколько отметились на занятие occurrenceId («придут 7 из 10»); у разового — null */
-  occurrenceAttendeesCount?: number;
-  /** До трёх подтверждённых участников; у серии с ближайшим занятием — отметившихся на него */
-  participantsPreview: EventParticipantResponse[];
-  /** Кворум: состоится, если наберём столько; null — без кворума */
-  minParticipants?: number;
-  /** Кворум ближайшего подходящего занятия; null — без кворума или занятия нет */
-  quorumStatus?: EventSummaryResponseQuorumStatus;
-  /** Разовое мероприятие отменено организатором (у серии отменяются отдельные занятия) */
-  cancelledByOrganizer: boolean;
-  /** Статус мероприятия */
-  status: EventSummaryResponseStatus;
-  /** Причина снятия с публикации или удаления */
-  moderationReason?: string;
-  /** Организатор-человек */
-  authorId: string;
-  /** Организация; null — от частного лица */
-  organizationId?: string;
-  /** Кто организует: автор мероприятия (у события организации — её аккаунт) */
-  organizer: UserShortResponse;
-  /** Организация для подписи «Шахматный клуб «Ладья»»; null — от частного лица */
-  organization?: OrganizationShortResponse;
-  /** Статус моей записи; null — не записан */
-  myRegistrationStatus?: EventSummaryResponseMyRegistrationStatus;
-  /** Обложка (первое фото): /api/files/{id}; null — без фото */
-  coverUrl?: string;
-  /** Точка фокуса обложки; null — центр или без фото (тогда у иллюстрации вида — sport.imageFocus) */
-  coverFocus?: FocusPoint;
 }
 
 /**
@@ -3171,6 +3607,38 @@ export interface DemoAccountResponse {
   systemRole?: DemoAccountResponseSystemRole;
 }
 
+/**
+ * «Как прошла встреча? Напиши пост»: последняя закончившаяся встреча, о которой я ещё не писал
+ */
+export interface BlogPromptResponse {
+  event: BlogEventResponse;
+  /** Когда закончилась */
+  endedAt: string;
+  /** Первые фото альбома и мероприятия — их можно взять в пост */
+  photos: FileResponse[];
+  /** Сколько всего фото со встречи */
+  photosCount: number;
+}
+
+export interface PageResponseBlogPostSummaryResponse {
+  items: BlogPostSummaryResponse[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+/**
+ * Автор блога: «Авторы недели»
+ */
+export interface BlogAuthorResponse {
+  author: UserShortResponse;
+  /** Организация, если пишет её аккаунт */
+  organization?: OrganizationShortResponse;
+  /** Опубликованных постов всего */
+  postsCount: number;
+}
+
 export interface AvailabilityCheckResponse {
   available?: boolean;
 }
@@ -3244,6 +3712,8 @@ export interface AdminStatsResponse {
   registrationsPending: number;
   /** Комментариев */
   comments: number;
+  /** Текстов ждут решения модератора: сомнительные и скрытые автоматически */
+  moderationQueue: number;
   /** Сколько присоединилось по дням (регистрации), старые дни сначала, дни без регистраций — с нулём */
   signupsByDay: DailyCountResponse[];
 }
@@ -3274,6 +3744,14 @@ export interface AdminSportCountsResponse {
 
 export interface PageResponseAdminOrganizationResponse {
   items: AdminOrganizationResponse[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+export interface PageResponseModerationItemResponse {
+  items: ModerationItemResponse[];
   page: number;
   size: number;
   totalElements: number;
@@ -3388,7 +3866,7 @@ from?: string;
  */
 to?: string;
 /**
- * Уровень; мероприятия «Любой уровень» подходят под любой
+ * Уровень, строго: ANY — только встречи «Любой уровень»
  */
 level?: EventsListLevel;
 /**
@@ -3511,6 +3989,33 @@ export type CommentsListParams = {
  * Только сообщения новее этого момента: createdAt последнего полученного
  */
 after?: string;
+};
+
+export type BlogListParams = {
+type?: BlogListType;
+sportId?: string;
+authorId?: string;
+eventId?: string;
+organizationId?: string;
+/**
+ * Поиск по заголовку и тексту
+ */
+searchText?: string;
+page?: number;
+size?: number;
+};
+
+export type BlogListType = typeof BlogListType[keyof typeof BlogListType];
+
+
+export const BlogListType = {
+  GUIDE: 'GUIDE',
+  EVENT_REPORT: 'EVENT_REPORT',
+} as const;
+
+export type BlogUploadPhotoBody = {
+  /** Фото */
+  file: Blob | File;
 };
 
 export type AdminListSportsParams = {
@@ -3951,7 +4456,7 @@ searchText?: string;
  */
 sportId?: string;
 /**
- * Уровень; мероприятия «Любой уровень» подходят под любой
+ * Уровень, строго: ANY — только встречи «Любой уровень»
  */
 level?: EventsMapLevel;
 /**
@@ -4004,6 +4509,24 @@ export const EventsMapJoinMode = {
   REQUEST: 'REQUEST',
 } as const;
 
+export type BlogMineParams = {
+status?: BlogMineStatus;
+page?: number;
+size?: number;
+};
+
+export type BlogMineStatus = typeof BlogMineStatus[keyof typeof BlogMineStatus];
+
+
+export const BlogMineStatus = {
+  DRAFT: 'DRAFT',
+  PUBLISHED: 'PUBLISHED',
+} as const;
+
+export type BlogTopAuthorsParams = {
+limit?: number;
+};
+
 export type AuthCheckUsernameParams = {
 username: string;
 };
@@ -4050,6 +4573,34 @@ export const AdminListOrganizationsStatus = {
   APPROVED: 'APPROVED',
   REJECTED: 'REJECTED',
   REVISION: 'REVISION',
+} as const;
+
+export type AdminListModerationParams = {
+status?: AdminListModerationStatus;
+targetType?: AdminListModerationTargetType;
+page?: number;
+size?: number;
+};
+
+export type AdminListModerationStatus = typeof AdminListModerationStatus[keyof typeof AdminListModerationStatus];
+
+
+export const AdminListModerationStatus = {
+  PENDING: 'PENDING',
+  CLEAN: 'CLEAN',
+  FLAGGED: 'FLAGGED',
+  AUTO_HIDDEN: 'AUTO_HIDDEN',
+  RESOLVED: 'RESOLVED',
+} as const;
+
+export type AdminListModerationTargetType = typeof AdminListModerationTargetType[keyof typeof AdminListModerationTargetType];
+
+
+export const AdminListModerationTargetType = {
+  COMMENT: 'COMMENT',
+  EVENT: 'EVENT',
+  USER_PROFILE: 'USER_PROFILE',
+  ORGANIZATION: 'ORGANIZATION',
 } as const;
 
 export type AdminListEventsParams = {

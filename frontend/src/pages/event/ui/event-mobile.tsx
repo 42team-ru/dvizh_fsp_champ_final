@@ -1,8 +1,15 @@
+import { CommentContent } from "./comment-content";
+import { Linkified } from "@/shared/lib/linkify";
+import { CommentModerationAction } from "@/features/comment-moderation/ui/comment-moderation";
+import { MessageActionsSheet, MessageGestures } from "@/features/comment-gestures/ui/message-gestures";
+import type { CommentResponse } from "@/shared/api/generated/core/appAPI.schemas";
+import { ENTER_HINT, enterToSend } from "@/shared/lib/enter-to-send";
+import { EventBlog } from "@/widgets/event-blog/ui/event-blog";
 import { profilePath } from "@/entity/user/lib/profile-path";
 import { coverOf } from "@/entity/event/lib/cover";
 import { MessageCircleQuestion } from "lucide-react";
 import { EmptyState } from "@/shared/components/ui/empty-state";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link } from "react-router";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
@@ -12,11 +19,12 @@ import { Eyebrow } from "@/shared/components/ui/eyebrow";
 import { Icon } from "@/shared/components/ui/icon";
 import { Progress } from "@/shared/components/ui/progress";
 import { cn } from "cn";
+import { quoteText } from "@/shared/lib/statuses";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 import { LocationPicker } from "@/widgets/events-map/ui/location-picker";
 import { fullName, initials, privateNote, type useEvent } from "../model/use-event";
 import { TicketStrip } from "@/entity/event/ui/ticket-strip";
-import { TicketQrStamp } from "@/entity/event/ui/ticket-qr-stamp";
+import { TicketAdmittedStamp } from "@/entity/event/ui/ticket-admitted-stamp";
 import { plural } from "@/shared/lib/plural";
 import { EventShare } from "./event-share";
 import { InviteActions } from "@/features/organizer-invite/ui/invite-actions";
@@ -92,7 +100,17 @@ function IconRow({
 
 function MobileChat({ m }: { m: EventModel }) {
   const [text, setText] = useState("");
+  const [replyTo, setReplyTo] = useState<{ id: string; who: string } | null>(null);
+  const [held, setHeld] = useState<CommentResponse>();
+  const input = useRef<HTMLTextAreaElement>(null);
   const canComment = m.event!.viewer.canComment;
+  const reply = (c: CommentResponse) => {
+    setReplyTo({ id: c.id, who: fullName(c.author) });
+    input.current?.focus({ preventScroll: true });
+    input.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+  const canReply = (c: CommentResponse) => canComment && !c.deleted && !c.hidden;
+  const canRemove = (c: CommentResponse) => m.moderation.isAdmin && !c.deleted && !c.hidden;
   return (
     <Card className="gap-[10px] rounded-[22px] p-[18px]">
       <div className="flex items-center justify-between leading-[normal] font-bold whitespace-nowrap">
@@ -105,30 +123,48 @@ function MobileChat({ m }: { m: EventModel }) {
           <Link to={profilePath(c.author)} aria-label={fullName(c.author)} className="shrink-0">
             <Disc user={c.author} initials={initials(c.author)} tone={TONES[i % TONES.length]} className="size-8 shrink-0" textClassName="text-xs leading-[normal]" />
           </Link>
+          <MessageGestures className="min-w-0 flex-1"
+            onReply={canReply(c) ? () => reply(c) : undefined}
+            onHold={canReply(c) || canRemove(c) ? () => setHeld(c) : undefined}>
           <div className={cn(
-            "box-border flex min-w-0 flex-1 flex-col gap-[2px] rounded-[14px] border-[1.5px] border-ink px-3 py-2",
+            "box-border flex min-w-0 flex-1 flex-col gap-[2px] break-words rounded-[14px] border-[1.5px] border-ink px-3 py-2",
             c.isOrganizer ? "bg-lime-soft" : "bg-sky-soft",
           )}>
             <span className="text-[11px] leading-[normal] font-bold text-muted-foreground">
               {fullName(c.author)}{c.isOrganizer && " · Организатор"} · {new Date(c.createdAt).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}
             </span>
-            {c.replyTo && <span className="border-l-2 border-ink pl-2 text-xs text-muted-foreground">{fullName(c.replyTo.author)}: {c.replyTo.text}</span>}
-            <span className="text-[13px] leading-[18px] font-medium text-foreground">
-              {c.deleted ? "Сообщение удалено" : c.text}
+            {!c.hidden && c.replyTo && <span className="border-l-2 border-ink pl-2 text-xs text-muted-foreground">{fullName(c.replyTo.author)}: {quoteText(c.replyTo)}</span>}
+            <span className="text-[13px] leading-[18px] font-medium whitespace-pre-line text-foreground">
+              <CommentContent comment={c} isAdmin={m.moderation.isAdmin} />
             </span>
+            <CommentModerationAction comment={c} moderation={m.moderation} />
           </div>
+          </MessageGestures>
         </div>
       ))}
+      {m.comments.length > 0 && canComment && <p className="text-[11px] font-bold text-muted-foreground">Свайп вправо — ответить, удержание — меню</p>}
+      <MessageActionsSheet open={held !== undefined} text={held && !held.deleted && !held.hidden ? held.text : undefined} onClose={() => setHeld(undefined)}
+        onReply={held && canReply(held) ? () => reply(held) : undefined}
+        onRemove={held && canRemove(held) ? () => m.moderation.open(held) : undefined} />
       {canComment ? (
-        <form className="flex items-center gap-2 rounded-[14px] border-2 border-ink px-[14px] py-2"
+        <>
+        {replyTo && (
+          <p className="flex items-center justify-between gap-2 rounded-xl border-l-4 border-ink bg-muted px-3 py-2 text-sm font-semibold">
+            <span className="min-w-0 truncate">Ответ для {replyTo.who}</span>
+            <button type="button" className="shrink-0 font-extrabold underline" onClick={() => setReplyTo(null)}>отменить</button>
+          </p>
+        )}
+        <form className="flex items-end gap-2 rounded-[14px] border-2 border-ink px-[14px] py-2"
           onSubmit={(event) => {
             event.preventDefault();
-            if (text.trim()) void m.sendComment(text.trim()).then(() => setText("")).catch(() => undefined);
+            if (text.trim()) void m.sendComment(text.trim(), replyTo?.id).then(() => { setText(""); setReplyTo(null); }).catch(() => undefined);
           }}>
-          <input value={text} onChange={(e) => setText(e.target.value)} aria-label="Сообщение" maxLength={2000}
-            placeholder="Задать вопрос" className="min-w-0 flex-1 bg-transparent text-sm outline-none" />
+          <textarea ref={input} value={text} onChange={(e) => setText(e.target.value)} aria-label="Сообщение" maxLength={2000} rows={1}
+            onKeyDown={(e) => enterToSend(e, setText, () => e.currentTarget.form?.requestSubmit())}
+            placeholder="Задать вопрос" className="field-sizing-content max-h-28 min-h-8 min-w-0 flex-1 resize-none bg-transparent py-1.5 text-sm outline-none" />
           <Button type="submit" size="sm" disabled={!text.trim() || m.commentPending}>→</Button>
         </form>
+        </>
       ) : (
         <div className="box-border flex items-center gap-[10px] rounded-[14px] border-2 border-dashed border-muted-foreground px-[14px] py-3">
           <Icon name={`${dir}/icon-lock`} className="size-[18px] shrink-0" />
@@ -260,14 +296,14 @@ export function EventMobile({ m, onDetails }: { m: EventModel; onDetails: (secti
             {/* Детали для участников: сами детали или пояснение по ситуации (как на десктопе) */}
             <p className="rounded-xl border-2 border-dashed border-ink px-3 py-2 text-xs leading-[17px] font-bold text-foreground">
               {viewer.canSeePrivateDetails && e.format === "ONLINE" && e.onlineUrl
-                ? <>{e.privateDetails && <>{e.privateDetails} · </>}<a href={e.onlineUrl} target="_blank" rel="noreferrer" className="underline">{e.onlineUrl}</a></>
-                : privateNote(e)}
+                ? <>{e.privateDetails && <><Linkified text={e.privateDetails} /> · </>}<Linkified text={e.onlineUrl} /></>
+                : <Linkified text={privateNote(e)} />}
             </p>
           </div>
-          {!m.moderated && e.singleOccurrence?.status !== "CANCELLED" && (viewer.registrationStatus === "CONFIRMED" || viewer.isOrganizer) && (
-            <div className="flex flex-col gap-4 border-t-2 border-dashed border-ink bg-lime px-5 pt-3 pb-5">
+          {!m.moderated && e.singleOccurrence?.status !== "CANCELLED" && viewer.registrationStatus === "CONFIRMED" && (
+            <div className="relative h-[120px] border-t-2 border-dashed border-ink bg-lime px-5 pt-3">
               <Eyebrow className="text-ink">КОНТРОЛЬ</Eyebrow>
-              <TicketQrStamp eventId={e.id} className="self-center" />
+              <TicketAdmittedStamp event={e} className="top-[34px] left-1/2 -translate-x-1/2" />
             </div>
           )}
         </div>
@@ -298,7 +334,7 @@ export function EventMobile({ m, onDetails }: { m: EventModel; onDetails: (secti
               />
             ))}
           </span>
-          <Progress value={m.percent} className="w-[120px] bg-card" />
+          {e.capacity != null && <Progress value={m.percent} className="w-[120px] bg-card" />}
         </div>
       </div>
 
@@ -361,6 +397,8 @@ export function EventMobile({ m, onDetails }: { m: EventModel; onDetails: (secti
       <div className="px-4">
         <EventGoingCrowd participants={e.participants} sample={m.crowd} authorId={e.author.id} organizers={e.organizers} going={m.going} capacity={e.capacity} className="rounded-[22px]" />
       </div>
+
+      <EventBlog event={e} className="px-4" />
 
       <div id="event-chat-mobile" className="px-4">
         <MobileChat m={m} />

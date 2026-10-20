@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.UUID;
@@ -27,6 +28,7 @@ import com.hackathon.app.domain.entity.StoredFile;
 import com.hackathon.app.domain.enums.EventFormat;
 import com.hackathon.app.domain.enums.EventStatus;
 import com.hackathon.app.domain.enums.FileKind;
+import com.hackathon.app.domain.enums.ModerationTarget;
 import com.hackathon.app.domain.enums.RegistrationStatus;
 import com.hackathon.app.domain.enums.SystemRole;
 import com.hackathon.app.domain.enums.TimeScope;
@@ -82,6 +84,7 @@ public class EventService {
     private final WaitlistService waitlist;
     private final NotificationSubjects notificationSubjects;
     private final PetService pets;
+    private final ContentGuard contentGuard;
 
     /**
      * Лента: только опубликованные, у которых есть занятие в периоде (без from — ещё не начавшееся), ближайшие первыми.
@@ -181,6 +184,7 @@ public class EventService {
         }
         var now = dbTime.now();
         validate(request, now);
+        contentGuard.requireClean(textFields(request));
         var plan = request.schedule() != null ? expander.expand(request.schedule()) : null;
         var firstSlot = plan != null ? plan.after(now).stream().findFirst()
                 .orElseThrow(() -> new BadRequestException("В расписании нет ни одного будущего занятия")) : null;
@@ -190,6 +194,7 @@ public class EventService {
                 firstSlot != null ? firstSlot.start() : request.startAt(),
                 firstSlot != null ? firstSlot.end() : request.endAt()));
         occurrenceService.apply(saved, plan, now);
+        submitForModeration(saved);
         if (organization != null) notificationSubjects.organizationEvent(saved, organization);
         // Напоминания по занятиям создаются существующим механизмом.
         notificationChanges.watch(saved.getId(), userId);
@@ -213,6 +218,7 @@ public class EventService {
         notificationChanges.watch(eventId, userId);
         var now = dbTime.now();
         validate(request, now);
+        contentGuard.requireClean(textFields(request));
         if ((request.schedule() != null) != event.isRecurring()) {
             throw new ConflictException(event.isRecurring()
                     ? "Повторяющееся мероприятие нельзя сделать разовым: создайте новое"
@@ -238,6 +244,7 @@ public class EventService {
         mapper.update(event, request, sport.getId(), plan != null ? event.getStartAt() : request.startAt(),
                 plan != null ? event.getEndAt() : request.endAt());
         events.saveAndFlush(event);
+        submitForModeration(event);
         occurrenceService.apply(event, plan, now);
         // лимит мест увеличили или сняли — очередь продвигается сама
         waitlist.promote(event, now);
@@ -252,8 +259,10 @@ public class EventService {
     public EventResponse announce(UUID eventId, UUID userId, String text) {
         var event = requireOrganizerLocked(eventId, userId, "Объявления публикует только организатор",
                 "Мероприятие удалено, объявления недоступны");
+        contentGuard.requireClean(ContentGuard.fields("Объявление", text));
         mapper.announce(event, text, dbTime.now());
         events.saveAndFlush(event);
+        submitForModeration(event);
         var recipients = new HashSet<>(registrations.findUserIds(eventId, List.of(RegistrationStatus.CONFIRMED,
                 RegistrationStatus.PENDING, RegistrationStatus.WAITLISTED)));
         recipients.addAll(policy.organizerIds(event));
@@ -269,6 +278,22 @@ public class EventService {
         mapper.announce(event, null, null);
         events.saveAndFlush(event);
         return get(eventId, userId);
+    }
+
+    /** Тексты формы для словарной проверки, с подписями полей для сообщения об ошибке. */
+    private static Map<String, String> textFields(EventRequest r) {
+        return ContentGuard.fields("Название", r.title(), "Описание", r.description(), "Вид спорта", r.sportName(),
+                "Адрес", r.address(), "Как найти место", r.locationNote(), "Требования", r.requirements(),
+                "Что взять с собой", r.equipment(), "Детали для участников", r.privateDetails());
+    }
+
+    /** Сохранённые тексты мероприятия — на проверку модерацией (сомнительное увидит админ). */
+    private void submitForModeration(Event event) {
+        contentGuard.submit(ModerationTarget.EVENT, event.getId(), event.getId(), event.getAuthorId(),
+                ContentGuard.snapshot(ContentGuard.fields("Название", event.getTitle(), "Описание", event.getDescription(),
+                        "Как найти место", event.getLocationNote(), "Требования", event.getRequirements(),
+                        "Что взять с собой", event.getEquipment(), "Детали для участников", event.getPrivateDetails(),
+                        "Объявление", event.getAnnouncement())));
     }
 
     /**

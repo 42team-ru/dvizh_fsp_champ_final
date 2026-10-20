@@ -1,3 +1,4 @@
+import { BlogPrompt } from "@/widgets/blog-prompt/ui/blog-prompt";
 import { NotificationSettingsButton } from "@/features/notification-settings/ui/notification-settings-dialog";
 import { BellRing, Hourglass, Ticket } from "lucide-react";
 import { EmptyState } from "@/shared/components/ui/empty-state";
@@ -13,6 +14,7 @@ import { Disc } from "@/shared/components/ui/disc";
 import { Eyebrow } from "@/shared/components/ui/eyebrow";
 import { Icon } from "@/shared/components/ui/icon";
 import { cn } from "cn";
+import type { LucideIcon } from "lucide-react";
 import { MyEventsMap } from "@/widgets/events-map/ui/my-events-map";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 import { plural } from "@/shared/lib/plural";
@@ -31,27 +33,27 @@ function Dot({ onRead }: { onRead(): void }) {
   );
 }
 
-function IconSquare({ tone, icon }: { tone: string; icon: string }) {
+function IconSquare({ tone, icon: Glyph }: { tone: string; icon: LucideIcon }) {
   return (
     <span className={cn("flex size-11 shrink-0 items-center justify-center rounded-[14px] border-2 border-ink", tone)}>
-      <Icon name={`activity/${icon}`} className="size-5" />
+      <Glyph aria-hidden className="size-5 text-foreground" strokeWidth={2.4} />
     </span>
   );
 }
 
 function FilterBar({ m }: { m: ActivityModel }) {
   return (
-    <div className="relative h-[50px] w-[1216px] shrink-0">
-      <h1 className="absolute top-0 left-0 w-[303.5px] font-display text-[40px] leading-[50px] font-extrabold tracking-[-1px] whitespace-nowrap text-foreground">
+    <div className="flex w-[1216px] shrink-0 flex-col gap-4">
+      <h1 className="font-display text-[40px] leading-[50px] font-extrabold tracking-[-1px] whitespace-nowrap text-foreground">
         Активность
       </h1>
-      <div className="absolute top-[6px] left-[327.5px] flex gap-2" role="tablist" aria-label="Тип активности">
+      <div className="flex gap-2" role="tablist" aria-label="Тип активности">
         {m.tabs.map((t) => {
           const active = m.tab === t.key;
           const unread = m.unreadOf(t.key);
           return (
             <Button key={t.key} role="tab" aria-selected={active} variant={active ? "ink" : "soft"} size="chip"
-              className={cn("gap-2", active && "hover:translate-x-0 hover:translate-y-0")} onClick={() => m.setTab(t.key)}>
+              className={cn("flex-1 gap-2", active && "hover:translate-x-0 hover:translate-y-0")} onClick={() => m.setTab(t.key)}>
               {t.label}
               {t.key !== "all" && unread > 0 && (
                 <span className="flex h-5 min-w-5 items-center justify-center rounded-[10px] bg-accent px-1 text-[11px] leading-[15px] font-extrabold text-white">
@@ -61,7 +63,7 @@ function FilterBar({ m }: { m: ActivityModel }) {
             </Button>
           );
         })}
-        <NotificationSettingsButton className="h-[38px] min-h-0 px-4" />
+        <NotificationSettingsButton className="h-[38px] min-h-0 flex-[1.5] px-4" />
       </div>
     </div>
   );
@@ -140,7 +142,7 @@ function Plans({ m }: { m: ActivityModel }) {
         {m.plansTab === "going" ? (
           <>
             {m.goingItems.length === 0 && !m.going.isPending && (
-              <EmptyState size="sm" icon={Ticket} tone="bg-accent" title="Билетов пока нет"
+              <EmptyState size="sm" icon={Ticket} bublik="ticket" tone="bg-accent" title="Билетов пока нет"
                 text="Запишитесь на первую встречу — билет появится здесь."
                 action={
                   <Button asChild size="sm">
@@ -186,6 +188,7 @@ export default function ActivityPage() {
       <AppHeader current="activity" />
       <main className="mx-auto flex w-full max-w-[1280px] flex-col gap-7 px-8 pt-8 pb-12">
         <FilterBar m={m} />
+        <BlogPrompt compact className="w-[1216px] empty:hidden" />
         <div className="relative h-[626px] w-[1216px] shrink-0">
           <Feed m={m} />
           {m.totalUnread > 0 && (

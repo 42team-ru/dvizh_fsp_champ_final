@@ -33,6 +33,30 @@ services:
       timeout: 3s
       retries: 10
 
+  # Нейросеть модерации (docs/moderation.md): Qwen3.5-0.8B Q4 в llama.cpp на CPU, ~1 ГБ памяти.
+  # Модель (~0.5 ГБ) качается с Hugging Face при первом старте в volume llmcache; пока качается — работает словарь.
+  # Наружу не публикуется. Выключить: MODERATION_LLM_ENABLED=false в .env.
+  llm:
+    image: ghcr.io/ggml-org/llama.cpp:server-b11459
+    restart: unless-stopped
+    command: >-
+      -hf unsloth/Qwen3.5-0.8B-GGUF:Q4_K_M --no-mmproj --alias qwen3.5-0.8b
+      --host 0.0.0.0 --port 8080 --ctx-size 4096 --parallel 1 --threads 4
+      --jinja --chat-template-kwargs '{"enable_thinking":false}'
+    volumes:
+      - llmcache:/root/.cache/llama.cpp
+    mem_limit: 2g
+
+  # Классификатор токсичности (docs/moderation.md): cointegrated/rubert-tiny-toxicity в text-embeddings-inference,
+  # ~45 МБ, ответ за миллисекунды. Третий голос модерации вместе со словарём и нейросетью. Наружу не публикуется.
+  toxicity:
+    image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.9
+    restart: unless-stopped
+    command: --model-id cointegrated/rubert-tiny-toxicity
+    volumes:
+      - toxicity:/data
+    mem_limit: 1g
+
   app:
     image: ${IMAGE}/app:${TAG:-latest}
     restart: unless-stopped
@@ -54,7 +78,17 @@ services:
       TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET:-}
       # Маршруты 2ГИС для подсказки «когда выходить» (тот же ключ, что у карты)
       VITE_2GIS_KEY: ${VITE_2GIS_KEY:-}
+      # Модерация нейросетью; false — только словарь (docs/moderation.md)
+      MODERATION_LLM_ENABLED: ${MODERATION_LLM_ENABLED:-true}
+      MODERATION_LLM_URL: http://llm:8080
+      # Классификатор токсичности — третий голос; false — без него
+      MODERATION_CLASSIFIER_ENABLED: ${MODERATION_CLASSIFIER_ENABLED:-true}
+      MODERATION_CLASSIFIER_URL: http://toxicity:80
     depends_on:
+      llm:
+        condition: service_started
+      toxicity:
+        condition: service_started
       db:
         condition: service_healthy
       minio:
@@ -83,3 +117,5 @@ services:
 
 volumes:
   pgdata:
+  llmcache:
+  toxicity:

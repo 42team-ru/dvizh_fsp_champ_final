@@ -40,3 +40,39 @@ export function pinHtml(point: MapPoint, active: boolean) {
 
 export const clusterHtml = (count: number, muted: boolean) =>
   `<span class="map-cluster${muted ? " map-cluster--muted" : ""}">${count}</span>`;
+
+/** Метка дома: оранжевая капля 52×62 из public/map, кончик — в точке (23, 56). */
+export const HOME_PIN = { size: [52, 62] as [number, number], anchor: [23, 56] as [number, number],
+  html: '<img class="map-home" src="/map/marker-home.svg" width="52" height="62" alt="Мой дом" title="Мой дом">' };
+
+type ControlActions = {
+  zoomIn(): void;
+  zoomOut(): void;
+};
+
+/**
+ * Кнопки карты по макету Memphis вместо стандартных: «Приблизить» и «Отдалить».
+ * Общие для MapGL и растровой карты; провайдер передаёт свои действия.
+ */
+export function mountControls(el: HTMLElement, actions: ControlActions) {
+  if (getComputedStyle(el).position === "static") el.style.position = "relative";
+  const box = document.createElement("div");
+  box.className = "map-controls";
+  const button = (icon: string, label: string, onClick: () => void) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "map-control";
+    b.title = label;
+    b.setAttribute("aria-label", label);
+    b.innerHTML = `<img src="/map/${icon}.svg" width="50" height="50" alt="">`;
+    // карта не должна принимать клик по кнопке за клик по себе (выбор точки, сброс выделения)
+    for (const event of ["pointerdown", "mousedown", "dblclick", "touchstart", "wheel"]) {
+      b.addEventListener(event, (e) => e.stopPropagation());
+    }
+    b.addEventListener("click", (e) => { e.stopPropagation(); onClick(); });
+    return b;
+  };
+  box.append(button("control-zoom-in", "Приблизить", actions.zoomIn), button("control-zoom-out", "Отдалить", actions.zoomOut));
+  el.appendChild(box);
+  return () => box.remove();
+}

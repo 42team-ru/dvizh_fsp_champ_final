@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import { useEventsList } from "@/shared/api/generated/core/events/events";
+import type { EventSummaryResponse } from "@/shared/api/generated/core/appAPI.schemas";
 import { Button } from "@/shared/components/ui/button";
 import { Icon } from "@/shared/components/ui/icon";
 import { Input } from "@/shared/components/ui/input";
@@ -16,6 +17,9 @@ const WHEN = new Intl.DateTimeFormat("ru-RU", {
   minute: "2-digit",
 });
 
+const PAST_DAYS = 90;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 /** Значение, которое обновляется через `delay` мс после последнего изменения. */
 function useDebounced<T>(value: T, delay: number) {
   const [debounced, setDebounced] = useState(value);
@@ -24,6 +28,35 @@ function useDebounced<T>(value: T, delay: number) {
     return () => clearTimeout(timer);
   }, [value, delay]);
   return debounced;
+}
+
+/** Строка результата; прошедшие события — серые. */
+function ResultLink({ event, onClick, past }: { event: EventSummaryResponse; onClick: () => void; past?: boolean }) {
+  return (
+    <Link
+      to={`/events/${event.id}`}
+      onClick={onClick}
+      className={`flex items-center justify-between gap-3 rounded-2xl border-2 px-4 py-3 transition-colors focus-visible:bg-secondary focus-visible:outline-none ${
+        past
+          ? "border-ink/30 bg-muted text-muted-foreground opacity-70 hover:bg-secondary"
+          : "border-ink bg-card hover:bg-secondary"
+      }`}
+    >
+      <span className="flex min-w-0 flex-col">
+        <span
+          className={`truncate font-display text-[15px] font-bold ${past ? "text-muted-foreground" : "text-foreground"}`}
+        >
+          {event.title}
+        </span>
+        <span className="truncate text-xs font-semibold text-muted-foreground">
+          {event.sport.name} · {WHEN.format(new Date(event.startAt))}
+        </span>
+      </span>
+      <span aria-hidden="true" className="shrink-0 text-lg font-extrabold text-primary">
+        →
+      </span>
+    </Link>
+  );
 }
 
 /**
@@ -51,6 +84,20 @@ export function SearchPalette() {
     { query: { enabled: open && debounced.length > 0 } },
   );
   const results = search.data?.status === 200 ? (search.data.data.items ?? []).slice(0, 6) : [];
+
+  // Прошедшие за последние 90 дней: без from лента показывает только будущие.
+  const [pastRange] = useState(() => {
+    const now = Date.now();
+    return { from: new Date(now - PAST_DAYS * DAY_MS).toISOString(), to: new Date(now).toISOString() };
+  });
+  const pastSearch = useEventsList(
+    { searchText: debounced || undefined, ...pastRange, size: 20 },
+    { query: { enabled: open && debounced.length > 0 } },
+  );
+  const pastResults = (pastSearch.data?.status === 200 ? (pastSearch.data.data.items ?? []) : [])
+    .filter((event) => new Date(event.startAt).getTime() < Date.now())
+    .reverse()
+    .slice(0, 3);
 
   const close = () => {
     setOpen(false);
@@ -97,32 +144,36 @@ export function SearchPalette() {
                 <EmptyState size="sm" icon={Search} tone="bg-secondary" title="Что ищем?" text="Начните вводить название события или вид спорта." />
               ) : search.isLoading ? (
                 <p className="px-2 py-4 text-center text-sm font-bold text-muted-foreground">Ищем…</p>
-              ) : results.length === 0 ? (
+              ) : results.length === 0 && pastResults.length === 0 ? (
                 <EmptyState size="sm" icon={SearchX} tone="bg-sky" title="Ничего не нашлось" text="Попробуйте другое слово." />
               ) : (
-                <ul className="flex flex-col gap-2">
-                  {results.map((event) => (
-                    <li key={`${event.id}-${event.occurrenceId ?? ""}`}>
-                      <Link
-                        to={`/events/${event.id}`}
-                        onClick={close}
-                        className="flex items-center justify-between gap-3 rounded-2xl border-2 border-ink bg-card px-4 py-3 transition-colors hover:bg-secondary focus-visible:bg-secondary focus-visible:outline-none"
-                      >
-                        <span className="flex min-w-0 flex-col">
-                          <span className="truncate font-display text-[15px] font-bold text-foreground">
-                            {event.title}
-                          </span>
-                          <span className="truncate text-xs font-semibold text-muted-foreground">
-                            {event.sport.name} · {WHEN.format(new Date(event.startAt))}
-                          </span>
-                        </span>
-                        <span aria-hidden="true" className="shrink-0 text-lg font-extrabold text-primary">
-                          →
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
+                <div className="flex flex-col gap-2">
+                  {results.length > 0 && (
+                    <ul className="flex flex-col gap-2">
+                      {results.map((event) => (
+                        <li key={`${event.id}-${event.occurrenceId ?? ""}`}>
+                          <ResultLink event={event} onClick={close} />
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {pastResults.length > 0 && (
+                    <>
+                      <div className="flex items-center gap-3 px-1 pt-2 text-xs font-bold text-muted-foreground">
+                        <span className="h-0 flex-1 border-t-2 border-dashed border-ink/40" />
+                        <span>Прошедшие</span>
+                        <span className="h-0 flex-1 border-t-2 border-dashed border-ink/40" />
+                      </div>
+                      <ul className="flex flex-col gap-2">
+                        {pastResults.map((event) => (
+                          <li key={`${event.id}-${event.occurrenceId ?? ""}`}>
+                            <ResultLink event={event} onClick={close} past />
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                </div>
               )}
             </div>
 

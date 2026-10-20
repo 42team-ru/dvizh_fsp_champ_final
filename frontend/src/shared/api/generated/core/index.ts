@@ -1,5 +1,6 @@
 export * from './admin/admin';
 export * from './auth/auth';
+export * from './blog/blog';
 export * from './comments/comments';
 export * from './demo/demo';
 export * from './events/events';

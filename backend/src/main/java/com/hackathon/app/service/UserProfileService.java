@@ -12,6 +12,7 @@ import com.hackathon.app.domain.dto.PublicUserResponse;
 import com.hackathon.app.domain.dto.UpdateProfileRequest;
 import com.hackathon.app.domain.entity.AppUser;
 import com.hackathon.app.domain.enums.FileKind;
+import com.hackathon.app.domain.enums.ModerationTarget;
 import com.hackathon.app.domain.mapper.FileMapper;
 import com.hackathon.app.domain.mapper.UserMapper;
 import com.hackathon.app.repository.AppUserRepository;
@@ -44,6 +45,7 @@ public class UserProfileService {
     private final UserSportService userSports;
     private final AttendanceHistoryService history;
     private final OrganizerTrust trust;
+    private final ContentGuard contentGuard;
 
     /**
      * Сколько ближайших мероприятий показываем в профиле.
@@ -69,8 +71,11 @@ public class UserProfileService {
     @Transactional
     public MeResponse update(UUID userId, UpdateProfileRequest request) {
         var user = find(userId);
+        contentGuard.requireClean(ContentGuard.fields("Имя", request.firstName(), "Фамилия", request.lastName(),
+                "Город", request.city(), "О себе", request.bio()));
         userMapper.updateProfile(user, request);
         users.saveAndFlush(user);
+        submitForModeration(user);
         return MeResponse.of(user, pets.get(userId));
     }
 
@@ -129,5 +134,12 @@ public class UserProfileService {
 
     private AppUser find(UUID userId) {
         return users.findById(userId).orElseThrow(() -> new NoSuchElementException("Пользователь не найден"));
+    }
+
+    /** Публичные тексты профиля — на проверку модерацией. */
+    private void submitForModeration(AppUser user) {
+        contentGuard.submit(ModerationTarget.USER_PROFILE, user.getId(), null, user.getId(),
+                ContentGuard.snapshot(ContentGuard.fields("Имя", user.getFirstName(), "Фамилия", user.getLastName(),
+                        "Город", user.getCity(), "О себе", user.getBio())));
     }
 }

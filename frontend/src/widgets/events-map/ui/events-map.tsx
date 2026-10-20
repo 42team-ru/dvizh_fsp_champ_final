@@ -18,7 +18,7 @@ import {
 import { TimeDock } from "./time-dock";
 
 /** Фильтры ленты, которые понимает карта (format не нужен: на карте только очные; время задаёт док). */
-export type MapFilters = Pick<EventsMapParams, "searchText" | "sportId" | "level" | "joinMode" | "organizationId" | "lat" | "lon" | "radiusKm">;
+export type MapFilters = Pick<EventsMapParams, "searchText" | "sportId" | "level" | "joinMode" | "forMe" | "organizationId" | "lat" | "lon" | "radiusKm">;
 
 const toPoint = (f: EventMapFeature): MapPoint => ({
   id: f.id, coordinates: [f.geometry.coordinates[0], f.geometry.coordinates[1]], data: f.properties,

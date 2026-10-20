@@ -272,6 +272,72 @@ export function ShareTicket({
   );
 }
 
+/** Афиша поста блога: та же сетка, что у билета встречи, — шапка, обложка с плашками, заголовок, строки, QR. */
+export function SharePost({
+  path,
+  kind,
+  chips,
+  title,
+  rows,
+  cover,
+  format,
+}: {
+  path: string;
+  kind: string;
+  chips: string[];
+  title: string;
+  rows: { label: string; value: string }[];
+  cover: { src: string; position: string } | null;
+  format: ShareFormat;
+}) {
+  const story = format === "story";
+  return (
+    <div className="flex size-full flex-col bg-card text-ink">
+      <header className="flex h-[100px] shrink-0 items-center justify-between gap-6 border-b-[4px] border-ink bg-ultramarine px-[46px] text-[25px] font-extrabold tracking-[2px] text-lime">
+        <span className="min-w-0 truncate whitespace-nowrap">ДВИЖ · БЛОГ</span>
+        <span className="shrink-0 whitespace-nowrap text-[24px] text-primary-foreground uppercase">{kind}</span>
+      </header>
+      <div className="relative min-h-0 flex-1 overflow-hidden border-b-[4px] border-ink bg-sky-soft">
+        {cover && (
+          <img src={cover.src} alt="" style={{ objectPosition: cover.position }} className="size-full max-w-none object-cover" />
+        )}
+        <div className="absolute top-[38px] right-[42px] left-[42px] flex flex-wrap gap-[16px]">
+          {chips.filter(Boolean).map((label, i) => (
+            <span key={i}
+              className={`max-w-full truncate rounded-pill border-[4px] border-ink px-[28px] py-[12px] text-[31px] leading-tight font-extrabold ${i === 0 ? "bg-lime" : "bg-card"}`}>
+              {label}
+            </span>
+          ))}
+        </div>
+      </div>
+      <div className="flex shrink-0 flex-col gap-[28px] px-[46px] pt-[38px] pb-[34px]">
+        <h2 className="line-clamp-3 break-words font-display leading-[1.17] font-extrabold"
+          style={{ fontSize: title.length > 65 ? 56 : 66 }}>
+          {title}
+        </h2>
+        <div className="flex flex-col gap-[18px]">
+          {rows.map((row) => (
+            <div key={row.label} className="grid grid-cols-[150px_minmax(0,1fr)] items-baseline gap-[16px]">
+              <span className="text-[24px] font-extrabold tracking-[3px] text-muted-foreground">{row.label}</span>
+              <span className="line-clamp-2 text-[32px] leading-[1.35] font-extrabold">{row.value}</span>
+            </div>
+          ))}
+        </div>
+        <footer className="flex items-center gap-[25px] border-t-[5px] border-dashed border-ink pt-[26px]"
+          style={{ paddingBottom: story ? 24 : 0 }}>
+          <QrCode path={path} label="QR-код: пост в блоге" className="size-[160px] rounded-[12px] border-[3px]" />
+          <p className="max-w-[440px] text-[31px] leading-[1.3] font-extrabold whitespace-nowrap">
+            Наведи камеру —<br />и читай пост
+          </p>
+          <span className="ml-auto rounded-pill border-[4px] border-ink bg-lime px-[32px] py-[14px] font-display text-[33px] font-bold">
+            движ
+          </span>
+        </footer>
+      </div>
+    </div>
+  );
+}
+
 /** Обложка паспорта. Герб передаётся страницей, чтобы feature не зависела от виджета питомца. */
 export function SharePassport({
   path,

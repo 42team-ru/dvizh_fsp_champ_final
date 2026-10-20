@@ -6,6 +6,8 @@ import java.util.UUID;
 
 import com.hackathon.app.domain.dto.CommentResponse;
 import com.hackathon.app.domain.entity.Comment;
+import com.hackathon.app.domain.enums.ModerationDecision;
+import com.hackathon.app.domain.enums.ModerationTarget;
 import com.hackathon.app.domain.mapper.CommentMapper;
 import com.hackathon.app.repository.CommentRepository;
 import com.hackathon.app.repository.DbTimeRepository;
@@ -30,6 +32,7 @@ public class AdminCommentService {
 	private final CommentMapper mapper;
 	private final CommentService commentService;
 	private final NotificationSubjects notificationSubjects;
+	private final ContentGuard contentGuard;
 
 	/** Скрыть с причиной; повторное скрытие обновляет причину. Автор получает уведомление. */
 	@Transactional
@@ -39,6 +42,7 @@ public class AdminCommentService {
 		mapper.moderate(comment, true, dbTime.now(), adminId, reason);
 		comments.saveAndFlush(comment);
 		notificationSubjects.hidden(event, comment, adminId);
+		contentGuard.resolve(ModerationTarget.COMMENT, commentId, ModerationDecision.HIDDEN, adminId);
 		log.info("Сообщение скрыто: commentId={}, eventId={}, adminId={}", commentId, event.getId(), adminId);
 		return commentService.toResponses(event, List.of(comment), adminId).getFirst();
 	}
@@ -51,6 +55,7 @@ public class AdminCommentService {
 		if (comment.isHidden()) {
 			mapper.moderate(comment, false, null, null, null);
 			comments.saveAndFlush(comment);
+			contentGuard.resolve(ModerationTarget.COMMENT, commentId, ModerationDecision.APPROVED, adminId);
 			log.info("Сообщение возвращено: commentId={}, eventId={}, adminId={}", commentId, event.getId(), adminId);
 		}
 		return commentService.toResponses(event, List.of(comment), adminId).getFirst();

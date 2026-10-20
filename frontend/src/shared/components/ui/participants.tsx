@@ -1,27 +1,25 @@
 import * as React from "react"
 import { cn } from "cn"
-import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar"
+import { UserAvatar } from "@/shared/components/ui/user-avatar"
 import { Progress } from "@/shared/components/ui/progress"
 
 import type { EventParticipantResponse } from "@/shared/api/generated/core/appAPI.schemas"
 
 const AVATAR_TONES = ["bg-sky", "bg-lime-soft", "bg-lavender-soft"]
 
-/** Стопка аватаров, «Идут N из M» и полоса заполнения. Без `total` лимита нет. */
+/** Стопка аватаров, «Идут N из M» и полоса заполнения. Без `total` лимита нет: полосы заполнения тоже нет. */
 function Participants({
   people,
   going,
   total,
   tone = "default",
   className,
-  renderBeaver,
 }: {
   people: EventParticipantResponse[]
   going: number
   total?: number
   tone?: "default" | "warning"
   className?: string
-  renderBeaver: (person: EventParticipantResponse) => React.ReactNode
 }) {
   const warning = tone === "warning"
   return (
@@ -35,19 +33,15 @@ function Participants({
             {people.slice(0, 3).map((p, i) => {
               const name = [p.firstName, p.lastName].filter(Boolean).join(" ") || p.username;
               return (
-                <Avatar
+                <UserAvatar
                   key={p.id}
+                  user={p}
                   role="img"
                   title={name}
                   aria-label={name}
-                  className={cn("absolute top-0 size-7 overflow-hidden border-2 border-ink after:hidden", AVATAR_TONES[i])}
+                  className={cn("absolute top-0 size-7 rounded-full border-2 border-ink object-cover", AVATAR_TONES[i])}
                   style={{ left: i * 20 }}
-                >
-                  {p.avatarUrl && <AvatarImage src={p.avatarUrl} alt="" />}
-                  <AvatarFallback className={cn("relative overflow-hidden", AVATAR_TONES[i])}>
-                    {renderBeaver(p)}
-                  </AvatarFallback>
-                </Avatar>
+                />
               );
             })}
           </div>
@@ -64,10 +58,12 @@ function Participants({
           {total ? `осталось ${total - going}` : "без лимита"}
         </span>
       </div>
-      <Progress
-        value={total ? (going / total) * 100 : 60}
-        indicatorClassName={warning ? "bg-accent" : undefined}
-      />
+      {total ? (
+        <Progress value={(going / total) * 100} indicatorClassName={warning ? "bg-accent" : undefined} />
+      ) : (
+        // Без лимита заполнять нечего: полосу не рисуем, место оставляем, чтобы карточки в ряду были одной высоты.
+        <div aria-hidden className="h-[10px]" />
+      )}
     </div>
   )
 }

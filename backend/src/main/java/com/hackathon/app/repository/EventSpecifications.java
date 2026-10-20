@@ -36,7 +36,7 @@ public class EventSpecifications {
 
 	/**
 	 * Только опубликованные и видимые (у организации — только одобренной); null-фильтры не применяются.
-	 * Событие уровня ANY подходит под любой level. searchText ищет в названии, описании, адресе, виде спорта
+	 * Фильтр level строгий (ANY — отдельное значение «Любой»). searchText ищет в названии, описании, адресе, виде спорта
 	 * и названии организации. mySports — лента «Для меня»: вид спорта → уровень пользователя (null — любой);
 	 * пустая карта ничего не пропускает. near — прямоугольник вокруг точки (переносимо, без PostGIS).
 	 */
@@ -53,7 +53,8 @@ public class EventSpecifications {
 				conditions.add(criteria.equal(root.get("sportId"), sportId));
 			}
 			if (level != null) {
-				conditions.add(root.get("level").in(level, EventLevel.ANY));
+				// фильтр уровня строгий: «Новичок» — только встречи для новичков (уровень «Любой» выбирается отдельно)
+				conditions.add(criteria.equal(root.get("level"), level));
 			}
 			if (joinMode != null) {
 				conditions.add(criteria.equal(root.get("joinMode"), joinMode));

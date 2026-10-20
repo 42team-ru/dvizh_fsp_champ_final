@@ -38,6 +38,9 @@ import com.hackathon.app.domain.dto.PetCatalogResponse;
 import com.hackathon.app.domain.dto.AdminOrganizationResponse;
 import com.hackathon.app.domain.dto.AvailabilityCheckResponse;
 import com.hackathon.app.domain.dto.CommentResponse;
+import com.hackathon.app.domain.dto.ModerationItemResponse;
+import com.hackathon.app.domain.dto.AdminStatsResponse;
+import com.hackathon.app.domain.dto.HideCommentRequest;
 import com.hackathon.app.domain.dto.CancelOccurrenceRequest;
 import com.hackathon.app.domain.dto.OccurrenceRequest;
 import com.hackathon.app.domain.dto.OccurrenceResponse;
@@ -569,6 +572,43 @@ public class Actor {
 		return send("PUT /api/events/" + eventId + "/comments/" + commentId,
 				put("/api/events/{id}/comments/{commentId}", eventId, commentId), Map.of("text", text),
 				type(CommentResponse.class));
+	}
+
+	/** Удалить своё сообщение и отозвать проверку его текста. */
+	public void deleteComment(UUID eventId, UUID commentId) {
+		api.send("DELETE comment", delete("/api/events/{id}/comments/{commentId}", eventId, commentId),
+				cookie, null, null, HttpStatus.NO_CONTENT);
+	}
+
+	/** Очередь текстов с фильтрами status, targetType, page и size. */
+	public PageResponse<ModerationItemResponse> moderationQueue(Map<String, String> filters) {
+		var request = get("/api/admin/moderation");
+		filters.forEach(request::param);
+		return send("GET moderation queue", request, null, api.generic(PageResponse.class, ModerationItemResponse.class));
+	}
+
+	public ModerationItemResponse approveModeration(UUID id) {
+		return send("POST moderation approve", post("/api/admin/moderation/{id}/approve", id), null,
+				type(ModerationItemResponse.class));
+	}
+
+	public ModerationItemResponse hideModeration(UUID id, String reason) {
+		return send("POST moderation hide", post("/api/admin/moderation/{id}/hide", id), new HideCommentRequest(reason),
+				type(ModerationItemResponse.class));
+	}
+
+	public ModerationItemResponse clearProfileModeration(UUID id) {
+		return send("POST moderation clear-profile", post("/api/admin/moderation/{id}/clear-profile", id), null,
+				type(ModerationItemResponse.class));
+	}
+
+	public ModerationItemResponse recheckModeration(UUID id) {
+		return send("POST moderation recheck", post("/api/admin/moderation/{id}/recheck", id), null,
+				type(ModerationItemResponse.class));
+	}
+
+	public AdminStatsResponse adminStats() {
+		return send("GET admin stats", get("/api/admin/stats"), null, type(AdminStatsResponse.class));
 	}
 
 	// ---------- уведомления ----------

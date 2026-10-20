@@ -24,7 +24,7 @@ public record EventFilter(
 		@DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
 		@Schema(description = "Начало не позже", example = "2027-05-31T23:59:59Z")
 		@DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to,
-		@Schema(description = "Уровень; мероприятия «Любой уровень» подходят под любой")
+		@Schema(description = "Уровень, строго: ANY — только встречи «Любой уровень»")
 		EventLevel level,
 		@Schema(description = "Режим записи")
 		JoinMode joinMode,

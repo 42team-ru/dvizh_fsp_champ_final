@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.hackathon.app.domain.dto.SaveUserPreferencesRequest;
+import com.hackathon.app.domain.dto.SportResponse;
 import com.hackathon.app.domain.dto.HelpersPreferences;
 import com.hackathon.app.domain.enums.SportLevel;
 import com.hackathon.app.domain.enums.Daytime;
@@ -107,6 +108,23 @@ class PostgresMigrationsTest {
         assertThat(user.history(Map.of("size", "1")).totalElements()).isEqualTo(2);
         assertThat(user.history(Map.of("sportId", first.sport().id().toString(), "size", "1")).totalElements()).isEqualTo(2);
         assertThat(user.historySummary(Map.of()).total()).isEqualTo(2);
+    }
+
+    /**
+     * ФЛОУ: человек вводит вид спорта с опечаткой и видит подсказку из справочника вместо создания дубля.
+     * ШАГИ: 1. Автор создаёт событие со своим видом «Сапсёрфинг». 2. Другой человек ищет «сапсерфинк» (е вместо ё, к вместо г).
+     * 3. Ищет «футбол» точно. 4. Ищет бессмыслицу.
+     * ПРОВЕРЯЕМ: pg_trgm находит «Сапсёрфинг» по опечатке; точное совпадение идёт первым; случайные строки ничего не дают.
+     * ПОЧЕМУ ВАЖНО: на H2 нечёткий поиск заменён заглушкой, и только здесь проверяется настоящий запрос и миграция V39 (pg_trgm).
+     */
+    @Test
+    void sportSearchFindsTypoOnRealPostgres() {
+        var api = new TestApi(mvc, json, users, passwords);
+        api.newUser("pgSportAuthor").createEvent(EventForm.free().sport("Сапсёрфинг"));
+        var user = api.newUser("pgSportSearch");
+        assertThat(user.sports("сапсерфинк")).extracting(SportResponse::name).contains("Сапсёрфинг");
+        assertThat(user.sports("футбол")).extracting(SportResponse::name).first().isEqualTo("Футбол");
+        assertThat(user.sports("щщщщщщ")).isEmpty();
     }
 
     @Autowired ObjectMapper json;

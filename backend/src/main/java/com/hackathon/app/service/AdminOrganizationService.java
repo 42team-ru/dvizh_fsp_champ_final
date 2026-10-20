@@ -11,6 +11,8 @@ import com.hackathon.app.domain.dto.AdminOrganizationResponse;
 import com.hackathon.app.domain.dto.PageResponse;
 import com.hackathon.app.domain.entity.AppUser;
 import com.hackathon.app.domain.entity.Organization;
+import com.hackathon.app.domain.enums.ModerationDecision;
+import com.hackathon.app.domain.enums.ModerationTarget;
 import com.hackathon.app.domain.enums.OrganizationStatus;
 import com.hackathon.app.domain.exception.ConflictException;
 import com.hackathon.app.domain.mapper.OrganizationMapper;
@@ -38,6 +40,7 @@ public class AdminOrganizationService {
 	private static final int MAX_PAGE_SIZE = 100;
 
 	private final OrganizationRepository organizations;
+	private final ContentGuard contentGuard;
 
 	private final NotificationSubjects notificationSubjects;
 	private final AppUserRepository users;
@@ -101,6 +104,9 @@ public class AdminOrganizationService {
 		boolean changed = org.getStatus() != status || !Objects.equals(org.getRejectReason(), Strings.blankToNull(rejectReason));
 		mapper.decide(org, status, rejectReason, dbTime.now(), adminId);
 		organizations.saveAndFlush(org);
+		if (status != OrganizationStatus.APPROVED) {
+			contentGuard.resolve(ModerationTarget.ORGANIZATION, org.getId(), ModerationDecision.ACTION_TAKEN, adminId);
+		}
 		if (changed) {
 			notificationSubjects.decided(org, adminId);
 		}

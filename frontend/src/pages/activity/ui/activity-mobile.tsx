@@ -1,3 +1,4 @@
+import { BlogPrompt } from "@/widgets/blog-prompt/ui/blog-prompt";
 import { NotificationSettingsButton } from "@/features/notification-settings/ui/notification-settings-dialog";
 import { BellRing, Hourglass, Ticket } from "lucide-react";
 import { EmptyState } from "@/shared/components/ui/empty-state";
@@ -7,6 +8,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Disc } from "@/shared/components/ui/disc";
 import { Icon } from "@/shared/components/ui/icon";
 import { cn } from "cn";
+import type { LucideIcon } from "lucide-react";
 import { MyEventsMap } from "@/widgets/events-map/ui/my-events-map";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 import { Link } from "react-router";
@@ -58,7 +60,7 @@ function Row({
   );
 }
 
-function IconBox({ tone, icon }: { tone: string; icon: string }) {
+function IconBox({ tone, icon: Glyph }: { tone: string; icon: LucideIcon }) {
   return (
     <span
       className={cn(
@@ -66,7 +68,7 @@ function IconBox({ tone, icon }: { tone: string; icon: string }) {
         tone
       )}
     >
-      <Icon name={`${dir}/${icon}`} className="size-[22px]" />
+      <Glyph aria-hidden className="size-[22px] text-foreground" strokeWidth={2.4} />
     </span>
   );
 }
@@ -116,6 +118,8 @@ export function ActivityMobile({ m }: { m: ActivityModel }) {
         })}
         <NotificationSettingsButton className="h-11 shrink-0 px-[18px]" />
       </div>
+
+      <div className="px-4 empty:hidden"><BlogPrompt compact /></div>
 
       {m.totalUnread > 0 && (
         <div className="px-4">
@@ -172,7 +176,7 @@ export function ActivityMobile({ m }: { m: ActivityModel }) {
           {m.plansTab === "going" ? (
             <>
               {m.goingItems.length === 0 && !m.going.isPending && (
-                <EmptyState size="sm" icon={Ticket} tone="bg-accent" title="Билетов пока нет"
+                <EmptyState size="sm" icon={Ticket} bublik="ticket" tone="bg-accent" title="Билетов пока нет"
                   text="Запишитесь на первую встречу — билет появится здесь." />
               )}
               {m.goingItems.map((reg, i) => <TicketRow key={reg.id} reg={reg} index={i} compact />)}

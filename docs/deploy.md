@@ -46,6 +46,7 @@ Push в `main` запускает `.github/workflows/deploy.yml`:
 | `data/caddy/` | сертификаты Let's Encrypt (обычная папка, переживает деплои и `docker compose down -v`) |
 | docker volume `pgdata` | данные Postgres |
 | `data/minio/` | файлы S3 (MinIO): аватарки, фото, документы; обычная папка, переживает `down -v` |
+| docker volume `llmcache` | модель нейросети модерации (~1,1 ГБ), качается с Hugging Face при первом старте сервиса `llm` ([moderation.md](moderation.md)) |
 
 ## Особенности
 - PWA обслуживается из корня `/`: Caddy отдаёт `/sw.js` и `/manifest.webmanifest` с `Cache-Control: no-cache`, манифест — с `application/manifest+json`, SW — с `Service-Worker-Allowed: /`. `/assets/*` с хешами кешируются как immutable, отсутствующая статика возвращает 404. HTML ревалидируется; SPA-маршруты получают `index.html`. Сборку копировать целиком из `frontend/build/client`, включая подготовленный `sw.js`. Для установки нужен HTTPS (исключение — localhost); HTTP по IP не подходит. [Проверка PWA](frontend.md).

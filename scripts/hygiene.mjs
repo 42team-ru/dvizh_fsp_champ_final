@@ -16,8 +16,6 @@ const L = '(?<![\\p{L}\\p{N}])' // «граница слова» для кири
 const AI = [
   /co-authored-by:.*(claude|anthropic|codex|openai|gpt|copilot|gemini|\bai\b|\bbot\b)/i,
   /generated (with|by)\b.*(claude|codex|gpt|copilot|ai\b|\[)/i,
-  /(claude|anthropic|codex|openai|chatgpt|copilot)/i,
-  /(?<![\p{L}])gpt-?\d/iu,
   /🤖|ai[- ]generated|as an ai\b/iu,
 ]
 // Мат (корни, рус/англ). Список правьте под себя.

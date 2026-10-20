@@ -18,5 +18,7 @@ app:
     scheduler-enabled: false   # фоновые начисления тестам не нужны
   notifications:
     scheduling-enabled: false   # доставку и напоминания тесты запускают вручную
+  moderation:
+    scheduling-enabled: false   # подметальщик проверок тестам не нужен
   demo:
     enabled: false   # демо-сид (сотни строк) тестам не нужен и не покрывается тестами

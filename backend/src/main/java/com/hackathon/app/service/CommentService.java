@@ -19,7 +19,12 @@ import com.hackathon.app.domain.enums.SystemRole;
 import com.hackathon.app.domain.exception.BadRequestException;
 import com.hackathon.app.domain.exception.ConflictException;
 import com.hackathon.app.domain.exception.ForbiddenException;
+import com.hackathon.app.domain.dto.CommentModerationResponse;
+import com.hackathon.app.domain.entity.ModerationCheck;
+import com.hackathon.app.domain.enums.ModerationTarget;
 import com.hackathon.app.domain.mapper.CommentMapper;
+import com.hackathon.app.domain.mapper.ModerationCheckMapper;
+import com.hackathon.app.repository.ModerationCheckRepository;
 import com.hackathon.app.domain.mapper.OrganizationMapper;
 import com.hackathon.app.repository.AppUserRepository;
 import com.hackathon.app.repository.CommentRepository;
@@ -50,6 +55,9 @@ public class CommentService {
     private final NotificationSubjects notificationSubjects;
     private final OrganizationRepository organizations;
     private final OrganizationMapper organizationMapper;
+    private final ContentGuard contentGuard;
+    private final ModerationCheckRepository moderationChecks;
+    private final ModerationCheckMapper moderationMapper;
 
     /**
      * Старые сверху, как в переписке. after — только сообщения новее этого момента (подгрузка новых без всей ленты).
@@ -81,7 +89,9 @@ public class CommentService {
         if (blockedReason != null) {
             throw new ConflictException(blockedReason);
         }
+        contentGuard.requireCleanComment(text);
         var saved = comments.saveAndFlush(mapper.toEntity(eventId, userId, text, replyToId));
+        contentGuard.submit(ModerationTarget.COMMENT, saved.getId(), eventId, userId, saved.getText());
         var organizerIds = policy.organizerIds(event);
         if (parent != null) {
             // Оповещается только автор исходного сообщения; ответ самому себе публикатор пропустит.
@@ -100,8 +110,10 @@ public class CommentService {
     public CommentResponse update(UUID eventId, UUID commentId, UUID userId, String text) {
         var event = find(eventId);
         var comment = editable(event, commentId, userId);
+        contentGuard.requireCleanComment(text);
         mapper.edit(comment, text, dbTime.now());
         comments.saveAndFlush(comment);
+        contentGuard.submit(ModerationTarget.COMMENT, comment.getId(), eventId, userId, comment.getText());
         return toResponses(event, List.of(comment), userId).getFirst();
     }
 
@@ -114,6 +126,7 @@ public class CommentService {
         var comment = editable(event, commentId, userId);
         mapper.delete(comment, dbTime.now());
         comments.saveAndFlush(comment);
+        contentGuard.withdraw(ModerationTarget.COMMENT, commentId);
     }
 
     private Event find(UUID eventId) {
@@ -156,6 +169,11 @@ public class CommentService {
                 .collect(Collectors.toMap(CommentRepository.ReplyCount::getParentId, CommentRepository.ReplyCount::getCount));
         Map<UUID, OrganizationShortResponse> organizationByAccount = organizations.findByAccountIdIn(authorIds).stream()
                 .collect(Collectors.toMap(Organization::getAccountId, organizationMapper::toShort));
+        // оценку модерации видит только админ
+        Map<UUID, CommentModerationResponse> moderationById = !admin ? Map.of()
+                : moderationChecks.findByTargetTypeAndTargetIdIn(ModerationTarget.COMMENT,
+                                page.stream().map(Comment::getId).toList()).stream()
+                        .collect(Collectors.toMap(ModerationCheck::getTargetId, moderationMapper::toCommentModeration));
         return page.stream()
                 .map(comment -> {
                     var parent = comment.getParentId() == null ? null : parentsById.get(comment.getParentId());
@@ -165,7 +183,8 @@ public class CommentService {
                             organizerIds.contains(comment.getAuthorId()), mine,
                             policy.commentEditBlockedReason(event, comment, userId) == null,
                             parent == null ? null : mapper.toReply(parent, authorsById.get(parent.getAuthorId())),
-                            repliesById.getOrDefault(comment.getId(), 0L), admin, admin || mine);
+                            repliesById.getOrDefault(comment.getId(), 0L), admin, admin || mine,
+                            moderationById.get(comment.getId()));
                 })
                 .toList();
     }
