@@ -82,7 +82,8 @@ function restyle(layer, group) {
       if (NOISE_GROUP.test(g) && !/flat buildings/.test(g)) return hide();
       const colorKeys = Object.keys(s).filter((k) => /color/i.test(k));
       const set = (fill, stroke) => colorKeys.forEach((k) => { s[k] = paint(s[k], /stroke/i.test(k) ? stroke : fill); });
-      if (/flat buildings/.test(g) && !/area/.test(n)) { set(C.building, C.ink); layer.maxzoom = 22; }
+      // Обводка рисуется у каждой части здания — на стыках получаются перегородки, поэтому дома сплошные.
+      if (/flat buildings/.test(g) && !/area/.test(n)) { set(C.building, C.building); layer.maxzoom = 22; }
       else if (/water|river|sea|lake|reservoir|pond|canal|ocean|stream/.test(n)) set(C.water, C.water);
       else if (/sport|stadium|basketball|football|tennis|volleyball|pitch/.test(n)) set(C.sport, C.ink);
       else if (/vegetation|forest|wood|park|garden|green|flower|cemetery|square|island/.test(n) && !/parking/.test(n)) {
