@@ -1,0 +1,14 @@
+[
+  {"text": "Ребята, разнесём их в финале! Сбор в 18:30 у входа",
+   "answer": {"reason": "Спортивный азарт и время сбора, нарушений нет.", "categories": [], "severity": 0, "verdict": "ok"}},
+  {"text": "Уже второй раз переносите, так нельзя. Предупреждайте заранее",
+   "answer": {"reason": "Критика организатора без оскорблений.", "categories": [], "severity": 0, "verdict": "ok"}},
+  {"text": "Быстрый доход на криптовалюте, жми ссылку bit.ly/x1",
+   "answer": {"reason": "Реклама заработка со ссылкой, к спорту отношения не имеет.", "categories": ["SPAM"], "severity": 2, "verdict": "violation"}},
+  {"text": "Найду тебя после игры и покалечу",
+   "answer": {"reason": "Прямая угроза насилием конкретному человеку.", "categories": ["THREAT"], "severity": 3, "verdict": "violation"}},
+  {"text": "Женщинам в футболе не место, пусть идут на кухню",
+   "answer": {"reason": "Унижение людей по признаку пола.", "categories": ["HATE"], "severity": 3, "verdict": "violation"}},
+  {"text": "Ты бездарь, не позорь команду, лучше не приходи",
+   "answer": {"reason": "Оскорбление и унижение собеседника.", "categories": ["INSULT", "HARASSMENT"], "severity": 2, "verdict": "violation"}}
+]

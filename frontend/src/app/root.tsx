@@ -16,6 +16,8 @@ import { ThemeProvider } from "./providers/theme-provider";
 import { ViewportScale } from "./providers/viewport-scale";
 import { PwaProvider } from "./providers/pwa-provider";
 import { OfflineBanner } from "./providers/offline-sync";
+import { AvatarBeaverContext } from "@/shared/components/ui/user-avatar";
+import { UserBeaver } from "@/widgets/event-card/ui/card-participants";
 
 export const links: Route.LinksFunction = () => [
   { rel: "icon", type: "image/svg+xml", href: "/icon.svg" },
@@ -48,7 +50,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <ViewportScale />
             <PwaProvider />
             <OfflineBanner />
-            <MotionConfig reducedMotion="user">{children}</MotionConfig>
+            <AvatarBeaverContext.Provider value={(user) => <UserBeaver userId={user?.id} pet={user?.pet} className="size-full" />}>
+              <MotionConfig reducedMotion="user">{children}</MotionConfig>
+            </AvatarBeaverContext.Provider>
             <Toaster position="top-right" offset={20} expand visibleToasts={3} />
           </ThemeProvider>
         </QueryClientProvider>

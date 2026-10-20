@@ -35,7 +35,7 @@ export function SelectContent({
         position="popper"
         sideOffset={5}
         className={cn(
-          "z-50 max-h-72 min-w-[var(--radix-select-trigger-width)] overflow-auto rounded-xl border-2 border-ink bg-card p-1 shadow-hard-sm",
+          "z-50 max-h-72 min-w-[calc(var(--radix-select-trigger-width)/var(--vp-zoom,1))] overflow-auto rounded-xl border-2 border-ink bg-card p-1 shadow-hard-sm",
           className,
         )}
         {...props}

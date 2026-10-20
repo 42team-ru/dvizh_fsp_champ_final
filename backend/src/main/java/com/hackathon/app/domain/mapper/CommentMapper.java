@@ -3,6 +3,7 @@ package com.hackathon.app.domain.mapper;
 import java.time.Instant;
 import java.util.UUID;
 
+import com.hackathon.app.domain.dto.CommentModerationResponse;
 import com.hackathon.app.domain.dto.CommentReplyResponse;
 import com.hackathon.app.domain.dto.CommentResponse;
 import com.hackathon.app.domain.dto.OrganizationShortResponse;
@@ -56,9 +57,10 @@ public interface CommentMapper {
 	@Mapping(target = "deleted", expression = "java(comment.getDeletedAt() != null)")
 	@Mapping(target = "hidden", source = "comment.hidden")
 	@Mapping(target = "hiddenReason", expression = "java(seeReason ? comment.getHideReason() : null)")
+	@Mapping(target = "moderation", source = "moderation")
 	CommentResponse toResponse(Comment comment, AppUser author, OrganizationShortResponse organization,
 			boolean isOrganizer, boolean isMine, boolean canEdit, CommentReplyResponse replyTo, long repliesCount,
-			boolean seeHidden, boolean seeReason);
+			boolean seeHidden, boolean seeReason, CommentModerationResponse moderation);
 
 	@Mapping(target = "id", source = "comment.id")
 	@Mapping(target = "text", source = "comment", qualifiedByName = "quote")

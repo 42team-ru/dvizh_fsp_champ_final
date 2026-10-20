@@ -28,7 +28,9 @@ import type { RecommendedEventResponse } from "@/shared/api/generated/core/appAP
 import { QrCode } from "@/shared/components/ui/qr-code";
 import { LeaveTip } from "@/widgets/leave-tip/ui/leave-tip";
 import { useUser } from "@/entity/user/model/use-user";
-import { calendarUrl, routeUrl, ticketDay, untilStart, useNextTicket } from "@/entity/event/model/use-next-ticket";
+import { AddToCalendarButton } from "@/features/add-to-calendar/ui/add-to-calendar-button";
+import { calendarEventOf } from "@/features/add-to-calendar/lib/calendar-links";
+import { routeUrl, ticketDay, untilStart, useNextTicket } from "@/entity/event/model/use-next-ticket";
 
 /** Обложки карточек подборки, если у события нет своего фото. */
 const COVERS = [
@@ -200,12 +202,10 @@ function Tip() {
       </div>
       {e ? (
         <>
-          <Button asChild variant="ink" rough>
-            <a href={calendarUrl(e.id)} download>
-              <Icon name="icon-bell1" className="size-[18px]" />
-              В календарь
-            </a>
-          </Button>
+          <AddToCalendarButton variant="ink" rough event={calendarEventOf(e, next.startAt, next.endAt)}>
+            <Icon name="icon-bell1" className="size-[18px]" />
+            В календарь
+          </AddToCalendarButton>
           {e.format === "OFFLINE" && e.lat != null && e.lon != null ? (
             <RouteButton to={{ lat: e.lat, lon: e.lon }} rough={false}>Как добраться</RouteButton>
           ) : e.format === "OFFLINE" && e.address ? (

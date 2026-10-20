@@ -17,6 +17,8 @@ public record AdminStatsResponse(
 		@Schema(description = "Подтверждённых записей", requiredMode = REQUIRED) long registrationsConfirmed,
 		@Schema(description = "Заявок ждут решения организаторов", requiredMode = REQUIRED) long registrationsPending,
 		@Schema(description = "Комментариев", requiredMode = REQUIRED) long comments,
+		@Schema(description = "Текстов ждут решения модератора: сомнительные и скрытые автоматически", requiredMode = REQUIRED)
+		long moderationQueue,
 		@Schema(description = "Сколько присоединилось по дням (регистрации), старые дни сначала, дни без регистраций — с нулём",
 				requiredMode = REQUIRED)
 		List<DailyCountResponse> signupsByDay) {

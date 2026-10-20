@@ -19,6 +19,7 @@ import { Eyebrow } from "@/shared/components/ui/eyebrow";
 import { Icon } from "@/shared/components/ui/icon";
 import { Progress } from "@/shared/components/ui/progress";
 import { cn } from "cn";
+import { quoteText } from "@/shared/lib/statuses";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 import { LocationPicker } from "@/widgets/events-map/ui/location-picker";
 import { fullName, initials, privateNote, type useEvent } from "../model/use-event";
@@ -132,7 +133,7 @@ function MobileChat({ m }: { m: EventModel }) {
             <span className="text-[11px] leading-[normal] font-bold text-muted-foreground">
               {fullName(c.author)}{c.isOrganizer && " · Организатор"} · {new Date(c.createdAt).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}
             </span>
-            {!c.hidden && c.replyTo && <span className="border-l-2 border-ink pl-2 text-xs text-muted-foreground">{fullName(c.replyTo.author)}: {c.replyTo.hidden ? "Удалено администратором" : c.replyTo.deleted ? "Сообщение удалено" : c.replyTo.text}</span>}
+            {!c.hidden && c.replyTo && <span className="border-l-2 border-ink pl-2 text-xs text-muted-foreground">{fullName(c.replyTo.author)}: {quoteText(c.replyTo)}</span>}
             <span className="text-[13px] leading-[18px] font-medium whitespace-pre-line text-foreground">
               <CommentContent comment={c} isAdmin={m.moderation.isAdmin} />
             </span>

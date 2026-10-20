@@ -218,7 +218,7 @@ class EventController {
         var body = events.calendar(id, userId(jwt));
         log.info("Endpoint response: GET /api/events/{}/calendar.ics, bytes={}", id, body.length());
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment().filename("event-" + id + ".ics").build().toString())
+                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.inline().filename("event-" + id + ".ics").build().toString())
                 .contentType(new MediaType("text", "calendar", StandardCharsets.UTF_8))
                 .body(body);
     }

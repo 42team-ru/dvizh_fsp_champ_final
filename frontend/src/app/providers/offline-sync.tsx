@@ -6,7 +6,6 @@ import { getAuthMeUrl } from "@/shared/api/generated/core/auth/auth";
 import { getEventsGetUrl, getEventsMineUrl } from "@/shared/api/generated/core/events/events";
 import { getNotificationsListUrl, getNotificationsUnreadCountsUrl } from "@/shared/api/generated/core/notifications/notifications";
 import { getRegistrationsMineUrl } from "@/shared/api/generated/core/registrations/registrations";
-import { ACTIVITY_TYPES, REPLY_TYPES, TEAM_TYPES } from "@/entity/notification/model/use-unread-notifications";
 import { lastOnline, markOnline } from "@/shared/lib/offline-cache";
 
 /** Как часто освежать офлайн-копию, пока приложение открыто. */
@@ -40,7 +39,7 @@ async function prefetch(user: MeResponse) {
   const urls = [
     getAuthMeUrl(),
     getNotificationsUnreadCountsUrl(),
-    getNotificationsListUrl({ types: participant ? ACTIVITY_TYPES : [...REPLY_TYPES, ...TEAM_TYPES], size: 30 }),
+    getNotificationsListUrl({ size: 30 }),
   ];
   if (participant) {
     urls.push(

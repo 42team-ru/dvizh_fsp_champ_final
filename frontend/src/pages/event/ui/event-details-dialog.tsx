@@ -3,7 +3,8 @@ import { Linkified } from "@/shared/lib/linkify";
 import { CalendarPlus, Check, ChevronDown, Clock, Copy, DoorOpen, ExternalLink, Info, Lock, LockOpen, MapPin, Navigation, Repeat, Route, UserCheck, Users, Video, X } from "lucide-react";
 import { cn } from "cn";
 import type { EventResponse, OccurrenceResponse } from "@/shared/api/generated/core/appAPI.schemas";
-import { getEventsCalendarUrl } from "@/shared/api/generated/core/events/events";
+import { AddToCalendarButton } from "@/features/add-to-calendar/ui/add-to-calendar-button";
+import { calendarEventOf } from "@/features/add-to-calendar/lib/calendar-links";
 import { useOccurrencesList } from "@/shared/api/generated/core/occurrences/occurrences";
 import { Button } from "@/shared/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@/shared/components/ui/dialog";
@@ -137,9 +138,12 @@ export function EventDetailsDialog({ event: e, section, action, onClose, onResto
         </Tabs>}
         {/* «Корешок» билета: пунктир — линия отрыва, внутри главное действие. */}
         <div className="flex shrink-0 items-center gap-2.5 border-t-2 border-dashed border-ink bg-lime-soft px-[18px] pt-3.5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:gap-3 sm:px-7 sm:pt-[18px] sm:pb-5">
-          <Button asChild variant="soft" className="shadow-hard-sm max-sm:size-11 max-sm:px-0">
-            <a href={getEventsCalendarUrl(e.id)} aria-label="Добавить в календарь"><CalendarPlus className="size-[18px]" /><span className="max-sm:sr-only">В календарь</span></a>
-          </Button>
+          {e.status === "PUBLISHED" && e.singleOccurrence?.status !== "CANCELLED" && (!e.recurring || e.nextOccurrence) && (
+            <AddToCalendarButton variant="soft" className="shadow-hard-sm max-sm:size-11 max-sm:px-0"
+              event={calendarEventOf(e, e.nextOccurrence?.startAt ?? e.startAt, e.nextOccurrence ? e.nextOccurrence.endAt : e.endAt)}>
+              <CalendarPlus className="size-[18px]" /><span className="max-sm:sr-only">В календарь</span>
+            </AddToCalendarButton>
+          )}
           {action && <div className="flex min-w-0 flex-1 flex-row-reverse items-center gap-3 [&>button]:max-sm:flex-1 [&>p]:max-sm:hidden">{action}</div>}
         </div>
       </DialogContent>

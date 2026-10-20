@@ -17,6 +17,7 @@ import com.hackathon.app.domain.dto.SportResponse;
 import com.hackathon.app.domain.entity.Organization;
 import com.hackathon.app.domain.entity.OrganizationSport;
 import com.hackathon.app.domain.entity.Sport;
+import com.hackathon.app.domain.enums.ModerationTarget;
 import com.hackathon.app.domain.enums.FileKind;
 import com.hackathon.app.domain.enums.OrganizationStatus;
 import com.hackathon.app.domain.enums.SystemRole;
@@ -64,6 +65,7 @@ public class OrganizationService {
 	private final SportService sportService;
 	private final SportMapper sportMapper;
 	private final OrganizerTrust trust;
+	private final ContentGuard contentGuard;
 
 	@Transactional(readOnly = true)
 	public OrganizationResponse mine(UUID userId) {
@@ -78,6 +80,7 @@ public class OrganizationService {
 	@Transactional
 	public OrganizationResponse saveMine(UUID userId, SaveOrganizationRequest r) {
 		requireOrgAccount(userId);
+		contentGuard.requireClean(ContentGuard.fields("Название", r.name(), "Описание", r.description(), "Город", r.city()));
 		var contacts = OrganizationContacts.normalize(r.contacts());
 		var org = organizations.findByAccountId(userId).orElse(null);
 		// Админам пишем, когда анкета уходит на проверку: первая подача и правка после отказа.
@@ -104,6 +107,8 @@ public class OrganizationService {
 			throw new ConflictException("Анкета уже сохраняется, обновите страницу");
 		}
 		replaceSports(org.getId(), sportIds);
+		contentGuard.submit(ModerationTarget.ORGANIZATION, org.getId(), null, userId, ContentGuard.snapshot(
+				ContentGuard.fields("Название", org.getName(), "Описание", org.getDescription(), "Город", org.getCity())));
 		if (submitted) {
 			notificationSubjects.submitted(org);
 		}

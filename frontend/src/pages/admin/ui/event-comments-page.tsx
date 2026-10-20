@@ -5,6 +5,7 @@ import { cn } from "cn";
 import { useCommentsList } from "@/shared/api/generated/core/comments/comments";
 import { useEventsGet } from "@/shared/api/generated/core/events/events";
 import type { CommentResponse } from "@/shared/api/generated/core/appAPI.schemas";
+import { MODERATION_CATEGORY_LABEL } from "@/shared/lib/statuses";
 import { Button } from "@/shared/components/ui/button";
 import { EmptyState } from "@/shared/components/ui/empty-state";
 import { UserAvatar } from "@/shared/components/ui/user-avatar";
@@ -19,12 +20,21 @@ const shortName = (u: { firstName?: string; lastName?: string; username?: string
 
 /** Сообщение потока: удаление с причиной или восстановление. */
 function Message({ c, moderation }: { c: CommentResponse; moderation: CommentModeration }) {
+  const flagged = c.moderation?.status === "FLAGGED" || c.moderation?.status === "AUTO_HIDDEN";
   const head = (
     <div className="flex flex-wrap items-center gap-2">
       <span className="text-[13px] font-extrabold text-foreground">{shortName(c.author)}</span>
       {c.isOrganizer && <Chip tone="bg-secondary" className="px-2 py-px text-[9px]">организатор</Chip>}
       {c.organization && <span className="text-xs font-bold text-muted-foreground">{c.organization.name}</span>}
       <span className="text-xs font-medium text-muted-foreground">{relative(c.createdAt)}</span>
+      {flagged && (
+        <Link to="/admin/moderation" title={c.moderation?.explanation}>
+          <Chip tone={c.moderation?.status === "AUTO_HIDDEN" ? "bg-salmon" : "bg-peach"} className="px-2 py-px text-[9px]">
+            {c.moderation?.status === "AUTO_HIDDEN" ? "скрыто автоматически" : "проверить"}
+            {c.moderation?.categories.length ? `: ${c.moderation.categories.map((k) => MODERATION_CATEGORY_LABEL[k].toLowerCase()).join(", ")}` : ""}
+          </Chip>
+        </Link>
+      )}
     </div>
   );
   return (

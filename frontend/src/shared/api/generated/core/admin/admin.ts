@@ -33,6 +33,7 @@ import type {
   AdminEventResponse,
   AdminListAwardsParams,
   AdminListEventsParams,
+  AdminListModerationParams,
   AdminListOrganizationsParams,
   AdminListSportsParams,
   AdminListUsersParams,
@@ -50,11 +51,13 @@ import type {
   HideSportRequest,
   MergeSportRequest,
   ModerateEventRequest,
+  ModerationItemResponse,
   OrganizationAwardResponse,
   PageResponseAdminEventResponse,
   PageResponseAdminOrganizationResponse,
   PageResponseAdminSportResponse,
   PageResponseAdminUserResponse,
+  PageResponseModerationItemResponse,
   PetArtPreviewResponse,
   PetFitRequest,
   PetItemResponse,
@@ -1840,6 +1843,408 @@ export const useAdminApproveOrganization = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getAdminApproveOrganizationMutationOptions(options), queryClient);
     }
+    export type adminRecheckModerationResponse200 = {
+  data: ModerationItemResponse
+  status: 200
+}
+
+export type adminRecheckModerationResponse404 = {
+  data: ProblemDetail
+  status: 404
+}
+
+export type adminRecheckModerationResponse409 = {
+  data: ProblemDetail
+  status: 409
+}
+
+export type adminRecheckModerationResponseSuccess = (adminRecheckModerationResponse200) & {
+  headers: Headers;
+};
+export type adminRecheckModerationResponseError = (adminRecheckModerationResponse404 | adminRecheckModerationResponse409) & {
+  headers: Headers;
+};
+
+export type adminRecheckModerationResponse = (adminRecheckModerationResponseSuccess | adminRecheckModerationResponseError)
+
+export const getAdminRecheckModerationUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/moderation/${id}/recheck`
+}
+
+/**
+ * Синхронно, до нескольких секунд. Решение админа сбрасывается.
+ * @summary Проверить нейросетью ещё раз
+ */
+export const adminRecheckModeration = async (id: string, options?: Parameters<typeof authMutator>[1]): Promise<adminRecheckModerationResponse> => {
+
+  return authMutator<adminRecheckModerationResponse>(getAdminRecheckModerationUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getAdminRecheckModerationMutationKey = () => ['adminRecheckModeration'] as const;
+
+export const getAdminRecheckModerationMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminRecheckModeration>>, TError,AdminRecheckModerationMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminRecheckModeration>>, TError,AdminRecheckModerationMutationVariables, TContext> => {
+
+const mutationKey = getAdminRecheckModerationMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminRecheckModeration>>, AdminRecheckModerationMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  adminRecheckModeration(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminRecheckModerationMutationResult = NonNullable<Awaited<ReturnType<typeof adminRecheckModeration>>>
+
+    export type AdminRecheckModerationMutationError = ErrorType<ProblemDetail>
+    export type AdminRecheckModerationMutationVariables = {id: string}
+
+    /**
+ * @summary Проверить нейросетью ещё раз
+ */
+export const useAdminRecheckModeration = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminRecheckModeration>>, TError,AdminRecheckModerationMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adminRecheckModeration>>,
+        TError,
+        AdminRecheckModerationMutationVariables,
+        TContext
+      > => {
+      return useMutation(getAdminRecheckModerationMutationOptions(options), queryClient);
+    }
+    export type adminHideModerationResponse200 = {
+  data: ModerationItemResponse
+  status: 200
+}
+
+export type adminHideModerationResponse404 = {
+  data: ProblemDetail
+  status: 404
+}
+
+export type adminHideModerationResponse409 = {
+  data: ProblemDetail
+  status: 409
+}
+
+export type adminHideModerationResponseSuccess = (adminHideModerationResponse200) & {
+  headers: Headers;
+};
+export type adminHideModerationResponseError = (adminHideModerationResponse404 | adminHideModerationResponse409) & {
+  headers: Headers;
+};
+
+export type adminHideModerationResponse = (adminHideModerationResponseSuccess | adminHideModerationResponseError)
+
+export const getAdminHideModerationUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/moderation/${id}/hide`
+}
+
+/**
+ * Только для сообщений обсуждения: как «Скрыть» на странице обсуждения, автор увидит причину.
+ * @summary Скрыть сообщение из очереди
+ */
+export const adminHideModeration = async (id: string,
+    hideCommentRequest: HideCommentRequest, options?: Parameters<typeof authMutator>[1]): Promise<adminHideModerationResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return authMutator<adminHideModerationResponse>(getAdminHideModerationUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(hideCommentRequest)
+  }
+);}
+
+
+
+
+
+export const getAdminHideModerationMutationKey = () => ['adminHideModeration'] as const;
+
+export const getAdminHideModerationMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminHideModeration>>, TError,AdminHideModerationMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminHideModeration>>, TError,AdminHideModerationMutationVariables, TContext> => {
+
+const mutationKey = getAdminHideModerationMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminHideModeration>>, AdminHideModerationMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  adminHideModeration(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminHideModerationMutationResult = NonNullable<Awaited<ReturnType<typeof adminHideModeration>>>
+    export type AdminHideModerationMutationBody = HideCommentRequest
+    export type AdminHideModerationMutationError = ErrorType<ProblemDetail>
+    export type AdminHideModerationMutationVariables = {id: string;data: HideCommentRequest}
+
+    /**
+ * @summary Скрыть сообщение из очереди
+ */
+export const useAdminHideModeration = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminHideModeration>>, TError,AdminHideModerationMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adminHideModeration>>,
+        TError,
+        AdminHideModerationMutationVariables,
+        TContext
+      > => {
+      return useMutation(getAdminHideModerationMutationOptions(options), queryClient);
+    }
+    export type adminClearProfileTextResponse200 = {
+  data: ModerationItemResponse
+  status: 200
+}
+
+export type adminClearProfileTextResponse404 = {
+  data: ProblemDetail
+  status: 404
+}
+
+export type adminClearProfileTextResponse409 = {
+  data: ProblemDetail
+  status: 409
+}
+
+export type adminClearProfileTextResponseSuccess = (adminClearProfileTextResponse200) & {
+  headers: Headers;
+};
+export type adminClearProfileTextResponseError = (adminClearProfileTextResponse404 | adminClearProfileTextResponse409) & {
+  headers: Headers;
+};
+
+export type adminClearProfileTextResponse = (adminClearProfileTextResponseSuccess | adminClearProfileTextResponseError)
+
+export const getAdminClearProfileTextUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/moderation/${id}/clear-profile`
+}
+
+/**
+ * Только для проверок профиля: текст «О себе» стирается, имя и остальное остаются.
+ * @summary Очистить «О себе» в профиле
+ */
+export const adminClearProfileText = async (id: string, options?: Parameters<typeof authMutator>[1]): Promise<adminClearProfileTextResponse> => {
+
+  return authMutator<adminClearProfileTextResponse>(getAdminClearProfileTextUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getAdminClearProfileTextMutationKey = () => ['adminClearProfileText'] as const;
+
+export const getAdminClearProfileTextMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminClearProfileText>>, TError,AdminClearProfileTextMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminClearProfileText>>, TError,AdminClearProfileTextMutationVariables, TContext> => {
+
+const mutationKey = getAdminClearProfileTextMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminClearProfileText>>, AdminClearProfileTextMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  adminClearProfileText(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminClearProfileTextMutationResult = NonNullable<Awaited<ReturnType<typeof adminClearProfileText>>>
+
+    export type AdminClearProfileTextMutationError = ErrorType<ProblemDetail>
+    export type AdminClearProfileTextMutationVariables = {id: string}
+
+    /**
+ * @summary Очистить «О себе» в профиле
+ */
+export const useAdminClearProfileText = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminClearProfileText>>, TError,AdminClearProfileTextMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adminClearProfileText>>,
+        TError,
+        AdminClearProfileTextMutationVariables,
+        TContext
+      > => {
+      return useMutation(getAdminClearProfileTextMutationOptions(options), queryClient);
+    }
+    export type adminApproveModerationResponse200 = {
+  data: ModerationItemResponse
+  status: 200
+}
+
+export type adminApproveModerationResponse404 = {
+  data: ProblemDetail
+  status: 404
+}
+
+export type adminApproveModerationResponseSuccess = (adminApproveModerationResponse200) & {
+  headers: Headers;
+};
+export type adminApproveModerationResponseError = (adminApproveModerationResponse404) & {
+  headers: Headers;
+};
+
+export type adminApproveModerationResponse = (adminApproveModerationResponseSuccess | adminApproveModerationResponseError)
+
+export const getAdminApproveModerationUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/moderation/${id}/approve`
+}
+
+/**
+ * Снимает флаг; скрытое автоматически сообщение возвращается в обсуждение.
+ * @summary Всё в порядке
+ */
+export const adminApproveModeration = async (id: string, options?: Parameters<typeof authMutator>[1]): Promise<adminApproveModerationResponse> => {
+
+  return authMutator<adminApproveModerationResponse>(getAdminApproveModerationUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getAdminApproveModerationMutationKey = () => ['adminApproveModeration'] as const;
+
+export const getAdminApproveModerationMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminApproveModeration>>, TError,AdminApproveModerationMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminApproveModeration>>, TError,AdminApproveModerationMutationVariables, TContext> => {
+
+const mutationKey = getAdminApproveModerationMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminApproveModeration>>, AdminApproveModerationMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  adminApproveModeration(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminApproveModerationMutationResult = NonNullable<Awaited<ReturnType<typeof adminApproveModeration>>>
+
+    export type AdminApproveModerationMutationError = ErrorType<ProblemDetail>
+    export type AdminApproveModerationMutationVariables = {id: string}
+
+    /**
+ * @summary Всё в порядке
+ */
+export const useAdminApproveModeration = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminApproveModeration>>, TError,AdminApproveModerationMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adminApproveModeration>>,
+        TError,
+        AdminApproveModerationMutationVariables,
+        TContext
+      > => {
+      return useMutation(getAdminApproveModerationMutationOptions(options), queryClient);
+    }
     export type adminUnpublishEventResponse200 = {
   data: AdminEventResponse
   status: 200
@@ -2908,6 +3313,126 @@ export function useAdminGetOrganization<TData = Awaited<ReturnType<typeof adminG
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getAdminGetOrganizationQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type adminListModerationResponse200 = {
+  data: PageResponseModerationItemResponse
+  status: 200
+}
+
+export type adminListModerationResponseSuccess = (adminListModerationResponse200) & {
+  headers: Headers;
+};
+;
+
+export type adminListModerationResponse = (adminListModerationResponseSuccess)
+
+export const getAdminListModerationUrl = (params?: AdminListModerationParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/moderation?${stringifiedParams}` : `/api/admin/moderation`
+}
+
+/**
+ * Без status — то, что ждёт решения: сомнительное (FLAGGED) и скрытое автоматически (AUTO_HIDDEN). Свежие сверху, size до 100.
+ * @summary Очередь модерации текстов
+ */
+export const adminListModeration = async (params?: AdminListModerationParams, options?: Parameters<typeof authMutator>[1]): Promise<adminListModerationResponse> => {
+
+  return authMutator<adminListModerationResponse>(getAdminListModerationUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getAdminListModerationQueryKey = (params?: AdminListModerationParams,) => {
+    return [
+    `/api/admin/moderation`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getAdminListModerationQueryOptions = <TData = Awaited<ReturnType<typeof adminListModeration>>, TError = ErrorType<unknown>>(params?: AdminListModerationParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListModeration>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getAdminListModerationQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof adminListModeration>>> = ({ signal }) => adminListModeration(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof adminListModeration>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type AdminListModerationQueryResult = NonNullable<Awaited<ReturnType<typeof adminListModeration>>>
+export type AdminListModerationQueryError = ErrorType<unknown>
+
+
+export function useAdminListModeration<TData = Awaited<ReturnType<typeof adminListModeration>>, TError = ErrorType<unknown>>(
+ params: undefined |  AdminListModerationParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListModeration>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminListModeration>>,
+          TError,
+          Awaited<ReturnType<typeof adminListModeration>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useAdminListModeration<TData = Awaited<ReturnType<typeof adminListModeration>>, TError = ErrorType<unknown>>(
+ params?: AdminListModerationParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListModeration>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminListModeration>>,
+          TError,
+          Awaited<ReturnType<typeof adminListModeration>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useAdminListModeration<TData = Awaited<ReturnType<typeof adminListModeration>>, TError = ErrorType<unknown>>(
+ params?: AdminListModerationParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListModeration>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Очередь модерации текстов
+ */
+
+export function useAdminListModeration<TData = Awaited<ReturnType<typeof adminListModeration>>, TError = ErrorType<unknown>>(
+ params?: AdminListModerationParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListModeration>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getAdminListModerationQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

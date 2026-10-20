@@ -54,11 +54,15 @@ if (mode === 'db') {
   if (!(await isOpen(9440))) die('S3 (MinIO) не запущен. Выполните: make dev (поднимет недостающее)')
   await ensurePortFree(8080, 'бэкенд')
   // Ключ 2ГИС из корневого .env: бэк считает маршруты для подсказки «когда выходить» (без ключа — оценка)
-  const key = existsSync(join(root, '.env'))
-    ? readFileSync(join(root, '.env'), 'utf8').match(/^VITE_2GIS_KEY=["']?([^"'\r\n]*)/m)?.[1] ?? ''
-    : ''
-  runHere(win ? 'gradlew.bat' : './gradlew', ['bootRun', '--console=plain'], join(root, 'backend'),
-    key && !process.env.VITE_2GIS_KEY ? { VITE_2GIS_KEY: key } : {})
+  const dotenv = existsSync(join(root, '.env')) ? readFileSync(join(root, '.env'), 'utf8') : ''
+  const fromEnv = (name) => dotenv.match(new RegExp(`^${name}=["']?([^"'\r\n]*)`, 'm'))?.[1] ?? ''
+  const key = fromEnv('VITE_2GIS_KEY')
+  // Нейросеть модерации (make llm) из корневого .env: MODERATION_LLM_ENABLED=true
+  const llm = fromEnv('MODERATION_LLM_ENABLED')
+  runHere(win ? 'gradlew.bat' : './gradlew', ['bootRun', '--console=plain'], join(root, 'backend'), {
+    ...(key && !process.env.VITE_2GIS_KEY ? { VITE_2GIS_KEY: key } : {}),
+    ...(llm && !process.env.MODERATION_LLM_ENABLED ? { MODERATION_LLM_ENABLED: llm } : {}),
+  })
 } else if (mode === 'front') {
   await ensurePortFree(5173, 'фронт')
   const frontend = join(root, 'frontend')

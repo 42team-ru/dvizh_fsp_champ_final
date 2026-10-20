@@ -2,6 +2,7 @@ package com.hackathon.app.service;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
@@ -15,6 +16,10 @@ import com.hackathon.app.domain.dto.PageResponse;
 import com.hackathon.app.domain.entity.AppUser;
 import com.hackathon.app.domain.entity.Event;
 import com.hackathon.app.domain.entity.Sport;
+import com.hackathon.app.domain.enums.ModerationDecision;
+import com.hackathon.app.domain.enums.ModerationStatus;
+import com.hackathon.app.domain.enums.ModerationTarget;
+import com.hackathon.app.repository.ModerationCheckRepository;
 import com.hackathon.app.domain.enums.EventStatus;
 import com.hackathon.app.domain.enums.OrganizationStatus;
 import com.hackathon.app.domain.enums.RegistrationStatus;
@@ -59,6 +64,8 @@ public class AdminEventService {
     private final DbTimeRepository dbTime;
     private final EventAccessPolicy policy;
     private final EventMapper mapper;
+    private final ContentGuard contentGuard;
+    private final ModerationCheckRepository moderationChecks;
 
     /**
      * Новые сверху; q ищет по названию без учёта регистра. status, organizationId (мероприятия организации —
@@ -148,6 +155,7 @@ public class AdminEventService {
                 registrations.countByStatus(RegistrationStatus.CONFIRMED),
                 registrations.countByStatus(RegistrationStatus.PENDING),
                 comments.count(),
+                moderationChecks.countByStatusIn(List.of(ModerationStatus.FLAGGED, ModerationStatus.AUTO_HIDDEN)),
                 signupsByDay);
     }
 
@@ -159,6 +167,9 @@ public class AdminEventService {
     private AdminEventResponse moderate(Event event, EventStatus status, String reason, UUID adminId) {
         mapper.moderate(event, status, reason, dbTime.now(), adminId);
         events.saveAndFlush(event);
+        if (status != EventStatus.PUBLISHED) {
+            contentGuard.resolve(ModerationTarget.EVENT, event.getId(), ModerationDecision.ACTION_TAKEN, adminId);
+        }
         log.info("Модерация мероприятия: eventId={}, adminId={}, status={}", event.getId(), adminId, status);
         return mapper.toAdmin(event, sports.findById(event.getSportId()).orElseThrow(),
                 users.findById(event.getAuthorId()).orElseThrow(),

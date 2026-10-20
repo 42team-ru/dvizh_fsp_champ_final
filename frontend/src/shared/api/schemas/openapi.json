@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost",
+      "url": "http://localhost:8099",
       "description": "Generated server url"
     }
   ],
@@ -5250,6 +5250,218 @@
         }
       }
     },
+    "/api/admin/moderation/{id}/recheck": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Проверить нейросетью ещё раз",
+        "description": "Синхронно, до нескольких секунд. Решение админа сбрасывается.",
+        "operationId": "admin_recheckModeration",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModerationItemResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Проверки нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Нейросеть выключена",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/moderation/{id}/hide": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Скрыть сообщение из очереди",
+        "description": "Только для сообщений обсуждения: как «Скрыть» на странице обсуждения, автор увидит причину.",
+        "operationId": "admin_hideModeration",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HideCommentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModerationItemResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Проверки нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Это не сообщение",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/moderation/{id}/clear-profile": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Очистить «О себе» в профиле",
+        "description": "Только для проверок профиля: текст «О себе» стирается, имя и остальное остаются.",
+        "operationId": "admin_clearProfileText",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModerationItemResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Проверки нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Это не профиль",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/moderation/{id}/approve": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Всё в порядке",
+        "description": "Снимает флаг; скрытое автоматически сообщение возвращается в обсуждение.",
+        "operationId": "admin_approveModeration",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModerationItemResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Проверки нет",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/events/{id}/unpublish": {
       "post": {
         "tags": [
@@ -8099,6 +8311,79 @@
         }
       }
     },
+    "/api/admin/moderation": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Очередь модерации текстов",
+        "description": "Без status — то, что ждёт решения: сомнительное (FLAGGED) и скрытое автоматически (AUTO_HIDDEN). Свежие сверху, size до 100.",
+        "operationId": "admin_listModeration",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PENDING",
+                "CLEAN",
+                "FLAGGED",
+                "AUTO_HIDDEN",
+                "RESOLVED"
+              ]
+            }
+          },
+          {
+            "name": "targetType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "COMMENT",
+                "EVENT",
+                "USER_PROFILE",
+                "ORGANIZATION"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseModerationItemResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/events": {
       "get": {
         "tags": [
@@ -10618,6 +10903,58 @@
           "text"
         ]
       },
+      "CommentModerationResponse": {
+        "type": "object",
+        "description": "Оценка сообщения модерацией — только администратору",
+        "properties": {
+          "checkId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id проверки в очереди"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "CLEAN",
+              "FLAGGED",
+              "AUTO_HIDDEN",
+              "RESOLVED"
+            ]
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "PROFANITY",
+                "INSULT",
+                "HARASSMENT",
+                "HATE",
+                "THREAT",
+                "SEXUAL",
+                "SPAM",
+                "OTHER"
+              ]
+            },
+            "uniqueItems": true
+          },
+          "severity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "explanation": {
+            "type": "string",
+            "description": "Пояснение оценки"
+          }
+        },
+        "required": [
+          "categories",
+          "checkId",
+          "severity",
+          "status"
+        ]
+      },
       "CommentReplyResponse": {
         "type": "object",
         "description": "Сообщение, на которое ответили: автор и начало текста",
@@ -10713,6 +11050,10 @@
           "hiddenReason": {
             "type": "string",
             "description": "Причина скрытия — только администратору и автору; иначе null"
+          },
+          "moderation": {
+            "$ref": "#/components/schemas/CommentModerationResponse",
+            "description": "Оценка модерации — только администратору; null — не проверялось или не админ"
           }
         },
         "required": [
@@ -12383,6 +12724,148 @@
           }
         }
       },
+      "ModerationItemResponse": {
+        "type": "object",
+        "description": "Проверка текста в очереди модерации",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "targetType": {
+            "type": "string",
+            "description": "Что проверяли",
+            "enum": [
+              "COMMENT",
+              "EVENT",
+              "USER_PROFILE",
+              "ORGANIZATION"
+            ]
+          },
+          "targetId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id объекта: сообщения, мероприятия, пользователя или организации"
+          },
+          "eventId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Мероприятие (у сообщения — его обсуждение); null — профиль или анкета"
+          },
+          "targetTitle": {
+            "type": "string",
+            "description": "Название мероприятия, организации или имя человека — подпись ссылки"
+          },
+          "author": {
+            "$ref": "#/components/schemas/UserShortResponse",
+            "description": "Автор текста; null — аккаунт удалён"
+          },
+          "text": {
+            "type": "string",
+            "description": "Проверенный текст; у мероприятия и анкеты — поля с подписями"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "CLEAN",
+              "FLAGGED",
+              "AUTO_HIDDEN",
+              "RESOLVED"
+            ]
+          },
+          "source": {
+            "type": "string",
+            "description": "Кто оценил: словарь или нейросеть; null — ещё никто",
+            "enum": [
+              "HEURISTIC",
+              "LLM"
+            ]
+          },
+          "categories": {
+            "type": "array",
+            "description": "Найденные нарушения",
+            "items": {
+              "type": "string",
+              "enum": [
+                "PROFANITY",
+                "INSULT",
+                "HARASSMENT",
+                "HATE",
+                "THREAT",
+                "SEXUAL",
+                "SPAM",
+                "OTHER"
+              ]
+            },
+            "uniqueItems": true
+          },
+          "severity": {
+            "type": "integer",
+            "format": "int32",
+            "description": "0 — нет нарушений, 3 — грубое"
+          },
+          "explanation": {
+            "type": "string",
+            "description": "Пояснение оценки"
+          },
+          "hidden": {
+            "type": "boolean",
+            "description": "Сообщение сейчас скрыто (только для сообщений)"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Когда текст отправлен на проверку или изменён"
+          },
+          "checkedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Когда поставлена оценка"
+          },
+          "decision": {
+            "type": "string",
+            "description": "Решение администратора",
+            "enum": [
+              "APPROVED",
+              "HIDDEN",
+              "ACTION_TAKEN"
+            ]
+          },
+          "reviewedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Когда принято решение"
+          }
+        },
+        "required": [
+          "categories",
+          "hidden",
+          "id",
+          "severity",
+          "status",
+          "targetId",
+          "targetType",
+          "text",
+          "updatedAt"
+        ]
+      },
+      "HideCommentRequest": {
+        "type": "object",
+        "description": "Скрытие сообщения администратором",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "Причина: её увидят автор сообщения и администраторы",
+            "example": "Оскорбления",
+            "maxLength": 1000,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
       "ModerateEventRequest": {
         "type": "object",
         "description": "Снятие с публикации или удаление мероприятия админом",
@@ -12470,22 +12953,6 @@
           "startAt",
           "status",
           "title"
-        ]
-      },
-      "HideCommentRequest": {
-        "type": "object",
-        "description": "Скрытие сообщения администратором",
-        "properties": {
-          "reason": {
-            "type": "string",
-            "description": "Причина: её увидят автор сообщения и администраторы",
-            "example": "Оскорбления",
-            "maxLength": 1000,
-            "minLength": 0
-          }
-        },
-        "required": [
-          "reason"
         ]
       },
       "OrganizationAwardResponse": {
@@ -14976,6 +15443,11 @@
             "format": "int64",
             "description": "Комментариев"
           },
+          "moderationQueue": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Текстов ждут решения модератора: сомнительные и скрытые автоматически"
+          },
           "signupsByDay": {
             "type": "array",
             "description": "Сколько присоединилось по дням (регистрации), старые дни сначала, дни без регистраций — с нулём",
@@ -14989,6 +15461,7 @@
           "eventsDeleted",
           "eventsPublished",
           "eventsUnpublished",
+          "moderationQueue",
           "organizationsApproved",
           "organizationsPending",
           "registrationsConfirmed",
@@ -15098,6 +15571,40 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AdminOrganizationResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "size",
+          "totalElements",
+          "totalPages"
+        ]
+      },
+      "PageResponseModerationItemResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ModerationItemResponse"
             }
           },
           "page": {
