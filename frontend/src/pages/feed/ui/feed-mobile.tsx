@@ -1,3 +1,4 @@
+import { FeedCityFilter } from "@/widgets/feed-filters/ui/feed-city-filter";
 import { useSearchParams } from "react-router";
 import { coverOf } from "@/entity/event/lib/cover";
 import { usePetName } from "@/entity/user/model/use-pet-name";
@@ -262,6 +263,8 @@ export function FeedMobile() {
         </button>
       </div>
 
+      {!filters.forYou && <div className="px-4"><FeedCityFilter city={filters.city} /></div>}
+
       {more && <FeedExtraFilters value={filters.extra} onChange={filters.setExtra} className="mx-4 p-4" />}
 
       <div className="no-scrollbar flex gap-2 overflow-x-auto px-4">
@@ -305,7 +308,7 @@ export function FeedMobile() {
 
       {view === "map" ? (
         <div className="px-4">
-          <EventsMap withHome filters={{ searchText: params.searchText, sportId: params.sportId, level: params.level, joinMode: params.joinMode, organizationId: params.organizationId }} className="w-full" mapClassName="h-[45dvh]" />
+          <EventsMap key={filters.city.value} withHome filters={{ searchText: params.searchText, sportId: params.sportId, level: params.level, joinMode: params.joinMode, organizationId: params.organizationId, lat: params.lat, lon: params.lon, radiusKm: params.radiusKm }} className="w-full" mapClassName="h-[45dvh]" />
         </div>
       ) : (
         <>
@@ -314,14 +317,16 @@ export function FeedMobile() {
           )}
           {list.isError && !list.isFetchNextPageError && <p role="alert" className="px-4 text-base font-semibold text-destructive">Не удалось загрузить ленту.</p>}
           {!list.isPending && !list.isError && events.length === 0 && <FeedEmpty />}
+          {/* «Не нашёл свою тусовку?» — после второй группы, а не в самом низу длинной ленты. */}
           {groups.map((group, i) => (
             <div key={group[0].id} className="flex flex-col gap-4">
               <BigCard e={group[0]} index={i} placeOf={list.placeOf} reason={list.topReasonOf(group[0].id)} onDismiss={onDismiss} />
               {group.length > 1 && <SmallRow items={group.slice(1)} placeOf={list.placeOf} reasonOf={list.topReasonOf} onDismiss={onDismiss} />}
+              {i === 1 && <Promo />}
             </div>
           ))}
           <div className="px-4"><FeedPagination {...list} /></div>
-          {!list.isPending && !list.isError && !list.hasNextPage && <Promo />}
+          {groups.length < 2 && !list.isPending && !list.isError && !list.hasNextPage && <Promo />}
         </>
       )}
       <MobileTabBar current="feed" />

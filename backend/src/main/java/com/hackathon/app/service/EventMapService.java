@@ -15,6 +15,7 @@ import com.hackathon.app.domain.mapper.EventMapper;
 import com.hackathon.app.repository.DbTimeRepository;
 import com.hackathon.app.repository.EventMapRepository;
 import com.hackathon.app.repository.EventRepository;
+import com.hackathon.app.repository.EventSpecifications;
 import com.hackathon.app.util.Strings;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -46,6 +47,11 @@ public class EventMapService {
 		if (filter.minLat() > filter.maxLat()) {
 			throw new BadRequestException("Южная граница области должна быть не севернее северной");
 		}
+		if ((filter.lat() == null) != (filter.lon() == null)) {
+			throw new BadRequestException("Для поиска рядом укажите и широту, и долготу");
+		}
+		var near = filter.lat() == null ? null : new EventSpecifications.Near(
+				filter.lat(), filter.lon(), filter.radiusKm() != null ? filter.radiusKm() : 10);
 		var now = dbTime.now();
 		var from = filter.from() != null && filter.from().isAfter(now) ? filter.from() : now;
 		var to = filter.to() != null ? filter.to() : from.plus(DEFAULT_WINDOW);
@@ -56,7 +62,7 @@ public class EventMapService {
 		var ids = mapRepository.findIdsInArea(filter.minLon(), filter.minLat(), filter.maxLon(), filter.maxLat(),
 				from, to, Strings.blankToNull(filter.searchText()), filter.sportId(), filter.level(),
 				filter.joinMode(), Boolean.TRUE.equals(filter.forMe()) ? userId : null,
-				filter.organizationId(), LIMIT + 1);
+				filter.organizationId(), near, LIMIT + 1);
 		var truncated = ids.size() > LIMIT;
 		var shownIds = truncated ? ids.subList(0, LIMIT) : ids;
 

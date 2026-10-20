@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:8094",
+      "url": "http://localhost",
       "description": "Generated server url"
     }
   ],
@@ -6897,6 +6897,45 @@
               "type": "string",
               "format": "uuid",
               "description": "Только мероприятия этой организации (карта на странице организации)"
+            }
+          },
+          {
+            "name": "lat",
+            "in": "query",
+            "description": "Центр фильтра по городу: широта, вместе с lon",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "description": "Центр фильтра по городу: широта, вместе с lon",
+              "maximum": 90,
+              "minimum": -90
+            }
+          },
+          {
+            "name": "lon",
+            "in": "query",
+            "description": "Центр фильтра по городу: долгота, вместе с lat",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "description": "Центр фильтра по городу: долгота, вместе с lat",
+              "maximum": 180,
+              "minimum": -180
+            }
+          },
+          {
+            "name": "radiusKm",
+            "in": "query",
+            "description": "Радиус вокруг центра в км, 1–100; по умолчанию 10",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "description": "Радиус вокруг центра в км, 1–100; по умолчанию 10",
+              "maximum": 100,
+              "minimum": 1
             }
           }
         ],

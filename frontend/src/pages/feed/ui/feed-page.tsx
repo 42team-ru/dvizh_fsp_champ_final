@@ -1,3 +1,4 @@
+import { FeedCityFilter } from "@/widgets/feed-filters/ui/feed-city-filter";
 import { useSearchParams } from "react-router";
 import { usePetName } from "@/entity/user/model/use-pet-name";
 import { MyBeaverBadge } from "@/widgets/beaver-pet/ui/my-beaver-badge";
@@ -21,7 +22,7 @@ import { Participants } from "@/shared/components/ui/participants";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 import { Link } from "react-router";
 import { cn } from "cn";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import type { EventSummaryResponse, EventsListParams } from "@/shared/api/generated/core/appAPI.schemas";
 import { toCardData, formatWhen } from "@/entity/event/lib/event-format";
 import { FEED_CHIPS, FOR_YOU_CHIP, useFeedFilters, type FeedChip } from "@/entity/event/model/use-feed-filters";
@@ -193,8 +194,8 @@ function Slot({ events, i, placeOf, reasonOf, topReasonOf, onDismiss, ...props }
 
 /** Карта понимает не все фильтры ленты: формат и «Для меня» ей не передаём (на карте только очные). */
 /** Время на карте задаёт её собственный док, поэтому from/to ленты сюда не идут. */
-const toMapFilters = ({ searchText, sportId, level, joinMode, organizationId }: EventsListParams): MapFilters =>
-  ({ searchText, sportId, level, joinMode, organizationId });
+const toMapFilters = ({ searchText, sportId, level, joinMode, organizationId, lat, lon, radiusKm }: EventsListParams): MapFilters =>
+  ({ searchText, sportId, level, joinMode, organizationId, lat, lon, radiusKm });
 
 export default function FeedPage() {
   const filters = useFeedFilters();
@@ -214,9 +215,10 @@ export default function FeedPage() {
       <main className="mx-auto flex w-full max-w-[1440px] flex-col gap-7 px-8 pt-8 pb-12">
         <FilterBar chip={filters.chip} onChip={filters.setChip} more={more} extraCount={filters.extraCount}
           onMore={() => setMore((m) => !m)} count={list.totalElements} view={view} onView={setView} />
+        {!filters.forYou && <FeedCityFilter city={filters.city} />}
         {more && <FeedExtraFilters value={filters.extra} onChange={filters.setExtra} className="w-full" />}
         {view === "map" ? (
-          <EventsMap withHome filters={toMapFilters(filters.params)} className="h-[calc(100dvh-234px)] min-h-[640px] w-full" mapClassName="min-h-0" />
+          <EventsMap key={filters.city.value} withHome filters={toMapFilters(filters.params)} className="h-[calc(100dvh-234px)] min-h-[640px] w-full" mapClassName="min-h-0" />
         ) : (
         <div className="flex min-w-[1216px] flex-col gap-5">
           {events?.length === 0 && <FeedEmpty />}
@@ -245,14 +247,19 @@ export default function FeedPage() {
                 topReasonOf={topReasonOf} onDismiss={onDismiss} className="col-span-5" />
             </div>
           )}
+          {/* «Не нашёл свою тусовку?» — плиткой в первом ряду продолжения, а не одна в самом низу длинной ленты. */}
           <div className="grid grid-cols-3 gap-5">
             {events?.slice(9).map((event, index) => (
-              <Slot key={event.id} events={events} i={index + 9} placeOf={placeOf}
-                reasonOf={reasonOf} topReasonOf={topReasonOf} onDismiss={onDismiss} />
+              <Fragment key={event.id}>
+                {index === 2 && <CtaCard />}
+                <Slot events={events} i={index + 9} placeOf={placeOf}
+                  reasonOf={reasonOf} topReasonOf={topReasonOf} onDismiss={onDismiss} />
+              </Fragment>
             ))}
           </div>
           <FeedPagination {...list} />
-          {!list.isPending && !list.isError && !list.hasNextPage && <CtaCard className="w-full max-w-[560px] self-end" />}
+          {(events?.length ?? 0) <= 11 && !list.isPending && !list.isError && !list.hasNextPage
+            && <CtaCard className="w-full max-w-[560px] self-end" />}
         </div>
         )}
       </main>

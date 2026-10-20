@@ -1,3 +1,4 @@
+import { useFeedCity } from "./use-feed-city";
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
 import { useSportsSearch } from "@/shared/api/generated/core/sports/sports";
@@ -36,6 +37,7 @@ export function useFeedFilters() {
   const [chip, setChip] = useState<FeedChip>(() => (searchParams.get("chip") === "for-you" ? FOR_YOU_CHIP : "Все"));
   const [extra, setExtra] = useState<FeedExtra>({});
   const forYou = chip === FOR_YOU_CHIP;
+  const city = useFeedCity();
   const isSport = !forYou && !["Все", "Сегодня", "Выходные"].includes(chip);
   const sport = useSportsSearch({ query: chip }, { query: { enabled: isSport, staleTime: 10 * 60_000 } });
   const found = sport.data?.status === 200 ? sport.data.data.find((s) => s.name.toLowerCase() === chip.toLowerCase()) : undefined;
@@ -45,8 +47,9 @@ export function useFeedFilters() {
   const params: EventsListParams = useMemo(() => ({
     ...(isSport ? (found ? { sportId: found.id } : { searchText: chip }) : range),
     ...extra,
+    ...(!forYou ? city.params : {}),
     organizationId: searchParams.get("organizationId") || undefined,
-  }), [isSport, found, chip, range, extra, searchParams]);
+  }), [isSport, found, chip, range, extra, searchParams, forYou, city.params.lat, city.params.lon]);
   const extraCount = Object.values(extra).filter((v) => v !== undefined && v !== false).length;
-  return { chip, setChip, extra, setExtra, extraCount, params, forYou, ready: !isSport || !sport.isPending };
+  return { city, chip, setChip, extra, setExtra, extraCount, params, forYou, ready: (forYou || city.ready) && (!isSport || !sport.isPending) };
 }
