@@ -1,13 +1,12 @@
 import { useState, type CSSProperties } from "react";
 import { Check, Lock } from "lucide-react";
-import { toBackendUrl } from "@/shared/api/mutators/authMutator";
+import { AchievementPicture } from "@/shared/components/ui/achievement-picture";
 import { Button } from "@/shared/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@/shared/components/ui/dialog";
 import { Icon } from "@/shared/components/ui/icon";
 import { cn } from "cn";
 import { useAchievements, type Achievement } from "../model/use-achievements";
 
-const imageUrl = (url: string) => toBackendUrl(url).toString();
 
 const CARD_FOCUS =
   "cursor-pointer text-left outline-none transition-shadow hover:shadow-[3px_3px_0_var(--ink)] focus-visible:ring-[3px] focus-visible:ring-primary";
@@ -17,24 +16,7 @@ const earnedDate = (iso: string) =>
 
 /** Картинка достижения в цветной плитке; у неполученного — пунктир и замок. */
 function Badge({ a, size }: { a: Achievement; size: "sm" | "lg" | "xl" }) {
-  return (
-    <span
-      className={cn(
-        "relative flex shrink-0 items-center justify-center overflow-hidden border-2",
-        size === "sm" && "size-10 rounded-xl",
-        size === "lg" && "size-12 rounded-[14px]",
-        size === "xl" && "size-[120px] rounded-[24px] border-[2.5px] sm:size-[168px]",
-        a.earned ? cn("border-ink", a.tone) : "border-dashed border-muted-foreground bg-card",
-      )}
-    >
-      <img src={imageUrl(a.imageUrl)} alt="" className={cn("size-full object-cover", !a.earned && "opacity-35 grayscale")} />
-      {!a.earned && (
-        <span className="absolute right-0 bottom-0 flex size-[18px] items-center justify-center rounded-tl-lg border-t-2 border-l-2 border-dashed border-muted-foreground bg-card">
-          <Icon name="profile/icon-lock" className="size-3" />
-        </span>
-      )}
-    </span>
-  );
+  return <AchievementPicture imageUrl={a.imageUrl} earned={a.earned} size={size} tone={a.tone} />;
 }
 
 function progressPercent(a: Achievement) {

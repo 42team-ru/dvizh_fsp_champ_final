@@ -50,4 +50,33 @@ public interface StoredFileRepository extends JpaRepository<StoredFile, UUID> {
 
 	/** Все фото альбома, свежие первыми: из них собираются папки. */
 	List<StoredFile> findByUploadedByIdAndKindOrderByCreatedAtDescIdDesc(UUID uploadedById, FileKind kind);
+
+    interface PhotoCount {
+        UUID getEventId();
+        long getCount();
+    }
+    @Query("""
+        select f.eventId as eventId, count(f) as count from StoredFile f join Event e on e.id = f.eventId
+        where e.organizationId = :organizationId and e.status = com.hackathon.app.domain.enums.EventStatus.PUBLISHED
+        and f.kind in (com.hackathon.app.domain.enums.FileKind.EVENT_PHOTO, com.hackathon.app.domain.enums.FileKind.ALBUM_PHOTO)
+        group by f.eventId
+        """)
+    List<PhotoCount> organizationPhotoCounts(UUID organizationId);
+
+    @Query("""
+        select f from StoredFile f join Event e on e.id = f.eventId
+        where e.organizationId = :organizationId and e.status = com.hackathon.app.domain.enums.EventStatus.PUBLISHED
+        and f.kind in (com.hackathon.app.domain.enums.FileKind.EVENT_PHOTO, com.hackathon.app.domain.enums.FileKind.ALBUM_PHOTO)
+        order by f.createdAt desc, f.id
+        """)
+    Page<StoredFile> organizationPhotos(UUID organizationId, Pageable pageable);
+
+
+    @Query("""
+        select f.eventId as eventId, count(f) as count from StoredFile f where f.eventId in :eventIds
+        and f.kind in (com.hackathon.app.domain.enums.FileKind.EVENT_PHOTO, com.hackathon.app.domain.enums.FileKind.ALBUM_PHOTO)
+        group by f.eventId
+        """)
+    List<PhotoCount> photoCounts(Collection<UUID> eventIds);
+
 }

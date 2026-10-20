@@ -2433,8 +2433,8 @@
               "format": "double",
               "description": "Рядом с точкой: широта (вместе с lon); онлайн-мероприятия показываются всегда",
               "example": 56.0153,
-              "maximum": 90,
-              "minimum": -90
+              "maximum": 90.0,
+              "minimum": -90.0
             },
             "example": 56.0153
           },
@@ -2448,8 +2448,8 @@
               "format": "double",
               "description": "Рядом с точкой: долгота (вместе с lat)",
               "example": 92.8932,
-              "maximum": 180,
-              "minimum": -180
+              "maximum": 180.0,
+              "minimum": -180.0
             },
             "example": 92.8932
           },
@@ -4837,8 +4837,8 @@
             "schema": {
               "type": "number",
               "format": "double",
-              "maximum": 90,
-              "minimum": -90
+              "maximum": 90.0,
+              "minimum": -90.0
             }
           },
           {
@@ -4849,8 +4849,8 @@
             "schema": {
               "type": "number",
               "format": "double",
-              "maximum": 180,
-              "minimum": -180
+              "maximum": 180.0,
+              "minimum": -180.0
             }
           },
           {
@@ -4913,8 +4913,8 @@
               "format": "double",
               "description": "Текущее место: широта (вместе с lon); иначе — домашняя точка из предпочтений",
               "example": 56.0153,
-              "maximum": 90,
-              "minimum": -90
+              "maximum": 90.0,
+              "minimum": -90.0
             },
             "example": 56.0153
           },
@@ -4928,8 +4928,8 @@
               "format": "double",
               "description": "Текущее место: долгота (вместе с lat)",
               "example": 92.8932,
-              "maximum": 180,
-              "minimum": -180
+              "maximum": 180.0,
+              "minimum": -180.0
             },
             "example": 92.8932
           },
@@ -5063,8 +5063,8 @@
               "format": "double",
               "description": "Текущее место: широта (вместе с lon); иначе — домашняя точка из предпочтений",
               "example": 56.0153,
-              "maximum": 90,
-              "minimum": -90
+              "maximum": 90.0,
+              "minimum": -90.0
             },
             "example": 56.0153
           },
@@ -5078,8 +5078,8 @@
               "format": "double",
               "description": "Текущее место: долгота (вместе с lat)",
               "example": 92.8932,
-              "maximum": 180,
-              "minimum": -180
+              "maximum": 180.0,
+              "minimum": -180.0
             },
             "example": 92.8932
           },
@@ -5386,6 +5386,7 @@
                 "type": "string",
                 "enum": [
                   "REMINDER",
+                  "ORG_NEW_EVENT",
                   "EVENT_CHANGED",
                   "EVENT_UNPUBLISHED",
                   "EVENT_DELETED",
@@ -5859,8 +5860,8 @@
               "format": "double",
               "description": "Западная граница (долгота юго-западного угла)",
               "example": 92.7,
-              "maximum": 180,
-              "minimum": -180
+              "maximum": 180.0,
+              "minimum": -180.0
             },
             "example": 92.7
           },
@@ -5874,8 +5875,8 @@
               "format": "double",
               "description": "Южная граница (широта юго-западного угла)",
               "example": 55.9,
-              "maximum": 90,
-              "minimum": -90
+              "maximum": 90.0,
+              "minimum": -90.0
             },
             "example": 55.9
           },
@@ -5889,8 +5890,8 @@
               "format": "double",
               "description": "Восточная граница (долгота северо-восточного угла)",
               "example": 93.1,
-              "maximum": 180,
-              "minimum": -180
+              "maximum": 180.0,
+              "minimum": -180.0
             },
             "example": 93.1
           },
@@ -5904,8 +5905,8 @@
               "format": "double",
               "description": "Северная граница (широта северо-восточного угла)",
               "example": 56.1,
-              "maximum": 90,
-              "minimum": -90
+              "maximum": 90.0,
+              "minimum": -90.0
             },
             "example": 56.1
           },
@@ -7437,6 +7438,314 @@
           }
         }
       }
+    },
+    "/api/organizations/{id}/subscription": {
+      "post": {
+        "tags": [
+          "organizations"
+        ],
+        "summary": "Подписаться на новые встречи организации",
+        "operationId": "organizations_subscribe",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationSubscriptionResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "organizations"
+        ],
+        "summary": "Отписаться от новых встреч организации",
+        "operationId": "organizations_unsubscribe",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationSubscriptionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/organizations": {
+      "get": {
+        "tags": [
+          "organizations"
+        ],
+        "summary": "Каталог одобренных организаций",
+        "operationId": "organizations_list",
+        "parameters": [
+          {
+            "name": "searchText",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "city",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sportId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "mine",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 12
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseOrganizationCardResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/organizations/{id}/photos": {
+      "get": {
+        "tags": [
+          "organizations"
+        ],
+        "summary": "Фото мероприятий и альбомов организации",
+        "operationId": "organizations_photos",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 24
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseFileResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/organizations/{id}/overview": {
+      "get": {
+        "tags": [
+          "organizations"
+        ],
+        "summary": "Сводка, расписание и первые страницы встреч и фото клуба",
+        "operationId": "organizations_overview",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationOverviewResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/organizations/{id}/meetings": {
+      "get": {
+        "tags": [
+          "organizations"
+        ],
+        "summary": "Архив занятий организации с фильтром по спорту",
+        "operationId": "organizations_pastMeetings",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "sportId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 4
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseOrganizationMeetingResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/organizations/cities": {
+      "get": {
+        "tags": [
+          "organizations"
+        ],
+        "summary": "Города публичного каталога",
+        "operationId": "organizations_cities",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -8842,7 +9151,7 @@
             "type": "array",
             "description": "Подтверждённые участники (у серии — принятые в серию)",
             "items": {
-              "$ref": "#/components/schemas/EventParticipantResponse"
+              "$ref": "#/components/schemas/UserShortResponse"
             }
           },
           "joinMode": {
@@ -10741,7 +11050,14 @@
             "type": "integer",
             "format": "int32"
           }
-        }
+        },
+        "required": [
+          "items",
+          "page",
+          "size",
+          "totalElements",
+          "totalPages"
+        ]
       },
       "AlbumFolderResponse": {
         "type": "object",
@@ -11057,7 +11373,14 @@
             "type": "integer",
             "format": "int32"
           }
-        }
+        },
+        "required": [
+          "items",
+          "page",
+          "size",
+          "totalElements",
+          "totalPages"
+        ]
       },
       "AttendanceSummaryResponse": {
         "type": "object",
@@ -11253,7 +11576,14 @@
             "type": "integer",
             "format": "int32"
           }
-        }
+        },
+        "required": [
+          "items",
+          "page",
+          "size",
+          "totalElements",
+          "totalPages"
+        ]
       },
       "RecommendationReason": {
         "type": "object",
@@ -11380,7 +11710,14 @@
             "type": "integer",
             "format": "int32"
           }
-        }
+        },
+        "required": [
+          "items",
+          "page",
+          "size",
+          "totalElements",
+          "totalPages"
+        ]
       },
       "RecommendedEventResponse": {
         "type": "object",
@@ -11885,6 +12222,7 @@
             "type": "string",
             "enum": [
               "REMINDER",
+              "ORG_NEW_EVENT",
               "EVENT_CHANGED",
               "EVENT_UNPUBLISHED",
               "EVENT_DELETED",
@@ -11982,6 +12320,7 @@
             "type": "string",
             "enum": [
               "REMINDER",
+              "ORG_NEW_EVENT",
               "EVENT_CHANGED",
               "EVENT_UNPUBLISHED",
               "EVENT_DELETED",
@@ -12118,7 +12457,14 @@
             "type": "integer",
             "format": "int32"
           }
-        }
+        },
+        "required": [
+          "items",
+          "page",
+          "size",
+          "totalElements",
+          "totalPages"
+        ]
       },
       "EventMapFeature": {
         "type": "object",
@@ -12443,7 +12789,14 @@
             "type": "integer",
             "format": "int32"
           }
-        }
+        },
+        "required": [
+          "items",
+          "page",
+          "size",
+          "totalElements",
+          "totalPages"
+        ]
       },
       "AdminStatsResponse": {
         "type": "object",
@@ -12562,7 +12915,14 @@
             "type": "integer",
             "format": "int32"
           }
-        }
+        },
+        "required": [
+          "items",
+          "page",
+          "size",
+          "totalElements",
+          "totalPages"
+        ]
       },
       "PageResponseAdminEventResponse": {
         "type": "object",
@@ -12589,7 +12949,14 @@
             "type": "integer",
             "format": "int32"
           }
-        }
+        },
+        "required": [
+          "items",
+          "page",
+          "size",
+          "totalElements",
+          "totalPages"
+        ]
       },
       "AdminAwardsResponse": {
         "type": "object",
@@ -12831,7 +13198,14 @@
             "type": "integer",
             "format": "int32"
           }
-        }
+        },
+        "required": [
+          "items",
+          "page",
+          "size",
+          "totalElements",
+          "totalPages"
+        ]
       },
       "AdminSportCountsResponse": {
         "type": "object",
@@ -12871,69 +13245,463 @@
           "withoutImage"
         ]
       },
-      "PetLookResponse": {
+      "OrganizationSubscriptionResponse": {
         "type": "object",
         "properties": {
-          "name": {
-            "type": "string",
-            "description": "Имя питомца; по умолчанию Бублик"
+          "subscribed": {
+            "type": "boolean"
           },
-          "activity": {
-            "type": "string",
-            "description": "Инвентарь; none — без инвентаря"
+          "subscribersCount": {
+            "type": "integer",
+            "format": "int64"
           },
-          "outfit": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Надетые вещи по кодам слотов"
+          "subscriberAvatars": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserShortResponse"
+            }
           }
         },
         "required": [
-          "activity",
-          "name",
-          "outfit"
+          "subscribed",
+          "subscriberAvatars",
+          "subscribersCount"
         ]
       },
-      "EventParticipantResponse": {
+      "OrganizationCardResponse": {
         "type": "object",
         "properties": {
           "id": {
             "type": "string",
             "format": "uuid"
           },
-          "username": {
-            "type": "string",
-            "description": "Логин"
+          "name": {
+            "type": "string"
           },
-          "firstName": {
-            "type": "string",
-            "description": "Имя"
-          },
-          "lastName": {
-            "type": "string",
-            "description": "Фамилия"
-          },
-          "avatarUrl": {
-            "type": "string",
-            "description": "Ссылка на аватар"
+          "description": {
+            "type": "string"
           },
           "city": {
-            "type": "string",
-            "description": "Город"
+            "type": "string"
           },
-          "pet": {
-            "$ref": "#/components/schemas/PetLookResponse",
-            "description": "Публичный образ питомца"
+          "logoUrl": {
+            "type": "string"
+          },
+          "sports": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SportResponse"
+            }
+          },
+          "hostedMeetings": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "subscribersCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "subscribed": {
+            "type": "boolean"
+          },
+          "attended": {
+            "type": "boolean"
+          },
+          "awardMonth": {
+            "type": "string",
+            "format": "date"
           }
         },
         "required": [
-          "firstName",
+          "attended",
+          "hostedMeetings",
           "id",
-          "lastName",
-          "pet",
-          "username"
+          "name",
+          "sports",
+          "subscribed",
+          "subscribersCount"
+        ]
+      },
+      "PageResponseOrganizationCardResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrganizationCardResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "size",
+          "totalElements",
+          "totalPages"
+        ]
+      },
+      "PageResponseFileResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FileResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "size",
+          "totalElements",
+          "totalPages"
+        ]
+      },
+      "Leader": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/UserShortResponse"
+          },
+          "meetingsCount": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "meetingsCount",
+          "user"
+        ]
+      },
+      "MonthCount": {
+        "type": "object",
+        "properties": {
+          "month": {
+            "type": "string",
+            "format": "date"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "awardMonth": {
+            "type": "boolean"
+          },
+          "current": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "awardMonth",
+          "count",
+          "current",
+          "month"
+        ]
+      },
+      "OrganizationMeetingResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "eventId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "sport": {
+            "$ref": "#/components/schemas/SportResponse"
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "timeZone": {
+            "type": "string"
+          },
+          "place": {
+            "type": "string"
+          },
+          "capacity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "attendeesCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "attendees": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserShortResponse"
+            }
+          },
+          "myRegistrationStatus": {
+            "type": "string",
+            "enum": [
+              "CONFIRMED",
+              "PENDING",
+              "REJECTED",
+              "CANCELLED",
+              "WAITLISTED"
+            ]
+          },
+          "coverUrl": {
+            "type": "string"
+          },
+          "coverFocus": {
+            "$ref": "#/components/schemas/FocusPoint"
+          },
+          "photosCount": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "attendees",
+          "attendeesCount",
+          "eventId",
+          "id",
+          "photosCount",
+          "place",
+          "sport",
+          "startAt",
+          "timeZone",
+          "title"
+        ]
+      },
+      "OrganizationOverviewResponse": {
+        "type": "object",
+        "properties": {
+          "firstEventYear": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hostedMeetings": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "yearParticipants": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "photosCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "photoMeetingsCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "returningShare": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "petName": {
+            "type": "string"
+          },
+          "subscription": {
+            "$ref": "#/components/schemas/OrganizationSubscriptionResponse"
+          },
+          "months": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MonthCount"
+            }
+          },
+          "schedule": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScheduleDay"
+            }
+          },
+          "leaders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Leader"
+            }
+          },
+          "places": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Place"
+            }
+          },
+          "pastSports": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SportCount"
+            }
+          },
+          "upcoming": {
+            "$ref": "#/components/schemas/PageResponseOrganizationMeetingResponse"
+          },
+          "past": {
+            "$ref": "#/components/schemas/PageResponseOrganizationMeetingResponse"
+          },
+          "photos": {
+            "$ref": "#/components/schemas/PageResponseFileResponse"
+          }
+        },
+        "required": [
+          "hostedMeetings",
+          "leaders",
+          "months",
+          "past",
+          "pastSports",
+          "petName",
+          "photoMeetingsCount",
+          "photos",
+          "photosCount",
+          "places",
+          "schedule",
+          "subscription",
+          "upcoming",
+          "yearParticipants"
+        ]
+      },
+      "PageResponseOrganizationMeetingResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrganizationMeetingResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "size",
+          "totalElements",
+          "totalPages"
+        ]
+      },
+      "Place": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "meetingsCount": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "meetingsCount",
+          "name"
+        ]
+      },
+      "ScheduleDay": {
+        "type": "object",
+        "properties": {
+          "day": {
+            "type": "string",
+            "enum": [
+              "MONDAY",
+              "TUESDAY",
+              "WEDNESDAY",
+              "THURSDAY",
+              "FRIDAY",
+              "SATURDAY",
+              "SUNDAY"
+            ]
+          },
+          "eventId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "timeZone": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "place": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "day",
+          "eventId",
+          "place",
+          "startAt",
+          "timeZone",
+          "title"
+        ]
+      },
+      "SportCount": {
+        "type": "object",
+        "properties": {
+          "sport": {
+            "$ref": "#/components/schemas/SportResponse"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "count",
+          "sport"
         ]
       }
     },

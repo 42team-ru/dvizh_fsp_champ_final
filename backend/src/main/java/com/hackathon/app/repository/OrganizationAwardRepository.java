@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.Collection;
 
 import com.hackathon.app.domain.entity.OrganizationAward;
 import com.hackathon.app.domain.enums.AwardStatus;
@@ -28,4 +29,7 @@ public interface OrganizationAwardRepository extends JpaRepository<OrganizationA
 	Optional<OrganizationAward> findFirstByStatusOrderByPeriodDesc(AwardStatus status);
 
 	List<OrganizationAward> findByOrganizationIdAndStatusOrderByPeriodDesc(UUID organizationId, AwardStatus status);
+
+    List<OrganizationAward> findByOrganizationIdInAndStatus(Collection<UUID> organizationIds, AwardStatus status);
+
 }

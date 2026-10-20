@@ -1,5 +1,6 @@
 package com.hackathon.app.repository;
 
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -14,7 +15,33 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface OrganizationRepository extends JpaRepository<Organization, UUID> {
 
-	Optional<Organization> findByAccountId(UUID accountId);
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select o from Organization o where o.id = :id")
+    Optional<Organization> findByIdForUpdate(UUID id);
+
+    /**
+     * Публичный каталог: только одобренные, «мои» — подписки или посещённые занятия.
+     * Город приходит в нижнем регистре, без фильтра — пустая строка: null в lower() Postgres типизирует как bytea.
+     */
+    @Query("""
+        select o from Organization o where o.status = com.hackathon.app.domain.enums.OrganizationStatus.APPROVED
+        and (lower(o.name) like :q or lower(o.description) like :q)
+        and (:city = '' or lower(o.city) = :city)
+        and (:sportId is null or exists (select s.id from OrganizationSport s where s.organizationId = o.id and s.sportId = :sportId))
+        and (:mine = false or exists (select s.id from OrganizationSubscription s where s.organizationId = o.id and s.userId = :userId)
+            or exists (select e.id from Event e join EventOccurrence oc on oc.eventId = e.id
+                where e.organizationId = o.id and e.status = com.hackathon.app.domain.enums.EventStatus.PUBLISHED
+                and oc.status = com.hackathon.app.domain.enums.OccurrenceStatus.SCHEDULED and oc.startAt < :now
+                and ((e.recurring = false and exists (select r.id from Registration r where r.eventId = e.id and r.userId = :userId
+                    and r.status = com.hackathon.app.domain.enums.RegistrationStatus.CONFIRMED))
+                or (e.recurring = true and exists (select a.id from OccurrenceAttendance a where a.occurrenceId = oc.id and a.userId = :userId)))))
+        """)
+    Page<Organization> catalog(String q, String city, UUID sportId, boolean mine, UUID userId, Instant now, Pageable pageable);
+
+    @Query("select distinct o.city from Organization o where o.status = com.hackathon.app.domain.enums.OrganizationStatus.APPROVED and o.city is not null order by o.city")
+    java.util.List<String> publicCities();
+
+    Optional<Organization> findByAccountId(UUID accountId);
 
 	/** Анкеты аккаунтов одним запросом: подписать сообщения и организаторов названием организации. */
 	java.util.List<Organization> findByAccountIdIn(java.util.Collection<UUID> accountIds);

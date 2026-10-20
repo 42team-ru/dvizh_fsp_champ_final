@@ -49,6 +49,7 @@ import com.hackathon.app.service.EventService;
 import com.hackathon.app.service.NotificationService;
 import com.hackathon.app.service.OccurrenceService;
 import com.hackathon.app.service.OrganizationService;
+import com.hackathon.app.service.OrganizationSubscriptionService;
 import com.hackathon.app.service.RegistrationService;
 import com.hackathon.app.service.UserProfileService;
 import com.hackathon.app.service.UserSportService;
@@ -134,6 +135,7 @@ public class DemoSeeder {
 	private final UserPreferencesService preferencesService;
 	private final RecommendationService recommendationService;
 	private final OrganizationService organizationService;
+	private final OrganizationSubscriptionService subscriptions;
 	private final AdminOrganizationService adminOrganizationService;
 	private final EventService eventService;
 	private final RegistrationService registrationService;
@@ -190,6 +192,9 @@ public class DemoSeeder {
 
 		// Массовка: люди, клубы и их мероприятия (ставятся в историю).
 		var people = bulk.seed(cast, adminId);
+        subscriptions.change(ladya, cast.id("anna"), true);
+        subscriptions.change(ladya, cast.id("olga"), true);
+        people.stream().limit(5).forEach(person -> subscriptions.change(ladya, person.id(), true));
 
 		// Сценарий 2 и 4: турнир клуба по заявке и открытый урок.
 		var clubTournament = event(cast.id("ladya"), "Шахматы", new EventRequest(

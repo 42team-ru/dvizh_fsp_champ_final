@@ -10,6 +10,13 @@ import com.hackathon.app.domain.dto.AwardBadgeResponse;
 import com.hackathon.app.domain.dto.FeaturedOrganizationResponse;
 import com.hackathon.app.domain.dto.FileResponse;
 import com.hackathon.app.domain.dto.OrganizationAccountResponse;
+import com.hackathon.app.domain.dto.OrganizationCardResponse;
+import com.hackathon.app.domain.dto.OrganizationMeetingResponse;
+import com.hackathon.app.domain.dto.UserShortResponse;
+import com.hackathon.app.domain.dto.FocusPoint;
+import com.hackathon.app.domain.entity.Event;
+import com.hackathon.app.domain.entity.EventOccurrence;
+import com.hackathon.app.domain.enums.RegistrationStatus;
 import com.hackathon.app.domain.dto.OrganizationResponse;
 import com.hackathon.app.domain.dto.OrganizationShortResponse;
 import com.hackathon.app.domain.dto.PublicOrganizationResponse;
@@ -49,6 +56,19 @@ public interface OrganizationMapper {
 	@Mapping(target = "logoUrl", source = "organization.logoFileId", qualifiedByName = "fileUrl")
 	PublicOrganizationResponse toPublic(Organization organization, List<FileResponse> documents,
 			List<AwardBadgeResponse> awards, List<SportResponse> sports, long hostedMeetings, long participantsTotal);
+
+    @Mapping(target = "logoUrl", source = "organization.logoFileId", qualifiedByName = "fileUrl")
+    OrganizationCardResponse toCard(Organization organization, List<SportResponse> sports, long hostedMeetings,
+            long subscribersCount, boolean subscribed, boolean attended, LocalDate awardMonth);
+
+    /** Карточка занятия клуба: агрегаты и безопасные публичные поля выбирает сервис. */
+    @Mapping(target = "id", source = "occurrence.id")
+    @Mapping(target = "eventId", source = "event.id")
+    @Mapping(target = "startAt", source = "occurrence.startAt")
+    @Mapping(target = "timeZone", source = "timeZone")
+    OrganizationMeetingResponse toMeeting(Event event, EventOccurrence occurrence, SportResponse sport,
+            String timeZone, String place, long attendeesCount, List<UserShortResponse> attendees,
+            RegistrationStatus myRegistrationStatus, String coverUrl, FocusPoint coverFocus, long photosCount);
 
 	/** Организация месяца для ленты. */
 	@Mapping(target = "logoUrl", source = "organization.logoFileId", qualifiedByName = "fileUrl")

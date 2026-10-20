@@ -34,6 +34,7 @@ import com.hackathon.app.service.CommentService;
 import com.hackathon.app.service.EventOrganizerService;
 import com.hackathon.app.service.EventService;
 import com.hackathon.app.service.OrganizationService;
+import com.hackathon.app.service.OrganizationSubscriptionService;
 import com.hackathon.app.service.RegistrationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -76,6 +77,7 @@ class DemoBulkSeeder {
     private final DemoHistory history;
     private final DemoPetSeeder pets;
     private final OrganizationService organizationService;
+    private final OrganizationSubscriptionService subscriptions;
     private final AdminOrganizationService adminOrganizationService;
     private final EventService eventService;
     private final RegistrationService registrationService;
@@ -161,6 +163,10 @@ class DemoBulkSeeder {
         var passwordHash = passwordEncoder.encode(props.password()); // один хеш на всех: bcrypt на сотни аккаунтов долгий
         var people = createPeople(run, passwordHash, cast);
         var clubs = createClubs(run, passwordHash, adminId, cast);
+        clubs.stream().limit(2).forEach(club -> {
+            subscriptions.change(club.organizationId(), cast.id("anna"), true);
+            people.stream().limit(4).forEach(person -> subscriptions.change(club.organizationId(), person.id(), true));
+        });
         run.people = people;
         run.peopleByCity = people.stream().collect(Collectors.groupingBy(p -> p.city().name()));
 

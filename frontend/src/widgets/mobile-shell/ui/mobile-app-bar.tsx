@@ -1,7 +1,5 @@
 import { Link } from "react-router";
 import { BrandPlate } from "@/shared/components/ui/brand-plate";
-import { useUser } from "@/entity/user/model/use-user";
-import { Disc } from "@/shared/components/ui/disc";
 import { Icon } from "@/shared/components/ui/icon";
 import { cn } from "cn";
 import { useNavAccess } from "@/entity/user/model/use-nav-access";
@@ -18,7 +16,6 @@ export function MobileAppBar({
   title: string;
   titleClassName?: string;
 }) {
-  const { user } = useUser();
   const nav = useNavAccess();
   return (
     <div className="flex h-16 shrink-0 items-center justify-between px-4">
@@ -44,20 +41,8 @@ export function MobileAppBar({
             {nav.unread > 0 && <span className="absolute top-[6px] left-6 box-border size-3 rounded-[6px] border-[1.5px] border-ink bg-accent" />}
           </Link>
         )}
-        {/* паспорт-профиль есть только у участника; клубу и админу аватар открывает меню аккаунта */}
-        {nav.showProfile ? (
-          <Link to="/profile" aria-label="Профиль">
-            <Disc
-              user={user}
-              initials={`${user?.firstName?.[0] ?? ""}${user?.lastName?.[0] ?? ""}`.toUpperCase() || "?"}
-              tone="bg-sky"
-              className="size-11"
-              textClassName="text-xs leading-[normal]"
-            />
-          </Link>
-        ) : (
-          <AccountMenu />
-        )}
+        {/* Меню даёт доступ к профилю, каталогу организаций и смене аккаунта на любом экране. */}
+        <AccountMenu />
       </div>
     </div>
   );

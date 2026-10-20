@@ -1,3 +1,4 @@
+import { useSearchParams } from "react-router";
 import { usePetName } from "@/entity/user/model/use-pet-name";
 import { MyBeaverBadge } from "@/widgets/beaver-pet/ui/my-beaver-badge";
 import { SearchX } from "lucide-react";
@@ -191,12 +192,13 @@ function Slot({ events, i, placeOf, reasonOf, topReasonOf, onDismiss, ...props }
 
 /** Карта понимает не все фильтры ленты: формат и «Для меня» ей не передаём (на карте только очные). */
 /** Время на карте задаёт её собственный док, поэтому from/to ленты сюда не идут. */
-const toMapFilters = ({ searchText, sportId, level, joinMode }: EventsListParams): MapFilters =>
-  ({ searchText, sportId, level, joinMode });
+const toMapFilters = ({ searchText, sportId, level, joinMode, organizationId }: EventsListParams): MapFilters =>
+  ({ searchText, sportId, level, joinMode, organizationId });
 
 export default function FeedPage() {
   const filters = useFeedFilters();
-  const [view, setView] = useState<"list" | "map">("list");
+  const [searchParams] = useSearchParams();
+  const [view, setView] = useState<"list" | "map">(() => searchParams.get("view") === "map" ? "map" : "list");
   const [more, setMore] = useState(false);
   const list = useFeedEvents(filters.params, filters);
   const { events, reasonOf, topReasonOf, placeOf } = list;

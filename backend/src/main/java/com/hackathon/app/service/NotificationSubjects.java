@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 import com.hackathon.app.domain.entity.*;
 import com.hackathon.app.domain.enums.*;
 import com.hackathon.app.repository.AppUserRepository;
+import com.hackathon.app.repository.OrganizationSubscriptionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +15,16 @@ import org.springframework.stereotype.Service;
 public class NotificationSubjects {
     private final NotificationPublisher publisher;
     private final AppUserRepository users;
+    private final OrganizationSubscriptionRepository subscriptions;
+
+    /** Новый анонс организации, один факт на мероприятие, в той же транзакции публикации. */
+    public void organizationEvent(Event event, Organization organization) {
+        publisher.publish(List.of(new NotificationFact("org-new-event:" + event.getId(),
+                Set.copyOf(subscriptions.subscriberIds(organization.getId())), event.getAuthorId(),
+                NotificationType.ORG_NEW_EVENT, NotificationCategory.ORGANIZATIONS,
+                "Новая встреча: " + organization.getName(), event.getTitle(), "/events/" + event.getId(),
+                event.getId(), null, organization.getId(), null)));
+    }
 
     public void reply(Event event, Comment reply, UUID parentAuthorId) {
         publisher.publish(List.of(new NotificationFact("reply:" + reply.getId(), Set.of(parentAuthorId), reply.getAuthorId(),

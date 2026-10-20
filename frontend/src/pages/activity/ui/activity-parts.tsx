@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/shared/comp
 import { Icon } from "@/shared/components/ui/icon";
 import { QrCode } from "@/shared/components/ui/qr-code";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
-import { REGISTRATION_STATUS } from "@/shared/lib/statuses";
+import { ORGANIZATION_NOTIFICATION, REGISTRATION_STATUS } from "@/shared/lib/statuses";
 import { cn } from "cn";
 import { PLANS_TABS, shortTime, usePlansPage, type PlansTab } from "../model/use-activity";
 
@@ -35,6 +35,9 @@ export function viewOf(n: NotificationResponse): NotificationView {
   const [first, ...rest] = n.body.split("\n");
   const second = rest.join(" ");
   switch (n.type) {
+    case "ORG_NEW_EVENT":
+      return { ...ORGANIZATION_NOTIFICATION.ORG_NEW_EVENT, href: n.targetPath,
+        text: <><span className={b}>{n.title}</span>{first && <>: {first}</>}{time(n.createdAt)}</> };
     case "COMMENT_REPLY":
     case "COMMENT_CREATED":
       return {

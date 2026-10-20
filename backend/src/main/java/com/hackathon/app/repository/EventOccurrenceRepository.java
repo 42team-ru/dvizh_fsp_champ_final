@@ -140,4 +140,35 @@ public interface EventOccurrenceRepository extends JpaRepository<EventOccurrence
 			  and e.authorId = coalesce(:authorId, e.authorId)
 			  and (:organizationId is null or e.organizationId = :organizationId)""")
 	long countHosted(UUID authorId, UUID organizationId, Instant now);
+
+    /** Все публичные неотменённые занятия клуба для сводки (серии учитываются по занятиям). */
+    @Query("""
+        select oc from EventOccurrence oc join Event e on e.id = oc.eventId
+        where e.organizationId = :organizationId and e.status = com.hackathon.app.domain.enums.EventStatus.PUBLISHED
+        and oc.status = com.hackathon.app.domain.enums.OccurrenceStatus.SCHEDULED
+        order by oc.startAt, oc.id
+        """)
+    List<EventOccurrence> findPublicOrganization(UUID organizationId);
+
+
+
+
+
+    @Query("""
+        select oc from EventOccurrence oc join Event e on e.id = oc.eventId
+        where e.organizationId in :organizationIds and e.status = com.hackathon.app.domain.enums.EventStatus.PUBLISHED
+        and oc.status = com.hackathon.app.domain.enums.OccurrenceStatus.SCHEDULED and oc.startAt < :now
+        """)
+    List<EventOccurrence> findStartedOrganizations(Collection<UUID> organizationIds, Instant now);
+
+    @Query("""
+        select distinct e.organizationId from EventOccurrence oc join Event e on e.id = oc.eventId
+        where e.organizationId in :organizationIds and e.status = com.hackathon.app.domain.enums.EventStatus.PUBLISHED
+        and oc.status = com.hackathon.app.domain.enums.OccurrenceStatus.SCHEDULED and oc.startAt < :now
+        and ((e.recurring = false and exists (select r.id from Registration r where r.eventId = e.id and r.userId = :userId
+            and r.status = com.hackathon.app.domain.enums.RegistrationStatus.CONFIRMED))
+        or (e.recurring = true and exists (select a.id from OccurrenceAttendance a where a.occurrenceId = oc.id and a.userId = :userId)))
+        """)
+    List<UUID> attendedOrganizations(Collection<UUID> organizationIds, UUID userId, Instant now);
+
 }
