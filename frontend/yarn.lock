@@ -2,6 +2,20 @@
 # yarn lockfile v1
 
 
+"@2gis/mapgl-clusterer@2.5.2":
+  version "2.5.2"
+  resolved "https://registry.yarnpkg.com/@2gis/mapgl-clusterer/-/mapgl-clusterer-2.5.2.tgz#c630f898e1bd8f4a86206a91b712811d75c2465c"
+  integrity sha512-ILfQiajeg6QYSgkRZNNYfmVI1kFPYNVEtBIgg5EitutkKzBI4GodT8ex6Jry7I4QP55EiZf2V4x5UrOJft99dA==
+  dependencies:
+    "@types/supercluster" "7.1.3"
+
+"@2gis/mapgl@1.78.1":
+  version "1.78.1"
+  resolved "https://registry.yarnpkg.com/@2gis/mapgl/-/mapgl-1.78.1.tgz#8d8ce66e8c3e91b48392322f105cdf554b242fc3"
+  integrity sha512-SkbrqwBMPTLV4hihV+BgAtftIfyMeSru6yqlVF0IJEE6jaGQ8LFq0NJb1TTaXt3I1t3q8sjvU7X/hhHpxo5JXQ==
+  dependencies:
+    "@types/geojson" "^7946.0.7"
+
 "@babel/code-frame@^7.29.7":
   version "7.29.7"
   resolved "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.29.7.tgz#f2fbbfea87c44a21590ec515b778b2c26d8866e7"
@@ -1932,6 +1946,11 @@
   resolved "https://registry.yarnpkg.com/@types/estree/-/estree-1.0.9.tgz#cf3f0e876d7bee15a93ab925b82bf570a3904a24"
   integrity sha512-GhdPgy1el4/ImP05X05Uw4cw2/M93BCUmnEvWZNStlCzEKME4Fkk+YpoA5OiHNQmoS7Cafb8Xa3Pya8m1Qrzeg==
 
+"@types/geojson@*", "@types/geojson@^7946.0.7":
+  version "7946.0.16"
+  resolved "https://registry.yarnpkg.com/@types/geojson/-/geojson-7946.0.16.tgz#8ebe53d69efada7044454e3305c19017d97ced2a"
+  integrity sha512-6C8nqWur3j98U6+lXDfTUWIfgvZU+EumvpHKcYjujKH7woYyLj2sUmff0tRhrqM7BohUw7Pz3ZB1jj2gW9Fvmg==
+
 "@types/node@^22":
   version "22.20.5"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-22.20.5.tgz#afa7bde6da81b8b83ea4e2f020487e9b148c11fd"
@@ -1950,6 +1969,13 @@
   integrity sha512-N0rFCuH9YoxG9/m61l9MfpJKfmLOVU0em7ipIz6TRgSSkvReLB9vL85GB+yr8Bs5leqpvg96JSwF4ZS1s4viQg==
   dependencies:
     csstype "^3.2.2"
+
+"@types/supercluster@7.1.3":
+  version "7.1.3"
+  resolved "https://registry.yarnpkg.com/@types/supercluster/-/supercluster-7.1.3.tgz#1a1bc2401b09174d9c9e44124931ec7874a72b27"
+  integrity sha512-Z0pOY34GDFl3Q6hUFYf3HkTwKEE02e7QgtJppBt+beEAxnyOpJua+voGFvxINBHa06GwLFFym7gRPY2SiKIfIA==
+  dependencies:
+    "@types/geojson" "*"
 
 "@types/validate-npm-package-name@^4.0.2":
   version "4.0.2"

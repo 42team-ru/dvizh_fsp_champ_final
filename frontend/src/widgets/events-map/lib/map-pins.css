@@ -1,4 +1,4 @@
-/* Метки событий на карте 2ГИС RasterJS (DG.divIcon). Цвета — токены дизайна, обводка и жёсткая тень как в Memphis. */
+/* Метки событий на карте 2ГИС: RasterJS (DG.divIcon) и MapGL (HtmlMarker). Цвета — токены дизайна, обводка и жёсткая тень как в Memphis. */
 .map-pin-host { background: none; border: none; }
 .map-pin {
   display: flex;
