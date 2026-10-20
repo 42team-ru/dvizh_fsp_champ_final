@@ -10,6 +10,7 @@ import com.hackathon.app.domain.dto.EventMapProperties;
 import com.hackathon.app.domain.dto.EventMapResponse;
 import com.hackathon.app.domain.dto.EventRequest;
 import com.hackathon.app.domain.dto.EventResponse;
+import com.hackathon.app.domain.dto.EventParticipantResponse;
 import com.hackathon.app.domain.dto.EventSummaryResponse;
 import com.hackathon.app.domain.dto.FileResponse;
 import com.hackathon.app.domain.dto.OccurrenceResponse;
@@ -115,7 +116,7 @@ public interface EventMapper {
 	@Mapping(target = "createdAt", source = "event.createdAt")
 	@Mapping(target = "updatedAt", source = "event.updatedAt")
 	EventResponse toResponse(Event event, Sport sport, AppUser author, Organization organization,
-			List<OrganizerResponse> organizers, List<AppUser> participants, long participantsCount,
+			List<OrganizerResponse> organizers, List<EventParticipantResponse> participants, long participantsCount,
 			List<FileResponse> photos, ViewerResponse viewer, String onlineUrl, String privateDetails,
 			ScheduleResponse schedule, OccurrenceShortResponse nextOccurrence, OccurrenceResponse singleOccurrence);
 

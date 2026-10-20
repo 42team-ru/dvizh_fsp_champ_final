@@ -54,7 +54,7 @@ public record EventResponse(
 		@Schema(description = "Подтверждённых участников (у серии — принятых в серию)", requiredMode = REQUIRED)
 		long participantsCount,
 		@Schema(description = "Подтверждённые участники (у серии — принятые в серию)", requiredMode = REQUIRED)
-		List<UserShortResponse> participants,
+		List<EventParticipantResponse> participants,
 		@Schema(description = "Режим записи", requiredMode = REQUIRED) JoinMode joinMode,
 		@Schema(description = "Статус мероприятия", requiredMode = REQUIRED) EventStatus status,
 		@Schema(description = "Причина снятия с публикации или удаления") String moderationReason,

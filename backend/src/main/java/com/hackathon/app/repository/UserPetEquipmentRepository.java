@@ -1,6 +1,7 @@
 package com.hackathon.app.repository;
 
 import java.util.List;
+import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -12,6 +13,9 @@ import org.springframework.data.jpa.repository.Query;
 public interface UserPetEquipmentRepository extends JpaRepository<UserPetEquipment, UUID> {
 
 	List<UserPetEquipment> findByUserId(UUID userId);
+
+	/** Все образы на общей поляне одним запросом. */
+	List<UserPetEquipment> findByUserIdIn(Collection<UUID> userIds);
 
 	Optional<UserPetEquipment> findByUserIdAndSlotId(UUID userId, UUID slotId);
 

@@ -74,6 +74,7 @@ public class EventService {
     private final UserSportService userSports;
     private final WaitlistService waitlist;
     private final NotificationSubjects notificationSubjects;
+    private final PetService pets;
 
     /**
      * Лента: только опубликованные, у которых есть занятие в периоде (без from — ещё не начавшееся), ближайшие первыми.
@@ -138,7 +139,7 @@ public class EventService {
                 myRegistration != null && myRegistration.getStatus() == RegistrationStatus.REJECTED
                         ? myRegistration.getDecisionReason() : null,
                 organizerService.isInvited(eventId, userId));
-        return mapper.toResponse(event, sport, author, organization, organizerService.list(event, userId), participants,
+        return mapper.toResponse(event, sport, author, organization, organizerService.list(event, userId), pets.participants(participants),
                 participants.size(), files.eventPhotos(eventId), viewer,
                 canSeePrivateDetails ? event.getOnlineUrl() : null,
                 canSeePrivateDetails ? event.getPrivateDetails() : null,

@@ -8842,7 +8842,7 @@
             "type": "array",
             "description": "Подтверждённые участники (у серии — принятые в серию)",
             "items": {
-              "$ref": "#/components/schemas/UserShortResponse"
+              "$ref": "#/components/schemas/EventParticipantResponse"
             }
           },
           "joinMode": {
@@ -12869,6 +12869,71 @@
           "hidden",
           "pending",
           "withoutImage"
+        ]
+      },
+      "PetLookResponse": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Имя питомца; по умолчанию Бублик"
+          },
+          "activity": {
+            "type": "string",
+            "description": "Инвентарь; none — без инвентаря"
+          },
+          "outfit": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Надетые вещи по кодам слотов"
+          }
+        },
+        "required": [
+          "activity",
+          "name",
+          "outfit"
+        ]
+      },
+      "EventParticipantResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "username": {
+            "type": "string",
+            "description": "Логин"
+          },
+          "firstName": {
+            "type": "string",
+            "description": "Имя"
+          },
+          "lastName": {
+            "type": "string",
+            "description": "Фамилия"
+          },
+          "avatarUrl": {
+            "type": "string",
+            "description": "Ссылка на аватар"
+          },
+          "city": {
+            "type": "string",
+            "description": "Город"
+          },
+          "pet": {
+            "$ref": "#/components/schemas/PetLookResponse",
+            "description": "Публичный образ питомца"
+          }
+        },
+        "required": [
+          "firstName",
+          "id",
+          "lastName",
+          "pet",
+          "username"
         ]
       }
     },
