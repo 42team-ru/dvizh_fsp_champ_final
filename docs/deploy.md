@@ -48,6 +48,7 @@ Push в `main` запускает `.github/workflows/deploy.yml`:
 | `data/minio/` | файлы S3 (MinIO): аватарки, фото, документы; обычная папка, переживает `down -v` |
 
 ## Особенности
+- PWA обслуживается из корня `/`: Caddy отдаёт `/sw.js` и `/manifest.webmanifest` с `Cache-Control: no-cache`, манифест — с `application/manifest+json`, SW — с `Service-Worker-Allowed: /`. `/assets/*` с хешами кешируются как immutable, отсутствующая статика возвращает 404. HTML ревалидируется; SPA-маршруты получают `index.html`. Сборку копировать целиком из `frontend/build/client`, включая подготовленный `sw.js`. Для установки нужен HTTPS (исключение — localhost); HTTP по IP не подходит. [Проверка PWA](frontend.md).
 - Образы приватные по умолчанию; на сервере деплой логинится в GHCR токеном самого workflow.
 - Образы собираются под amd64 (раннер). Для ARM-сервера добавьте `platforms: linux/arm64` в `build-push-action`.
 - Не включено сознательно: AOT-кэш Java 25. Он весит ~86 МБ и пересоздаётся при каждом деплое, то есть вернул бы полный `pull` ради пары секунд старта.

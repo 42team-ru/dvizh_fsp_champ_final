@@ -14,9 +14,12 @@ import { Toaster } from "sonner";
 import { MotionConfig } from "motion/react";
 import { ThemeProvider } from "./providers/theme-provider";
 import { ViewportScale } from "./providers/viewport-scale";
+import { PwaProvider } from "./providers/pwa-provider";
 
 export const links: Route.LinksFunction = () => [
   { rel: "icon", type: "image/svg+xml", href: "/icon.svg" },
+  { rel: "manifest", href: "/manifest.webmanifest" },
+  { rel: "apple-touch-icon", sizes: "180x180", href: "/icons/apple-touch-icon.png" },
 ];
 
 const queryClient = new QueryClient();
@@ -27,6 +30,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="theme-color" content="#4B3FE0" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="Движ" />
         <Meta />
         <Links />
       </head>
@@ -34,6 +41,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <QueryClientProvider client={queryClient}>
           <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
             <ViewportScale />
+            <PwaProvider />
             <MotionConfig reducedMotion="user">{children}</MotionConfig>
             <Toaster position="top-right" offset={20} expand visibleToasts={3} />
           </ThemeProvider>

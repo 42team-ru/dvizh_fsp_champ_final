@@ -1,11 +1,12 @@
 import { Link } from "react-router";
 import { DropdownMenu } from "radix-ui";
-import { Building2, BriefcaseBusiness, LogOut, RefreshCw, User, Shirt } from "lucide-react";
+import { Building2, BriefcaseBusiness, Download, LogOut, RefreshCw, User, Shirt } from "lucide-react";
 import { useUser } from "@/entity/user/model/use-user";
 import { useCabinetAccess } from "@/entity/user/model/use-cabinet-access";
 import { UserAvatar } from "@/shared/components/ui/user-avatar";
 import { useSignOut } from "../model/use-sign-out";
 import { handle } from "@/shared/lib/handle";
+import { usePwaInstall, installPwa } from "@/shared/lib/pwa-install";
 
 const ROLE: Record<string, string> = { USER: "участник", ORG: "организация", ADMIN: "администратор" };
 const item =
@@ -16,6 +17,7 @@ export function AccountMenu() {
   const { user } = useUser();
   const cabinet = useCabinetAccess();
   const { signOut, pending } = useSignOut();
+  const installMode = usePwaInstall((state) => state.mode);
   const name = [user?.firstName, user?.lastName].filter(Boolean).join(" ") || user?.username;
 
   return (
@@ -60,6 +62,11 @@ export function AccountMenu() {
           <DropdownMenu.Item className={item} disabled={pending} onSelect={() => void signOut()}>
             <RefreshCw className="size-[18px]" strokeWidth={2.4} />Сменить аккаунт
           </DropdownMenu.Item>
+          {installMode && (
+            <DropdownMenu.Item className={item} onSelect={() => void installPwa()}>
+              <Download className="size-[18px]" strokeWidth={2.4} />Установить приложение
+            </DropdownMenu.Item>
+          )}
           <DropdownMenu.Separator className="mx-2 my-1 h-0.5 bg-track" />
           <DropdownMenu.Item className={`${item} text-orange-ink data-[highlighted]:bg-peach`} disabled={pending} onSelect={() => void signOut()}>
             <LogOut className="size-[18px]" strokeWidth={2.4} />Выйти

@@ -1,89 +1,75 @@
-> Это исходный README шаблона React Router. В проекте используется **yarn** (`yarn install`, `yarn dev`), а запуск всего проекта описан в [development.md](development.md).
+# Фронтенд
 
-# Welcome to React Router!
+React Router 7 в режиме SPA (`ssr: false`), Vite, Tailwind 4 и shadcn/ui.
+Исходники в `frontend/src` следуют FSD: `app`, `pages`, `widgets`, `features`,
+`entity`, `shared`. Цвета Memphis — в `app/styles/app.css`, тексты интерфейса — русские.
+API-клиент генерирует Orval; [синхронизация API](orval.md), [запуск проекта](development.md).
 
-A modern, production-ready template for building full-stack React applications using React Router.
+## PWA: проверка локально
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)
-
-## Features
-
-- 🚀 Server-side rendering
-- ⚡️ Hot Module Replacement (HMR)
-- 📦 Asset bundling and optimization
-- 🔄 Data loading and mutations
-- 🔒 TypeScript by default
-- 🎉 TailwindCSS for styling
-- 📖 [React Router docs](https://reactrouter.com/)
-
-## Getting Started
-
-### Installation
-
-Install the dependencies:
+После установки зависимостей:
 
 ```bash
-npm install
+cd frontend
+yarn typecheck
+yarn build && yarn preview
 ```
 
-### Development
+Открыть адрес preview на `localhost` (обычно `http://localhost:4173`).
+Для проверки с телефона нужен HTTPS: обычный HTTP по IP не даёт Service Worker.
+Preview обслуживает `build/client`; `/api` при такой проверке не проксируется на бэкенд.
+Пользовательские сценарии с авторизацией проверяются через Caddy с работающим бэкендом.
 
-Start the development server with HMR:
+В Chrome DevTools → **Application**:
+
+1. **Manifest**: название «Движ — спорт рядом», standalone, цвета, PNG 192/512,
+   maskable-иконка с безопасной зоной и три ярлыка. Проверить обрезку maskable.
+2. **Service Workers**: `/sw.js`, scope `/`, состояние activated. В **Cache Storage**
+   появился `dvizh-pwa-v1-<хеш>` с HTML, JS/CSS, иконками и локальными шрифтами.
+   Не включать «Update on reload»/«Bypass for network» при обычной проверке.
+3. После первой успешной загрузки включить **Offline**, открыть `/feed`, обновить страницу
+   или зайти по прямой ссылке на SPA-маршрут. Оболочка должна загрузиться; живые данные,
+   вход, запись и карта без сети недоступны. Ответы `/api/*` и внешние сервисы
+   (включая 2ГИС) не попадают в Cache Storage. При отсутствии HTML-фолбэка — «Нет сети».
+4. Установка: в поддерживающем браузере дождаться `beforeinstallprompt`, затем в меню
+   аккаунта выбрать «Установить приложение»; браузер может предложить установку и сам.
+   Отмена скрывает пункт до следующего предложения браузера. В iOS Safari пункт показывает
+   «Поделиться → На экран Домой». В установленном standalone-окне пункт скрыт.
+   Проверить запуск и ярлыки на настоящем устройстве.
+5. Обновление: оставить вкладку открытой, поменять исходники и выполнить `yarn build`.
+   В Application нажать **Update** у SW (или открыть ещё одну вкладку приложения).
+   После активации появится «Доступна новая версия» → «Обновить»; кнопка перезагружает
+   страницу, старый кеш удаляется. Первая установка SW тост обновления не показывает.
+
+Дополнительно запустить Lighthouse для production-сборки: проверить доступность,
+качество приложения и доступные в вашей версии проверки installability/PWA.
+Окончательная проверка установки — через Application и настоящий браузер/телефон.
+
+## Как устроено кеширование
+
+Новых npm-зависимостей нет. `public/sw.js` написан вручную. После `react-router build`
+скрипт `scripts/prepare-pwa.mjs` добавляет в **build/client/sw.js** список всех ресурсов
+`assets`, `fonts`, `icons` и вычисляет версию кеша по их содержимому, HTML, манифесту
+и самому SW. Поэтому смена приложения обновляет SW без ручного изменения номера.
+При изменении стратегии кеширования можно также поднять `CACHE_VERSION` в исходном SW.
+
+Установка атомарно кеширует оболочку и ресурсы, включая ленивые маршруты. Навигация —
+network-first с фолбэком на предзагруженный `index.html`, хешированные `/assets/*` —
+cache-first. HTML навигации не перезаписывает оболочку другой версии.
+SW сразу вызывает `skipWaiting` и `clients.claim`; вкладка перезагружается по кнопке.
+Кешируется только статика собственного origin, GET. Ответы API не кешируются.
+
+В `yarn dev` SW **не регистрируется**: провайдер снимает ранее установленный `/sw.js`,
+удаляет только кеши `dvizh-pwa-*` и при необходимости один раз перезагружает вкладку,
+чтобы освободить её от старого контроллера и не мешать HMR. Установку проверять в preview.
+
+Иконки получены из `public/icon.svg`. Для повторной генерации нужен Python 3 и системные
+librsvg/Cairo (без пакетов Python/npm):
 
 ```bash
-npm run dev
+python3 frontend/scripts/generate-pwa-icons.py
 ```
 
-Your application will be available at `http://localhost:5173`.
-
-## Building for Production
-
-Create a production build:
-
-```bash
-npm run build
-```
-
-## Deployment
-
-### Docker Deployment
-
-To build and run using Docker:
-
-```bash
-docker build -t my-app .
-
-# Run the container
-docker run -p 3000:3000 my-app
-```
-
-The containerized application can be deployed to any platform that supports Docker, including:
-
-- AWS ECS
-- Google Cloud Run
-- Azure Container Apps
-- Digital Ocean App Platform
-- Fly.io
-- Railway
-
-### DIY Deployment
-
-If you're familiar with deploying Node applications, the built-in app server is production-ready.
-
-Make sure to deploy the output of `npm run build`
-
-```
-├── package.json
-├── package-lock.json (or pnpm-lock.yaml, or bun.lockb)
-├── build/
-│   ├── client/    # Static assets
-│   └── server/    # Server-side code
-```
-
-## Styling
-
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
-
----
-
-Built with ❤️ using React Router.
+Фон иконок и манифеста соответствует `--paper` (`#F6F4FF`), цвет темы —
+`--ultramarine` (`#4B3FE0`). При смене токенов синхронизировать манифест,
+`root.tsx` и генератор иконок.

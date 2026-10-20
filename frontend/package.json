@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "react-router build",
+    "build": "react-router build && node scripts/prepare-pwa.mjs",
+    "preview": "vite preview --outDir build/client",
     "dev": "react-router dev",
     "api:pull": "node scripts/pull-spec.mjs",
     "api:sync": "yarn api:pull && orval",
