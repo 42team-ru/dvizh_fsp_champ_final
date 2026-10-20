@@ -1,11 +1,13 @@
-import { useEventsList } from "@/shared/api/generated/core/events/events";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { eventsList, getEventsListQueryKey } from "@/shared/api/generated/core/events/events";
 import { useUsersMyPreferences } from "@/shared/api/generated/core/users/users";
 import { formatDistance } from "./use-recommendation-preview";
-import { useRecommendationsEvents } from "@/shared/api/generated/core/recommendations/recommendations";
+import { recommendationsEvents, getRecommendationsEventsQueryKey } from "@/shared/api/generated/core/recommendations/recommendations";
 import type {
   EventSummaryResponse,
   EventsListParams,
   RecommendedEventResponse,
+  RecommendationsEventsParams,
 } from "@/shared/api/generated/core/appAPI.schemas";
 
 const EARTH_RADIUS_KM = 6371;
@@ -18,8 +20,8 @@ function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number) {
   return 2 * EARTH_RADIUS_KM * Math.asin(Math.min(1, Math.sqrt(a)));
 }
 
-/** Сколько рекомендаций показываем в ленте «Для вас». */
-const FOR_YOU_SIZE = 20;
+/** Единый размер страницы обычной и персональной ленты. */
+const PAGE_SIZE = 24;
 /** Сколько лучших рекомендаций выделяем фиолетовой причиной со звёздочками, как на главной. */
 const TOP_PICKS = 3;
 
@@ -28,16 +30,43 @@ const TOP_PICKS = 3;
  * Карточки одинаковые; у рекомендаций дополнительно есть причины (reasonOf) — «почему вам это».
  */
 export function useFeedEvents(params: EventsListParams, { forYou, ready }: { forYou: boolean; ready: boolean }) {
-  const list = useEventsList(params, { query: { enabled: ready && !forYou } });
-  const recommended = useRecommendationsEvents({ size: FOR_YOU_SIZE }, { query: { enabled: forYou } });
+  const listParams = { ...params, size: PAGE_SIZE };
+  const recommendationParams: RecommendationsEventsParams = {
+    sportId: params.sportId, from: params.from, to: params.to,
+    lat: params.lat, lon: params.lon, radiusKm: params.radiusKm, size: PAGE_SIZE,
+  };
+  const list = useInfiniteQuery({
+    queryKey: [...getEventsListQueryKey(listParams), "infinite"],
+    queryFn: async ({ pageParam, signal }) => (await eventsList({ ...listParams, page: pageParam }, { signal })).data,
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => {
+      const next = (lastPage.page ?? 0) + 1;
+      return next < (lastPage.totalPages ?? 0) ? next : undefined;
+    },
+    enabled: ready && !forYou,
+  });
+  const recommended = useInfiniteQuery({
+    queryKey: [...getRecommendationsEventsQueryKey(recommendationParams), "infinite", params],
+    queryFn: async ({ pageParam, signal }) => {
+      const response = await recommendationsEvents({ ...recommendationParams, page: pageParam }, { signal });
+      if (response.status !== 200) throw new Error("Не удалось загрузить подборку");
+      return response.data;
+    },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => {
+      const next = (lastPage.page ?? 0) + 1;
+      return next < (lastPage.totalPages ?? 0) ? next : undefined;
+    },
+    enabled: ready && forYou,
+  });
   const preferences = useUsersMyPreferences();
   const home = preferences.data?.status === 200 ? preferences.data.data.home : undefined;
   const source = forYou ? recommended : list;
   const items: RecommendedEventResponse[] =
-    forYou && recommended.data?.status === 200 ? recommended.data.data.items ?? [] : [];
+    forYou ? recommended.data?.pages.flatMap((page) => page.items ?? []) ?? [] : [];
   const events: EventSummaryResponse[] | undefined = forYou
-    ? recommended.data?.status === 200 ? items.map((item) => item.event) : undefined
-    : list.data?.status === 200 ? list.data.data : undefined;
+    ? recommended.data ? items.map((item) => item.event) : undefined
+    : list.data?.pages.flatMap((page) => page.items ?? []);
   const byId = new Map(items.map((item) => [item.event.id, item]));
   const top = new Set(items.slice(0, TOP_PICKS).map((item) => item.event.id));
   /** «450 м» / «1,2 км» до точки сбора; онлайн — «Онлайн», нет точки отсчёта — адрес. */
@@ -49,6 +78,12 @@ export function useFeedEvents(params: EventsListParams, { forYou, ready }: { for
   };
   return {
     events,
+    totalElements: source.data?.pages[0]?.totalElements,
+    hasNextPage: source.hasNextPage,
+    isFetching: source.isFetching,
+    isFetchingNextPage: source.isFetchingNextPage,
+    isFetchNextPageError: source.isFetchNextPageError,
+    fetchNextPage: source.fetchNextPage,
     placeOf,
     isPending: source.isPending,
     isError: source.isError,

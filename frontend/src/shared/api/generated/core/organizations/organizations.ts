@@ -463,418 +463,6 @@ export const useOrganizationsDeleteLogo = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getOrganizationsDeleteLogoMutationOptions(options), queryClient);
     }
-    export type organizationsAddDocumentResponse200 = {
-  data: OrganizationResponse
-  status: 200
-}
-
-export type organizationsAddDocumentResponse400 = {
-  data: ProblemDetail
-  status: 400
-}
-
-export type organizationsAddDocumentResponse409 = {
-  data: ProblemDetail
-  status: 409
-}
-
-export type organizationsAddDocumentResponseSuccess = (organizationsAddDocumentResponse200) & {
-  headers: Headers;
-};
-export type organizationsAddDocumentResponseError = (organizationsAddDocumentResponse400 | organizationsAddDocumentResponse409) & {
-  headers: Headers;
-};
-
-export type organizationsAddDocumentResponse = (organizationsAddDocumentResponseSuccess | organizationsAddDocumentResponseError)
-
-export const getOrganizationsAddDocumentUrl = () => {
-
-
-
-
-  return `/api/organizations/me/documents`
-}
-
-/**
- * Устав, свидетельство и т.п. Видят организация, админ при проверке и все вошедшие после одобрения. Не больше 10.
- * @summary Загрузить документ (PDF, JPG, PNG до 10 МБ)
- */
-export const organizationsAddDocument = async (organizationsAddDocumentBody?: OrganizationsAddDocumentBody, options?: Parameters<typeof authMutator>[1]): Promise<organizationsAddDocumentResponse> => {
-    const formData = new FormData();
-if(organizationsAddDocumentBody?.file !== undefined) {
- formData.append(`file`, organizationsAddDocumentBody.file);
- }
-
-  return authMutator<organizationsAddDocumentResponse>(getOrganizationsAddDocumentUrl(),
-  {
-    ...options,
-    method: 'POST'
-    ,
-    body: formData
-  }
-);}
-
-
-
-
-
-export const getOrganizationsAddDocumentMutationKey = () => ['organizationsAddDocument'] as const;
-
-export const getOrganizationsAddDocumentMutationOptions = <TError = ErrorType<ProblemDetail>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsAddDocument>>, TError,OrganizationsAddDocumentMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
-): UseMutationOptions<Awaited<ReturnType<typeof organizationsAddDocument>>, TError,OrganizationsAddDocumentMutationVariables, TContext> => {
-
-const mutationKey = getOrganizationsAddDocumentMutationKey();
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof organizationsAddDocument>>, OrganizationsAddDocumentMutationVariables> = (props) => {
-          const {data} = props ?? {};
-
-          return  organizationsAddDocument(data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type OrganizationsAddDocumentMutationResult = NonNullable<Awaited<ReturnType<typeof organizationsAddDocument>>>
-    export type OrganizationsAddDocumentMutationBody = OrganizationsAddDocumentBody | undefined
-    export type OrganizationsAddDocumentMutationError = ErrorType<ProblemDetail>
-    export type OrganizationsAddDocumentMutationVariables = {data?: OrganizationsAddDocumentBody}
-
-    /**
- * @summary Загрузить документ (PDF, JPG, PNG до 10 МБ)
- */
-export const useOrganizationsAddDocument = <TError = ErrorType<ProblemDetail>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsAddDocument>>, TError,OrganizationsAddDocumentMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof organizationsAddDocument>>,
-        TError,
-        OrganizationsAddDocumentMutationVariables,
-        TContext
-      > => {
-      return useMutation(getOrganizationsAddDocumentMutationOptions(options), queryClient);
-    }
-    export type organizationsGetResponse200 = {
-  data: PublicOrganizationResponse
-  status: 200
-}
-
-export type organizationsGetResponseSuccess = (organizationsGetResponse200) & {
-  headers: Headers;
-};
-;
-
-export type organizationsGetResponse = (organizationsGetResponseSuccess)
-
-export const getOrganizationsGetUrl = (id: string,) => {
-
-
-
-
-  return `/api/organizations/${id}`
-}
-
-/**
- * @summary Публичная страница одобренной организации
- */
-export const organizationsGet = async (id: string, options?: Parameters<typeof authMutator>[1]): Promise<organizationsGetResponse> => {
-
-  return authMutator<organizationsGetResponse>(getOrganizationsGetUrl(id),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getOrganizationsGetQueryKey = (id: string,) => {
-    return [
-    `/api/organizations/${id}`
-    ] as const;
-    }
-
-
-export const getOrganizationsGetQueryOptions = <TData = Awaited<ReturnType<typeof organizationsGet>>, TError = ErrorType<unknown>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsGet>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getOrganizationsGetQueryKey(id);
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof organizationsGet>>> = ({ signal }) => organizationsGet(id, { signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof organizationsGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type OrganizationsGetQueryResult = NonNullable<Awaited<ReturnType<typeof organizationsGet>>>
-export type OrganizationsGetQueryError = ErrorType<unknown>
-
-
-export function useOrganizationsGet<TData = Awaited<ReturnType<typeof organizationsGet>>, TError = ErrorType<unknown>>(
- id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsGet>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof organizationsGet>>,
-          TError,
-          Awaited<ReturnType<typeof organizationsGet>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof authMutator>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useOrganizationsGet<TData = Awaited<ReturnType<typeof organizationsGet>>, TError = ErrorType<unknown>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsGet>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof organizationsGet>>,
-          TError,
-          Awaited<ReturnType<typeof organizationsGet>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof authMutator>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useOrganizationsGet<TData = Awaited<ReturnType<typeof organizationsGet>>, TError = ErrorType<unknown>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsGet>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Публичная страница одобренной организации
- */
-
-export function useOrganizationsGet<TData = Awaited<ReturnType<typeof organizationsGet>>, TError = ErrorType<unknown>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsGet>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getOrganizationsGetQueryOptions(id,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  return withQueryKey(query, queryOptions.queryKey);
-}
-
-
-
-
-
-
-export type organizationsFeaturedResponse200 = {
-  data: FeaturedOrganizationResponse
-  status: 200
-}
-
-export type organizationsFeaturedResponseSuccess = (organizationsFeaturedResponse200) & {
-  headers: Headers;
-};
-;
-
-export type organizationsFeaturedResponse = (organizationsFeaturedResponseSuccess)
-
-export const getOrganizationsFeaturedUrl = () => {
-
-
-
-
-  return `/api/organizations/featured`
-}
-
-/**
- * Подтверждённая админом организация за прошлый или текущий месяц; пустой ответ, если её нет.
- * @summary Организация месяца для ленты
- */
-export const organizationsFeatured = async ( options?: Parameters<typeof authMutator>[1]): Promise<organizationsFeaturedResponse> => {
-
-  return authMutator<organizationsFeaturedResponse>(getOrganizationsFeaturedUrl(),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getOrganizationsFeaturedQueryKey = () => {
-    return [
-    `/api/organizations/featured`
-    ] as const;
-    }
-
-
-export const getOrganizationsFeaturedQueryOptions = <TData = Awaited<ReturnType<typeof organizationsFeatured>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsFeatured>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getOrganizationsFeaturedQueryKey();
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof organizationsFeatured>>> = ({ signal }) => organizationsFeatured({ signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof organizationsFeatured>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type OrganizationsFeaturedQueryResult = NonNullable<Awaited<ReturnType<typeof organizationsFeatured>>>
-export type OrganizationsFeaturedQueryError = ErrorType<unknown>
-
-
-export function useOrganizationsFeatured<TData = Awaited<ReturnType<typeof organizationsFeatured>>, TError = ErrorType<unknown>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsFeatured>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof organizationsFeatured>>,
-          TError,
-          Awaited<ReturnType<typeof organizationsFeatured>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof authMutator>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useOrganizationsFeatured<TData = Awaited<ReturnType<typeof organizationsFeatured>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsFeatured>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof organizationsFeatured>>,
-          TError,
-          Awaited<ReturnType<typeof organizationsFeatured>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof authMutator>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useOrganizationsFeatured<TData = Awaited<ReturnType<typeof organizationsFeatured>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsFeatured>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Организация месяца для ленты
- */
-
-export function useOrganizationsFeatured<TData = Awaited<ReturnType<typeof organizationsFeatured>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsFeatured>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getOrganizationsFeaturedQueryOptions(options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  return withQueryKey(query, queryOptions.queryKey);
-}
-
-
-
-
-
-
-export type organizationsRemoveDocumentResponse200 = {
-  data: OrganizationResponse
-  status: 200
-}
-
-export type organizationsRemoveDocumentResponseSuccess = (organizationsRemoveDocumentResponse200) & {
-  headers: Headers;
-};
-;
-
-export type organizationsRemoveDocumentResponse = (organizationsRemoveDocumentResponseSuccess)
-
-export const getOrganizationsRemoveDocumentUrl = (fileId: string,) => {
-
-
-
-
-  return `/api/organizations/me/documents/${fileId}`
-}
-
-/**
- * @summary Удалить документ
- */
-export const organizationsRemoveDocument = async (fileId: string, options?: Parameters<typeof authMutator>[1]): Promise<organizationsRemoveDocumentResponse> => {
-
-  return authMutator<organizationsRemoveDocumentResponse>(getOrganizationsRemoveDocumentUrl(fileId),
-  {
-    ...options,
-    method: 'DELETE'
-
-
-  }
-);}
-
-
-
-
-
-export const getOrganizationsRemoveDocumentMutationKey = () => ['organizationsRemoveDocument'] as const;
-
-export const getOrganizationsRemoveDocumentMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsRemoveDocument>>, TError,OrganizationsRemoveDocumentMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
-): UseMutationOptions<Awaited<ReturnType<typeof organizationsRemoveDocument>>, TError,OrganizationsRemoveDocumentMutationVariables, TContext> => {
-
-const mutationKey = getOrganizationsRemoveDocumentMutationKey();
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof organizationsRemoveDocument>>, OrganizationsRemoveDocumentMutationVariables> = (props) => {
-          const {fileId} = props ?? {};
-
-          return  organizationsRemoveDocument(fileId,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type OrganizationsRemoveDocumentMutationResult = NonNullable<Awaited<ReturnType<typeof organizationsRemoveDocument>>>
-
-    export type OrganizationsRemoveDocumentMutationError = ErrorType<unknown>
-    export type OrganizationsRemoveDocumentMutationVariables = {fileId: string}
-
-    /**
- * @summary Удалить документ
- */
-export const useOrganizationsRemoveDocument = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsRemoveDocument>>, TError,OrganizationsRemoveDocumentMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof organizationsRemoveDocument>>,
-        TError,
-        OrganizationsRemoveDocumentMutationVariables,
-        TContext
-      > => {
-      return useMutation(getOrganizationsRemoveDocumentMutationOptions(options), queryClient);
-    }
     export type organizationsSubscribeResponse200 = {
   data: OrganizationSubscriptionResponse
   status: 200
@@ -1045,6 +633,108 @@ export const useOrganizationsUnsubscribe = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getOrganizationsUnsubscribeMutationOptions(options), queryClient);
     }
+    export type organizationsAddDocumentResponse200 = {
+  data: OrganizationResponse
+  status: 200
+}
+
+export type organizationsAddDocumentResponse400 = {
+  data: ProblemDetail
+  status: 400
+}
+
+export type organizationsAddDocumentResponse409 = {
+  data: ProblemDetail
+  status: 409
+}
+
+export type organizationsAddDocumentResponseSuccess = (organizationsAddDocumentResponse200) & {
+  headers: Headers;
+};
+export type organizationsAddDocumentResponseError = (organizationsAddDocumentResponse400 | organizationsAddDocumentResponse409) & {
+  headers: Headers;
+};
+
+export type organizationsAddDocumentResponse = (organizationsAddDocumentResponseSuccess | organizationsAddDocumentResponseError)
+
+export const getOrganizationsAddDocumentUrl = () => {
+
+
+
+
+  return `/api/organizations/me/documents`
+}
+
+/**
+ * Устав, свидетельство и т.п. Видят организация, админ при проверке и все вошедшие после одобрения. Не больше 10.
+ * @summary Загрузить документ (PDF, JPG, PNG до 10 МБ)
+ */
+export const organizationsAddDocument = async (organizationsAddDocumentBody?: OrganizationsAddDocumentBody, options?: Parameters<typeof authMutator>[1]): Promise<organizationsAddDocumentResponse> => {
+    const formData = new FormData();
+if(organizationsAddDocumentBody?.file !== undefined) {
+ formData.append(`file`, organizationsAddDocumentBody.file);
+ }
+
+  return authMutator<organizationsAddDocumentResponse>(getOrganizationsAddDocumentUrl(),
+  {
+    ...options,
+    method: 'POST'
+    ,
+    body: formData
+  }
+);}
+
+
+
+
+
+export const getOrganizationsAddDocumentMutationKey = () => ['organizationsAddDocument'] as const;
+
+export const getOrganizationsAddDocumentMutationOptions = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsAddDocument>>, TError,OrganizationsAddDocumentMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof organizationsAddDocument>>, TError,OrganizationsAddDocumentMutationVariables, TContext> => {
+
+const mutationKey = getOrganizationsAddDocumentMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof organizationsAddDocument>>, OrganizationsAddDocumentMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  organizationsAddDocument(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OrganizationsAddDocumentMutationResult = NonNullable<Awaited<ReturnType<typeof organizationsAddDocument>>>
+    export type OrganizationsAddDocumentMutationBody = OrganizationsAddDocumentBody | undefined
+    export type OrganizationsAddDocumentMutationError = ErrorType<ProblemDetail>
+    export type OrganizationsAddDocumentMutationVariables = {data?: OrganizationsAddDocumentBody}
+
+    /**
+ * @summary Загрузить документ (PDF, JPG, PNG до 10 МБ)
+ */
+export const useOrganizationsAddDocument = <TError = ErrorType<ProblemDetail>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsAddDocument>>, TError,OrganizationsAddDocumentMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof organizationsAddDocument>>,
+        TError,
+        OrganizationsAddDocumentMutationVariables,
+        TContext
+      > => {
+      return useMutation(getOrganizationsAddDocumentMutationOptions(options), queryClient);
+    }
     export type organizationsListResponse200 = {
   data: PageResponseOrganizationCardResponse
   status: 200
@@ -1153,6 +843,118 @@ export function useOrganizationsList<TData = Awaited<ReturnType<typeof organizat
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getOrganizationsListQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type organizationsGetResponse200 = {
+  data: PublicOrganizationResponse
+  status: 200
+}
+
+export type organizationsGetResponseSuccess = (organizationsGetResponse200) & {
+  headers: Headers;
+};
+;
+
+export type organizationsGetResponse = (organizationsGetResponseSuccess)
+
+export const getOrganizationsGetUrl = (id: string,) => {
+
+
+
+
+  return `/api/organizations/${id}`
+}
+
+/**
+ * @summary Публичная страница одобренной организации
+ */
+export const organizationsGet = async (id: string, options?: Parameters<typeof authMutator>[1]): Promise<organizationsGetResponse> => {
+
+  return authMutator<organizationsGetResponse>(getOrganizationsGetUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getOrganizationsGetQueryKey = (id: string,) => {
+    return [
+    `/api/organizations/${id}`
+    ] as const;
+    }
+
+
+export const getOrganizationsGetQueryOptions = <TData = Awaited<ReturnType<typeof organizationsGet>>, TError = ErrorType<unknown>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsGet>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getOrganizationsGetQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof organizationsGet>>> = ({ signal }) => organizationsGet(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof organizationsGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type OrganizationsGetQueryResult = NonNullable<Awaited<ReturnType<typeof organizationsGet>>>
+export type OrganizationsGetQueryError = ErrorType<unknown>
+
+
+export function useOrganizationsGet<TData = Awaited<ReturnType<typeof organizationsGet>>, TError = ErrorType<unknown>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof organizationsGet>>,
+          TError,
+          Awaited<ReturnType<typeof organizationsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useOrganizationsGet<TData = Awaited<ReturnType<typeof organizationsGet>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof organizationsGet>>,
+          TError,
+          Awaited<ReturnType<typeof organizationsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useOrganizationsGet<TData = Awaited<ReturnType<typeof organizationsGet>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsGet>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Публичная страница одобренной организации
+ */
+
+export function useOrganizationsGet<TData = Awaited<ReturnType<typeof organizationsGet>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsGet>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getOrganizationsGetQueryOptions(id,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -1530,6 +1332,119 @@ export function useOrganizationsPastMeetings<TData = Awaited<ReturnType<typeof o
 
 
 
+export type organizationsFeaturedResponse200 = {
+  data: FeaturedOrganizationResponse
+  status: 200
+}
+
+export type organizationsFeaturedResponseSuccess = (organizationsFeaturedResponse200) & {
+  headers: Headers;
+};
+;
+
+export type organizationsFeaturedResponse = (organizationsFeaturedResponseSuccess)
+
+export const getOrganizationsFeaturedUrl = () => {
+
+
+
+
+  return `/api/organizations/featured`
+}
+
+/**
+ * Подтверждённая админом организация за прошлый или текущий месяц; пустой ответ, если её нет.
+ * @summary Организация месяца для ленты
+ */
+export const organizationsFeatured = async ( options?: Parameters<typeof authMutator>[1]): Promise<organizationsFeaturedResponse> => {
+
+  return authMutator<organizationsFeaturedResponse>(getOrganizationsFeaturedUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getOrganizationsFeaturedQueryKey = () => {
+    return [
+    `/api/organizations/featured`
+    ] as const;
+    }
+
+
+export const getOrganizationsFeaturedQueryOptions = <TData = Awaited<ReturnType<typeof organizationsFeatured>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsFeatured>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getOrganizationsFeaturedQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof organizationsFeatured>>> = ({ signal }) => organizationsFeatured({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof organizationsFeatured>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type OrganizationsFeaturedQueryResult = NonNullable<Awaited<ReturnType<typeof organizationsFeatured>>>
+export type OrganizationsFeaturedQueryError = ErrorType<unknown>
+
+
+export function useOrganizationsFeatured<TData = Awaited<ReturnType<typeof organizationsFeatured>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsFeatured>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof organizationsFeatured>>,
+          TError,
+          Awaited<ReturnType<typeof organizationsFeatured>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useOrganizationsFeatured<TData = Awaited<ReturnType<typeof organizationsFeatured>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsFeatured>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof organizationsFeatured>>,
+          TError,
+          Awaited<ReturnType<typeof organizationsFeatured>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useOrganizationsFeatured<TData = Awaited<ReturnType<typeof organizationsFeatured>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsFeatured>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Организация месяца для ленты
+ */
+
+export function useOrganizationsFeatured<TData = Awaited<ReturnType<typeof organizationsFeatured>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsFeatured>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getOrganizationsFeaturedQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 export type organizationsCitiesResponse200 = {
   data: string[]
   status: 200
@@ -1636,3 +1551,94 @@ export function useOrganizationsCities<TData = Awaited<ReturnType<typeof organiz
 
   return withQueryKey(query, queryOptions.queryKey);
 }
+
+
+
+
+
+
+export type organizationsRemoveDocumentResponse200 = {
+  data: OrganizationResponse
+  status: 200
+}
+
+export type organizationsRemoveDocumentResponseSuccess = (organizationsRemoveDocumentResponse200) & {
+  headers: Headers;
+};
+;
+
+export type organizationsRemoveDocumentResponse = (organizationsRemoveDocumentResponseSuccess)
+
+export const getOrganizationsRemoveDocumentUrl = (fileId: string,) => {
+
+
+
+
+  return `/api/organizations/me/documents/${fileId}`
+}
+
+/**
+ * @summary Удалить документ
+ */
+export const organizationsRemoveDocument = async (fileId: string, options?: Parameters<typeof authMutator>[1]): Promise<organizationsRemoveDocumentResponse> => {
+
+  return authMutator<organizationsRemoveDocumentResponse>(getOrganizationsRemoveDocumentUrl(fileId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getOrganizationsRemoveDocumentMutationKey = () => ['organizationsRemoveDocument'] as const;
+
+export const getOrganizationsRemoveDocumentMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsRemoveDocument>>, TError,OrganizationsRemoveDocumentMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof organizationsRemoveDocument>>, TError,OrganizationsRemoveDocumentMutationVariables, TContext> => {
+
+const mutationKey = getOrganizationsRemoveDocumentMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof organizationsRemoveDocument>>, OrganizationsRemoveDocumentMutationVariables> = (props) => {
+          const {fileId} = props ?? {};
+
+          return  organizationsRemoveDocument(fileId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OrganizationsRemoveDocumentMutationResult = NonNullable<Awaited<ReturnType<typeof organizationsRemoveDocument>>>
+
+    export type OrganizationsRemoveDocumentMutationError = ErrorType<unknown>
+    export type OrganizationsRemoveDocumentMutationVariables = {fileId: string}
+
+    /**
+ * @summary Удалить документ
+ */
+export const useOrganizationsRemoveDocument = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsRemoveDocument>>, TError,OrganizationsRemoveDocumentMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof organizationsRemoveDocument>>,
+        TError,
+        OrganizationsRemoveDocumentMutationVariables,
+        TContext
+      > => {
+      return useMutation(getOrganizationsRemoveDocumentMutationOptions(options), queryClient);
+    }

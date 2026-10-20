@@ -624,7 +624,7 @@ export const useEventsClearAnnouncement = <TError = ErrorType<ProblemDetail>,
       return useMutation(getEventsClearAnnouncementMutationOptions(options), queryClient);
     }
     export type eventsListResponse200 = {
-  data: EventSummaryResponse[]
+  data: PageResponseEventSummaryResponse
   status: 200
 }
 
@@ -651,7 +651,7 @@ export const getEventsListUrl = (params?: EventsListParams,) => {
 }
 
 /**
- * Только опубликованные и видимые (организация одобрена), ближайшие первыми. Без from — начиная с текущего момента. Постранично: page и size (до 100); пришло меньше size — дальше пусто. lat/lon/radiusKm — рядом с точкой, онлайн показывается всегда.
+ * Только опубликованные и видимые (организация одобрена), ближайшие первыми. Без from — начиная с текущего момента. Постранично: page и size (до 100), общее количество — totalElements. lat/lon/radiusKm — рядом с точкой, онлайн показывается всегда.
  * @summary Лента мероприятий
  */
 export const eventsList = async (params?: EventsListParams, options?: Parameters<typeof authMutator>[1]): Promise<eventsListResponse> => {

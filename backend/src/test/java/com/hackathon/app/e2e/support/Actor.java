@@ -334,9 +334,14 @@ public class Actor {
 
 	/** Лента с фильтрами: searchText, sportId, from, to, level, joinMode, format, organizationId. */
 	public List<EventSummaryResponse> feed(Map<String, String> filters) {
+		return feedPage(filters).items();
+	}
+
+	/** Страница ленты вместе с общим количеством и номером страницы. */
+	public PageResponse<EventSummaryResponse> feedPage(Map<String, String> filters) {
 		var request = get("/api/events");
 		filters.forEach(request::param);
-		return send("GET /api/events " + filters, request, null, listOf(EventSummaryResponse.class));
+		return send("GET /api/events " + filters, request, null, api.generic(PageResponse.class, EventSummaryResponse.class));
 	}
 
 	/** Поиск в ленте по тексту. */

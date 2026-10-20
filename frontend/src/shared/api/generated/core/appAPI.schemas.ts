@@ -867,6 +867,36 @@ export interface EventRequest {
 }
 
 /**
+ * Надетые вещи по кодам слотов
+ */
+export type PetLookResponseOutfit = {[key: string]: string};
+
+export interface PetLookResponse {
+  /** Имя питомца; по умолчанию Бублик */
+  name: string;
+  /** Инвентарь; none — без инвентаря */
+  activity: string;
+  /** Надетые вещи по кодам слотов */
+  outfit: PetLookResponseOutfit;
+}
+
+export interface EventParticipantResponse {
+  id: string;
+  /** Логин */
+  username: string;
+  /** Имя */
+  firstName: string;
+  /** Фамилия */
+  lastName: string;
+  /** Ссылка на аватар */
+  avatarUrl?: string;
+  /** Город */
+  city?: string;
+  /** Публичный образ питомца */
+  pet: PetLookResponse;
+}
+
+/**
  * Очно или онлайн
  */
 export type EventResponseFormat = typeof EventResponseFormat[keyof typeof EventResponseFormat];
@@ -1125,36 +1155,6 @@ export interface OccurrenceResponse {
 }
 
 /**
- * Надетые вещи по кодам слотов
- */
-export type PetLookResponseOutfit = {[key: string]: string};
-
-export interface PetLookResponse {
-  /** Имя питомца; по умолчанию Бублик */
-  name: string;
-  /** Инвентарь; none — без инвентаря */
-  activity: string;
-  /** Надетые вещи по кодам слотов */
-  outfit: PetLookResponseOutfit;
-}
-
-export interface EventParticipantResponse {
-  id: string;
-  /** Логин */
-  username: string;
-  /** Имя */
-  firstName: string;
-  /** Фамилия */
-  lastName: string;
-  /** Ссылка на аватар */
-  avatarUrl?: string;
-  /** Город */
-  city?: string;
-  /** Публичный образ питомца */
-  pet: PetLookResponse;
-}
-
-/**
  * Статус моей записи; null — не записан
  */
 export type ViewerResponseRegistrationStatus = typeof ViewerResponseRegistrationStatus[keyof typeof ViewerResponseRegistrationStatus];
@@ -1379,6 +1379,18 @@ export interface AnnouncementRequest {
 }
 
 /**
+ * Новое название вида спорта
+ */
+export interface RenameSportRequest {
+  /**
+     * Название
+     * @minLength 0
+     * @maxLength 100
+     */
+  name: string;
+}
+
+/**
  * Посадка вещи на бобра
  */
 export interface PetFitRequest {
@@ -1581,6 +1593,12 @@ export interface PetBuySetRequest {
   wear: boolean;
 }
 
+export interface OrganizationSubscriptionResponse {
+  subscribed: boolean;
+  subscribersCount: number;
+  subscriberAvatars: UserShortResponse[];
+}
+
 export interface NotificationPollResponse {
   changed: boolean;
   revision: number;
@@ -1736,6 +1754,79 @@ export interface LoginRequest {
   username: string;
   /** @minLength 1 */
   password: string;
+}
+
+/**
+ * Состояние в справочнике
+ */
+export type AdminSportResponseStatus = typeof AdminSportResponseStatus[keyof typeof AdminSportResponseStatus];
+
+
+export const AdminSportResponseStatus = {
+  ACTIVE: 'ACTIVE',
+  PENDING: 'PENDING',
+  HIDDEN: 'HIDDEN',
+  MERGED: 'MERGED',
+} as const;
+
+/**
+ * Вид спорта в админке: статус модерации, картинка и сколько мероприятий на него опираются
+ */
+export interface AdminSportResponse {
+  id: string;
+  /** Название */
+  name: string;
+  /** Код для URL */
+  slug: string;
+  /** Добавлен пользователем, а не админом или из исходного набора */
+  custom: boolean;
+  /** Состояние в справочнике */
+  status: AdminSportResponseStatus;
+  /** Есть ли своя картинка; false — в интерфейсе показывается заглушка */
+  hasImage: boolean;
+  /** Картинка загружена админом (её можно убрать); false — встроенная или нет вовсе */
+  imageUploaded: boolean;
+  /** Ссылка на картинку; null, если своей картинки нет */
+  imageUrl?: string;
+  /** Точка фокуса картинки */
+  imageFocus: FocusPoint;
+  /** Мероприятий с этим видом (во всех статусах) */
+  eventsCount: number;
+  /** Кто предложил свой вид; null — из справочника или добавлен админом */
+  proposedBy?: UserShortResponse;
+  /** Причина отключения или слияния */
+  moderationReason?: string;
+  /** Название вида, с которым объединён; только у MERGED */
+  mergedIntoName?: string;
+  /** Когда админ принял решение */
+  moderatedAt?: string;
+  createdAt: string;
+}
+
+/**
+ * Объединение вида спорта с другим: мероприятия и интересы переходят в целевой вид
+ */
+export interface MergeSportRequest {
+  /** В какой вид переносим */
+  targetId: string;
+  /**
+     * Причина; без неё подставляется «Дубликат вида …»
+     * @minLength 0
+     * @maxLength 1000
+     */
+  reason?: string;
+}
+
+/**
+ * Отключение или отклонение вида спорта
+ */
+export interface HideSportRequest {
+  /**
+     * Причина для админов и автора предложения
+     * @minLength 0
+     * @maxLength 1000
+     */
+  reason: string;
 }
 
 /**
@@ -2566,6 +2657,28 @@ export interface PetCatalogResponse {
   slots: PetSlotResponse[];
 }
 
+export interface OrganizationCardResponse {
+  id: string;
+  name: string;
+  description?: string;
+  city?: string;
+  logoUrl?: string;
+  sports: SportResponse[];
+  hostedMeetings: number;
+  subscribersCount: number;
+  subscribed: boolean;
+  attended: boolean;
+  awardMonth?: string;
+}
+
+export interface PageResponseOrganizationCardResponse {
+  items: OrganizationCardResponse[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
 export type AwardBadgeResponseKind = typeof AwardBadgeResponseKind[keyof typeof AwardBadgeResponseKind];
 
 
@@ -2613,6 +2726,113 @@ export interface PublicOrganizationResponse {
   sports?: SportResponse[];
   hostedMeetings?: number;
   participantsTotal?: number;
+}
+
+export interface PageResponseFileResponse {
+  items: FileResponse[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+export interface Leader {
+  user: UserShortResponse;
+  meetingsCount: number;
+}
+
+export interface MonthCount {
+  month: string;
+  count: number;
+  awardMonth: boolean;
+  current: boolean;
+}
+
+export type OrganizationMeetingResponseMyRegistrationStatus = typeof OrganizationMeetingResponseMyRegistrationStatus[keyof typeof OrganizationMeetingResponseMyRegistrationStatus];
+
+
+export const OrganizationMeetingResponseMyRegistrationStatus = {
+  CONFIRMED: 'CONFIRMED',
+  PENDING: 'PENDING',
+  REJECTED: 'REJECTED',
+  CANCELLED: 'CANCELLED',
+  WAITLISTED: 'WAITLISTED',
+} as const;
+
+export interface OrganizationMeetingResponse {
+  id: string;
+  eventId: string;
+  title: string;
+  sport: SportResponse;
+  startAt: string;
+  timeZone: string;
+  place: string;
+  capacity?: number;
+  attendeesCount: number;
+  attendees: UserShortResponse[];
+  myRegistrationStatus?: OrganizationMeetingResponseMyRegistrationStatus;
+  coverUrl?: string;
+  coverFocus?: FocusPoint;
+  photosCount: number;
+}
+
+export type ScheduleDayDay = typeof ScheduleDayDay[keyof typeof ScheduleDayDay];
+
+
+export const ScheduleDayDay = {
+  MONDAY: 'MONDAY',
+  TUESDAY: 'TUESDAY',
+  WEDNESDAY: 'WEDNESDAY',
+  THURSDAY: 'THURSDAY',
+  FRIDAY: 'FRIDAY',
+  SATURDAY: 'SATURDAY',
+  SUNDAY: 'SUNDAY',
+} as const;
+
+export interface ScheduleDay {
+  day: ScheduleDayDay;
+  eventId: string;
+  startAt: string;
+  timeZone: string;
+  title: string;
+  place: string;
+}
+
+export interface Place {
+  name: string;
+  meetingsCount: number;
+}
+
+export interface SportCount {
+  sport: SportResponse;
+  count: number;
+}
+
+export interface PageResponseOrganizationMeetingResponse {
+  items: OrganizationMeetingResponse[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+export interface OrganizationOverviewResponse {
+  firstEventYear?: number;
+  hostedMeetings: number;
+  yearParticipants: number;
+  photosCount: number;
+  photoMeetingsCount: number;
+  returningShare?: number;
+  petName: string;
+  subscription: OrganizationSubscriptionResponse;
+  months: MonthCount[];
+  schedule: ScheduleDay[];
+  leaders: Leader[];
+  places: Place[];
+  pastSports: SportCount[];
+  upcoming: PageResponseOrganizationMeetingResponse;
+  past: PageResponseOrganizationMeetingResponse;
+  photos: PageResponseFileResponse;
 }
 
 /**
@@ -2750,6 +2970,14 @@ export interface TelegramConnectionResponse {
   username?: string;
 }
 
+export interface PageResponseEventSummaryResponse {
+  items: EventSummaryResponse[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
 /**
  * Статус
  */
@@ -2783,14 +3011,6 @@ export interface EventRegistrationResponse {
   createdAt: string;
   /** Когда встал в лист ожидания (порядок очереди); null — не в листе ожидания */
   queuedAt?: string;
-}
-
-export interface PageResponseEventSummaryResponse {
-  items: EventSummaryResponse[];
-  page: number;
-  size: number;
-  totalElements: number;
-  totalPages: number;
 }
 
 export type EventMapFeatureType = typeof EventMapFeatureType[keyof typeof EventMapFeatureType];
@@ -3026,6 +3246,30 @@ export interface AdminStatsResponse {
   signupsByDay: DailyCountResponse[];
 }
 
+export interface PageResponseAdminSportResponse {
+  items: AdminSportResponse[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+/**
+ * Счётчики вкладок админки «Виды спорта»
+ */
+export interface AdminSportCountsResponse {
+  /** Всего видов */
+  all: number;
+  /** Активные: справочник и одобренные */
+  catalog: number;
+  /** Ждут проверки админа */
+  pending: number;
+  /** Скрытые и объединённые */
+  hidden: number;
+  /** Без своей картинки */
+  withoutImage: number;
+}
+
 export interface PageResponseAdminOrganizationResponse {
   items: AdminOrganizationResponse[];
   page: number;
@@ -3072,250 +3316,6 @@ export interface AdminAwardsResponse {
   candidates: AwardCandidateResponse[];
 }
 
-/**
- * Новое название вида спорта
- */
-export interface RenameSportRequest {
-  /**
-     * Название
-     * @minLength 0
-     * @maxLength 100
-     */
-  name: string;
-}
-
-/**
- * Состояние в справочнике
- */
-export type AdminSportResponseStatus = typeof AdminSportResponseStatus[keyof typeof AdminSportResponseStatus];
-
-
-export const AdminSportResponseStatus = {
-  ACTIVE: 'ACTIVE',
-  PENDING: 'PENDING',
-  HIDDEN: 'HIDDEN',
-  MERGED: 'MERGED',
-} as const;
-
-/**
- * Вид спорта в админке: статус модерации, картинка и сколько мероприятий на него опираются
- */
-export interface AdminSportResponse {
-  id: string;
-  /** Название */
-  name: string;
-  /** Код для URL */
-  slug: string;
-  /** Добавлен пользователем, а не админом или из исходного набора */
-  custom: boolean;
-  /** Состояние в справочнике */
-  status: AdminSportResponseStatus;
-  /** Есть ли своя картинка; false — в интерфейсе показывается заглушка */
-  hasImage: boolean;
-  /** Картинка загружена админом (её можно убрать); false — встроенная или нет вовсе */
-  imageUploaded: boolean;
-  /** Ссылка на картинку; null, если своей картинки нет */
-  imageUrl?: string;
-  /** Точка фокуса картинки */
-  imageFocus: FocusPoint;
-  /** Мероприятий с этим видом (во всех статусах) */
-  eventsCount: number;
-  /** Кто предложил свой вид; null — из справочника или добавлен админом */
-  proposedBy?: UserShortResponse;
-  /** Причина отключения или слияния */
-  moderationReason?: string;
-  /** Название вида, с которым объединён; только у MERGED */
-  mergedIntoName?: string;
-  /** Когда админ принял решение */
-  moderatedAt?: string;
-  createdAt: string;
-}
-
-/**
- * Объединение вида спорта с другим: мероприятия и интересы переходят в целевой вид
- */
-export interface MergeSportRequest {
-  /** В какой вид переносим */
-  targetId: string;
-  /**
-     * Причина; без неё подставляется «Дубликат вида …»
-     * @minLength 0
-     * @maxLength 1000
-     */
-  reason?: string;
-}
-
-/**
- * Отключение или отклонение вида спорта
- */
-export interface HideSportRequest {
-  /**
-     * Причина для админов и автора предложения
-     * @minLength 0
-     * @maxLength 1000
-     */
-  reason: string;
-}
-
-export interface PageResponseAdminSportResponse {
-  items: AdminSportResponse[];
-  page: number;
-  size: number;
-  totalElements: number;
-  totalPages: number;
-}
-
-/**
- * Счётчики вкладок админки «Виды спорта»
- */
-export interface AdminSportCountsResponse {
-  /** Всего видов */
-  all: number;
-  /** Активные: справочник и одобренные */
-  catalog: number;
-  /** Ждут проверки админа */
-  pending: number;
-  /** Скрытые и объединённые */
-  hidden: number;
-  /** Без своей картинки */
-  withoutImage: number;
-}
-
-export interface OrganizationSubscriptionResponse {
-  subscribed: boolean;
-  subscribersCount: number;
-  subscriberAvatars: UserShortResponse[];
-}
-
-export interface OrganizationCardResponse {
-  id: string;
-  name: string;
-  description?: string;
-  city?: string;
-  logoUrl?: string;
-  sports: SportResponse[];
-  hostedMeetings: number;
-  subscribersCount: number;
-  subscribed: boolean;
-  attended: boolean;
-  awardMonth?: string;
-}
-
-export interface PageResponseOrganizationCardResponse {
-  items: OrganizationCardResponse[];
-  page: number;
-  size: number;
-  totalElements: number;
-  totalPages: number;
-}
-
-export interface PageResponseFileResponse {
-  items: FileResponse[];
-  page: number;
-  size: number;
-  totalElements: number;
-  totalPages: number;
-}
-
-export interface Leader {
-  user: UserShortResponse;
-  meetingsCount: number;
-}
-
-export interface MonthCount {
-  month: string;
-  count: number;
-  awardMonth: boolean;
-  current: boolean;
-}
-
-export type OrganizationMeetingResponseMyRegistrationStatus = typeof OrganizationMeetingResponseMyRegistrationStatus[keyof typeof OrganizationMeetingResponseMyRegistrationStatus];
-
-
-export const OrganizationMeetingResponseMyRegistrationStatus = {
-  CONFIRMED: 'CONFIRMED',
-  PENDING: 'PENDING',
-  REJECTED: 'REJECTED',
-  CANCELLED: 'CANCELLED',
-  WAITLISTED: 'WAITLISTED',
-} as const;
-
-export interface OrganizationMeetingResponse {
-  id: string;
-  eventId: string;
-  title: string;
-  sport: SportResponse;
-  startAt: string;
-  timeZone: string;
-  place: string;
-  capacity?: number;
-  attendeesCount: number;
-  attendees: UserShortResponse[];
-  myRegistrationStatus?: OrganizationMeetingResponseMyRegistrationStatus;
-  coverUrl?: string;
-  coverFocus?: FocusPoint;
-  photosCount: number;
-}
-
-export type ScheduleDayDay = typeof ScheduleDayDay[keyof typeof ScheduleDayDay];
-
-
-export const ScheduleDayDay = {
-  MONDAY: 'MONDAY',
-  TUESDAY: 'TUESDAY',
-  WEDNESDAY: 'WEDNESDAY',
-  THURSDAY: 'THURSDAY',
-  FRIDAY: 'FRIDAY',
-  SATURDAY: 'SATURDAY',
-  SUNDAY: 'SUNDAY',
-} as const;
-
-export interface ScheduleDay {
-  day: ScheduleDayDay;
-  eventId: string;
-  startAt: string;
-  timeZone: string;
-  title: string;
-  place: string;
-}
-
-export interface Place {
-  name: string;
-  meetingsCount: number;
-}
-
-export interface SportCount {
-  sport: SportResponse;
-  count: number;
-}
-
-export interface PageResponseOrganizationMeetingResponse {
-  items: OrganizationMeetingResponse[];
-  page: number;
-  size: number;
-  totalElements: number;
-  totalPages: number;
-}
-
-export interface OrganizationOverviewResponse {
-  firstEventYear?: number;
-  hostedMeetings: number;
-  yearParticipants: number;
-  photosCount: number;
-  photoMeetingsCount: number;
-  returningShare?: number;
-  petName: string;
-  subscription: OrganizationSubscriptionResponse;
-  months: MonthCount[];
-  schedule: ScheduleDay[];
-  leaders: Leader[];
-  places: Place[];
-  pastSports: SportCount[];
-  upcoming: PageResponseOrganizationMeetingResponse;
-  past: PageResponseOrganizationMeetingResponse;
-  photos: PageResponseFileResponse;
-}
-
 export type UsersUploadAvatarBody = {
   /** Изображение */
   file: Blob | File;
@@ -3323,6 +3323,22 @@ export type UsersUploadAvatarBody = {
 
 export type OrganizationsUploadLogoBody = {
   /** Изображение */
+  file: Blob | File;
+};
+
+export type AdminReplaceSportImageParams = {
+/**
+ * Точка фокуса по горизонтали, % (0–100)
+ */
+focusX?: number;
+/**
+ * Точка фокуса по вертикали, % (0–100)
+ */
+focusY?: number;
+};
+
+export type AdminReplaceSportImageBody = {
+  /** PNG-картинка */
   file: Blob | File;
 };
 
@@ -3493,6 +3509,51 @@ export type CommentsListParams = {
  * Только сообщения новее этого момента: createdAt последнего полученного
  */
 after?: string;
+};
+
+export type AdminListSportsParams = {
+status?: AdminListSportsStatusItem[];
+/**
+ * Только виды без своей картинки
+ */
+withoutImage?: boolean;
+searchText?: string;
+page?: number;
+size?: number;
+};
+
+export type AdminListSportsStatusItem = typeof AdminListSportsStatusItem[keyof typeof AdminListSportsStatusItem];
+
+
+export const AdminListSportsStatusItem = {
+  ACTIVE: 'ACTIVE',
+  PENDING: 'PENDING',
+  HIDDEN: 'HIDDEN',
+  MERGED: 'MERGED',
+} as const;
+
+export type AdminCreateSportParams = {
+/**
+ * Название вида
+ */
+name: string;
+/**
+ * Точка фокуса по горизонтали, % (0–100)
+ */
+focusX?: number;
+/**
+ * Точка фокуса по вертикали, % (0–100)
+ */
+focusY?: number;
+/**
+ * Сразу показывать в справочнике
+ */
+published?: boolean;
+};
+
+export type AdminCreateSportBody = {
+  /** PNG-картинка */
+  file?: Blob | File;
 };
 
 export type AdminCreatePetItemParams = {
@@ -3738,6 +3799,26 @@ page?: number;
 size?: number;
 };
 
+export type OrganizationsListParams = {
+searchText?: string;
+city?: string;
+sportId?: string;
+mine?: boolean;
+page?: number;
+size?: number;
+};
+
+export type OrganizationsPhotosParams = {
+page?: number;
+size?: number;
+};
+
+export type OrganizationsPastMeetingsParams = {
+sportId?: string;
+page?: number;
+size?: number;
+};
+
 export type NotificationsListParams = {
 cursor?: string;
 size?: number;
@@ -3980,86 +4061,5 @@ export type AdminListAwardsParams = {
  * Месяц в виде 2026-09
  */
 month?: string;
-};
-
-export type AdminReplaceSportImageParams = {
-/**
- * Точка фокуса по горизонтали, % (0–100)
- */
-focusX?: number;
-/**
- * Точка фокуса по вертикали, % (0–100)
- */
-focusY?: number;
-};
-
-export type AdminReplaceSportImageBody = {
-  /** PNG-картинка */
-  file: Blob | File;
-};
-
-export type AdminListSportsParams = {
-status?: AdminListSportsStatusItem[];
-/**
- * Только виды без своей картинки
- */
-withoutImage?: boolean;
-searchText?: string;
-page?: number;
-size?: number;
-};
-
-export type AdminListSportsStatusItem = typeof AdminListSportsStatusItem[keyof typeof AdminListSportsStatusItem];
-
-
-export const AdminListSportsStatusItem = {
-  ACTIVE: 'ACTIVE',
-  PENDING: 'PENDING',
-  HIDDEN: 'HIDDEN',
-  MERGED: 'MERGED',
-} as const;
-
-export type AdminCreateSportParams = {
-/**
- * Название вида
- */
-name: string;
-/**
- * Точка фокуса по горизонтали, % (0–100)
- */
-focusX?: number;
-/**
- * Точка фокуса по вертикали, % (0–100)
- */
-focusY?: number;
-/**
- * Сразу показывать в справочнике
- */
-published?: boolean;
-};
-
-export type AdminCreateSportBody = {
-  /** PNG-картинка */
-  file?: Blob | File;
-};
-
-export type OrganizationsListParams = {
-searchText?: string;
-city?: string;
-sportId?: string;
-mine?: boolean;
-page?: number;
-size?: number;
-};
-
-export type OrganizationsPhotosParams = {
-page?: number;
-size?: number;
-};
-
-export type OrganizationsPastMeetingsParams = {
-sportId?: string;
-page?: number;
-size?: number;
 };
 

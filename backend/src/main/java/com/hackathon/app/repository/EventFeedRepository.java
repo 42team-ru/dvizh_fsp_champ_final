@@ -10,6 +10,10 @@ import com.hackathon.app.domain.entity.EventOccurrence;
 import com.hackathon.app.domain.enums.OccurrenceStatus;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Tuple;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
@@ -39,7 +43,36 @@ public class EventFeedRepository {
 		var occurrence = query.from(EventOccurrence.class);
 		var event = query.from(Event.class);
 
-		var conditions = new ArrayList<jakarta.persistence.criteria.Predicate>();
+		var conditions = conditions(eventFilter, from, to, criteria, query, occurrence, event);
+
+		var nearestStart = criteria.<Instant>least(occurrence.get("startAt"));
+		query.multiselect(event.get("id"), nearestStart)
+				.where(conditions.toArray(Predicate[]::new))
+				.groupBy(event.get("id"))
+				.orderBy(criteria.asc(nearestStart), criteria.asc(event.get("id")));
+		return em.createQuery(query).setFirstResult(offset).setMaxResults(limit).getResultList().stream()
+				.map((Tuple row) -> row.get(0, UUID.class))
+				.toList();
+	}
+
+	/** Число событий по тем же условиям; несколько занятий серии считаются одним событием. */
+	public long count(Specification<Event> eventFilter, Instant from, Instant to) {
+		var criteria = em.getCriteriaBuilder();
+		var query = criteria.createQuery(Long.class);
+		var occurrence = query.from(EventOccurrence.class);
+		var event = query.from(Event.class);
+		var conditions = conditions(eventFilter, from, to, criteria, query, occurrence, event);
+		query.select(criteria.countDistinct(event.get("id")))
+				.where(conditions.toArray(Predicate[]::new));
+		return em.createQuery(query).getSingleResult();
+	}
+
+	private List<Predicate> conditions(Specification<Event> eventFilter,
+			Instant from, Instant to, CriteriaBuilder criteria,
+			CriteriaQuery<?> query,
+			Root<EventOccurrence> occurrence,
+			Root<Event> event) {
+		var conditions = new ArrayList<Predicate>();
 		conditions.add(criteria.equal(occurrence.get("eventId"), event.get("id")));
 		conditions.add(criteria.equal(occurrence.get("status"), OccurrenceStatus.SCHEDULED));
 		conditions.add(criteria.greaterThanOrEqualTo(occurrence.get("startAt"), from));
@@ -51,13 +84,6 @@ public class EventFeedRepository {
 			conditions.add(eventCondition);
 		}
 
-		var nearestStart = criteria.<Instant>least(occurrence.get("startAt"));
-		query.multiselect(event.get("id"), nearestStart)
-				.where(conditions.toArray(jakarta.persistence.criteria.Predicate[]::new))
-				.groupBy(event.get("id"))
-				.orderBy(criteria.asc(nearestStart), criteria.asc(event.get("id")));
-		return em.createQuery(query).setFirstResult(offset).setMaxResults(limit).getResultList().stream()
-				.map((Tuple row) -> row.get(0, UUID.class))
-				.toList();
+		return conditions;
 	}
 }

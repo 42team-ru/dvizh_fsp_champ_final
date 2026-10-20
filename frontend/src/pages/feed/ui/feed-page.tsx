@@ -5,6 +5,7 @@ import { SearchX } from "lucide-react";
 import { useNavAccess } from "@/entity/user/model/use-nav-access";
 import { EmptyState } from "@/shared/components/ui/empty-state";
 import { FeedMobile } from "./feed-mobile";
+import { FeedPagination } from "./feed-pagination";
 import { AppHeader } from "@/widgets/app-header/ui/app-header";
 import {
   EventCard,
@@ -212,14 +213,14 @@ export default function FeedPage() {
       <AppHeader current="feed" />
       <main className="mx-auto flex w-full max-w-[1440px] flex-col gap-7 px-8 pt-8 pb-12">
         <FilterBar chip={filters.chip} onChip={filters.setChip} more={more} extraCount={filters.extraCount}
-          onMore={() => setMore((m) => !m)} count={events?.length} view={view} onView={setView} />
+          onMore={() => setMore((m) => !m)} count={list.totalElements} view={view} onView={setView} />
         {more && <FeedExtraFilters value={filters.extra} onChange={filters.setExtra} className="w-full" />}
         {view === "map" ? (
           <EventsMap withHome filters={toMapFilters(filters.params)} className="h-[calc(100dvh-234px)] min-h-[640px] w-full" mapClassName="min-h-0" />
         ) : (
         <div className="flex min-w-[1216px] flex-col gap-5">
           {events?.length === 0 && <FeedEmpty />}
-          {list.isError && <p role="alert" className="text-lg font-semibold text-destructive">Не удалось загрузить ленту.</p>}
+          {list.isError && !list.isFetchNextPageError && <p role="alert" className="text-lg font-semibold text-destructive">Не удалось загрузить ленту.</p>}
           {/* Ряды — отдельные сетки: если событий мало, пустеет конец ряда, а не съезжает раскладка. */}
           <div className="grid grid-cols-12 gap-5">
             <Slot placeOf={placeOf} reasonOf={reasonOf} topReasonOf={topReasonOf} onDismiss={onDismiss} events={events} i={0} size="lg" className="col-span-6" />
@@ -237,10 +238,21 @@ export default function FeedPage() {
             <Slot placeOf={placeOf} reasonOf={reasonOf} topReasonOf={topReasonOf} onDismiss={onDismiss} events={events} i={5} className="col-span-4" />
             <Slot placeOf={placeOf} reasonOf={reasonOf} topReasonOf={topReasonOf} onDismiss={onDismiss} events={events} i={6} className="col-span-4" />
           </div>
-          <div className="grid grid-cols-12 gap-5">
-            {events?.[7] && <BikeCard event={events[7]} placeOf={placeOf} className="col-span-7" onDismiss={onDismiss} />}
-            <CtaCard className="col-span-5 col-start-8" />
+          {events?.[7] && (
+            <div className="grid grid-cols-12 gap-5">
+              <BikeCard event={events[7]} placeOf={placeOf} className="col-span-7" onDismiss={onDismiss} />
+              <Slot events={events} i={8} placeOf={placeOf} reasonOf={reasonOf}
+                topReasonOf={topReasonOf} onDismiss={onDismiss} className="col-span-5" />
+            </div>
+          )}
+          <div className="grid grid-cols-3 gap-5">
+            {events?.slice(9).map((event, index) => (
+              <Slot key={event.id} events={events} i={index + 9} placeOf={placeOf}
+                reasonOf={reasonOf} topReasonOf={topReasonOf} onDismiss={onDismiss} />
+            ))}
           </div>
+          <FeedPagination {...list} />
+          {!list.isPending && !list.isError && !list.hasNextPage && <CtaCard className="w-full max-w-[560px] self-end" />}
         </div>
         )}
       </main>

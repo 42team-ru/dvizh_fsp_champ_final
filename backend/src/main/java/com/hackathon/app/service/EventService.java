@@ -81,7 +81,7 @@ public class EventService {
      * Серия — одна карточка с ближайшим подходящим занятием. Постранично (по умолчанию первые 100).
      */
     @Transactional(readOnly = true)
-    public List<EventSummaryResponse> list(EventFilter filter, UUID userId) {
+    public PageResponse<EventSummaryResponse> list(EventFilter filter, UUID userId) {
         var startFrom = filter.from() != null ? filter.from() : dbTime.now();
         if ((filter.lat() == null) != (filter.lon() == null)) {
             throw new BadRequestException("Для поиска рядом укажите и широту, и долготу");
@@ -94,7 +94,8 @@ public class EventService {
         int size = filter.size() != null ? filter.size() : FEED_LIMIT;
         int page = filter.page() != null ? filter.page() : 0;
         var ids = feed.findIds(feedSpec, startFrom, filter.to(), size, page * size);
-        return summaries(EventListLookups.sortedLike(events.findAllById(ids), ids), userId, startFrom, filter.to());
+        var items = summaries(EventListLookups.sortedLike(events.findAllById(ids), ids), userId, startFrom, filter.to());
+        return PageResponse.slice(items, page, size, feed.count(feedSpec, startFrom, filter.to()));
     }
 
     /**
