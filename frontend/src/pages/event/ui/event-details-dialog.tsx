@@ -97,7 +97,7 @@ export function EventDetailsDialog({ event: e, section, action, onClose, onResto
           "flex max-w-none flex-col gap-0 overflow-hidden border-[2.5px] border-ink bg-card p-0 text-base text-foreground shadow-hard",
           // мобильный: шторка снизу почти на весь экран
           "top-auto bottom-0 h-[94dvh] translate-y-0 rounded-t-[24px] rounded-b-none data-open:slide-in-from-bottom-10 data-open:zoom-in-100",
-          "sm:top-1/2 sm:bottom-auto sm:h-auto sm:max-h-[90dvh] sm:max-w-[640px] sm:-translate-y-1/2 sm:rounded-[24px] sm:shadow-[8px_8px_0_var(--ink)] sm:data-open:slide-in-from-bottom-0 sm:data-open:zoom-in-95",
+          "sm:top-1/2 sm:bottom-auto sm:h-[min(860px,90dvh)] sm:max-w-[640px] sm:-translate-y-1/2 sm:rounded-[24px] sm:shadow-[8px_8px_0_var(--ink)] sm:data-open:slide-in-from-bottom-0 sm:data-open:zoom-in-95",
         )}>
         <div aria-hidden className="mx-auto mt-2.5 h-[5px] w-11 shrink-0 rounded-full bg-ink sm:hidden" />
         {open && <Tabs key={section} defaultValue={section} onValueChange={() => scroll.current?.scrollTo({ top: 0 })} className="min-h-0 flex-1 gap-0">
