@@ -1,3 +1,4 @@
+import { BlogPrompt } from "@/widgets/blog-prompt/ui/blog-prompt";
 import { NotificationSettingsButton } from "@/features/notification-settings/ui/notification-settings-dialog";
 import { BellRing, Hourglass, Ticket } from "lucide-react";
 import { EmptyState } from "@/shared/components/ui/empty-state";
@@ -186,6 +187,7 @@ export default function ActivityPage() {
       <AppHeader current="activity" />
       <main className="mx-auto flex w-full max-w-[1280px] flex-col gap-7 px-8 pt-8 pb-12">
         <FilterBar m={m} />
+        <BlogPrompt compact className="w-[1216px] empty:hidden" />
         <div className="relative h-[626px] w-[1216px] shrink-0">
           <Feed m={m} />
           {m.totalUnread > 0 && (

@@ -1,3 +1,4 @@
+import { ProfileBlog } from "@/widgets/profile-blog/ui/profile-blog";
 import { PetDressLinks } from "@/features/pet-wardrobe/ui/pet-dress-links";
 import { BrandPlate } from "@/shared/components/ui/brand-plate";
 import { UserAvatar } from "@/shared/components/ui/user-avatar";
@@ -354,6 +355,7 @@ function Gallery() {
         mine={!readOnly}
         aboutPhotos={photos}
       />
+      <ProfileBlog userId={user.id} mine={!readOnly} compact className="mt-8" />
     </div>
   );
 }

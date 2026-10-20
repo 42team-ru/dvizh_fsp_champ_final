@@ -1,3 +1,4 @@
+import { EventBlog } from "@/widgets/event-blog/ui/event-blog";
 import { profilePath } from "@/entity/user/lib/profile-path";
 import { coverOf } from "@/entity/event/lib/cover";
 import { MessageCircleQuestion } from "lucide-react";
@@ -361,6 +362,8 @@ export function EventMobile({ m, onDetails }: { m: EventModel; onDetails: (secti
       <div className="px-4">
         <EventGoingCrowd participants={e.participants} sample={m.crowd} authorId={e.author.id} organizers={e.organizers} going={m.going} capacity={e.capacity} className="rounded-[22px]" />
       </div>
+
+      <EventBlog event={e} className="px-4" />
 
       <div id="event-chat-mobile" className="px-4">
         <MobileChat m={m} />

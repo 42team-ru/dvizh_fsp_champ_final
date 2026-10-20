@@ -1,3 +1,4 @@
+import { EventBlog } from "@/widgets/event-blog/ui/event-blog";
 import { profilePath } from "@/entity/user/lib/profile-path";
 import { coverOf } from "@/entity/event/lib/cover";
 import { MessageCircleQuestion } from "lucide-react";
@@ -512,6 +513,7 @@ export default function EventPage() {
             <div className="grid w-[1216px] shrink-0 grid-cols-[701px_495px] items-start gap-5">
               <div className="flex min-w-0 flex-col gap-5">
                 <About m={m} />
+                <EventBlog event={m.event} />
                 <Chat m={m} />
               </div>
               <div className="flex min-w-0 flex-col gap-5">

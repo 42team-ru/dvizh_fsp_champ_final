@@ -137,3 +137,15 @@ export const QUORUM_STATUS_LABEL = {
   REACHED: "Кворум набран — состоится",
   CONFIRMED: "Организатор подтвердил: состоится",
 } as const;
+
+/** Вид поста в блоге: подпись и цвет плашки. */
+export const BLOG_POST_TYPE: Record<string, { label: string; tone: string }> = {
+  GUIDE: { label: "Гайд", tone: "bg-sky" },
+  EVENT_REPORT: { label: "С тренировки", tone: "bg-secondary" },
+};
+
+/** Статус поста: черновик видит только автор. */
+export const BLOG_POST_STATUS: Record<string, { label: string; tone: string }> = {
+  DRAFT: { label: "Черновик", tone: "bg-muted" },
+  PUBLISHED: { label: "Опубликован", tone: "bg-mint" },
+};

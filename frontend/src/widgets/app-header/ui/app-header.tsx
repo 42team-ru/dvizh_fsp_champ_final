@@ -6,12 +6,13 @@ import { Icon } from "@/shared/components/ui/icon";
 import { AccountMenu } from "@/features/auth/sign-out/ui/account-menu";
 import { useCabinetAccess } from "@/entity/user/model/use-cabinet-access";
 import { useNavAccess } from "@/entity/user/model/use-nav-access";
-import { Building2, BriefcaseBusiness, ShieldCheck } from "lucide-react";
+import { BookOpen, Building2, BriefcaseBusiness, ShieldCheck } from "lucide-react";
 import { SearchPalette } from "@/widgets/search-palette/ui/search-palette";
 
 const NAV = [
   { key: "home", to: "/", label: "Главная", icon: "icon-home" },
   { key: "feed", to: "/feed", label: "Лента", icon: "icon-grid" },
+  { key: "blog", to: "/blog", label: "Блог", icon: null },
   { key: "activity", to: "/activity", label: "Активность", icon: "icon-bell" },
   { key: "profile", to: "/profile", label: "Профиль", icon: "icon-user" },
 ] as const;
@@ -25,13 +26,13 @@ const NAV_LABEL = "sr-only 2xl:not-sr-only 2xl:whitespace-nowrap";
 
 /** Папка иконки: в папке страницы активная иконка белая; в кабинете и админке ни одна из четырёх не активна. */
 const iconFolder = (current: string, key: string) =>
-  current !== "cabinet" && current !== "admin" && current !== "orgs" ? current : key === "home" ? "feed" : "home";
+  current !== "cabinet" && current !== "admin" && current !== "orgs" && current !== "blog" ? current : key === "home" ? "feed" : "home";
 
 /**
  * Шапка одна и та же на всех страницах: ширина контейнера не зависит от страницы, шапка прилипает к верху —
  * при переходах ничего не прыгает. Вкладка «Кабинет» — только организаторам.
  */
-export function AppHeader({ current = "home" }: { current?: "home" | "feed" | "profile" | "activity" | "cabinet" | "admin" | "orgs" }) {
+export function AppHeader({ current = "home" }: { current?: "home" | "feed" | "blog" | "profile" | "activity" | "cabinet" | "admin" | "orgs" }) {
   const cabinet = useCabinetAccess();
   const nav = useNavAccess();
   const items = NAV.filter((item) =>
@@ -52,7 +53,9 @@ export function AppHeader({ current = "home" }: { current?: "home" | "feed" | "p
           {items.map((item) => (
             <Button key={item.label} asChild variant="nav" size="nav" className={NAV_ITEM}>
               <Link to={item.to} title={item.label} aria-current={item.key === current ? "page" : undefined}>
-                <Icon name={`${iconFolder(current, item.key)}/${item.icon}`} className="size-[19px] shrink-0" />
+                {item.icon
+                  ? <Icon name={`${iconFolder(current, item.key)}/${item.icon}`} className="size-[19px] shrink-0" />
+                  : <BookOpen className="size-[19px] shrink-0" strokeWidth={2.2} />}
                 <span className={NAV_LABEL}>{item.label}</span>
                 {item.key === "activity" && nav.unread > 0 ? (
                   <Badge

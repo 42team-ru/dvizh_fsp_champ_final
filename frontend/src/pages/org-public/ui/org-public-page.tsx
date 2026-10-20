@@ -1,3 +1,4 @@
+import { OrganizationBlog } from "@/widgets/organization-blog/ui/organization-blog";
 import { useState } from "react";
 import { Link, useParams } from "react-router";
 import {
@@ -31,6 +32,7 @@ export default function OrgPublicPage() {
     ["overview", "Обзор"],
     ["about", "О клубе"],
     ["upcoming", `Ближайшие ${o?.upcoming.totalElements ?? ""}`],
+    ["blog", "Блог"],
     ["past", `Проведённые ${o?.hostedMeetings ?? ""}`],
     ["photos", `Фото ${o?.photosCount ?? ""}`],
   ];
@@ -120,6 +122,7 @@ export default function OrgPublicPage() {
               </Card>
               <div className="flex min-w-0 flex-col gap-9 lg:col-start-1 lg:row-span-2 lg:row-start-1">
                 <UpcomingMeetings id={id} overview={o} />
+                <OrganizationBlog organizationId={id} />
                 <PastMeetings key={id} id={id} overview={o} />
                 <OrganizationPhotos id={id} overview={o} />
               </div>
