@@ -134,8 +134,8 @@ function AchievementDialog({ a, mine, onClose }: { a: Achievement | null; mine: 
   );
 }
 
-/** Колонка достижений справа от паспорта (десктоп). */
-export function AchievementsColumn({ className, style }: { className?: string; style?: CSSProperties }) {
+/** Достижения на десктопе: колонкой или (`wide`) сеткой во всю ширину под паспортом. */
+export function AchievementsColumn({ className, style, wide }: { className?: string; style?: CSSProperties; wide?: boolean }) {
   const { query, achievements, earnedCount, total, mine } = useAchievements();
   const [opened, setOpened] = useState<Achievement | null>(null);
   return (
@@ -153,7 +153,7 @@ export function AchievementsColumn({ className, style }: { className?: string; s
       ) : query.isError ? (
         <p className="text-sm text-muted-foreground">Не удалось загрузить достижения.</p>
       ) : (
-        <ul className="flex min-h-0 flex-1 flex-col gap-[10px] overflow-y-auto p-1 pr-2 [scrollbar-color:var(--ink)_transparent] [scrollbar-width:thin]">
+        <ul className={cn("p-1", wide ? "grid grid-cols-3 gap-3" : "flex min-h-0 flex-1 flex-col gap-[10px] overflow-y-auto pr-2 [scrollbar-color:var(--ink)_transparent] [scrollbar-width:thin]")}>
           {achievements.map((a) => (
             <li key={a.code}>
               <button
