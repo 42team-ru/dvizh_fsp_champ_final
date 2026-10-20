@@ -654,8 +654,8 @@ function DataPage() {
   );
 }
 
-/** Во сколько раз разворот уменьшен, чтобы справа осталось место под достижения. */
-export const SPREAD_SCALE = 0.76;
+/** Разворот во всю ширину страницы, без уменьшения: мелкий текст паспорта остаётся читаемым. */
+export const SPREAD_SCALE = 1;
 export const SPREAD_W = Math.round(1216 * SPREAD_SCALE);
 export const SPREAD_H = Math.round((PAGE_H + 28) * SPREAD_SCALE);
 
