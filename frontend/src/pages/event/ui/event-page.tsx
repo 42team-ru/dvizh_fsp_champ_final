@@ -123,9 +123,10 @@ function TicketHero({ m }: { m: EventModel }) {
     <div className="-mr-[6px] -mb-[6px] h-[406px] w-[1222px] shrink-0" style={notchMask(TICKET_HEIGHT)}>
     <div className="relative h-[400px] w-[1216px] drop-shadow-[6px_6px_0_var(--ink)]">
     <Card className="relative h-[400px] w-[1216px] flex-row items-start overflow-hidden rounded-[28px] p-0" style={notchMask(TICKET_HEIGHT)}>
-      <div className="relative h-[396px] w-[270px] shrink-0 overflow-hidden border-r-2 border-ink">
+      {/* Обложка отделена линией отрыва (пунктир), как корешок, а не сплошной чертой. */}
+      <div className="relative h-[396px] w-[270px] shrink-0 overflow-hidden border-r-2 border-dashed border-ink">
         <img src={cover.src} style={{ objectPosition: cover.position }} alt="" className="absolute top-0 left-0 h-[396px] w-[268px] object-cover" />
-        <div className="absolute top-0 left-0 h-[396px] w-[268px] bg-gradient-to-b from-[rgba(22,24,31,0.05)] via-[rgba(22,24,31,0.15)] via-55% to-[rgba(22,24,31,0.7)]" />
+        <div className="absolute top-0 left-0 h-[396px] w-[268px] bg-gradient-to-b from-transparent via-transparent via-60% to-[rgba(22,24,31,0.55)]" />
         <div className="absolute top-[18px] right-[18px] left-[18px] flex gap-[6px]">
           <Badge variant="outline" title={e.sport.name} className="min-w-0 shrink"><span className="truncate">{e.sport.name}</span></Badge>
           <Badge variant="outline">{m.levelLabel}</Badge>
