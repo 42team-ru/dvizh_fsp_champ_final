@@ -17,7 +17,8 @@ const buttonVariants = cva(
           "border-transparent shadow-none hover:translate-x-0 hover:translate-y-0 hover:border-ink hover:bg-muted active:translate-x-0 active:translate-y-0 aria-expanded:bg-muted",
         destructive: "bg-destructive text-destructive-foreground",
         ink: "bg-ink text-white shadow-hard-accent",
-        soft: "bg-card text-foreground shadow-none hover:translate-x-0 hover:translate-y-0 active:translate-x-0 active:translate-y-0",
+        // без тени в покое; при наведении приподнимается с жёсткой тенью, как остальные кнопки
+        soft: "bg-card text-foreground shadow-none hover:shadow-hard-sm active:translate-x-0 active:translate-y-0 active:shadow-none aria-expanded:shadow-hard-sm",
         clear:
           "bg-transparent text-white shadow-none hover:translate-x-0 hover:translate-y-0 hover:bg-white/10 active:translate-x-0 active:translate-y-0",
         nav: "border-transparent bg-transparent text-foreground shadow-none hover:translate-x-0 hover:translate-y-0 hover:bg-muted active:translate-x-0 active:translate-y-0 aria-[current=page]:border-ink aria-[current=page]:bg-ink aria-[current=page]:text-white aria-[current=page]:hover:bg-ink",
