@@ -111,7 +111,7 @@ function Hero({ slot, orgName }: { slot?: WeekSlot; orgName?: string }) {
       <HeroDecor />
       <div className="relative flex min-w-0 flex-col gap-4">
         <p className="text-[13px] font-bold text-white/85">{greet} {isToday ? "Сегодня" : "Ближайшее занятие"}{orgName ? ` в клубе «${orgName}»` : ""}</p>
-        <h1 className="font-display text-[38px] leading-[44px] font-extrabold break-words sm:text-[46px] sm:leading-[52px]">{e.title}</h1>
+        <h1 className="font-display text-[28px] leading-[34px] font-extrabold break-words hyphens-auto sm:text-[46px] sm:leading-[52px]">{e.title}</h1>
         <div className="flex flex-wrap gap-2">
           <Chip tone="bg-card" className="gap-1.5 normal-case"><Clock className="size-3" strokeWidth={2.6} />{hm(o.startAt)}{end}</Chip>
           {(e.address || e.format === "ONLINE") && (
@@ -446,7 +446,7 @@ function Announce({ events }: { events: EventSummaryResponse[] }) {
           <p className="text-xs font-medium text-muted-foreground">Закрепится вверху карточки и придёт уведомлением записавшимся.</p>
         </div>
       </div>
-      <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_240px]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-[minmax(0,1fr)_240px]">
         <div className="flex flex-col gap-3">
           <select value={selected} onChange={(ev) => { setId(ev.target.value); setText(""); }}
             className="h-11 rounded-pill border-2 border-ink bg-card px-4 text-sm font-extrabold text-foreground outline-none focus-visible:ring-[3px] focus-visible:ring-ring/30">

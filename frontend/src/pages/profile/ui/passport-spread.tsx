@@ -36,7 +36,7 @@ import {
 import { ProfileShare } from "./profile-share";
 import { handle } from "@/shared/lib/handle";
 import { PassportWaves } from "@/features/share-link/ui/share-posters";
-import { PassportHologram, PassportMrz, PassportPageHeader } from "./passport-decoration";
+import { PassportMrz, PassportPageHeader } from "./passport-decoration";
 
 const IMG = "/profile";
 const CHIP_TONES = [
@@ -61,15 +61,15 @@ function Field({
 }) {
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-[2px]">
-      <p className="text-[11px] leading-4 font-extrabold tracking-[1.2px] whitespace-nowrap text-muted-foreground">
+      <p className="text-[13px] leading-[18px] font-extrabold tracking-[1.2px] whitespace-nowrap text-muted-foreground">
         {label}
       </p>
       <p
         className={cn(
           "truncate leading-[1.25] text-foreground",
           large
-            ? "font-display text-[21px] font-bold"
-            : "text-[18px] font-bold",
+            ? "font-display text-[25px] font-bold"
+            : "text-[21px] font-bold",
         )}
       >
         {value}
@@ -563,7 +563,6 @@ function DataPage() {
         <div className="flex shrink-0 flex-col gap-3">
           <div className="relative">
             <UserAvatar user={user} className="h-[160px] w-[150px] rounded-xl border-2 border-ink object-cover" />
-            <PassportHologram />
           </div>
           <ProfileShare user={user} className="px-3" />
         </div>
@@ -607,7 +606,7 @@ function DataPage() {
 
       <div className="relative flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          <p className="text-[11px] font-extrabold tracking-[1.2px] whitespace-nowrap text-muted-foreground">
+          <p className="text-[13px] font-extrabold tracking-[1.2px] whitespace-nowrap text-muted-foreground">
             ВИДЫ СПОРТА И РАЗРЯД
           </p>
           {!owner && (
@@ -638,10 +637,10 @@ function DataPage() {
 
       <div className="relative flex items-center gap-4">
         <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <p className="text-[11px] font-extrabold tracking-[1.2px] whitespace-nowrap text-muted-foreground">
+          <p className="text-[13px] font-extrabold tracking-[1.2px] whitespace-nowrap text-muted-foreground">
             ОСОБЫЕ ОТМЕТКИ
           </p>
-          <p className="line-clamp-2 text-[15px] leading-[21px] font-medium text-foreground">
+          <p className="line-clamp-2 text-[17px] leading-[24px] font-medium text-foreground">
             {user?.bio || "Пока ничего не написано."}
           </p>
         </div>

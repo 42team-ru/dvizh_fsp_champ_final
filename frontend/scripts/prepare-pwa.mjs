@@ -7,11 +7,13 @@ const output = fileURLToPath(new URL("../build/client/", import.meta.url));
 const template = await readFile(new URL("../public/sw.js", import.meta.url), "utf8");
 const resources = [];
 
-async function collect(directory) {
+const IMAGE = /\.(svg|png|webp|jpe?g)$/i;
+
+async function collect(directory, only) {
   for (const entry of await readdir(path.join(output, directory), { withFileTypes: true })) {
     const relative = path.posix.join(directory, entry.name);
-    if (entry.isDirectory()) await collect(relative);
-    else resources.push(`/${relative}`);
+    if (entry.isDirectory()) await collect(relative, only);
+    else if (!only || only.test(entry.name)) resources.push(`/${relative}`);
   }
 }
 
@@ -19,8 +21,14 @@ async function collect(directory) {
 await collect("assets");
 await collect("fonts");
 await collect("icons");
-resources.push("/index.html", "/manifest.webmanifest", "/icon.svg");
+// Иллюстрации и иконки интерфейса из public/ (~0,9 МБ): без них офлайн-экраны остаются с битыми картинками.
+for (const entry of await readdir(output, { withFileTypes: true })) {
+  if (entry.isDirectory() && !["assets", "fonts", "icons"].includes(entry.name)) await collect(entry.name, IMAGE);
+  else if (entry.isFile() && IMAGE.test(entry.name)) resources.push(`/${entry.name}`);
+}
+resources.push("/index.html", "/manifest.webmanifest");
 resources.sort();
+resources.splice(0, resources.length, ...new Set(resources));
 const hash = createHash("sha256").update(template);
 for (const resource of resources) {
   hash.update(resource).update(await readFile(path.join(output, resource.slice(1))));

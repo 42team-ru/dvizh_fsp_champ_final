@@ -58,7 +58,7 @@ export default function ProfilePage() {
         </div>
         {user?.id && (
           <ProfileGallery
-            className="mt-6"
+            className="mt-12"
             owner={{ ...user, id: user.id }}
             mine={!owner}
             aboutPhotos={owner?.user.photos}

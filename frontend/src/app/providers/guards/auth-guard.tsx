@@ -6,6 +6,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Loader2Icon, TriangleAlertIcon } from "lucide-react";
 import { PageTransition } from "@/shared/components/ui/page-transition";
 import { Link, Navigate, useLocation } from "react-router";
+import { OfflinePrefetch } from "@/app/providers/offline-sync";
 
 const RequireAuth = () => {
   const location = useLocation();
@@ -90,7 +91,12 @@ const RequireAuth = () => {
     );
   }
 
-  return <PageTransition />;
+  return (
+    <>
+      <OfflinePrefetch user={user} />
+      <PageTransition />
+    </>
+  );
 };
 
 export default RequireAuth;

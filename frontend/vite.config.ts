@@ -2,6 +2,21 @@ import { reactRouter } from "@react-router/dev/vite";
 import tailwindcss from "@tailwindcss/vite";
 import { fileURLToPath } from "node:url";
 import { defineConfig, loadEnv } from "vite";
+import type { Plugin as PostcssPlugin } from "postcss";
+
+/**
+ * На 2K/4K страница увеличивается через `zoom` на <html> (`ViewportScale`, переменная `--vp-zoom`).
+ * Под zoom браузер умножает и vh/vw, поэтому высота «на весь экран» стала бы больше экрана.
+ * Плагин делит каждую viewport-единицу в CSS на коэффициент: `100dvh` → `calc(100dvh / var(--vp-zoom, 1))`.
+ */
+const VIEWPORT_UNIT = /(-?\d*\.?\d+)(dvh|svh|lvh|vh|dvw|svw|lvw|vw)\b/g;
+const unzoomViewportUnits: PostcssPlugin = {
+  postcssPlugin: "unzoom-viewport-units",
+  Declaration(decl) {
+    if (!/\d(d|s|l)?v(h|w)\b/.test(decl.value) || decl.value.includes("--vp-zoom")) return;
+    decl.value = decl.value.replace(VIEWPORT_UNIT, "calc($1$2 / var(--vp-zoom, 1))");
+  },
+};
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
@@ -14,6 +29,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [tailwindcss(), reactRouter()],
     define: Object.fromEntries(fromRoot.map(([key, value]) => [`import.meta.env.${key}`, JSON.stringify(value)])),
+    css: { postcss: { plugins: [unzoomViewportUnits] } },
     resolve: {
       tsconfigPaths: true,
     },

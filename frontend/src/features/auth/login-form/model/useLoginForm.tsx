@@ -1,4 +1,5 @@
 import { useForm } from "@tanstack/react-form";
+import { clearOfflineCache } from "@/shared/lib/offline-cache";
 import { loginSchema } from "./login-shema";
 import { useState } from "react";
 import {
@@ -32,6 +33,7 @@ export function useLoginForm() {
         await logoutAsync().catch(() => undefined);
         useAuthStore.getState().logout();
         queryClient.removeQueries({ queryKey: USER_QUERY_KEY });
+        await clearOfflineCache();
 
         await loginAsync({
           data: {

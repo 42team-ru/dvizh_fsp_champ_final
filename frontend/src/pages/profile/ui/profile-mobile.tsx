@@ -25,7 +25,6 @@ import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 import { ProfileShare } from "./profile-share";
 import { PassportWaves } from "@/features/share-link/ui/share-posters";
 import {
-  PassportHologram,
   PassportMrz,
   PassportPageHeader,
 } from "./passport-decoration";
@@ -116,17 +115,16 @@ function Passport() {
                   user={p.user}
                   className="box-border h-24 w-20 rounded-xl border-2 border-ink object-cover"
                 />
-                <PassportHologram />
               </div>
               <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
                 <Eyebrow className={small}>ИМЯ</Eyebrow>
-                <p className="break-words font-display text-[19px] leading-6 font-bold text-foreground">
+                <p className="break-words font-display text-[22px] leading-7 font-bold text-foreground">
                   {p.fullName}
                 </p>
-                <p className="break-words text-sm leading-snug font-medium text-muted-foreground">
+                <p className="break-words text-base leading-snug font-medium text-muted-foreground">
                   {p.handle}
                 </p>
-                <p className="text-xs font-bold text-muted-foreground">
+                <p className="text-sm font-bold text-muted-foreground">
                   {p.passportNumber}
                 </p>
               </div>
@@ -191,22 +189,22 @@ function Pet() {
         <div className="overflow-hidden rounded-[17px] border-2 border-ink bg-sky">
           <PassportPageHeader title="СОПРОВОЖДАЮЩИЙ" page={2} />
           <div className="flex flex-col gap-3 p-4">
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-col items-start gap-1">
+              <Eyebrow className={cn(small, "text-foreground")}>
+                {owner ? "ПИТОМЕЦ" : "ТВОЙ ПИТОМЕЦ"}
+              </Eyebrow>
+              <ProfilePetName />
+            </div>
+            {/* реплика бобра — над сценой, чтобы не закрывать его */}
+            <div ref={setSpeechContainer} className="relative min-h-[92px] w-full" />
+            {/* бобр крупно, на полосе травы */}
+            <div className="relative h-[300px] overflow-hidden rounded-[18px] border-2 border-ink bg-sky-soft">
+              <div className="absolute inset-x-0 bottom-0 h-[64px] border-t-2 border-ink bg-lime" />
               <ProfileBeaverPet
                 speechContainer={speechContainer}
-                className="size-28 shrink-0 [&_.beaver-pet]:h-full [&_svg]:h-full"
+                className="absolute -bottom-6 left-1/2 h-[300px] w-[300px] -translate-x-1/2 [&_.beaver-pet]:h-full [&_svg]:h-full"
               />
-              <div className="flex min-w-[180px] flex-1 flex-col items-start gap-1">
-                <Eyebrow className={cn(small, "text-foreground")}>
-                  {owner ? "ПИТОМЕЦ" : "ТВОЙ ПИТОМЕЦ"}
-                </Eyebrow>
-                <ProfilePetName />
-              </div>
             </div>
-            <div
-              ref={setSpeechContainer}
-              className="relative min-h-[92px] w-full"
-            />
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm leading-5">
               <p className="min-w-0 flex-1 font-semibold">
                 Образ:{" "}

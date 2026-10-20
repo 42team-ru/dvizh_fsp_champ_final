@@ -3,6 +3,13 @@ import type { LucideIcon } from "lucide-react"
 import { motion } from "motion/react"
 import { cn } from "cn"
 
+/** Строки появляются друг за другом с небольшой задержкой. */
+const rise = (delay: number) => ({
+  initial: { opacity: 0, y: 8 },
+  animate: { opacity: 1, y: 0 },
+  transition: { delay, duration: 0.3, ease: "easeOut" as const },
+})
+
 /**
  * Пустое состояние: иконка в кружке, заголовок, пояснение и действие («Найти встречу»).
  * `tone` — фон кружка токеном (`bg-secondary`), `size="sm"` — для узких карточек и боковых колонок.
@@ -39,6 +46,7 @@ export function EmptyState({
       <motion.div
         initial={{ scale: 0, rotate: -20 }}
         animate={{ scale: 1, rotate: 0 }}
+        whileHover={{ rotate: [0, -12, 10, -6, 0], transition: { duration: 0.6 } }}
         transition={{ type: "spring", stiffness: 380, damping: 14, delay: 0.08 }}
       >
         <motion.div
@@ -53,15 +61,15 @@ export function EmptyState({
           <Icon className={sm ? "size-5" : "size-7"} strokeWidth={2.2} aria-hidden />
         </motion.div>
       </motion.div>
-      <p className={cn("font-display font-extrabold text-foreground", sm ? "text-[15px] leading-5" : "text-lg leading-6")}>
+      <motion.p {...rise(0.14)} className={cn("font-display font-extrabold text-foreground", sm ? "text-[15px] leading-5" : "text-lg leading-6")}>
         {title}
-      </p>
+      </motion.p>
       {text && (
-        <p className={cn("max-w-[420px] font-medium text-muted-foreground", sm ? "text-[13px] leading-[18px]" : "text-[15px] leading-[22px]")}>
+        <motion.p {...rise(0.2)} className={cn("max-w-[420px] font-medium text-muted-foreground", sm ? "text-[13px] leading-[18px]" : "text-[15px] leading-[22px]")}>
           {text}
-        </p>
+        </motion.p>
       )}
-      {action && <div className="mt-1 flex flex-wrap justify-center gap-2">{action}</div>}
+      {action && <motion.div {...rise(0.26)} className="mt-1 flex flex-wrap justify-center gap-2">{action}</motion.div>}
     </motion.div>
   )
 }

@@ -178,7 +178,7 @@ export default function AdminOverviewPage() {
                 <h2 className="font-display text-xl font-extrabold text-foreground">Регистрации по дням</h2>
                 <p className="text-xs font-medium text-muted-foreground">Старые дни слева. Дни без регистраций остаются нулём.</p>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <Chip tone="bg-secondary" className="text-xs normal-case">за {period} дней: {num(total)}</Chip>
                 <PillTabs tabs={PERIODS.map((p) => ({ key: p, label: p }))} value={period} onChange={setPeriod} />
               </div>

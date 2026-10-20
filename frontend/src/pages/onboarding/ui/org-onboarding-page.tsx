@@ -181,7 +181,7 @@ function StepForm({ form, setForm, logo, onLogo }: {
   ];
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[1fr_420px]">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-[minmax(0,1fr)_420px]">
       <div className="flex flex-col gap-5">
         <Heading title="Расскажи о клубе"
           hint="Администратор проверит анкету и документы. После одобрения появится публичная страница и можно публиковать мероприятия от имени клуба." />
@@ -196,7 +196,7 @@ function StepForm({ form, setForm, logo, onLogo }: {
           <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only"
             onChange={(e) => { const f = e.target.files?.[0]; if (f) onLogo(f); }} />
         </label>
-        <div className="grid gap-4 sm:grid-cols-[1fr_220px]">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-4 sm:grid-cols-[minmax(0,1fr)_220px]">
           <div className="flex flex-col gap-2">
             <label htmlFor={ids.name} className={label}>НАЗВАНИЕ *</label>
             <input id={ids.name} maxLength={200} value={form.name} placeholder="Беговой клуб «Татышев»" className={input}
@@ -335,7 +335,7 @@ function StepDocuments() {
   ];
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[1fr_420px]">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-[minmax(0,1fr)_420px]">
       <div className="flex flex-col gap-5">
         <Heading title="Документы клуба" hint="Приложи то, что подтверждает, что клуб настоящий. Это ускорит проверку." />
         <label

@@ -55,7 +55,7 @@ export default function AdminAwardsPage() {
               initial={{ scale: 0.96, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: "spring", stiffness: 260, damping: 20 }}
-              className={cn("flex w-full flex-wrap items-center gap-6 rounded-[24px] border-[3px] border-ink p-6 shadow-hard", proposed ? "bg-secondary" : "bg-lime-soft")}
+              className={cn("flex w-full flex-wrap items-center gap-4 rounded-[24px] border-[3px] border-ink p-4 shadow-hard sm:gap-6 sm:p-6", proposed ? "bg-secondary" : "bg-lime-soft")}
             >
               <motion.span
                 animate={{ rotate: [0, -8, 8, 0] }}
@@ -71,7 +71,7 @@ export default function AdminAwardsPage() {
                   </Chip>
                   <Chip tone="bg-card" className="text-[10px] normal-case">{monthTitle(award.period)}</Chip>
                 </div>
-                <h2 className="font-display text-[28px] leading-[34px] font-extrabold break-words text-foreground">{award.organizationName}</h2>
+                <h2 className="font-display text-[22px] leading-[28px] font-extrabold break-words hyphens-auto sm:text-[28px] sm:leading-[34px] text-foreground">{award.organizationName}</h2>
                 {winner && (
                   <p className="text-[13px] font-bold text-foreground">
                     {winner.meetings} встреч · {winner.participants} участников · {winner.returning} вернулись

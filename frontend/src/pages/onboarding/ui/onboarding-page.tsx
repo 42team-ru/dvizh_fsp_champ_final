@@ -17,17 +17,25 @@ import { Button } from "@/shared/components/ui/button";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 import { cn } from "cn";
 import {
-  StepDone, StepHelpers, StepPet, StepProfile, StepSchedule, StepSports,
+  StepHelpers, StepPet, StepProfile, StepSchedule, StepSports,
   type Pet, type Prefs, type Profile, type SportRow,
 } from "./onboarding-steps";
+import { StepDone } from "./onboarding-done";
+import { OnboardingPanel } from "./onboarding-panel";
+import { AnimatePresence, motion } from "motion/react";
 
 const STEPS = 6;
 const DEFAULT_RADIUS_KM = 5;
 
+/** Подпись шага над заголовком: «ШАГ 2 ИЗ 6 · ВИДЫ СПОРТА». */
+const STEP_LABEL = ["ПРОФИЛЬ", "ВИДЫ СПОРТА", "ВРЕМЯ И МЕСТО", "ПОМОЩНИКИ", "БОБР", "ПОДБОРКА"];
+/** Шаги с живым бобром справа; остальные — на всю ширину. */
+const SPLIT_STEPS = 4;
+
 const FOOTER_HINT = [
-  "Сохраним сразу. Потом поменяешь в профиле",
-  "По выбранным видам соберём «Для меня»",
-  "Дом — точка отсчёта для подборки «Вам подойдёт»",
+  "Сохраним сразу, поменяешь в профиле",
+  "",
+  "Дом и радиус — точка отсчёта подборки",
   "Помощников можно выключить в настройках",
   "Образ сохраним целиком, менять можно в любой момент",
   "Подборка всегда в ленте, во вкладке «Для вас»",
@@ -80,8 +88,7 @@ function Wizard(props: {
   const [sportRows, setSportRows] = useState<SportRow[]>(
     props.sports.map((s) => ({ sportId: s.sport.id, name: s.sport.name, level: s.level })),
   );
-  const { radiusKm, ...initialPrefs } = props.prefs;
-  const [prefs, setPrefs] = useState<Prefs>(initialPrefs);
+  const [prefs, setPrefs] = useState<Prefs>({ ...props.prefs, radiusKm: props.prefs.radiusKm || DEFAULT_RADIUS_KM });
   const [pet, setPet] = useState<Pet>({ name: props.pet.name, outfit: { ...props.pet.outfit }, activity: props.pet.activity || "none" });
 
   const updateMe = useUsersUpdateMe();
@@ -102,13 +109,12 @@ function Wizard(props: {
 
   /** Каждый шаг сохраняется на сервере при переходе дальше. */
   const save = async () => {
-    const body = { ...prefs, radiusKm: radiusKm || DEFAULT_RADIUS_KM };
     if (step === 1) await updateMe.mutateAsync({ data: profile });
     if (step === 2) {
       await saveSports.mutateAsync({ data: { sports: sportRows.map((r) => (r.sportId
         ? { sportId: r.sportId, level: r.level } : { sportName: r.name, level: r.level })) } });
     }
-    if (step === 3 || step === 4) await savePrefs.mutateAsync({ data: body });
+    if (step === 3 || step === 4) await savePrefs.mutateAsync({ data: prefs });
     if (step === 5) {
       const name = pet.name.trim().replace(/\s+/g, " ");
       if (name !== props.pet.name) await rename.mutateAsync({ data: { name } });
@@ -137,28 +143,13 @@ function Wizard(props: {
     navigate("/");
   };
 
-  return (
-    <>
-      <header className="flex shrink-0 items-center justify-between gap-4 px-4 py-3 lg:px-10">
-        <div className="flex items-center gap-[10px]">
-          <img src="/icon.svg" alt="" className="size-9 shrink-0" />
-          <span className="hidden font-display text-base font-bold sm:inline">Движ</span>
-        </div>
-        <div className="flex items-center gap-3" role="progressbar" aria-valuemin={1} aria-valuemax={STEPS} aria-valuenow={step} aria-label="Шаг онбординга">
-          <div className="hidden gap-1.5 sm:flex">
-            {Array.from({ length: STEPS }, (_, i) => (
-              <span key={i} className={cn("h-2 w-10 rounded-full border-[1.5px] border-ink", i < step ? "bg-primary" : "bg-card")} />
-            ))}
-          </div>
-          <span className="text-xs font-bold text-muted-foreground">Шаг {step} из {STEPS}</span>
-        </div>
-        {step < STEPS ? (
-          <button type="button" onClick={() => void finish()} className="text-sm font-extrabold text-primary">Пропустить</button>
-        ) : <span />}
-      </header>
+  const split = step <= SPLIT_STEPS;
+  const hint = step === 2 ? `Выбрано ${sportRows.length} из 30` : FOOTER_HINT[step - 1];
 
-      <main className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 lg:px-10">
-        <div className="m-auto w-full max-w-[1200px] py-4">
+  const content = (
+    <AnimatePresence mode="wait">
+      <motion.div key={step} initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }}
+        transition={{ duration: 0.25, ease: "easeOut" }}>
         {step === 1 && (
           <StepProfile user={user} profile={profile} setProfile={setProfile}
             onUpload={(file) => uploadAvatar.mutate({ data: { file } })} uploading={uploadAvatar.isPending} />
@@ -167,32 +158,100 @@ function Wizard(props: {
         {step === 3 && <StepSchedule prefs={prefs} setPrefs={setPrefs} />}
         {step === 4 && <StepHelpers prefs={prefs} setPrefs={setPrefs} pet={pet} />}
         {step === 5 && <StepPet pet={pet} setPet={setPet} items={props.items} catalog={props.catalog} />}
-        {step === 6 && <StepDone name={profile.firstName.trim()} />}
+        {step === 6 && <StepDone name={profile.firstName.trim()} sports={sportRows} prefs={prefs} pet={pet} />}
         {error && <p role="alert" className="mt-4 text-sm font-semibold text-destructive">{error}</p>}
-        </div>
-      </main>
+      </motion.div>
+    </AnimatePresence>
+  );
 
-      <footer className="shrink-0 border-t-2 border-track bg-background">
-        <div className="mx-auto flex max-w-[1200px] items-center justify-between gap-3 px-4 py-3 lg:px-10">
-          {step > 1 ? (
-            <Button variant="outline" className="h-12" disabled={busy} onClick={() => setStep(step - 1)}>
-              <ArrowLeft className="size-4" />Назад
-            </Button>
-          ) : <span />}
-          <p className="hidden items-center gap-2 text-sm text-muted-foreground md:flex">
-            <Check className="size-4 text-primary" />{FOOTER_HINT[step - 1]}
+  const footer = (
+    <footer className="shrink-0 border-t-2 border-track bg-background">
+      <div className={cn("flex items-center justify-between gap-3 px-4 py-4 lg:px-10", !split && "mx-auto max-w-[1280px]")}>
+        {step > 1 ? (
+          <Button variant="outline" className="h-12 px-6" disabled={busy} onClick={() => setStep(step - 1)}>
+            <ArrowLeft className="size-4" />Назад
+          </Button>
+        ) : <span />}
+        {hint && (
+          <p className="hidden max-w-[260px] items-center gap-2 text-center text-sm font-medium text-muted-foreground md:flex">
+            {!split && <Check className="size-4 shrink-0 text-green" />}{hint}
           </p>
-          {step < STEPS ? (
-            <Button className="h-12 px-6" disabled={!canNext || busy} onClick={() => void next()}>
-              {busy ? "Сохраняем…" : <>Дальше<ArrowRight className="size-4" /></>}
-            </Button>
-          ) : (
-            <Button variant="secondary" className="h-12 px-6" onClick={() => void finish()}>
-              На главную<ArrowRight className="size-4" />
-            </Button>
-          )}
+        )}
+        {step < STEPS ? (
+          <Button className="h-12 px-6" disabled={!canNext || busy} onClick={() => void next()}>
+            {busy ? "Сохраняем…" : <><ArrowRight className="size-4" />Дальше</>}
+          </Button>
+        ) : (
+          <Button variant="secondary" className="h-12 px-6" onClick={() => void finish()}>
+            <ArrowRight className="size-4" />На главную
+          </Button>
+        )}
+      </div>
+    </footer>
+  );
+
+  const logo = (
+    <div className="flex items-center gap-[10px]">
+      <img src="/icon.svg" alt="" className="size-10 shrink-0" />
+      <span className="hidden font-display text-lg font-bold sm:inline">Движ</span>
+    </div>
+  );
+  const skip = step < STEPS ? (
+    <button type="button" onClick={() => void finish()} className="text-sm font-extrabold text-primary hover:underline">Пропустить</button>
+  ) : <span />;
+
+  if (split) {
+    return (
+      <div className="grid min-h-0 flex-1 lg:grid-cols-[minmax(560px,700px)_1fr]">
+        <div className="flex min-h-0 flex-col bg-background">
+          <header className="flex shrink-0 items-center justify-between gap-4 px-4 pt-5 lg:px-12">{logo}{skip}</header>
+          <main className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 lg:px-12">
+            <div className="flex flex-col gap-4 py-5">
+              <Dots step={step} />
+              {content}
+            </div>
+          </main>
+          {footer}
         </div>
-      </footer>
+        <OnboardingPanel step={step} profile={profile} sports={sportRows} prefs={prefs} pet={pet} />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <header className="flex shrink-0 items-center justify-between gap-4 px-4 py-4 lg:px-10">
+        {logo}
+        <div className="flex items-center gap-3" role="progressbar" aria-valuemin={1} aria-valuemax={STEPS} aria-valuenow={step} aria-label="Шаг онбординга">
+          <div className="hidden gap-2 sm:flex">
+            {Array.from({ length: STEPS }, (_, i) => (
+              <motion.span key={i} layout className={cn("h-2.5 rounded-full border-[1.5px] border-ink",
+                i + 1 === step ? "w-16" : "w-11", i < step ? "bg-primary" : "bg-card")} />
+            ))}
+          </div>
+          <span className="text-xs font-bold text-muted-foreground">Шаг {step} из {STEPS}</span>
+        </div>
+        {skip}
+      </header>
+      <main className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 lg:px-10">
+        <div className="m-auto w-full max-w-[1152px] py-4">{content}</div>
+      </main>
+      {footer}
     </>
+  );
+}
+
+/** Точки прогресса над заголовком: пройденные — заливкой, текущая — длинная. */
+function Dots({ step }: { step: number }) {
+  return (
+    <div className="flex items-center gap-1.5" role="progressbar" aria-valuemin={1} aria-valuemax={STEPS} aria-valuenow={step} aria-label="Шаг онбординга">
+      {Array.from({ length: STEPS }, (_, i) => (
+        <motion.span key={i} layout transition={{ type: "spring", stiffness: 400, damping: 30 }}
+          className={cn("h-2.5 rounded-full border-[1.5px] border-ink", i + 1 === step ? "w-8" : "w-4", i < step ? "bg-primary" : "bg-card")} />
+      ))}
+      <span className="ml-2 text-[11px] font-extrabold tracking-[1.2px] text-primary">
+        ШАГ {step} ИЗ {STEPS} · {STEP_LABEL[step - 1]}
+      </span>
+    </div>
   );
 }

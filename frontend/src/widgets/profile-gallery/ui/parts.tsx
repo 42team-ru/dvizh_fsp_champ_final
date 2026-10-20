@@ -1,5 +1,6 @@
 import { MyBeaverBadge, type BeaverPose } from "@/widgets/beaver-pet/ui/my-beaver-badge";
 import type { ReactNode } from "react";
+import { motion } from "motion/react";
 import type { SportResponse } from "@/shared/api/generated/core/appAPI.schemas";
 import { cn } from "cn";
 import { IMG, sportTone } from "../lib/gallery";
@@ -78,19 +79,48 @@ export function EmptyState({
 }) {
   const art = EMPTY_ART[kind];
   return (
-    <div className="mx-auto flex w-full max-w-[384px] flex-col items-center gap-[10px] rounded-[20px] border-2 border-ink bg-card p-[22px] text-center">
-      <div className={cn("relative h-[130px] w-[150px] overflow-hidden rounded-2xl border-2 border-ink", art.tone)}>
-        <MyBeaverBadge pose={art.pose} className="absolute inset-x-2 top-3 bottom-1" />
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: "spring", stiffness: 260, damping: 24 }}
+      className="mx-auto flex w-full max-w-[384px] flex-col items-center gap-[10px] rounded-[20px] border-2 border-ink bg-card p-[22px] text-center sm:max-w-[640px] sm:flex-row sm:gap-6 sm:text-left"
+    >
+      <motion.div
+        initial={{ scale: 0.6, rotate: -8 }}
+        animate={{ scale: 1, rotate: 0 }}
+        whileHover={{ rotate: [0, -4, 4, 0], transition: { duration: 0.5 } }}
+        transition={{ type: "spring", stiffness: 380, damping: 14, delay: 0.06 }}
+        className={cn("relative h-[130px] w-[150px] shrink-0 overflow-hidden rounded-2xl border-2 border-ink", art.tone)}
+      >
+        <motion.div
+          animate={{ y: [0, -4, 0] }}
+          transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute inset-x-2 top-3 bottom-1"
+        >
+          <MyBeaverBadge pose={art.pose} className="size-full" />
+        </motion.div>
         {art.ask && (
-          <span aria-hidden="true" className="absolute top-2 right-2 flex size-8 rotate-6 items-center justify-center rounded-full border-2 border-ink bg-card font-display text-lg leading-none font-extrabold text-primary">
+          <motion.span
+            aria-hidden="true"
+            animate={{ rotate: [6, -10, 6] }}
+            transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute top-2 right-2 flex size-8 items-center justify-center rounded-full border-2 border-ink bg-card font-display text-lg leading-none font-extrabold text-primary"
+          >
             ?
-          </span>
+          </motion.span>
         )}
-      </div>
-      <p className="font-display text-[17px] leading-[22px] font-extrabold text-foreground">{title}</p>
-      {text && <p className="text-[13px] leading-[19px] font-medium text-muted-foreground">{text}</p>}
-      {children}
-    </div>
+      </motion.div>
+      <motion.div
+        initial={{ opacity: 0, x: 10 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.15, duration: 0.3 }}
+        className="flex min-w-0 flex-col items-center gap-[10px] sm:items-start"
+      >
+        <p className="font-display text-[17px] leading-[22px] font-extrabold text-foreground">{title}</p>
+        {text && <p className="text-[13px] leading-[19px] font-medium text-muted-foreground">{text}</p>}
+        {children}
+      </motion.div>
+    </motion.div>
   );
 }
 

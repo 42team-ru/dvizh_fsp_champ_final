@@ -23,7 +23,7 @@ const LOGIN_BRAND: Brand = {
   bubble: "Бублик скучал. Заходи — серия не ждёт!",
   assets: "login",
   bublik: "bublik.png",
-  banner: { height: 250, dir: "m-login", bublik: "left-[212px] top-[88px] size-[170px]" },
+  banner: { height: 250, dir: "m-login", bublik: "right-2 top-[88px] size-[170px]" },
 };
 
 const REGISTER_BRAND: Brand = {
@@ -33,7 +33,7 @@ const REGISTER_BRAND: Brand = {
   bubble: "Привет! Я Бублик. Сначала паспорт, потом знакомство!",
   assets: "register",
   bublik: "bublik.png",
-  banner: { height: 200, dir: "m-register", bublik: "left-[242px] top-[68px] size-[140px]" },
+  banner: { height: 200, dir: "m-register", bublik: "right-2 top-[68px] size-[140px]" },
 };
 
 export default function AuthLayout() {
@@ -55,7 +55,7 @@ export default function AuthLayout() {
 function BrandPanel({ brand }: { brand: Brand }) {
   const dir = `/${brand.assets}`;
   return (
-    <aside className="relative hidden min-h-[820px] w-[420px] shrink-0 overflow-hidden bg-primary lg:block">
+    <aside className="relative hidden w-[420px] shrink-0 overflow-hidden bg-primary lg:block">
       <img
         src={`${dir}/memphis.svg`}
         alt=""
@@ -73,17 +73,16 @@ function BrandPanel({ brand }: { brand: Brand }) {
       <p className="absolute top-[266px] left-10 w-[320px] text-base leading-6 font-semibold text-lilac">
         {brand.text}
       </p>
-      <div className="absolute top-[432px] left-10 box-border flex w-[260px] items-start rounded-[18px] border-2 border-ink bg-card px-4 py-[14px] shadow-[3px_3px_0_var(--lime)]">
-        <p className="text-sm leading-5 font-bold text-foreground">{brand.bubble}</p>
-      </div>
-      <img
-        src={`${dir}/tail.svg`}
-        alt=""
-        className="absolute top-[502px] left-[100px] h-[18px] w-6 max-w-none"
-      />
-      {/* обычный бобр без вещей: живой, моргает, следит за курсором и реагирует на тычки */}
-      <div className="absolute top-[540px] left-[50px] w-[260px]">
-        <BeaverPet withCatalog={false} className="[&_.beaver-speech]:hidden" />
+      {/* облачко с репликой стоит прямо над бобром, оба прижаты к низу панели */}
+      <div className="absolute bottom-4 left-4 flex flex-col items-start">
+        <div className="ml-6 box-border flex w-[260px] items-start rounded-[18px] border-2 border-ink bg-card px-4 py-[14px] shadow-[3px_3px_0_var(--lime)]">
+          <p className="text-sm leading-5 font-bold text-foreground">{brand.bubble}</p>
+        </div>
+        <img src={`${dir}/tail.svg`} alt="" className="-mt-[2px] ml-[84px] h-[18px] w-6 max-w-none" />
+        {/* обычный бобр без вещей: живой, моргает, следит за курсором и реагирует на тычки */}
+        <div className="w-[320px]">
+          <BeaverPet withCatalog={false} className="[&_.beaver-speech]:hidden" />
+        </div>
       </div>
     </aside>
   );
@@ -108,11 +107,10 @@ function MobileBanner({ brand }: { brand: Brand }) {
       <p className="absolute top-[76px] left-4 w-[200px] break-words font-display text-[22px] leading-7 font-extrabold tracking-[-0.3px] text-white">
         {brand.mobileTitle}
       </p>
-      <img
-        src={`${dir}/img.png`}
-        alt=""
-        className={`pointer-events-none absolute max-w-none object-contain ${banner.bublik}`}
-      />
+      {/* живой бобр вместо статичной картинки, как на компьютере */}
+      <div className={`absolute flex items-end ${banner.bublik}`}>
+        <BeaverPet withCatalog={false} className="w-full [&_.beaver-speech]:hidden" />
+      </div>
     </header>
   );
 }

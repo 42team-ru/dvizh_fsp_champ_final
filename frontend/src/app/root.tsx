@@ -15,6 +15,7 @@ import { MotionConfig } from "motion/react";
 import { ThemeProvider } from "./providers/theme-provider";
 import { ViewportScale } from "./providers/viewport-scale";
 import { PwaProvider } from "./providers/pwa-provider";
+import { OfflineBanner } from "./providers/offline-sync";
 
 export const links: Route.LinksFunction = () => [
   { rel: "icon", type: "image/svg+xml", href: "/icon.svg" },
@@ -22,7 +23,11 @@ export const links: Route.LinksFunction = () => [
   { rel: "apple-touch-icon", sizes: "180x180", href: "/icons/apple-touch-icon.png" },
 ];
 
-const queryClient = new QueryClient();
+// Без сети запросы всё равно идут в service worker: он отдаёт сохранённые личные данные (см. public/sw.js).
+// Действия без сети сразу падают с ошибкой, а не висят «в ожидании».
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { networkMode: "offlineFirst" }, mutations: { networkMode: "always" } },
+});
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -42,6 +47,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
             <ViewportScale />
             <PwaProvider />
+            <OfflineBanner />
             <MotionConfig reducedMotion="user">{children}</MotionConfig>
             <Toaster position="top-right" offset={20} expand visibleToasts={3} />
           </ThemeProvider>
