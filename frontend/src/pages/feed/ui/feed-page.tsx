@@ -279,6 +279,7 @@ function FeedEmpty() {
   return (
     <EmptyState
       icon={SearchX}
+      bublik="think"
       tone="bg-sky"
       title="Ничего не нашлось"
       text={nav.canCreate ? "Попробуйте другой фильтр — или соберите свою встречу, и люди подтянутся." : "Попробуйте другой фильтр или период."}

@@ -119,7 +119,7 @@ export default function MyEventsPage() {
         <p className="text-base font-bold text-muted-foreground">Загружаем…</p>
       ) : items.length === 0 ? (
         status === "PUBLISHED" ? (
-          <EmptyState icon={CalendarPlus} tone="bg-secondary" title="Пока нет мероприятий"
+          <EmptyState icon={CalendarPlus} bublik="point" tone="bg-secondary" title="Пока нет мероприятий"
             text="Создайте первое — укажите вид спорта, время и место, и участники найдут его в ленте."
             action={
               <Button asChild>

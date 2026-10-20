@@ -141,7 +141,7 @@ function Plans({ m }: { m: ActivityModel }) {
         {m.plansTab === "going" ? (
           <>
             {m.goingItems.length === 0 && !m.going.isPending && (
-              <EmptyState size="sm" icon={Ticket} tone="bg-accent" title="Билетов пока нет"
+              <EmptyState size="sm" icon={Ticket} bublik="ticket" tone="bg-accent" title="Билетов пока нет"
                 text="Запишитесь на первую встречу — билет появится здесь."
                 action={
                   <Button asChild size="sm">

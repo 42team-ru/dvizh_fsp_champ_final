@@ -341,6 +341,7 @@ function FeedEmpty() {
     <div className="px-4">
       <EmptyState
         icon={SearchX}
+        bublik="think"
         tone="bg-sky"
         title="Ничего не нашлось"
         text="Попробуйте другой фильтр — или соберите свою встречу."
