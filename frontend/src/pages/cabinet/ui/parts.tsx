@@ -1,3 +1,4 @@
+import { profilePath } from "@/entity/user/lib/profile-path";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { ChevronLeft, TriangleAlert, X } from "lucide-react";
@@ -115,7 +116,7 @@ export function Avatar({ user, className }: { user: UserShortResponse; className
 export function PersonLine({ user, extra }: { user: UserShortResponse; extra?: string }) {
   return (
     <div className="flex min-w-0 flex-wrap items-baseline gap-x-2">
-      <Link to={`/users/${user.id}`} className="truncate text-[15px] leading-[21px] font-extrabold text-foreground hover:underline">
+      <Link to={profilePath(user)} className="truncate text-[15px] leading-[21px] font-extrabold text-foreground hover:underline">
         {fullName(user)}
       </Link>
       <span className="truncate text-[13px] font-medium text-muted-foreground">

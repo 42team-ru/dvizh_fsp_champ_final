@@ -1,3 +1,4 @@
+import { profilePath } from "@/entity/user/lib/profile-path";
 import { useState } from "react";
 import { ShareDialog } from "@/features/share-link/ui/share-dialog";
 import { SharePassport } from "@/features/share-link/ui/share-posters";
@@ -119,7 +120,7 @@ function ProfileShareDialog({
     <ShareDialog
       open
       onOpenChange={onOpenChange}
-      path={`/users/${user.id}`}
+      path={profilePath(user)}
       title="Поделиться паспортом"
       filename={`passport-${user.username || user.id}`}
       ready={ready}
@@ -127,7 +128,7 @@ function ProfileShareDialog({
     >
       {(format) => (
         <SharePassport
-          path={`/users/${user.id}`}
+          path={profilePath(user)}
           name={name}
           format={format}
           stats={stats}

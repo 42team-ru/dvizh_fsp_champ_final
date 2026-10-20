@@ -1,3 +1,4 @@
+import { profilePath } from "@/entity/user/lib/profile-path";
 import { useState } from "react";
 import { Link } from "react-router";
 import { motion } from "motion/react";
@@ -441,7 +442,7 @@ export function AdminHome() {
             <Link to="/admin/users" className="flex items-center gap-1 text-[13px] font-extrabold text-foreground hover:underline">Все {num(monthData?.users ?? 0)} <ArrowRight className="size-3.5" strokeWidth={2.6} /></Link>
           </div>
           {newcomers.map((u) => (
-            <Link key={u.id} to={`/users/${u.id}`} className="flex items-center gap-3 py-1.5">
+            <Link key={u.id} to={profilePath(u)} className="flex items-center gap-3 py-1.5">
               <UserAvatar user={u} className="size-9 shrink-0 rounded-full border-2 border-ink" />
               <span className="flex min-w-0 flex-1 flex-col">
                 <span className="truncate text-sm font-extrabold text-foreground">{[u.firstName, u.lastName].filter(Boolean).join(" ") || u.username}</span>

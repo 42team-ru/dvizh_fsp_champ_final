@@ -4,6 +4,7 @@ import static com.hackathon.app.e2e.support.ApiAssertions.assertThatApi;
 import static com.hackathon.app.e2e.support.TestApi.uniqueName;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 import java.util.List;
 import java.util.Locale;
@@ -41,6 +42,29 @@ class UserProfileE2ETest {
 	@Autowired PasswordEncoder passwords;
 	@Autowired SportRepository sports;
 	private TestApi api;
+
+    /**
+     * ФЛОУ: посетитель открывает один публичный профиль по старой ссылке и по нику.
+     * ШАГИ: 1. Зарегистрировать владельца и посетителя через API.
+     * 2. Открыть профиль по UUID, логину и логину в верхнем регистре.
+     * 3. Запросить неизвестный логин.
+     * ПРОВЕРЯЕМ: все три ссылки возвращают тот же профиль с username;
+     * неизвестный логин даёт 404 с detail «Пользователь не найден».
+     * ПОЧЕМУ ВАЖНО: короткие ссылки должны работать без учёта регистра,
+     * сохраняя доступность ранее опубликованных ссылок с UUID.
+     */
+    @Test
+    void publicProfileResolvesUuidAndCaseInsensitiveUsername() {
+        var owner = api.newUser("anna.slug");
+        var visitor = api.newUser("visitor");
+        var profile = visitor.openUser(owner.id());
+        assertThat(profile.id()).isEqualTo(owner.id());
+        assertThat(profile.username()).isEqualTo(owner.username());
+        assertThat(visitor.openUser(owner.username())).isEqualTo(profile);
+        assertThat(visitor.openUser(owner.username().toUpperCase(Locale.ROOT))).isEqualTo(profile);
+        assertThatApi(() -> visitor.openUser(uniqueName("unknown")))
+                .fails(NOT_FOUND, "Пользователь не найден");
+    }
 
 	@BeforeEach
 	void setUp() {

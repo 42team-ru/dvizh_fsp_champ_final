@@ -1,3 +1,4 @@
+import { profilePath } from "@/entity/user/lib/profile-path";
 import { coverOf } from "@/entity/event/lib/cover";
 import { MessageCircleQuestion } from "lucide-react";
 import { EmptyState } from "@/shared/components/ui/empty-state";
@@ -279,7 +280,7 @@ function About({ m }: { m: EventModel }) {
 function Organizer({ m }: { m: EventModel }) {
   const e = m.event!;
   /** Событие организации ведёт на её страницу, личное — на профиль автора. */
-  const organizerHref = e.organization ? `/orgs/${e.organization.id}` : `/users/${e.author.id}`;
+  const organizerHref = e.organization ? `/orgs/${e.organization.id}` : profilePath(e.author);
   return (
     // Обычный поток с отступами: при крупном шрифте браузера блоки раздвигаются, а не наезжают друг на друга.
     <Card className="relative min-h-[286.5px] shrink-0 gap-[17px] overflow-hidden bg-sky-soft p-[22px]">
@@ -400,7 +401,7 @@ function Chat({ m }: { m: EventModel }) {
         )}
         {m.comments.map((c) => (
           <div key={c.id} className="flex shrink-0 items-start gap-3">
-            <Link to={`/users/${c.author.id}`} aria-label={fullName(c.author)} className="shrink-0">
+            <Link to={profilePath(c.author)} aria-label={fullName(c.author)} className="shrink-0">
               <Disc user={c.author} initials={initials(c.author)} tone="bg-sky" className="size-9 shrink-0" textClassName="text-xs leading-[17px]" />
             </Link>
             <div className={cn(

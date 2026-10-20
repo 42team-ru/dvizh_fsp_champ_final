@@ -1,3 +1,4 @@
+import { profilePath } from "@/entity/user/lib/profile-path";
 import { coverOf } from "@/entity/event/lib/cover";
 import { MessageCircleQuestion } from "lucide-react";
 import { EmptyState } from "@/shared/components/ui/empty-state";
@@ -97,7 +98,7 @@ function MobileChat({ m }: { m: EventModel }) {
       {m.comments.length === 0 && <EmptyState size="sm" icon={MessageCircleQuestion} tone="bg-sky" title="Пока тихо" text="Спросите о месте или снаряжении — организатор ответит здесь." />}
       {m.comments.map((c, i) => (
         <div key={c.id} className="flex items-start gap-2">
-          <Link to={`/users/${c.author.id}`} aria-label={fullName(c.author)} className="shrink-0">
+          <Link to={profilePath(c.author)} aria-label={fullName(c.author)} className="shrink-0">
             <Disc user={c.author} initials={initials(c.author)} tone={TONES[i % TONES.length]} className="size-8 shrink-0" textClassName="text-xs leading-[normal]" />
           </Link>
           <div className={cn(

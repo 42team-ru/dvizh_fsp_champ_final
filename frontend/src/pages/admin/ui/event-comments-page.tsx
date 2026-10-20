@@ -1,3 +1,4 @@
+import { profilePath } from "@/entity/user/lib/profile-path";
 import { useState } from "react";
 import { Link, useParams } from "react-router";
 import { ArrowUpRight, ChevronLeft, EyeOff, MessagesSquare, MoreHorizontal, RotateCcw } from "lucide-react";
@@ -74,7 +75,7 @@ function Message({ c, onHide, onUnhide, unhiding }: { c: CommentResponse; onHide
                   <EyeOff className="size-4" strokeWidth={2.4} />
                   Скрыть сообщение…
                 </button>
-                <Link to={`/users/${c.author.id}`} className="flex items-center gap-2 rounded-[10px] px-3 py-2 text-sm font-extrabold text-foreground hover:bg-muted">
+                <Link to={profilePath(c.author)} className="flex items-center gap-2 rounded-[10px] px-3 py-2 text-sm font-extrabold text-foreground hover:bg-muted">
                   <ArrowUpRight className="size-4" strokeWidth={2.4} />
                   Открыть автора
                 </Link>

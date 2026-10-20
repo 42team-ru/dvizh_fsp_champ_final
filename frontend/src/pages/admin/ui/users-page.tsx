@@ -1,3 +1,4 @@
+import { profilePath } from "@/entity/user/lib/profile-path";
 import { useState } from "react";
 import { Link } from "react-router";
 import { ArrowUpRight, UsersRound } from "lucide-react";
@@ -34,7 +35,7 @@ function Row({ user: u, odd }: { user: AdminUserResponse; odd: boolean }) {
       <div className="flex min-w-0 items-center gap-2.5">
         <UserAvatar user={u} className="size-10 shrink-0 rounded-full border-2 border-ink" />
         <div className="flex min-w-0 flex-col">
-          <Link to={`/users/${u.id}`} className="truncate text-sm font-extrabold text-foreground hover:underline">{name}</Link>
+          <Link to={profilePath(u)} className="truncate text-sm font-extrabold text-foreground hover:underline">{name}</Link>
           <span className="flex min-w-0 items-center gap-1.5 text-xs font-medium text-muted-foreground">
             <span className="truncate">@{u.username}</span>
             {!u.active && <Chip tone="bg-lavender-soft" className="px-1.5 py-0 text-[9px] normal-case">неактивен</Chip>}
