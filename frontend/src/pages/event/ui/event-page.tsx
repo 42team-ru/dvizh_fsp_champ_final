@@ -200,7 +200,8 @@ function TicketHero({ m, onDetails }: { m: EventModel; onDetails: (section: Even
             <p className="font-display text-[54px] leading-[67px] font-extrabold">{m.going}</p>
             {e.capacity != null && <span className="text-xl leading-[27px] font-bold">/ {e.capacity}</span>}
           </div>
-          <Progress value={m.percent} className="absolute top-[89px] left-0 h-3" />
+          {/* без лимита заполнять нечего */}
+          {e.capacity != null && <Progress value={m.percent} className="absolute top-[89px] left-0 h-3" />}
           <div className="absolute top-[113px] left-0 h-[30px] w-[242px]">
             {e.participants.slice(0, 4).map((p, i) => (
               <Disc

@@ -334,7 +334,7 @@ export function EventMobile({ m, onDetails }: { m: EventModel; onDetails: (secti
               />
             ))}
           </span>
-          <Progress value={m.percent} className="w-[120px] bg-card" />
+          {e.capacity != null && <Progress value={m.percent} className="w-[120px] bg-card" />}
         </div>
       </div>
 

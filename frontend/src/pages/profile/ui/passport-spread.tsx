@@ -38,16 +38,12 @@ import { handle } from "@/shared/lib/handle";
 import { PassportWaves } from "@/features/share-link/ui/share-posters";
 import { PassportMrz, PassportPageHeader } from "./passport-decoration";
 
-const IMG = "/profile";
 const CHIP_TONES = [
   "bg-sky-soft",
   "bg-lime-soft",
   "bg-peach",
   "bg-lavender-soft",
 ];
-
-/** Высота страницы паспорта; разворот выше на 2 × 12 px рамки. */
-const PAGE_H = 920;
 
 /** Вся подпись поля паспорта: мелкий заголовок и значение. */
 function Field({
@@ -61,15 +57,15 @@ function Field({
 }) {
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-[2px]">
-      <p className="text-[13px] leading-[18px] font-extrabold tracking-[1.2px] whitespace-nowrap text-muted-foreground">
+      <p className="text-[11px] leading-[16px] font-extrabold tracking-[1.2px] whitespace-nowrap text-muted-foreground">
         {label}
       </p>
       <p
         className={cn(
           "truncate leading-[1.25] text-foreground",
           large
-            ? "font-display text-[25px] font-bold"
-            : "text-[21px] font-bold",
+            ? "font-display text-[20px] font-bold"
+            : "text-base font-bold",
         )}
       >
         {value}
@@ -89,15 +85,15 @@ function SportChip({
   return (
     <span
       className={cn(
-        "flex items-center gap-2 rounded-pill border-[1.5px] border-ink px-3 py-[6px]",
+        "flex items-center gap-2 rounded-pill border-[1.5px] border-ink px-[10px] py-[5px]",
         CHIP_TONES[index % CHIP_TONES.length],
       )}
     >
-      <span className="text-[15px] font-extrabold whitespace-nowrap text-foreground">
+      <span className="text-sm font-extrabold whitespace-nowrap text-foreground">
         {sport.sport.name}
       </span>
       {sport.level ? (
-        <span className="text-sm font-bold whitespace-nowrap text-muted-foreground">
+        <span className="text-[13px] font-bold whitespace-nowrap text-muted-foreground">
           · {SPORT_LEVEL_LABEL[sport.level]}
         </span>
       ) : null}
@@ -156,6 +152,9 @@ function PetBackdrop() {
   );
 }
 
+/** Полоса страницы: тот же заголовок, но синий, как в макете профиля. */
+const STRIP = "bg-primary px-5 text-primary-foreground";
+
 /** Правая страница (стр. 2): питомец-сопровождающий. */
 function PetPage() {
   const owner = usePublicProfile();
@@ -172,37 +171,40 @@ function PetPage() {
   return (
     <section
       aria-label="Паспорт спортсмена: питомец"
-      style={{ height: PAGE_H }}
-      className="absolute top-[12px] left-[618px] flex w-[582px] flex-col gap-[14px] overflow-hidden rounded-tl-[4px] rounded-tr-[20px] rounded-br-[20px] rounded-bl-[4px] border-2 border-ink bg-card px-[26px] pt-0 pb-[22px]"
+      className="relative flex min-w-0 flex-1 basis-0 flex-col overflow-hidden bg-card"
     >
       <PassportWaves className="pointer-events-none absolute inset-0 text-primary/10" />
-      <PassportPageHeader title="СОПРОВОЖДАЮЩИЙ" page={2} className="-mx-[26px] px-[26px]" />
+      <PassportPageHeader title="СОПРОВОЖДАЮЩИЙ" page={2} className={STRIP} />
 
-      <div className="relative flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <ProfilePetName nameClassName="font-display text-[32px] leading-10">
-            {mood ? (
-              <span className="mt-1 inline-flex rounded-pill border-[1.5px] border-ink bg-lavender-soft px-[10px] py-1 text-[11px] font-bold whitespace-nowrap text-foreground">
-                настроение: {mood}
-              </span>
-            ) : null}
-          </ProfilePetName>
+      <div className="relative flex min-h-0 flex-1 flex-col gap-3 px-5 pt-4 pb-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <ProfilePetName nameClassName="font-display text-[26px] leading-8">
+              {mood ? (
+                <span className="mt-1 inline-flex rounded-pill border-[1.5px] border-ink bg-lavender-soft px-[10px] py-1 text-[11px] font-bold whitespace-nowrap text-foreground">
+                  настроение: {mood}
+                </span>
+              ) : null}
+            </ProfilePetName>
+          </div>
         </div>
-      </div>
 
-      <div className="relative min-h-0 flex-1 overflow-hidden rounded-[18px] border-2 border-ink bg-sky">
-<PetBackdrop />
-        <ProfileBeaverPet
-          speechContainer={speechContainer}
-          className="absolute bottom-[-268px] left-1/2 h-[420px] w-[420px] -translate-x-1/2 [&_.beaver-pet]:h-full [&_svg]:h-full"
-        />
-        <div
-          ref={setSpeechContainer}
-          className="beaver-speech-corner absolute top-[68px] left-[150px] z-10 flex h-[104px] w-[284px] items-end"
-        />
+        <div className="relative min-h-[300px] flex-1 overflow-hidden rounded-2xl border-2 border-ink bg-sky [container-type:size]">
+          <PetBackdrop />
+          <ProfileBeaverPet
+            speechContainer={speechContainer}
+            // .beaver-pet-container сам ставит position: relative, поэтому absolute — принудительно.
+            // Размер бобра следует за сценой, а лапы бобра на 30px выше нижнего края (рисунок уходит на ~30% размера ниже центра): бобёр стоит на траве.
+            className="absolute! bottom-[calc(30px_-_min(100cqw,85cqh)*0.2)] left-1/2 h-[min(100cqw,85cqh)] w-[min(100cqw,85cqh)] -translate-x-1/2 [&_.beaver-pet]:h-full [&_svg]:h-full"
+          />
+          <div
+            ref={setSpeechContainer}
+            className="beaver-speech-corner absolute top-3 right-3 left-20 z-10 flex items-start [&_.beaver-speech--card]:text-[15px]! [&_.beaver-speech--card]:leading-5!"
+          />
+        </div>
+        <p className="relative truncate text-[13px] leading-5 font-bold" title={`Образ: ${outfit}`}>Образ: {outfit}</p>
+        {!owner && <PetDressLinks className="relative" />}
       </div>
-      <p className="relative truncate text-[14px] leading-5 font-semibold" title={`Образ: ${outfit}`}>Образ: {outfit}</p>
-      {!owner && <PetDressLinks className="relative" />}
     </section>
   );
 }
@@ -211,93 +213,28 @@ function PetPage() {
 
 type StampType = "round" | "rect" | "oval" | "star";
 
-/** Размеры оттиска, положение текста внутри и цвет — как в макете. */
-const STAMP: Record<
-  StampType,
-  {
-    w: number;
-    h: number;
-    img: string;
-    color: string;
-    kind: number;
-    sport: number;
-    date: number;
-    place?: number;
-    sportSize: number;
-  }
-> = {
-  round: {
-    w: 132,
-    h: 132,
-    img: "stamp-round",
-    color: "text-primary",
-    kind: 26,
-    sport: 42,
-    date: 70,
-    place: 90,
-    sportSize: 19,
-  },
-  rect: {
-    w: 172,
-    h: 104,
-    img: "stamp-rect",
-    color: "text-accent",
-    kind: 16,
-    sport: 30,
-    date: 62,
-    sportSize: 19,
-  },
-  oval: {
-    w: 168,
-    h: 104,
-    img: "stamp-oval",
-    color: "text-green",
-    kind: 20,
-    sport: 34,
-    date: 62,
-    sportSize: 18,
-  },
-  star: {
-    w: 136,
-    h: 136,
-    img: "stamp-star",
-    color: "text-ink",
-    kind: 34,
-    sport: 48,
-    date: 72,
-    place: 90,
-    sportSize: 15,
-  },
+/** Форма и цвет печати: четыре вида по кругу. */
+const STAMP: Record<StampType, { width: number; shape: string; color: string }> = {
+  round: { width: 72, shape: "rounded-full", color: "text-primary" },
+  rect: { width: 80, shape: "rounded-xl", color: "text-accent" },
+  oval: { width: 92, shape: "rounded-[48px]", color: "text-green" },
+  star: { width: 72, shape: "rounded-full", color: "text-ink" },
 };
 
-/** Холст штампов 640×262 (четыре печати в один ряд, ниже визы) (потом уменьшается до ширины страницы). */
-const STAMP_SCALE = 0.82;
-const STAMP_CANVAS = { w: 640, h: 262 };
-
-/** Четыре места под печати: центр на холсте, поворот и вид оттиска. */
-const STAMP_SLOTS: {
-  type: StampType;
-  cx: number;
-  cy: number;
-  rotate: number;
-}[] = [
-  { type: "round", cx: 68, cy: 74, rotate: 6 },
-  { type: "rect", cx: 230, cy: 70, rotate: -4 },
-  { type: "oval", cx: 408, cy: 70, rotate: 3 },
-  { type: "star", cx: 570, cy: 74, rotate: -7 },
+/** Какие формы печатей идут подряд: от них же зависит, сколько печатей помещается в ряд. */
+const STAMP_SLOTS: { type: StampType; rotate: number }[] = [
+  { type: "round", rotate: 4 },
+  { type: "rect", rotate: -3 },
+  { type: "oval", rotate: 2 },
+  { type: "star", rotate: -5 },
 ];
 
-/** Места под визы (записи на будущие события). */
-const VISA_SLOTS = [
-  { cx: 100, cy: 200, rotate: 2 },
-  { cx: 300, cy: 198, rotate: -3 },
-];
+/** Сколько виз (записей на будущие события) показываем. */
+const MAX_VISAS = 2;
 
-/** Название вида спорта в оттиске: чем длиннее, тем мельче, чтобы влезло. */
-function sportSize(length: number, base: number) {
-  if (length <= 6) return base;
-  if (length <= 8) return base - 6;
-  return base - 9;
+/** Название вида спорта в печати: чем длиннее слово и уже печать, тем мельче шрифт, но не меньше 8px. */
+function sportSize(length: number, width: number) {
+  return Math.max(8, Math.min(11, (width - 14) / (length * 0.82)));
 }
 
 function Stamp({
@@ -310,55 +247,25 @@ function Stamp({
   const s = STAMP[slot.type];
   const sport = item.event.sport.name.toUpperCase();
   const kind = item.event.kind ? KIND_LABEL[item.event.kind] : "ЗАНЯТИЕ";
-  const place = item.event.address ?? item.event.locationNote ?? "";
+  const place = item.event.address ?? item.event.locationNote;
   const date = dateShort(item.startAt);
-  const inline = s.place === undefined;
   return (
     <div
-      className={cn("absolute", s.color)}
-      style={{
-        width: s.w,
-        height: s.h,
-        left: slot.cx - s.w / 2,
-        top: slot.cy - s.h / 2,
-        transform: `rotate(${slot.rotate}deg)`,
-      }}
+      title={[kind, item.event.sport.name, date, place].filter(Boolean).join(" · ")}
+      className={cn(
+        "flex h-[72px] shrink-0 flex-col items-center justify-center gap-[2px] border-[2.5px] border-dashed border-current px-1 text-center",
+        s.shape,
+        s.color,
+      )}
+      style={{ width: s.width, transform: `rotate(${slot.rotate}deg)` }}
     >
-      <img
-        src={`${IMG}/${s.img}.svg`}
-        alt=""
-        className="absolute inset-0 size-full max-w-none"
-      />
-      <p
-        className="absolute inset-x-0 text-center text-[9px] font-extrabold tracking-[1.5px]"
-        style={{ top: s.kind }}
-      >
-        {kind}
-      </p>
-      <p
-        className="absolute inset-x-3 truncate text-center font-display font-extrabold"
-        style={{ top: s.sport, fontSize: sportSize(sport.length, s.sportSize) }}
-        title={item.event.sport.name}
+      <span
+        className="max-w-full truncate font-sans font-extrabold tracking-[0.3px]"
+        style={{ fontSize: sportSize(sport.length, s.width) }}
       >
         {sport}
-      </p>
-      <p
-        className={cn(
-          "absolute inset-x-3 truncate text-center font-extrabold",
-          inline ? "text-[11px] tracking-[0.5px]" : "text-xs tracking-[1px]",
-        )}
-        style={{ top: s.date }}
-      >
-        {inline ? [date, place].filter(Boolean).join(" · ") : date}
-      </p>
-      {!inline && place ? (
-        <p
-          className="absolute inset-x-3 truncate text-center text-[10px] font-bold"
-          style={{ top: s.place }}
-        >
-          {place}
-        </p>
-      ) : null}
+      </span>
+      <span className="text-[10px] font-extrabold tracking-[0.5px]">{date}</span>
     </div>
   );
 }
@@ -379,37 +286,21 @@ const regVisa = (reg: MyRegistrationResponse): VisaItem => ({
   status: isCancelled(reg) ? "ОТМЕНЕНО" : reg.status === "PENDING" ? "ОЖИДАЕТ" : "ОДОБРЕНО",
 });
 
-function Visa({
-  slot,
-  visa,
-}: {
-  slot: (typeof VISA_SLOTS)[number];
-  visa: VisaItem;
-}) {
-  const pending = visa.pending;
+function Visa({ visa }: { visa: VisaItem }) {
   return (
     <div
       className={cn(
-        "absolute flex w-[184px] flex-col gap-1 rounded-[10px] border-[2.5px] border-dashed px-3 py-[10px]",
-        visa.cancelled ? "border-orange-ink text-orange-ink" : pending ? "border-accent text-accent" : "border-primary text-primary",
+        "relative flex min-w-0 flex-col gap-[2px] rounded-[10px] border-2 border-dashed px-[10px] py-[6px]",
+        visa.cancelled ? "border-orange-ink text-orange-ink" : visa.pending ? "border-accent text-accent" : "border-primary text-primary",
       )}
-      style={{
-        left: slot.cx - 92,
-        top: slot.cy - 50,
-        transform: `rotate(${slot.rotate}deg)`,
-      }}
     >
-      <div className="flex items-center justify-between text-[11px] font-extrabold whitespace-nowrap">
+      <div className="flex items-center justify-between gap-2 text-[10px] font-extrabold whitespace-nowrap">
         <span className="tracking-[2px]">ВИЗА</span>
-        <span className="tracking-[1.2px]">{visa.status}</span>
+        <span className="tracking-[1px]">{visa.status}</span>
       </div>
-      <p className="line-clamp-2 font-display text-sm leading-5 font-bold">
-        {visa.title}
-      </p>
-      <p className="text-[13px] font-extrabold whitespace-nowrap">
-        {whenLabel(visa.startAt)}
-      </p>
-      {visa.cancelled && <CancelledStamp className="right-[-6px] bottom-[-10px] h-[30px] w-[96px] -rotate-[8deg]" />}
+      <p className="truncate font-display text-xs leading-4 font-bold" title={visa.title}>{visa.title}</p>
+      <p className="text-[11px] font-extrabold whitespace-nowrap">{whenLabel(visa.startAt)}</p>
+      {visa.cancelled && <CancelledStamp className="right-[-4px] bottom-[-8px] h-[24px] w-[78px] -rotate-[8deg]" />}
     </div>
   );
 }
@@ -422,7 +313,7 @@ function Stamps() {
     <StampsView
       total={owner.user.attendedCount}
       attended={[]}
-      visas={owner.user.events.slice(0, VISA_SLOTS.length).map((e) => ({
+      visas={owner.user.events.slice(0, MAX_VISAS).map((e) => ({
         id: e.id, title: e.title, startAt: e.startAt, status: "ВЕДЁТ",
       }))}
       hint="Виза — ближайшее событие, которое ведёт"
@@ -456,7 +347,7 @@ function MyStamps() {
         new Date(a.myNextOccurrence?.startAt ?? a.event.startAt).getTime() -
         new Date(b.myNextOccurrence?.startAt ?? b.event.startAt).getTime(),
     )
-    .slice(0, VISA_SLOTS.length);
+    .slice(0, MAX_VISAS);
 
   return (
     <StampsView
@@ -483,58 +374,40 @@ function StampsView({
   /** Пустая печать «следующая» — подсказка владельцу. */
   nextStamp?: boolean;
 }) {
-  // пустая печать «следующая»: на первом свободном месте, а когда все заняты — во втором ряду
-  const emptyAt =
-    attended.length < STAMP_SLOTS.length
-      ? STAMP_SLOTS[attended.length]
-      : { cx: 480, cy: 200 };
-
+  const shown = attended.slice(0, STAMP_SLOTS.length);
   return (
     <div className="relative flex flex-col gap-2">
       <div className="flex items-center gap-2">
         <h3 className="text-[11px] font-extrabold tracking-[1.2px] whitespace-nowrap text-muted-foreground">
           ОТМЕТКИ О ПОСЕЩЕНИИ
         </h3>
-        <span className="rounded-pill border-[1.5px] border-ink bg-secondary px-[10px] py-[3px] text-xs font-extrabold tracking-[1px] whitespace-nowrap text-foreground">
+        <span className="rounded-pill border-[1.5px] border-ink bg-secondary px-[10px] py-[2px] text-[11px] font-extrabold tracking-[1px] whitespace-nowrap text-foreground">
           ВСЕГО {total}
         </span>
-        <span className="min-w-0 truncate text-xs font-semibold text-muted-foreground">
-          {hint}
-        </span>
       </div>
 
-      <div
-        className="relative w-full"
-        style={{ height: STAMP_CANVAS.h * STAMP_SCALE }}
-      >
-        <div
-          className="absolute top-0 left-0 origin-top-left"
-          style={{
-            width: STAMP_CANVAS.w,
-            height: STAMP_CANVAS.h,
-            transform: `scale(${STAMP_SCALE})`,
-          }}
-        >
-          {attended.slice(0, STAMP_SLOTS.length).map((item, i) => (
-            <Stamp key={item.occurrenceId} slot={STAMP_SLOTS[i]} item={item} />
-          ))}
+      <div className="flex flex-wrap items-center gap-3 py-1 pr-1">
+        {shown.map((item, i) => (
+          <Stamp key={item.occurrenceId} slot={STAMP_SLOTS[i]} item={item} />
+        ))}
+        {nextStamp && shown.length < STAMP_SLOTS.length && (
+          <div className="flex size-[72px] shrink-0 flex-col items-center justify-center rounded-full border-[2.5px] border-dashed border-ultramarine bg-white text-[10px] leading-[12px] font-extrabold text-foreground">
+            <span className="font-display text-[24px] leading-[26px] text-ultramarine">+</span>
+            <span>следующая</span>
+          </div>
+        )}
+        {shown.length === 0 && !nextStamp && (
+          <span className="text-[13px] font-semibold text-muted-foreground">{hint}</span>
+        )}
+      </div>
 
-          {visas.map((visa, i) => (
-            <Visa key={visa.id} slot={VISA_SLOTS[i]} visa={visa} />
+      {visas.length > 0 && (
+        <div className="grid grid-cols-2 gap-3">
+          {visas.map((visa) => (
+            <Visa key={visa.id} visa={visa} />
           ))}
-
-          {nextStamp && (
-            <div
-              className="absolute flex size-[116px] flex-col items-center justify-center rounded-full border-[2.5px] border-dashed border-ultramarine bg-white text-[11px] leading-[14px] font-extrabold text-foreground"
-              style={{ left: emptyAt.cx - 58, top: emptyAt.cy - 58 }}
-            >
-              <span className="font-display text-[30px] leading-[34px] text-ultramarine">+</span>
-              <span>следующая</span>
-              <span>печать</span>
-            </div>
-          )}
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -553,131 +426,106 @@ function DataPage() {
   return (
     <section
       aria-label="Паспорт спортсмена: данные и отметки"
-      style={{ height: PAGE_H }}
-      className="absolute top-[12px] left-[12px] flex w-[582px] flex-col gap-2 overflow-hidden rounded-tl-[20px] rounded-tr-[4px] rounded-br-[4px] rounded-bl-[20px] border-2 border-ink bg-card px-[26px] pt-0 pb-[14px]"
+      className="relative flex min-w-0 flex-1 basis-0 flex-col overflow-hidden border-r-2 border-ink bg-card"
     >
       <PassportWaves className="pointer-events-none absolute inset-0 text-primary/10" />
-      <PassportPageHeader title="◉ ПАСПОРТ СПОРТСМЕНА" page={1} className="-mx-[26px] px-[26px]" />
+      <PassportPageHeader title="◉ ПАСПОРТ СПОРТСМЕНА" page={1} className={STRIP} />
 
-      <div className="relative flex items-start gap-[22px]">
-        <div className="flex shrink-0 flex-col gap-3">
-          <div className="relative">
-            <UserAvatar user={user} className="h-[160px] w-[150px] rounded-xl border-2 border-ink object-cover" />
-          </div>
-          <ProfileShare user={user} className="px-3" />
-        </div>
-        <div className="flex min-w-0 flex-1 flex-col gap-3">
-          <div className="flex gap-4">
+      <div className="relative flex flex-1 flex-col gap-3 px-5 pt-4 pb-4">
+        <div className="relative flex items-start gap-4">
+          <UserAvatar user={user} className="h-[132px] w-[108px] shrink-0 rounded-xl border-2 border-ink object-cover" />
+          <div className="flex min-w-0 flex-1 flex-col gap-2 pr-10">
             <Field
               label="ФАМИЛИЯ / SURNAME"
               value={user?.lastName ?? "—"}
               large
             />
             <Field label="ИМЯ / NAME" value={user?.firstName ?? "—"} large />
-          </div>
-          <div className="flex gap-4">
             <Field
               label="ЛОГИН"
               value={user?.username ? handle(user.username) : "—"}
             />
-            <Field label="ГОРОД" value={user?.city ?? "—"} />
           </div>
-          <div className="flex gap-4">
-            {owner ? (
-              <Field label="ПОСЕЩЕНИЙ" value={String(owner.user.attendedCount)} />
-            ) : (
-              <Field label="ДАТА ВЫДАЧИ" value={dateFull(me?.createdAt)} />
-            )}
-            <Field label="ОРГАН ВЫДАЧИ" value="Движ" />
-          </div>
-          <div className="flex gap-4">
-            {owner ? (
-              <Field label="ВЕДЁТ СОБЫТИЙ" value={String(owner.user.events.length)} />
-            ) : (
-              <Field
-                label="СТАТУС"
-                value={me?.systemRole ? ROLE_LABEL[me.systemRole] : "—"}
-              />
-            )}
-            <Field label="№ ПАСПОРТА" value={number} />
-          </div>
-        </div>
-      </div>
-
-      <div className="relative flex flex-col gap-2">
-        <div className="flex items-center justify-between">
-          <p className="text-[13px] font-extrabold tracking-[1.2px] whitespace-nowrap text-muted-foreground">
-            ВИДЫ СПОРТА И РАЗРЯД
-          </p>
           {!owner && (
             <EditProfileDialog user={me}>
               <Button
                 variant="soft"
                 aria-label="Править профиль"
                 title="Править профиль"
-                className="-mt-2 -mr-1 size-11 shrink-0 p-0"
+                className="absolute top-0 right-0 size-9 shrink-0 p-0"
               >
-                <Pencil className="size-6" />
+                <Pencil className="size-5" />
               </Button>
             </EditProfileDialog>
           )}
         </div>
-        <div className="flex max-h-[80px] flex-wrap gap-2 overflow-hidden">
-          {list.length > 0 ? (
-            list.map((s, i) => (
-              <SportChip key={s.sport.id} sport={s} index={i} />
-            ))
-          ) : (
-            <span className="text-[15px] font-semibold text-muted-foreground">
-              Виды спорта пока не выбраны.
-            </span>
-          )}
-        </div>
-      </div>
 
-      <div className="relative flex items-center gap-4">
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <p className="text-[13px] font-extrabold tracking-[1.2px] whitespace-nowrap text-muted-foreground">
+        <div className="grid grid-cols-3 items-end gap-x-3 gap-y-2">
+          <Field label="ГОРОД" value={user?.city ?? "—"} />
+          {owner ? (
+            <Field label="ПОСЕЩЕНИЙ" value={String(owner.user.attendedCount)} />
+          ) : (
+            <Field label="ДАТА ВЫДАЧИ" value={dateFull(me?.createdAt)} />
+          )}
+          {owner ? (
+            <Field label="ВЕДЁТ СОБЫТИЙ" value={String(owner.user.events.length)} />
+          ) : (
+            <Field
+              label="СТАТУС"
+              value={me?.systemRole ? ROLE_LABEL[me.systemRole] : "—"}
+            />
+          )}
+          <Field label="ОРГАН ВЫДАЧИ" value="Движ" />
+          <Field label="№ ПАСПОРТА" value={number} />
+          <ProfileShare user={user} className="h-9 justify-self-end px-3" />
+        </div>
+
+        <div className="relative flex flex-col gap-[6px]">
+          <p className="text-[11px] font-extrabold tracking-[1.2px] whitespace-nowrap text-muted-foreground">
+            ВИДЫ СПОРТА И РАЗРЯД
+          </p>
+          <div className="flex max-h-[76px] flex-wrap gap-2 overflow-hidden">
+            {list.length > 0 ? (
+              list.map((s, i) => (
+                <SportChip key={s.sport.id} sport={s} index={i} />
+              ))
+            ) : (
+              <span className="text-sm font-semibold text-muted-foreground">
+                Виды спорта пока не выбраны.
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="relative flex flex-col gap-[2px]">
+          <p className="text-[11px] font-extrabold tracking-[1.2px] whitespace-nowrap text-muted-foreground">
             ОСОБЫЕ ОТМЕТКИ
           </p>
-          <p className="line-clamp-2 text-[17px] leading-[24px] font-medium text-foreground">
+          <p className="line-clamp-2 text-[15px] leading-[21px] font-medium text-foreground">
             {user?.bio || "Пока ничего не написано."}
           </p>
         </div>
-      </div>
 
-      <div className="relative mt-auto">
-        <Stamps />
+        <div className="relative mt-auto">
+          <Stamps />
+        </div>
+        <PassportMrz user={user} className="rounded-[10px] border-0 bg-muted px-3 py-2 text-[10px] tracking-[0.6px]" />
       </div>
-      <PassportMrz user={user} />
     </section>
   );
 }
 
-/** Разворот во всю ширину страницы, без уменьшения: мелкий текст паспорта остаётся читаемым. */
-export const SPREAD_SCALE = 1;
-export const SPREAD_W = Math.round(1216 * SPREAD_SCALE);
-export const SPREAD_H = Math.round((PAGE_H + 28) * SPREAD_SCALE);
-
-/** Разворот паспорта спортсмена: данные и отметки слева, питомец справа. */
-export function PassportSpread() {
+/** Разворот паспорта спортсмена: данные и отметки слева, питомец справа. Ширину задаёт родитель, высоту — содержимое. */
+export function PassportSpread({ className }: { className?: string }) {
   return (
     <div
-      className="absolute top-0 left-0"
-      style={{ width: SPREAD_W, height: SPREAD_H }}
+      className={cn(
+        "relative flex min-h-[520px] overflow-hidden rounded-[24px] border-2 border-ink bg-card shadow-hard",
+        className,
+      )}
     >
-      <div
-        className="absolute top-0 left-0 origin-top-left rounded-[28px] border-2 border-ink bg-primary shadow-hard"
-        style={{
-          width: 1216,
-          height: PAGE_H + 28,
-          transform: `scale(${SPREAD_SCALE})`,
-        }}
-      >
-        <DataPage />
-        <PetPage />
-        <div aria-hidden="true" className="absolute top-[16px] bottom-[16px] left-[605px] border-l-[3px] border-dashed border-lime" />
-      </div>
+      <DataPage />
+      <PetPage />
     </div>
   );
 }

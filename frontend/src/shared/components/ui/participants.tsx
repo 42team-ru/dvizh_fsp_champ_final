@@ -7,7 +7,7 @@ import type { EventParticipantResponse } from "@/shared/api/generated/core/appAP
 
 const AVATAR_TONES = ["bg-sky", "bg-lime-soft", "bg-lavender-soft"]
 
-/** Стопка аватаров, «Идут N из M» и полоса заполнения. Без `total` лимита нет. */
+/** Стопка аватаров, «Идут N из M» и полоса заполнения. Без `total` лимита нет: полосы заполнения тоже нет. */
 function Participants({
   people,
   going,
@@ -58,10 +58,12 @@ function Participants({
           {total ? `осталось ${total - going}` : "без лимита"}
         </span>
       </div>
-      <Progress
-        value={total ? (going / total) * 100 : 60}
-        indicatorClassName={warning ? "bg-accent" : undefined}
-      />
+      {total ? (
+        <Progress value={(going / total) * 100} indicatorClassName={warning ? "bg-accent" : undefined} />
+      ) : (
+        // Без лимита заполнять нечего: полосу не рисуем, место оставляем, чтобы карточки в ряду были одной высоты.
+        <div aria-hidden className="h-[10px]" />
+      )}
     </div>
   )
 }

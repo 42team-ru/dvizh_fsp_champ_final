@@ -7,7 +7,6 @@ import { Card } from "@/shared/components/ui/card";
 import { cn } from "cn";
 import { visitsWord } from "./use-attendance";
 import { SPORT_LEVEL_LABEL, whenLabel } from "./passport-utils";
-import { SPREAD_H } from "./passport-spread";
 import { usePublicProfile, type PublicProfile } from "../model/public-profile";
 
 /** Цвета полос по видам спорта: чаще всего — синий, дальше по кругу. */
@@ -18,9 +17,8 @@ const REG_TONES = {
   CONFIRMED: { box: "bg-sky-soft", badge: "border-primary text-primary", text: "ПОДТВЕРЖДЕНО" },
 } as const;
 
-const CARD_STYLE = { top: SPREAD_H + 20 };
-// Высота карточки фиксирована раскладкой профиля, поэтому размеры внутри в px: не растут от шрифта браузера.
-const CARD = "absolute left-0 h-[316px] w-[495px] gap-[14px] overflow-hidden rounded-[24px] p-[22px]";
+// Карточка занимает остаток правой колонки под «Посещено»; размеры внутри в px: не растут от шрифта браузера.
+const CARD = "min-h-0 flex-1 gap-[14px] overflow-hidden rounded-[24px] p-5";
 
 /** История посещений: всего, по видам спорта и ближайшие записи. В чужом профиле — его данные без записей. */
 export function HistoryCard() {
@@ -31,7 +29,7 @@ export function HistoryCard() {
 function Head({ total }: { total: number }) {
   return (
     <>
-      <div className="flex items-baseline justify-between font-bold whitespace-nowrap">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 font-bold whitespace-nowrap">
         <h2 className="font-display text-[22px] text-foreground">История</h2>
         <span className="text-[13px] text-muted-foreground">
           <span className="font-display text-[18px] leading-[28px] font-extrabold text-foreground">{total}</span> {visitsWord(total)} за всё время
@@ -44,9 +42,9 @@ function Head({ total }: { total: number }) {
 /** Чужая история: число посещений, виды спорта с уровнем и события, которые человек ведёт. */
 function PublicHistory({ owner }: { owner: PublicProfile }) {
   const { user } = owner;
-  const events = user.events.slice(0, 1);
+  const events = user.events.slice(0, 3);
   return (
-    <Card className={CARD} style={CARD_STYLE}>
+    <Card className={CARD}>
       <Head total={user.attendedCount} />
 
       <ul className="flex flex-col gap-[10px]" aria-label="Виды спорта">
@@ -116,10 +114,10 @@ function MyHistory() {
         new Date(a.myNextOccurrence?.startAt ?? a.event.startAt).getTime() -
         new Date(b.myNextOccurrence?.startAt ?? b.event.startAt).getTime(),
     )
-    .slice(0, 1);
+    .slice(0, 3);
 
   return (
-    <Card className={CARD} style={CARD_STYLE}>
+    <Card className={CARD}>
       <Head total={total} />
 
       <ul className="flex flex-col gap-[10px]" aria-label="Посещения по видам спорта">
