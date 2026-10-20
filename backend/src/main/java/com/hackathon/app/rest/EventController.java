@@ -70,12 +70,12 @@ class EventController {
     @GetMapping
     @Operation(operationId = "events_list", summary = "Лента мероприятий",
             description = "Только опубликованные и видимые (организация одобрена), ближайшие первыми. Без from — начиная "
-                    + "с текущего момента. Постранично: page и size (до 100); пришло меньше size — дальше пусто. "
+                    + "с текущего момента. Постранично: page и size (до 100), общее количество — totalElements. "
                     + "lat/lon/radiusKm — рядом с точкой, онлайн показывается всегда.")
-    List<EventSummaryResponse> list(@AuthenticationPrincipal Jwt jwt, @ParameterObject @Valid EventFilter filter) {
+    PageResponse<EventSummaryResponse> list(@AuthenticationPrincipal Jwt jwt, @ParameterObject @Valid EventFilter filter) {
         log.info("Endpoint called: GET /api/events, userId={}, request={}", jwt.getSubject(), filter);
         var response = events.list(filter, userId(jwt));
-        log.info("Endpoint response: GET /api/events, count={}", response.size());
+        log.info("Endpoint response: GET /api/events, count={}, total={}", response.items().size(), response.totalElements());
         return response;
     }
 

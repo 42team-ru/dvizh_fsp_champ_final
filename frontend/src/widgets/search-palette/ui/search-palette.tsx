@@ -50,7 +50,7 @@ export function SearchPalette() {
     { searchText: debounced || undefined },
     { query: { enabled: open && debounced.length > 0 } },
   );
-  const results = search.data?.status === 200 ? search.data.data.slice(0, 6) : [];
+  const results = search.data?.status === 200 ? (search.data.data.items ?? []).slice(0, 6) : [];
 
   const close = () => {
     setOpen(false);

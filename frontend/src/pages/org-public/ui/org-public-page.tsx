@@ -61,7 +61,7 @@ export default function OrgPublicPage() {
   const query = useOrganizationsGet(id, { query: { retry: false } });
   const org = query.data?.status === 200 ? query.data.data : undefined;
   const events = useEventsList({ organizationId: id, size: 30 }, { query: { enabled: Boolean(org) } });
-  const items = events.data?.status === 200 ? events.data.data : [];
+  const items = events.data?.status === 200 ? events.data.data.items ?? [] : [];
   const contacts = CONTACT_TYPES.filter((c) => org?.contacts?.[c.key]);
   const awards = (org?.awards ?? []).filter((a) => a.earned);
 

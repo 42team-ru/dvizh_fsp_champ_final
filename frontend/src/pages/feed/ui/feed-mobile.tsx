@@ -22,6 +22,7 @@ import { useFeedEvents } from "@/entity/event/model/use-feed-events";
 import { Sparkles } from "lucide-react";
 import { EventsMap } from "@/widgets/events-map/ui/events-map";
 import { FeedExtraFilters } from "@/widgets/feed-filters/ui/feed-extra-filters";
+import { FeedPagination } from "./feed-pagination";
 
 const dir = "m-feed";
 
@@ -306,16 +307,19 @@ export function FeedMobile() {
         </div>
       ) : (
         <>
-          {list.isPending && <p className="px-4 text-base font-semibold text-muted-foreground">Загружаем события…</p>}
-          {list.isError && <p role="alert" className="px-4 text-base font-semibold text-destructive">Не удалось загрузить ленту.</p>}
-          {!list.isPending && events.length === 0 && <FeedEmpty />}
+          {list.totalElements !== undefined && (
+            <p className="px-4 text-sm font-bold text-muted-foreground">Найдено событий: {list.totalElements}</p>
+          )}
+          {list.isError && !list.isFetchNextPageError && <p role="alert" className="px-4 text-base font-semibold text-destructive">Не удалось загрузить ленту.</p>}
+          {!list.isPending && !list.isError && events.length === 0 && <FeedEmpty />}
           {groups.map((group, i) => (
             <div key={group[0].id} className="flex flex-col gap-4">
               <BigCard e={group[0]} index={i} placeOf={list.placeOf} reason={list.topReasonOf(group[0].id)} onDismiss={onDismiss} />
               {group.length > 1 && <SmallRow items={group.slice(1)} placeOf={list.placeOf} reasonOf={list.topReasonOf} onDismiss={onDismiss} />}
             </div>
           ))}
-          <Promo />
+          <div className="px-4"><FeedPagination {...list} /></div>
+          {!list.isPending && !list.isError && !list.hasNextPage && <Promo />}
         </>
       )}
       <MobileTabBar current="feed" />

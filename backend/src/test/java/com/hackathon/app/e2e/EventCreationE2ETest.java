@@ -9,6 +9,7 @@ import java.time.Instant;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import com.hackathon.app.domain.enums.NotificationType;
 import com.hackathon.app.domain.entity.Sport;
@@ -158,6 +159,44 @@ class EventCreationE2ETest {
 		var updated = author.updateEvent(id, form.capacity(2));
 		assertThat(updated.capacity()).isEqualTo(2);
 		assertThat(updated.participantsCount()).isEqualTo(2);
+	}
+
+	/**
+	 * ФЛОУ: читатель последовательно загружает страницы отфильтрованной ленты до конца.
+	 * ШАГИ: 1. Создать три события одного вида и одно другого. 2. Запросить страницы по два события.
+	 *   3. Проверить страницу за концом выдачи и уточнить поиск до одного события.
+	 * ПРОВЕРЯЕМ: totalElements и totalPages учитывают фильтр, страницы не пересекаются,
+	 *   последняя неполная и пустая страницы сохраняют общее количество.
+	 * ПОЧЕМУ ВАЖНО: бесконечная лента должна показать все события без дублей и правильно остановиться.
+	 */
+	@Test
+	void feedPagesPreserveFilteredTotalAndStableOrder() {
+		var author = api.newUser("pagingAuthor");
+		var reader = api.newUser("pagingReader");
+		var sport = uniqueName("Постраничный спорт ");
+		var first = author.createEvent(EventForm.free().sport(sport));
+		var second = author.createEvent(EventForm.free().sport(sport));
+		var third = author.createEvent(EventForm.free().sport(sport));
+		author.createEvent(EventForm.free().sport(uniqueName("Другой спорт ")));
+		var sportId = first.sport().id().toString();
+		var page0 = reader.feedPage(Map.of("sportId", sportId, "page", "0", "size", "2"));
+		var page1 = reader.feedPage(Map.of("sportId", sportId, "page", "1", "size", "2"));
+		assertThat(page0.totalElements()).isEqualTo(3);
+		assertThat(page0.totalPages()).isEqualTo(2);
+		assertThat(page0.page()).isZero();
+		assertThat(page0.size()).isEqualTo(2);
+		assertThat(page0.items()).hasSize(2);
+		assertThat(page1.items()).hasSize(1).doesNotContainAnyElementsOf(page0.items());
+		assertThat(page1.totalElements()).isEqualTo(3);
+		assertThat(reader.feedPage(Map.of("sportId", sportId, "size", "2")).items()).isEqualTo(page0.items());
+		assertThat(Stream.concat(page0.items().stream(), page1.items().stream()).map(e -> e.id()))
+				.containsExactlyInAnyOrder(first.id(), second.id(), third.id());
+		var end = reader.feedPage(Map.of("sportId", sportId, "page", "2", "size", "2"));
+		assertThat(end.items()).isEmpty();
+		assertThat(end.totalElements()).isEqualTo(3);
+		var search = reader.feedPage(Map.of("sportId", sportId, "searchText", first.title(), "size", "2"));
+		assertThat(search.items()).extracting(e -> e.id()).containsExactly(first.id());
+		assertThat(search.totalElements()).isEqualTo(1);
 	}
 
 	private void assertFoundAndPublished(Actor reader, UUID id, String title, UUID sportId) {
