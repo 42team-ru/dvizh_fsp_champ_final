@@ -84,5 +84,20 @@
   box-shadow: 3px 3px 0 var(--ink);
 }
 
-/* Дом пользователя на карте ленты: готовая капля public/feed/map-home-pin.svg; поверх событий и не кликается. */
-.map-home { display: block; width: 40px; height: 50px; max-width: none; pointer-events: none; }
+/* Дом пользователя на карте: капля public/map/marker-home.svg; поверх событий и не кликается. */
+.map-home { display: block; width: 52px; height: 62px; max-width: none; pointer-events: none; }
+
+/* Кнопки карты (Memphis): справа по центру; z-index как у контролов Leaflet — выше слоёв плиток (400). Иконки 50×50 уже с жёсткой тенью. */
+.map-controls {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%); z-index: 1000;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.map-control {
+  display: block; width: 50px; height: 50px; padding: 0; border: 0; border-radius: 50%;
+  background: none; cursor: pointer; transition: transform 0.1s ease;
+}
+.map-control img { display: block; width: 50px; height: 50px; max-width: none; }
+.map-control:hover:not(:disabled) { transform: translate(-1px, -1px); }
+.map-control:active:not(:disabled) { transform: translate(2px, 2px); }
+.map-control:disabled { cursor: progress; opacity: 0.6; }
+.map-control:focus-visible { outline: 3px solid var(--ring); outline-offset: 2px; }
