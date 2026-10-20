@@ -37,7 +37,7 @@ public record EventMapFilter(
 		String searchText,
 		@Schema(description = "Вид спорта")
 		UUID sportId,
-		@Schema(description = "Уровень; мероприятия «Любой уровень» подходят под любой")
+		@Schema(description = "Уровень, строго: ANY — только встречи «Любой уровень»")
 		EventLevel level,
 		@Schema(description = "Режим записи")
 		JoinMode joinMode,
