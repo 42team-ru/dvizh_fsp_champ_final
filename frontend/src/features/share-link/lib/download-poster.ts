@@ -61,9 +61,13 @@ async function inlineNode(source: Element, clone: Element) {
 /** PNG имеет размер самого холста, независимо от DPR устройства и масштаба превью. */
 export async function downloadPoster(node: HTMLElement, title: string) {
   await document.fonts.ready;
+  // Оба поднабора (кириллица и латиница с цифрами) — иначе цифры и «×» уйдут в запасной шрифт.
+  const sample = "Движ Sport 0123456789 ×№—·";
   await Promise.all([
-    document.fonts.load('800 48px "Unbounded"', "Движ Sport"),
-    document.fonts.load('700 32px "Manrope"', "Движ Sport"),
+    document.fonts.load('800 48px "Unbounded"', sample),
+    document.fonts.load('900 48px "Unbounded"', sample),
+    document.fonts.load('700 32px "Manrope"', sample),
+    document.fonts.load('800 32px "Manrope"', sample),
   ]);
   const width = node.offsetWidth;
   const height = node.offsetHeight;
@@ -73,8 +77,15 @@ export async function downloadPoster(node: HTMLElement, title: string) {
   style.textContent = await fonts();
   clone.prepend(style);
   const markup = new XMLSerializer().serializeToString(clone);
+  const src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><foreignObject width="100%" height="100%">${markup}</foreignObject></svg>`)}`;
+  // Шрифты внутри SVG-картинки грузятся асинхронно: первая отрисовка их только прогревает,
+  // без этого в PNG часть текста выходит запасным шрифтом и переносится.
+  const warm = new Image();
+  warm.src = src;
+  await warm.decode();
+  await new Promise((resolve) => window.setTimeout(resolve, 250));
   const image = new Image();
-  image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><foreignObject width="100%" height="100%">${markup}</foreignObject></svg>`)}`;
+  image.src = src;
   await image.decode();
   const canvas = document.createElement("canvas");
   canvas.width = width;

@@ -57,8 +57,8 @@ export function ShareTicket({
   return (
     <div className="flex size-full flex-col bg-card text-ink">
       <header className="flex h-[100px] shrink-0 items-center justify-between gap-6 border-b-[4px] border-ink bg-ultramarine px-[46px] text-[25px] font-extrabold tracking-[2px] text-lime">
-        <span>ДВИЖ · ПОСАДОЧНЫЙ ТАЛОН</span>
-        <span className="shrink-0 text-[24px] text-primary-foreground">
+        <span className="min-w-0 truncate whitespace-nowrap">ДВИЖ · ПОСАДОЧНЫЙ ТАЛОН</span>
+        <span className="shrink-0 whitespace-nowrap text-[24px] text-primary-foreground">
           № {number}
         </span>
       </header>
@@ -111,7 +111,7 @@ export function ShareTicket({
             label="QR-код: страница встречи"
             className="size-[160px] rounded-[12px] border-[3px]"
           />
-          <p className="max-w-[440px] text-[31px] leading-[1.3] font-extrabold">
+          <p className="max-w-[440px] text-[31px] leading-[1.3] font-extrabold whitespace-nowrap">
             Наведи камеру —<br />и ты в игре
           </p>
           <span className="ml-auto rounded-pill border-[4px] border-ink bg-lime px-[32px] py-[14px] font-display text-[33px] font-bold">
@@ -200,7 +200,7 @@ export function SharePassport({
             label="QR-код: профиль спортсмена"
             className="size-[170px] rounded-[16px] border-[4px]"
           />
-          <p className="text-[31px] leading-snug font-bold">
+          <p className="text-[31px] leading-snug font-bold whitespace-nowrap">
             Наведи камеру —<br />
             профиль на Движе
           </p>
