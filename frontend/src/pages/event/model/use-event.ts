@@ -9,6 +9,8 @@ import { plural } from "@/shared/lib/plural";
 import { useUser } from "@/entity/user/model/use-user";
 import { useCrowdSample } from "@/widgets/event-going-crowd/model/use-crowd-sample";
 
+import { useCommentModeration } from "@/features/comment-moderation/model/use-comment-moderation";
+
 const WEEKDAYS = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
 const MONTHS = ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
 const time = (d: Date) => d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
@@ -86,6 +88,7 @@ function facts(event: EventResponse) {
 export function useEvent() {
   const { id = "" } = useParams();
   const queryClient = useQueryClient();
+  const moderation = useCommentModeration(id);
   const query = useEventsGet(id);
   const event = query.data?.status === 200 ? query.data.data : undefined;
   const { user } = useUser();
@@ -106,6 +109,7 @@ export function useEvent() {
 
   return {
     id,
+    moderation,
     query,
     event,
     comments: comments.data?.status === 200 ? comments.data.data : [],

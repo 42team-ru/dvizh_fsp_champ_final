@@ -1,3 +1,7 @@
+import { CommentContent } from "./comment-content";
+import { CommentModerationAction, CommentModerationDialog } from "@/features/comment-moderation/ui/comment-moderation";
+import { MessageActionsSheet, MessageGestures } from "@/features/comment-gestures/ui/message-gestures";
+import type { CommentResponse } from "@/shared/api/generated/core/appAPI.schemas";
 import { profilePath } from "@/entity/user/lib/profile-path";
 import { coverOf } from "@/entity/event/lib/cover";
 import { MessageCircleQuestion } from "lucide-react";
@@ -370,8 +374,11 @@ function RouteMap({ m }: { m: EventModel }) {
 function Chat({ m }: { m: EventModel }) {
   const [text, setText] = useState("");
   const [replyTo, setReplyTo] = useState<{ id: string; who: string } | null>(null);
+  const [held, setHeld] = useState<CommentResponse>();
   const input = useRef<HTMLInputElement>(null);
   const canComment = m.event!.viewer.canComment;
+  const canReply = (c: CommentResponse) => canComment && !c.deleted && !c.hidden;
+  const canRemove = (c: CommentResponse) => m.moderation.isAdmin && !c.deleted && !c.hidden;
   // «Ответить»: сразу в поле ввода — фокус и прокрутка к нему, без второго клика
   const reply = (id: string, who: string) => {
     setReplyTo({ id, who });
@@ -406,8 +413,11 @@ function Chat({ m }: { m: EventModel }) {
             <Link to={profilePath(c.author)} aria-label={fullName(c.author)} className="shrink-0">
               <Disc user={c.author} initials={initials(c.author)} tone="bg-sky" className="size-9 shrink-0" textClassName="text-xs leading-[17px]" />
             </Link>
-            <div className={cn(
-              "box-border min-w-0 max-w-[580px] break-words rounded-tl-[4px] rounded-tr-[18px] rounded-br-[18px] rounded-bl-[18px] border-2 border-ink px-4 py-2.5",
+            <MessageGestures className="min-w-0 max-w-[580px]"
+              onReply={canReply(c) ? () => reply(c.id, fullName(c.author)) : undefined}
+              onHold={canReply(c) || canRemove(c) ? () => setHeld(c) : undefined}>
+            <div onDoubleClick={canReply(c) ? () => reply(c.id, fullName(c.author)) : undefined} className={cn(
+              "box-border min-w-0 break-words rounded-tl-[4px] rounded-tr-[18px] rounded-br-[18px] rounded-bl-[18px] border-2 border-ink px-4 py-2.5",
               c.isOrganizer ? "bg-lime-soft" : "bg-card",
             )}>
               <p className="text-[13px] leading-[18px]">
@@ -418,22 +428,27 @@ function Chat({ m }: { m: EventModel }) {
                   {c.editedAt && " · изменено"}
                 </span>
               </p>
-              {c.replyTo && (
+              {!c.hidden && c.replyTo && (
                 <p className="mt-1 border-l-2 border-ink pl-2 text-[13px] text-muted-foreground">
-                  {fullName(c.replyTo.author)}: {c.replyTo.deleted ? "сообщение удалено" : c.replyTo.text}
+                  {fullName(c.replyTo.author)}: {c.replyTo.hidden ? "Удалено администратором" : c.replyTo.deleted ? "Сообщение удалено" : c.replyTo.text}
                 </p>
               )}
               <p className="mt-0.5 text-[15px] leading-[22px] font-medium text-foreground">
-                {c.deleted ? <span className="text-muted-foreground italic">Сообщение удалено</span> : c.text}
+                <CommentContent comment={c} isAdmin={m.moderation.isAdmin} />
               </p>
-              {canComment && !c.deleted && (
+              <CommentModerationAction comment={c} moderation={m.moderation} />
+              {canComment && !c.deleted && !c.hidden && (
                 <button type="button" className="mt-1 text-xs font-bold text-muted-foreground underline"
                   onClick={() => reply(c.id, fullName(c.author))}>Ответить</button>
               )}
             </div>
+            </MessageGestures>
           </div>
         ))}
       </div>
+      <MessageActionsSheet open={held !== undefined} text={held && !held.deleted && !held.hidden ? held.text : undefined} onClose={() => setHeld(undefined)}
+        onReply={held && canReply(held) ? () => reply(held.id, fullName(held.author)) : undefined}
+        onRemove={held && canRemove(held) ? () => m.moderation.open(held) : undefined} />
       {canComment ? (
         <form className="flex shrink-0 flex-col gap-2"
           onSubmit={(event) => { event.preventDefault(); void send(); }}>
@@ -476,6 +491,7 @@ export default function EventPage() {
   };
   return (
     <>
+    <CommentModerationDialog moderation={m.moderation} />
     <EventMobile m={m} onDetails={openDetails} />
     {m.event && <EventDetailsDialog key={m.id} event={m.event} section={details} onClose={() => setDetails(undefined)} onRestoreFocus={() => detailsTrigger.current?.focus()}
       action={!m.moderated && <RegisterAction m={m} className="h-11 px-6" hintClassName="min-w-0 flex-1 text-[13px] leading-[18px] font-bold text-muted-foreground" />} />}
