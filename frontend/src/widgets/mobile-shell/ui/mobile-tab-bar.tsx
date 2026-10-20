@@ -13,7 +13,7 @@ type Tab = { key: string; to: string; label: string; icon?: string; lucide?: Luc
 /**
  * Нижняя навигация мобильной версии. Иконки активного и неактивного состояния лежат
  * в папке экрана (`public/m-<экран>`), поэтому `current` выбирает и подсветку, и папку.
- * Набор вкладок зависит от роли: клубу вместо «Профиля» — «Кабинет», админу — только главная и лента.
+ * Набор вкладок зависит от роли: клубу вместо «Профиля» — «Кабинет», админу вместо плюса — «Админка».
  */
 export function MobileTabBar({ current }: { current: MobileTab }) {
   // У админки своей папки иконок нет: в папке «Профиля» (этой вкладки у админа нет) остальные иконки неактивные.
@@ -24,10 +24,10 @@ export function MobileTabBar({ current }: { current: MobileTab }) {
   const left: Tab[] = [
     { key: "home", to: "/", label: "Главная", icon: "icon-home" },
     { key: "feed", to: "/feed", label: "Лента", icon: "icon-grid" },
-    { key: "blog", to: "/blog", label: "Блог", lucide: BookOpen },
   ];
+  // «Активность» — колокольчиком в верхней панели (MobileAppBar): так по две вкладки с каждой стороны от плюса.
   const right: Tab[] = [
-    ...(nav.showActivity ? [{ key: "activity", to: "/activity", label: "Активность", icon: "icon-bell", count: nav.unread }] : []),
+    { key: "blog", to: "/blog", label: "Блог", lucide: BookOpen },
     ...(nav.showProfile
       ? [{ key: "profile", to: "/profile", label: "Профиль", icon: "icon-user" }]
       : cabinet.isOrg ? [{ key: "profile", to: "/my/events", label: "Кабинет" }] : []),
@@ -77,13 +77,12 @@ export function MobileTabBar({ current }: { current: MobileTab }) {
       aria-label="Основное меню"
       className="fixed inset-x-0 bottom-0 z-40 border-t-2 border-ink bg-card pb-[max(16px,env(safe-area-inset-bottom))] lg:hidden"
     >
-      <div
-        className="mx-auto grid max-w-[480px] px-0 pt-2"
-        style={{ gridTemplateColumns: `repeat(${left.length + right.length + (nav.canCreate ? 1 : 0)}, minmax(0, 1fr))` }}
-      >
-        {left.map(tab)}
-        {/* админ событий не создаёт (правило 7): плюс в центре только у участника и клуба */}
-        {nav.canCreate && (
+      {nav.canCreate ? (
+        // Плюс строго по центру, вкладки каждой стороны делят свою половину поровну:
+        // слева их может быть больше, чем справа, а бар всё равно симметричен.
+        <div className="mx-auto grid max-w-[480px] grid-cols-[minmax(0,1fr)_64px_minmax(0,1fr)] pt-2">
+          <div className="grid" style={{ gridTemplateColumns: `repeat(${left.length}, minmax(0, 1fr))` }}>{left.map(tab)}</div>
+          {/* админ событий не создаёт (правило 7): плюс в центре только у участника и клуба */}
           <div className="relative">
             <Link
               to="/events/new"
@@ -93,9 +92,14 @@ export function MobileTabBar({ current }: { current: MobileTab }) {
               <Icon name={`${dir}/icon-plus`} className="size-[26px]" />
             </Link>
           </div>
-        )}
-        {right.map(tab)}
-      </div>
+          <div className="grid" style={{ gridTemplateColumns: `repeat(${right.length}, minmax(0, 1fr))` }}>{right.map(tab)}</div>
+        </div>
+      ) : (
+        <div className="mx-auto grid max-w-[480px] pt-2" style={{ gridTemplateColumns: `repeat(${left.length + right.length}, minmax(0, 1fr))` }}>
+          {left.map(tab)}
+          {right.map(tab)}
+        </div>
+      )}
     </nav>
   );
 }
