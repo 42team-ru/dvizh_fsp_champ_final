@@ -1,4 +1,6 @@
-import { Link, Navigate, useParams } from "react-router";
+import { useEffect } from "react";
+import { profilePath } from "@/entity/user/lib/profile-path";
+import { Link, Navigate, useNavigate, useParams } from "react-router";
 import { useUser } from "@/entity/user/model/use-user";
 import { useUsersGet } from "@/shared/api/generated/core/users/users";
 import { usePetsGetUser } from "@/shared/api/generated/core/pets/pets";
@@ -16,10 +18,17 @@ export default function UserPage() {
   const profile = useUsersGet(id, { query: { enabled: Boolean(id), retry: false } });
   const petQuery = usePetsGetUser(id, { query: { enabled: Boolean(id), retry: false } });
 
-  if (me?.id && me.id === id) return <Navigate to="/profile" replace />;
-
   const user = profile.data?.status === 200 ? profile.data.data : undefined;
   const pet = petQuery.data?.status === 200 ? petQuery.data.data : undefined;
+
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (user?.username && id === user.id) {
+      void navigate(profilePath(user), { replace: true });
+    }
+  }, [id, user, navigate]);
+
+  if (me?.id && user?.id === me.id) return <Navigate to="/profile" replace />;
 
   if (user && !petQuery.isPending) {
     return (

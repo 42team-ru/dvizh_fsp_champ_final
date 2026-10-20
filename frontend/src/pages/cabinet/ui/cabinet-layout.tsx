@@ -1,3 +1,4 @@
+import { profilePath } from "@/entity/user/lib/profile-path";
 import type { ReactNode } from "react";
 import { Link, NavLink } from "react-router";
 import { ArrowUpRight } from "lucide-react";
@@ -82,7 +83,7 @@ function Rail() {
           </Link>
         )}
         {!isOrg && user?.id && (
-          <Link to={`/users/${user.id}`} className={item}>
+          <Link to={profilePath(user)} className={item}>
             Публичная страница
             <ArrowUpRight className="size-4" strokeWidth={2.6} />
           </Link>

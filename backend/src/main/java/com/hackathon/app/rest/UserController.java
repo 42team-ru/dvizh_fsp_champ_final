@@ -31,6 +31,7 @@ import com.hackathon.app.service.AchievementService;
 import com.hackathon.app.service.AttendanceHistoryService;
 import com.hackathon.app.service.WalletService;
 import com.hackathon.app.service.UserProfileService;
+import com.hackathon.app.service.UserRefService;
 import com.hackathon.app.service.UserSportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -65,6 +66,7 @@ import org.springframework.web.multipart.MultipartFile;
 class UserController {
 
 	private final UserProfileService profiles;
+	private final UserRefService userRefs;
 	private final UserSportService userSports;
 	private final UserPreferencesService preferences;
 	private final AttendanceHistoryService history;
@@ -94,9 +96,9 @@ class UserController {
 	@Operation(operationId = "users_userAchievements", summary = "Достижения человека: все шесть с прогрессом и датой получения",
 			description = "Видны любому вошедшему. У организации и админа достижений нет — 403.")
 	@ApiResponse(responseCode = "404", description = "Пользователь не найден", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
-	List<AchievementResponse> userAchievements(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+	List<AchievementResponse> userAchievements(@AuthenticationPrincipal Jwt jwt, @Parameter(description = "UUID или логин пользователя") @PathVariable String id) {
 		log.info("Endpoint called: GET /api/users/{}/achievements, userId={}", id, jwt.getSubject());
-		var response = achievements.list(id);
+		var response = achievements.list(userRefs.resolveUserRef(id));
 		log.info("Endpoint response: GET /api/users/{}/achievements, items={}", id, response.size());
 		return response;
 	}
@@ -106,9 +108,9 @@ class UserController {
 			description = "Имя, аватар, город, о себе и ближайшие опубликованные мероприятия. Без email.")
 	@ApiResponse(responseCode = "404", description = "Пользователь не найден", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
 	@ApiResponse(responseCode = "200", description = "Публичный профиль", useReturnTypeSchema = true)
-	PublicUserResponse get(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+	PublicUserResponse get(@AuthenticationPrincipal Jwt jwt, @Parameter(description = "UUID или логин пользователя") @PathVariable String id) {
 		log.info("Endpoint called: GET /api/users/{}, userId={}", id, jwt.getSubject());
-		var response = profiles.getPublic(id, userId(jwt));
+		var response = profiles.getPublic(userRefs.resolveUserRef(id), userId(jwt));
 		log.info("Endpoint response: GET /api/users/{}, events={}", id, response.events().size());
 		return response;
 	}
@@ -243,14 +245,14 @@ class UserController {
 					+ "mine = true у своих фото: их можно подписать и удалить.")
 	@ApiResponse(responseCode = "404", description = "Пользователь не найден", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
 	@ApiResponse(responseCode = "200", description = "Страница фото", useReturnTypeSchema = true)
-	PageResponse<AlbumPhotoResponse> album(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,
+	PageResponse<AlbumPhotoResponse> album(@AuthenticationPrincipal Jwt jwt, @Parameter(description = "UUID или логин пользователя") @PathVariable String id,
 			@Parameter(description = "Занятие (папка)") @RequestParam(required = false) UUID eventId,
 			@Parameter(description = "Вид спорта") @RequestParam(required = false) UUID sportId,
 			@RequestParam(defaultValue = "NEWEST") AlbumSort sort,
 			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
 		log.info("Endpoint called: GET /api/users/{}/album, userId={}, eventId={}, sportId={}, sort={}, page={}, size={}",
 				id, jwt.getSubject(), eventId, sportId, sort, page, size);
-		var response = album.photos(id, userId(jwt), eventId, sportId, sort, page, size);
+		var response = album.photos(userRefs.resolveUserRef(id), userId(jwt), eventId, sportId, sort, page, size);
 		log.info("Endpoint response: GET /api/users/{}/album, total={}", id, response.totalElements());
 		return response;
 	}
@@ -259,9 +261,9 @@ class UserController {
 	@Operation(operationId = "users_albumFolders", summary = "Папки альбома: занятия с фото, новые сверху")
 	@ApiResponse(responseCode = "404", description = "Пользователь не найден", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
 	@ApiResponse(responseCode = "200", description = "Папки", useReturnTypeSchema = true)
-	List<AlbumFolderResponse> albumFolders(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+	List<AlbumFolderResponse> albumFolders(@AuthenticationPrincipal Jwt jwt, @Parameter(description = "UUID или логин пользователя") @PathVariable String id) {
 		log.info("Endpoint called: GET /api/users/{}/album/events, userId={}", id, jwt.getSubject());
-		var response = album.folders(id);
+		var response = album.folders(userRefs.resolveUserRef(id));
 		log.info("Endpoint response: GET /api/users/{}/album/events, folders={}", id, response.size());
 		return response;
 	}

@@ -1,3 +1,4 @@
+import { profilePath } from "@/entity/user/lib/profile-path";
 import { useState } from "react";
 import { Link } from "react-router";
 import { FileText, MapPin } from "lucide-react";
@@ -236,7 +237,7 @@ export function OrganizationSidebar({
           {o.leaders.map((l) => (
             <Link
               key={l.user.id}
-              to={`/users/${l.user.id}`}
+              to={profilePath(l.user)}
               className="flex items-center gap-3 hover:underline"
             >
               <UserAvatar

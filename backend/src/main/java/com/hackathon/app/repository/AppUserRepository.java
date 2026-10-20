@@ -29,6 +29,8 @@ public interface AppUserRepository extends JpaRepository<AppUser, UUID> {
     /** Активные аккаунты указанной роли. */
     List<AppUser> findBySystemRoleAndActiveTrue(com.hackathon.app.domain.enums.SystemRole role);
 
+    Optional<AppUser> findByUsernameIgnoreCase(String username);
+
     boolean existsByUsernameIgnoreCase(String username);
 
 	boolean existsByEmailIgnoreCase(String email);

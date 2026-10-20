@@ -213,7 +213,12 @@ public class Actor {
 
 	/** Открыть публичную карточку другого пользователя. */
 	public PublicUserResponse openUser(UUID userId) {
-		return send("GET /api/users/" + userId, get("/api/users/{id}", userId), null, type(PublicUserResponse.class));
+        return openUser(userId.toString());
+    }
+
+    /** Открыть публичный профиль по UUID или логину. */
+    public PublicUserResponse openUser(String ref) {
+        return send("GET /api/users/" + ref, get("/api/users/{id}", ref), null, type(PublicUserResponse.class));
 	}
 
 	/** Прочитать свои виды спорта и уровни. */

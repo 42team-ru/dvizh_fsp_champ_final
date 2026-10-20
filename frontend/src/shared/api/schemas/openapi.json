@@ -4888,10 +4888,10 @@
           {
             "name": "id",
             "in": "path",
+            "description": "UUID или логин пользователя",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -4931,10 +4931,10 @@
           {
             "name": "id",
             "in": "path",
+            "description": "UUID или логин пользователя",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -4974,10 +4974,10 @@
           {
             "name": "id",
             "in": "path",
+            "description": "UUID или логин пользователя",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -5069,10 +5069,10 @@
           {
             "name": "id",
             "in": "path",
+            "description": "UUID или логин пользователя",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -5115,10 +5115,10 @@
           {
             "name": "id",
             "in": "path",
+            "description": "UUID или логин пользователя",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],

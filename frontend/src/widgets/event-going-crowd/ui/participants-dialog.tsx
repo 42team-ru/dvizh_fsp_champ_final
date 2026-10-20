@@ -1,3 +1,4 @@
+import { profilePath } from "@/entity/user/lib/profile-path";
 import { useState } from "react";
 import { Link } from "react-router";
 import { X } from "lucide-react";
@@ -41,7 +42,7 @@ export function ParticipantsDialog({ participants, viewerId, authorId, organizer
               const name = [p.firstName, p.lastName].filter(Boolean).join(" ") || p.username;
               return (
                 <li key={p.id}>
-                  <Link to={`/users/${p.id}`} className="group flex items-center gap-3 rounded-[18px] border-2 border-ink bg-background p-3 shadow-hard-sm outline-none hover:bg-sky-soft focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:ring-offset-2" aria-label={`${name}, @${p.username} — профиль`}>
+                  <Link to={profilePath(p)} className="group flex items-center gap-3 rounded-[18px] border-2 border-ink bg-background p-3 shadow-hard-sm outline-none hover:bg-sky-soft focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:ring-offset-2" aria-label={`${name}, @${p.username} — профиль`}>
                     <span aria-hidden="true" className="relative block size-12 shrink-0 overflow-hidden rounded-full border-2 border-ink bg-lime-soft">
                       <StaticBeaver outfit={p.pet.outfit as BeaverOutfit} activity={p.pet.activity as BeaverActivity} arts={arts} className="absolute -top-1 -left-3 h-[85px] w-24" />
                     </span>

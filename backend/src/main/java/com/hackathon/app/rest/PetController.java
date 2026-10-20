@@ -21,7 +21,9 @@ import com.hackathon.app.service.PetBundleService;
 import com.hackathon.app.service.PetCatalogService;
 import com.hackathon.app.service.ShopService;
 import com.hackathon.app.service.PetService;
+import com.hackathon.app.service.UserRefService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -50,6 +52,7 @@ import org.springframework.web.bind.annotation.RestController;
 class PetController {
 
 	private final PetService pets;
+	private final UserRefService userRefs;
 	private final PetCatalogService catalog;
 	private final ShopService shop;
 	/** Покупка и надевание готовых комплектов. */
@@ -214,9 +217,10 @@ class PetController {
 	@Operation(operationId = "pets_getUser", summary = "Бобр другого пользователя", description = "Только образ, без данных аккаунта.")
 	@ApiResponse(responseCode = "200", description = "OK")
 	@ApiResponse(responseCode = "404", description = "Нет пользователя", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
-	PetResponse getUser(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+	PetResponse getUser(@AuthenticationPrincipal Jwt jwt,
+            @Parameter(description = "UUID или логин пользователя") @PathVariable String id) {
 		log.info("Endpoint called: GET /api/users/{}/pet, userId={}", id, jwt.getSubject());
-		var response = pets.getPublic(id);
+		var response = pets.getPublic(userRefs.resolveUserRef(id));
 		log.info("Endpoint response: GET /api/users/{}/pet, response={}", id, response);
 		return response;
 	}
