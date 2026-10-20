@@ -8,6 +8,7 @@ import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import com.hackathon.app.demo.DemoBulkSeeder.Person;
@@ -43,13 +44,23 @@ class DemoEconomySeeder {
 	private record Spot(String address, double lat, double lon) {
 	}
 
-	private static final Spot PARK = new Spot("Красноярск, Центральный парк, площадка у фонтана", 56.0118, 92.8790);
-	private static final Spot TATYSHEV = new Spot("Красноярск, остров Татышев, футбольное поле у центрального входа", 56.0275, 92.9301);
-	private static final Spot HALL = new Spot("Красноярск, улица Урицкого, 61, спортзал школы", 56.0127, 92.8864);
-	private static final Spot QUAY = new Spot("Красноярск, Центральная набережная, у Часовни", 56.0097, 92.8890);
-	private static final Spot COURTYARD = new Spot("Красноярск, улица Ленина, 113, двор", 56.0140, 92.8560);
-	private static final Spot CLUB = new Spot("Красноярск, улица Карла Маркса, 49, клуб «Ладья»", 56.0110, 92.8830);
-	private static final Spot CAMPUS = new Spot("Красноярск, студенческий городок, спортивный зал", 56.0100, 92.8700);
+	// Точки — сами площадки по OpenStreetMap (на суше, у настоящего адреса), а не центр района.
+	private static final Spot PARK = new Spot("Красноярск, ул. Карла Маркса, 151, Центральный парк", 56.00771, 92.85305);
+	private static final Spot TATYSHEV = new Spot("Красноярск, остров Татышев, футбольные поля", 56.02757, 92.93819);
+	private static final Spot TATYSHEV_COURTS = new Spot("Красноярск, остров Татышев, баскетбольные и волейбольные площадки",
+			56.02777, 92.93995);
+	private static final Spot HALL = new Spot("Красноярск, ул. 9 Мая, 74, «Арена.Север», малый зал", 56.05079, 92.89461);
+	private static final Spot QUAY = new Spot("Красноярск, ул. Дубровинского, 1, набережная у Речного вокзала", 56.00784,
+			92.88194);
+	private static final Spot COURTYARD = new Spot("Красноярск, ул. Ленина, 113, двор", 56.01254, 92.86003);
+	private static final Spot CLUB = new Spot("Красноярск, ул. Карла Маркса, 49, клуб «Ладья»", 56.01064, 92.88004);
+	private static final Spot CAMPUS = new Spot("Красноярск, Свободный пр-т, 82, стр. 11, студенческий спорткомплекс",
+			56.00612, 92.76221);
+	private static final Spot ICE = new Spot("Красноярск, ул. Партизана Железняка, 42, «Кристалл Арена»", 56.03659, 92.92620);
+
+	/** Где проходят встречи Виктории: каждый вид — на своей площадке. */
+	private static final Map<String, Spot> COLLECTOR_SPOTS = Map.of("Бег", QUAY, "Футбол", TATYSHEV, "Баскетбол",
+			TATYSHEV_COURTS, "Йога", PARK, "Волейбол", TATYSHEV_COURTS, "Бадминтон", HALL);
 
 	private static final List<String> CLUB_TITLES = List.of("Клубный вечер «Ладьи»: свободная игра",
 			"Разбор партий с тренером", "Шахматы для начинающих", "Турнир выходного дня", "Партии на время: блиц",
@@ -60,7 +71,10 @@ class DemoEconomySeeder {
 	private final OrganizationAwardService awards;
 	private final DemoDataRepository data;
 	private final DemoHistory history;
+	private final DemoPhotos photos;
 	private final Clock clock;
+	/** Сколько прошедших встреч создано: фото загружают к каждой второй. */
+	private int created;
 
 	/** Прошедшие встречи основных персонажей ставятся в историю; people — массовка, из неё приходят в «Ладью». */
 	void schedulePast(DemoCast cast, List<Person> people) {
@@ -74,16 +88,16 @@ class DemoEconomySeeder {
 
 		// Пётр: шесть своих встреч в разные дни; на каждой 3+ человека со старыми аккаунтами.
 		meeting(cast, petr, "Шахматы", "Шахматная партия в парке",
-				"Живые шахматы в парке: сыграем несколько партий и разберём дебюты.", PARK, -3, 17, 2,
+				"Шахматы на скамейках Центрального парка: сыграем несколько партий и разберём дебюты.", PARK, -3, 17, 2,
 				List.of(anna, olga, dmitry, nikolai));
 		meeting(cast, petr, "Шахматы", "Вечер быстрых шахмат", "Играем быстрые партии, меняем соперников каждый тур.",
-				PARK, -6, 18, 2, List.of(anna, sergey, elena, nikolai));
+				CLUB, -6, 18, 2, List.of(anna, sergey, elena, nikolai));
 		meeting(cast, petr, "Футбол", "Дворовый футбол по выходным", "Играем два тайма, команды делим на месте.",
 				TATYSHEV, -8, 12, 2, List.of(dmitry, sergey, elena, anna));
 		meeting(cast, petr, "Шахматы", "Разбор партий для начинающих", "Разбираем простые партии и типичные ошибки.",
-				PARK, -10, 18, 2, List.of(olga, anna, dmitry));
+				CLUB, -10, 18, 2, List.of(olga, anna, dmitry));
 		meeting(cast, petr, "Баскетбол", "Разминочная игра 3×3", "Короткие игры 3×3, мяч есть.",
-				HALL, -13, 19, 2, List.of(sergey, dmitry, nikolai, olga));
+				TATYSHEV_COURTS, -13, 19, 2, List.of(sergey, dmitry, nikolai, olga));
 		meeting(cast, petr, "Шахматы", "Блиц на скамейках", "Блиц на открытом воздухе, доски приносим сами.",
 				PARK, -15, 17, 2, List.of(anna, olga, elena));
 
@@ -128,7 +142,8 @@ class DemoEconomySeeder {
 				var start = today.minusDays(daysAgo).atTime(hour, 0).atZone(MeetingAttendance.ZONE).toInstant();
 				var invited = rotate(guests, meeting * 3, 10);
 				history.add(start, start.plus(Duration.ofHours(1)), () -> create(cast, vika, sport, sport + " с Викторией",
-						"Открытая тренировка: разминка, игра и заминка. Приходите с друзьями.", PARK, start, 1, invited));
+						"Открытая тренировка: разминка, игра и заминка. Приходите с друзьями.", COLLECTOR_SPOTS.get(sport), start,
+						1, invited));
 				meeting++;
 			}
 		}
@@ -143,7 +158,7 @@ class DemoEconomySeeder {
 		}
 		var bobryStart = today.minusDays(9).atTime(20, 0).atZone(MeetingAttendance.ZONE).toInstant();
 		history.add(bobryStart, bobryStart.plus(Duration.ofHours(2)), () -> create(cast, cast.id("bobry"), "Хоккей",
-				"Вечерняя тренировка «Хищных бобров»", "Открытая тренировка клуба для всех желающих.", CAMPUS, bobryStart, 2,
+				"Вечерняя тренировка «Хищных бобров»", "Открытая тренировка клуба на льду для всех желающих.", ICE, bobryStart, 2,
 				List.of(vika, guests.get(0), guests.get(1), guests.get(2))));
 	}
 
@@ -208,6 +223,10 @@ class DemoEconomySeeder {
 				temporaryStart.plus(Duration.ofHours(hours)), EventFormat.OFFLINE, spot.address(), null, null,
 				spot.lat(), spot.lon(), EventLevel.ANY, EventKind.GAME, null, null, null, JoinMode.FREE, null, null, null);
 		var eventId = eventService.create(authorId, request).id();
+		var photo = created++ % 2 == 0 ? photos.one(sport, created) : null;
+		if (photo != null) {
+			eventService.addPhoto(eventId, authorId, photo, null);
+		}
 		var createdAt = start.minus(Duration.ofDays(5));
 		var authorSince = cast.since(authorId).plus(Duration.ofHours(2));
 		if (createdAt.isBefore(authorSince)) {

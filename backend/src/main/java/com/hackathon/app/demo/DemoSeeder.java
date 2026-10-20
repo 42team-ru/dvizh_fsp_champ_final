@@ -14,6 +14,7 @@ import java.util.UUID;
 
 import com.hackathon.app.domain.dto.ConnectNotificationEmailRequest;
 import com.hackathon.app.domain.dto.EventRequest;
+import com.hackathon.app.domain.dto.FocusPoint;
 import com.hackathon.app.domain.dto.HelpersPreferences;
 import com.hackathon.app.domain.dto.HomePoint;
 import com.hackathon.app.domain.dto.RegisterRequest;
@@ -129,6 +130,7 @@ public class DemoSeeder {
 	private final DemoPetSeeder pets;
 	private final DemoAlbumSeeder album;
 	private final DemoBlogSeeder blog;
+	private final DemoPhotos photos;
 	private final NotificationService notificationService;
 	private final AuthService authService;
 	private final UserProfileService profileService;
@@ -162,6 +164,7 @@ public class DemoSeeder {
 		}
 		long started = System.currentTimeMillis();
 		var cast = seedAccounts();
+		avatars(cast);
 		notificationService.connectEmail(cast.id("anna"), new ConnectNotificationEmailRequest("anna@demo.ru"));
 		var adminId = cast.id("admin");
 
@@ -187,6 +190,10 @@ public class DemoSeeder {
 				Map.of(ContactType.TELEGRAM, "@predatory_beavers"), List.of(),
 				List.of("Хоккей", "Баскетбол", "Фитнес")),
 				OrganizationStatus.APPROVED, null, adminId, 88, 86);
+		logo(cast.id("ladya"), "Шахматы");
+		logo(cast.id("enisey"), "Бег");
+		logo(cast.id("yoga"), "Йога");
+		logo(cast.id("bobry"), "Хоккей");
 		// Служебный код, по которому система узнаёт клуб («Свой бобр»), через API не задаётся.
 		data.assignOrganizationCode(beavers, AchievementService.BEAVERS_ORGANIZATION_CODE);
 		data.flushAndClear();
@@ -202,15 +209,21 @@ public class DemoSeeder {
 				"Турнир клуба «Ладья» по быстрым шахматам",
 				"Пять туров, контроль 10+5. Рейтинговый турнир клуба, приглашаем любителей.",
 				null, null, at(6, 12, 0), at(6, 17, 0), EventFormat.OFFLINE,
-				CITY + ", улица Карла Маркса, 49, клуб «Ладья»", "Третий этаж, кабинет 305",
-				null, 56.0110, 92.8830, EventLevel.AMATEUR, EventKind.AMATEUR_TOURNAMENT,
+				CITY + ", ул. Карла Маркса, 49, клуб «Ладья»", "Третий этаж, кабинет 305",
+				null, 56.01064, 92.88004, EventLevel.AMATEUR, EventKind.AMATEUR_TOURNAMENT,
 				"Знать правила и нотацию", "Ничего: доски и часы клуба",
 				16, JoinMode.REQUEST, "Жеребьёвка и чат участников: https://t.me/ladya_tournament", null, null));
+		eventPhotos(clubTournament, cast.id("ladya"), "Шахматы", 0, 3);
 		join(clubTournament, cast.id("olga"), "Играла в молодости, хочу вспомнить");
 		join(clubTournament, cast.id("nikolai"), "Есть второй разряд");
 		join(clubTournament, cast.id("dmitry"), null);
 		var notationQuestion = comment(clubTournament, cast.id("elena"), "Нужно ли уметь записывать партии?");
 		reply(clubTournament, cast.id("ladya"), "Желательно, но не обязательно: бланки и подсказку по нотации дадим на месте.", notationQuestion);
+		reply(clubTournament, cast.id("elena"), "Отлично, тогда записываюсь!", notationQuestion);
+		var prizeQuestion = comment(clubTournament, cast.id("nikolai"), "Будут ли призы? И есть ли зачёт для ветеранов 60+?");
+		reply(clubTournament, cast.id("ladya"),
+				"Кубок и грамоты первым трём, отдельный приз лучшему ветерану и лучшей шахматистке.", prizeQuestion);
+		comment(clubTournament, cast.id("olga"), "Возьму с собой термос — партии долгие, а в клубе прохладно");
 		// Объявление организатора: закреплено в карточке, участникам и ожидающим решения пришло уведомление.
 		eventService.announce(clubTournament, cast.id("ladya"),
 				"Регистрация участников с 11:30, жеребьёвка ровно в 12:00. Опоздавшие играют со второго тура.");
@@ -218,29 +231,39 @@ public class DemoSeeder {
 				"Открытый урок шахмат для начинающих",
 				"Разберём, как ходят фигуры, и сыграем первые партии с тренером клуба.",
 				null, null, at(3, 11, 0), at(3, 12, 30), EventFormat.OFFLINE,
-				CITY + ", улица Карла Маркса, 49, клуб «Ладья»", "Третий этаж, кабинет 305",
-				null, 56.0110, 92.8830, EventLevel.BEGINNER, EventKind.TRAINING,
+				CITY + ", ул. Карла Маркса, 49, клуб «Ладья»", "Третий этаж, кабинет 305",
+				null, 56.01064, 92.88004, EventLevel.BEGINNER, EventKind.TRAINING,
 				"Никаких: учим с нуля", null,
 				12, JoinMode.FREE, null, null, null));
+		eventPhotos(chessLesson, cast.id("ladya"), "Шахматы", 3, 2);
 		join(chessLesson, cast.id("anna"), null);
 		join(chessLesson, cast.id("elena"), null);
-		event(cast.id("bobry"), "Хоккей", new EventRequest(
+		var kidsQuestion = comment(chessLesson, cast.id("sergey"), "Можно привести сына, ему 9 лет?");
+		reply(chessLesson, cast.id("ladya"), "Можно и нужно: у нас есть детские доски и отдельный столик для младших.",
+				kidsQuestion);
+		var beaversTraining = event(cast.id("bobry"), "Хоккей", new EventRequest(
 				"Тренировка «Хищных бобров»: набор новичков",
-				"Приходите знакомиться: покажем, как проходят тренировки клуба.",
+				"Приходите знакомиться: покажем, как проходят тренировки клуба. Первые полчаса — катание и работа "
+					+ "с шайбой, потом двусторонка без силовой борьбы.",
 				null, null, at(4, 19, 0), at(4, 21, 0), EventFormat.OFFLINE,
-				CITY + ", студенческий городок, спортивный зал", null,
-				null, 56.0100, 92.8700, EventLevel.ANY, EventKind.TRAINING,
-				null, "Сменная обувь", null, JoinMode.FREE, null, null, null));
+				CITY + ", ул. Партизана Железняка, 42, «Кристалл Арена»", "Малая ледовая площадка, раздевалка № 4",
+				null, 56.03659, 92.92620, EventLevel.ANY, EventKind.TRAINING,
+				"Уверенно стоять на коньках", "Коньки и шлем обязательно; клюшки и краги дадим", null, JoinMode.FREE,
+				null, null, null));
+		eventPhotos(beaversTraining, cast.id("bobry"), "Хоккей", 0, 2);
+		var skatesQuestion = comment(beaversTraining, cast.id("dmitry"), "Коньки можно взять в прокат на арене?");
+		reply(beaversTraining, cast.id("bobry"), "Да, прокат у входа на лёд, размеры с 36 по 47.", skatesQuestion);
 
 		// Сценарии 1 и 3: свободная запись от пользователя, есть соорганизатор и участники.
 		var football = event(cast.id("dmitry"), "Футбол", new EventRequest(
 				"Футбол 5×5 на Татышеве",
 				"Играем в мини-футбол два тайма по 25 минут. Команды делим на месте, мяч и манишки есть.",
 				null, null, at(2, 19, 0), at(2, 21, 0), EventFormat.OFFLINE,
-				CITY + ", остров Татышев, футбольное поле у центрального входа", "Синие ворота, встречаемся у скамеек",
-				null, 56.0275, 92.9301, EventLevel.AMATEUR, EventKind.GAME,
+				CITY + ", остров Татышев, футбольные поля", "Поле с искусственным газоном, встречаемся у скамеек",
+				null, 56.02757, 92.93819, EventLevel.AMATEUR, EventKind.GAME,
 				"Уверенно держите мяч, играем без грубости", "Сменная обувь (шиповки или сороконожки), вода",
 				14, JoinMode.FREE, "Чат игры: https://t.me/demo_football_tatyshev", null, null));
+		eventPhotos(football, cast.id("dmitry"), "Футбол", 0, 3);
 		// соорганизатора приглашают, он принимает — как живые пользователи
 		organizerService.add(football, cast.id("dmitry"), "nikolai");
 		organizerService.accept(football, cast.id("nikolai"));
@@ -266,23 +289,28 @@ public class DemoSeeder {
 				"Настольный теннис: один стол на двоих",
 				"Играем на счёт до 11, меняемся после каждой партии. Стол во дворе, ракетки свои.",
 				null, null, at(2, 18, 0), at(2, 20, 0), EventFormat.OFFLINE,
-				CITY + ", улица Ленина, 113, двор", "Стол у спортивной площадки",
-				null, 56.0141, 92.8562, EventLevel.ANY, EventKind.GAME,
+				CITY + ", ул. Ленина, 113, двор", "Стол у спортивной площадки",
+				null, 56.01254, 92.86003, EventLevel.ANY, EventKind.GAME,
 				null, "Своя ракетка и мячи",
 				2, JoinMode.FREE, null, null, null));
+		eventPhotos(tableTennis, cast.id("sergey"), "Настольный теннис", 0, 1);
 		join(tableTennis, cast.id("dmitry"), null);
 		join(tableTennis, cast.id("nikolai"), null);
 		join(tableTennis, cast.id("olga"), null);
+		var queueQuestion = comment(tableTennis, cast.id("olga"), "Я в листе ожидания. Если кто-то не сможет — напишите, прибегу!");
+		reply(tableTennis, cast.id("sergey"), "Освободится место — вас запишет автоматически, придёт уведомление.",
+				queueQuestion);
 
 		// Сценарий 4: запись по заявке — автор Пётр, заявки в обоих исходах и ждущие решения.
 		var chess = event(cast.id("petr"), "Шахматы", new EventRequest(
 				"Блиц-турнир по шахматам для любителей",
 				"Швейцарская система, 7 туров, контроль 5+3. Подойдёт тем, кто знает правила и хочет живых соперников.",
 				null, null, at(3, 18, 30), at(3, 21, 30), EventFormat.OFFLINE,
-				CITY + ", проспект Мира, 10, читальный зал", "Вход со двора, второй этаж",
-				null, 56.0105, 92.8710, EventLevel.AMATEUR, EventKind.AMATEUR_TOURNAMENT,
+				CITY + ", ул. Карла Маркса, 114, краевая научная библиотека", "Читальный зал на втором этаже",
+				null, 56.01018, 92.85520, EventLevel.AMATEUR, EventKind.AMATEUR_TOURNAMENT,
 				"Знать правила и уметь пользоваться часами", "Доски и часы есть, свои тоже приносите",
 				12, JoinMode.REQUEST, "Точная аудитория и жеребьёвка: https://t.me/demo_chess_blitz", null, null));
+		eventPhotos(chess, cast.id("petr"), "Шахматы", 5, 2);
 		join(chess, cast.id("anna"), "Играю с дедушкой, хочу попробовать турнир");
 		join(chess, cast.id("dmitry"), "Рейтинг на lichess около 1500");
 		join(chess, cast.id("elena"), null);
@@ -294,15 +322,17 @@ public class DemoSeeder {
 				"Утренняя пробежка по набережной",
 				"Спокойные 5 км в разговорном темпе, никто не отстаёт. После — растяжка.",
 				null, null, at(1, 7, 0), at(1, 8, 0), EventFormat.OFFLINE,
-				CITY + ", Центральная набережная, у Часовни", null,
-				null, 56.0097, 92.8890, EventLevel.BEGINNER, EventKind.TRAINING,
+				CITY + ", ул. Дубровинского, 1, набережная у Речного вокзала", "Сбор у лестницы к воде",
+				null, 56.00784, 92.88194, EventLevel.BEGINNER, EventKind.TRAINING,
 				null, "Удобные кроссовки, вода",
 				null, JoinMode.FREE, null, null, null));
+		eventPhotos(run, cast.id("elena"), "Бег", 0, 2);
 		join(run, cast.id("anna"), null);
 		join(run, cast.id("dmitry"), null);
 		// Модерация в фоне (docs/moderation.md): обычные вопросы остаются; угроза и реклама заработка скрываются сами —
 		// их видят словарь и модели (2 из 3 голосов); ненависть видит только нейросеть — она ждёт админа в очереди.
-		comment(run, cast.id("anna"), "Во сколько сбор? Мяч брать?");
+		var paceQuestion = comment(run, cast.id("anna"), "Во сколько сбор? И какой темп — я пока бегаю медленно");
+		reply(run, cast.id("elena"), "Сбор в 6:50, бежим около 7 минут на километр — никто не отстанет.", paceQuestion);
 		comment(run, cast.id("anna"), "Порвём их в субботу, ребята!");
 		comment(run, cast.id("sergey"), "Если ещё раз придёшь, я тебе ноги переломаю и найду где ты живёшь");
 		comment(run, cast.id("nikolai"), "Заработок от 5000 в день без вложений, пиши в лс t.me/money_fast");
@@ -312,12 +342,17 @@ public class DemoSeeder {
 				"Зарядка во дворе для всех возрастов",
 				"Пятнадцать минут простых упражнений под музыку. Можно выполнять сидя на скамейке.",
 				null, null, at(1, 9, 0), at(1, 9, 30), EventFormat.OFFLINE,
-				CITY + ", улица Ленина, 113, двор", "Площадка за детской горкой",
-				null, 56.0140, 92.8560, EventLevel.ANY, EventKind.TRAINING,
+				CITY + ", ул. Ленина, 113, двор", "Площадка за детской горкой",
+				null, 56.01254, 92.86003, EventLevel.ANY, EventKind.TRAINING,
 				"Никаких: подойдёт любой уровень и возраст", "Коврик по желанию",
 				null, JoinMode.FREE, null, null, null));
+		eventPhotos(morningExercise, cast.id("olga"), "Зарядка", 0, 2);
 		join(morningExercise, cast.id("nikolai"), null);
 		join(morningExercise, cast.id("elena"), null);
+		var musicQuestion = comment(morningExercise, cast.id("nikolai"), "Ольга, а музыку какую ставите? Могу принести колонку");
+		reply(morningExercise, cast.id("olga"), "Ставлю старые добрые песни, но от колонки не откажусь — моя тихая!",
+				musicQuestion);
+		comment(morningExercise, cast.id("elena"), "Приведу маму, ей 74 — будет рада компании 💪");
 
 		// Сценарий 1, вторая часть: нишевый вид, которого нет в справочнике, создаётся обычным путём как custom.
 		// Кворум 4 при двух записавшихся: «Состоится, если наберём 4».
@@ -325,12 +360,18 @@ public class DemoSeeder {
 				"Петанк в парке: научим за 10 минут",
 				"Французская игра с металлическими шарами. Правила объясню на месте, шары дам.",
 				null, null, at(4, 17, 0), at(4, 19, 0), EventFormat.OFFLINE,
-				CITY + ", Центральный парк, площадка у фонтана", null,
-				null, 56.0118, 92.8790, EventLevel.BEGINNER, EventKind.MEETUP,
+				CITY + ", ул. Карла Маркса, 151, Центральный парк", "Гравийная площадка у главной аллеи",
+				null, 56.00771, 92.85305, EventLevel.BEGINNER, EventKind.MEETUP,
 				null, null,
 				10, JoinMode.FREE, null, null, 4));
+		eventPhotos(petanque, cast.id("nikolai"), "Петанк", 0, 3);
 		join(petanque, cast.id("olga"), null);
 		join(petanque, cast.id("anna"), null);
+		var rulesQuestion = comment(petanque, cast.id("anna"), "Никогда не слышала про петанк. Это сложно?");
+		reply(petanque, cast.id("nikolai"),
+				"Проще городков: бросаешь шар поближе к деревянному «кошонету». Объясню за минуту, остальное — практика.",
+				rulesQuestion);
+		reply(petanque, cast.id("olga"), "Я тоже первый раз, будем учиться вместе 🙂", rulesQuestion);
 
 		// Повторяющееся мероприятие: серия с двумя правилами, отметками на даты и одним отменённым занятием.
 		// Кворум 3 на занятие: первое набрано (трое отметились), следующие — собираем.
@@ -341,13 +382,14 @@ public class DemoSeeder {
 				"Баскетбол по вечерам",
 				"Регулярные игры 3×3 и 5×5 в школьном зале. Вступите в серию и отмечайте, на какие даты придёте.",
 				null, null, null, null, EventFormat.OFFLINE,
-				CITY + ", улица Урицкого, 61, спортзал школы", "Вход со стороны стадиона, охране сказать «на баскетбол»",
-				null, 56.0127, 92.8864, EventLevel.AMATEUR, EventKind.TRAINING,
+				CITY + ", ул. 9 Мая, 74, «Арена.Север»", "Малый зал, вход с торца; охране сказать «на баскетбол»",
+				null, 56.05079, 92.89461, EventLevel.AMATEUR, EventKind.TRAINING,
 				"Знать правила, играть без грубости", "Сменная обувь для зала, вода",
 				10, JoinMode.FREE, "Чат серии: https://t.me/demo_basketball_evenings",
 				new ScheduleRequest(CITY_ZONE.getId(), today, today.plusMonths(3), List.of(
 						new ScheduleRuleRequest(firstTuesday.atTime(20, 0), 90, "FREQ=WEEKLY;BYDAY=TU"),
 						new ScheduleRuleRequest(firstSunday.atTime(14, 0), 120, "FREQ=WEEKLY;INTERVAL=2;BYDAY=SU"))), 3));
+		eventPhotos(basketball, cast.id("petr"), "Баскетбол", 0, 2);
 		join(basketball, cast.id("anna"), null);
 		join(basketball, cast.id("sergey"), null);
 		join(basketball, cast.id("dmitry"), null);
@@ -366,8 +408,8 @@ public class DemoSeeder {
 				"Пляжный волейбол на Татышеве",
 				"Играем 2×2 и 4×4, сетка своя.",
 				null, null, at(5, 18, 0), at(5, 20, 0), EventFormat.OFFLINE,
-				CITY + ", остров Татышев, пляжные площадки", null,
-				null, 56.0262, 92.9420, EventLevel.AMATEUR, EventKind.GAME,
+				CITY + ", остров Татышев, волейбольные площадки", null,
+				null, 56.02783, 92.93699, EventLevel.AMATEUR, EventKind.GAME,
 				null, "Купальник или шорты, вода",
 				8, JoinMode.FREE, null, null, null));
 		join(volleyball, cast.id("elena"), null);
@@ -401,8 +443,33 @@ public class DemoSeeder {
 		pets.dressCollector(cast.id("vika"));
 		bulk.dress(people);
 		album.seed(cast);
-		blog.seed(cast);
+		blog.seed(cast, ladya, beavers);
 		log.info("Demo data seeded in {} ms", System.currentTimeMillis() - started);
+	}
+
+	/** Аватары главных героев ({@code demo-photos/avatars/<логин>.jpg}); нет файла — профиль без фото. */
+	private void avatars(DemoCast cast) {
+		for (var account : ACCOUNTS) {
+			var avatar = account.role() == SystemRole.USER ? photos.avatarOf(account.username()) : null;
+			if (avatar != null) {
+				profileService.uploadAvatar(cast.id(account.username()), avatar);
+			}
+		}
+	}
+
+	/** Логотип клуба — снимок его вида спорта. */
+	private void logo(UUID accountId, String sport) {
+		var logo = photos.one(sport, 1);
+		if (logo != null) {
+			organizationService.uploadLogo(accountId, logo);
+		}
+	}
+
+	/** Фото мероприятия от организатора; фокус чуть выше центра — на лицах, а не на траве. */
+	private void eventPhotos(UUID eventId, UUID organizerId, String sport, int from, int count) {
+		for (var photo : photos.pick(sport, true, from, count)) {
+			eventService.addPhoto(eventId, organizerId, photo, new FocusPoint(50, 40));
+		}
 	}
 
 	/** Виды спорта в профиле с одним уровнем. */

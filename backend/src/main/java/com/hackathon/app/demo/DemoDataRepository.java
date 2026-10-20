@@ -163,6 +163,14 @@ class DemoDataRepository {
 				.executeUpdate();
 	}
 
+	/** Пост блога опубликован в at: сервис ставит «сейчас», а лента блога должна выглядеть живой. */
+	void backdateBlogPost(UUID id, Instant at) {
+		em.createQuery("update BlogPost p set p.createdAt = :at, p.updatedAt = :at, p.publishedAt = :at where p.id = :id")
+				.setParameter("at", at)
+				.setParameter("id", id)
+				.executeUpdate();
+	}
+
 	/** Предложение «Организации месяца» сделано в at (в первый день месяца), а не в момент старта демо. */
 	void backdateAward(UUID id, Instant at) {
 		backdate(com.hackathon.app.domain.entity.OrganizationAward.class, id, at);
