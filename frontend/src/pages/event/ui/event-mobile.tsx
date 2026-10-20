@@ -1,4 +1,5 @@
 import { CommentContent } from "./comment-content";
+import { Linkified } from "@/shared/lib/linkify";
 import { CommentModerationAction } from "@/features/comment-moderation/ui/comment-moderation";
 import { MessageActionsSheet, MessageGestures } from "@/features/comment-gestures/ui/message-gestures";
 import type { CommentResponse } from "@/shared/api/generated/core/appAPI.schemas";
@@ -291,8 +292,8 @@ export function EventMobile({ m, onDetails }: { m: EventModel; onDetails: (secti
             {/* Детали для участников: сами детали или пояснение по ситуации (как на десктопе) */}
             <p className="rounded-xl border-2 border-dashed border-ink px-3 py-2 text-xs leading-[17px] font-bold text-foreground">
               {viewer.canSeePrivateDetails && e.format === "ONLINE" && e.onlineUrl
-                ? <>{e.privateDetails && <>{e.privateDetails} · </>}<a href={e.onlineUrl} target="_blank" rel="noreferrer" className="underline">{e.onlineUrl}</a></>
-                : privateNote(e)}
+                ? <>{e.privateDetails && <><Linkified text={e.privateDetails} /> · </>}<Linkified text={e.onlineUrl} /></>
+                : <Linkified text={privateNote(e)} />}
             </p>
           </div>
           {!m.moderated && e.singleOccurrence?.status !== "CANCELLED" && viewer.registrationStatus === "CONFIRMED" && (

@@ -1,4 +1,5 @@
 import { CommentContent } from "./comment-content";
+import { Linkified } from "@/shared/lib/linkify";
 import { CommentModerationAction, CommentModerationDialog } from "@/features/comment-moderation/ui/comment-moderation";
 import { MessageActionsSheet, MessageGestures } from "@/features/comment-gestures/ui/message-gestures";
 import type { CommentResponse } from "@/shared/api/generated/core/appAPI.schemas";
@@ -265,7 +266,7 @@ function About({ m }: { m: EventModel }) {
           </div>
         )}
         <div className="relative rounded-[18px] border-2 border-ink bg-card px-4 py-2">
-          <p className="break-words text-sm leading-[20.5px] font-semibold text-foreground">{note}</p>
+          <p className="break-words text-sm leading-[20.5px] font-semibold text-foreground"><Linkified text={note} /></p>
           {/* хвостик облачка: квадрат, повёрнутый углом к бобру, — облачко «говорит» бобр */}
           <span aria-hidden className="absolute top-1/2 -right-[11px] box-border size-5 -translate-y-1/2 -rotate-45 rounded-br-[4px] border-r-2 border-b-2 border-ink bg-card" />
         </div>

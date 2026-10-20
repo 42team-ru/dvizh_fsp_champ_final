@@ -1,4 +1,5 @@
 import { useRef, useState, type ReactNode } from "react";
+import { Linkified } from "@/shared/lib/linkify";
 import { CalendarPlus, Check, ChevronDown, Clock, Copy, DoorOpen, ExternalLink, Info, Lock, LockOpen, MapPin, Navigation, Repeat, Route, UserCheck, Users, Video, X } from "lucide-react";
 import { cn } from "cn";
 import type { EventResponse, OccurrenceResponse } from "@/shared/api/generated/core/appAPI.schemas";
@@ -427,13 +428,6 @@ function RegistrationTab({ e }: { e: EventResponse }) {
       </div>
     </div>
   );
-}
-
-/** Ссылки в приватных деталях (чат, трансляция) — кликабельные. */
-function Linkified({ text }: { text: string }) {
-  return text.split(/(https?:\/\/\S+)/g).map((part, i) => i % 2
-    ? <a key={i} href={part} target="_blank" rel="noreferrer" className="break-all text-primary underline">{part}</a>
-    : part);
 }
 
 /** Места квадратиками: занятые синие, черта — порог кворума. Много мест — полосой. */
