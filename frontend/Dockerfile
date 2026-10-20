@@ -10,7 +10,8 @@ ENV VITE_BACKEND_URL=""
 # Ключ карты 2ГИС попадает в сборку из корневого .env через args в docker-compose.yml
 ARG VITE_2GIS_KEY=""
 ARG VITE_2GIS_STYLE_ID=""
-ENV VITE_2GIS_KEY=$VITE_2GIS_KEY VITE_2GIS_STYLE_ID=$VITE_2GIS_STYLE_ID
+ARG VITE_2GIS_MAP="raster"
+ENV VITE_2GIS_KEY=$VITE_2GIS_KEY VITE_2GIS_STYLE_ID=$VITE_2GIS_STYLE_ID VITE_2GIS_MAP=$VITE_2GIS_MAP
 RUN yarn build
 
 FROM caddy:2-alpine
