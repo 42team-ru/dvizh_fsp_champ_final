@@ -1,7 +1,7 @@
 import { useRef, type PointerEvent } from "react";
 import { cn } from "cn";
 import {
-  DAY, HOUR, dayCaption, eventsWord, dayShort, hhmm, presetRange, snap, startOfDay,
+  DAY, HOUR, MINUTE, dayCaption, eventsWord, dayShort, hhmm, presetRange, snap, startOfDay,
   type Preset, type Selection, type Span,
 } from "../lib/timeline";
 
@@ -55,7 +55,7 @@ export function TimeDock({ now, span, onSpan, selection, onSelect, bars, activeC
   totalCount: number;
 }) {
   const track = useRef<HTMLDivElement>(null);
-  const anchor = useRef<number | null>(null);
+  const drag = useRef<{ kind: "new" | "from" | "to" | "move"; anchor: number; len: number; from0: number } | null>(null);
   const start = startOfDay(now);
   const width = span * DAY;
   const pct = (t: number) => `${Math.min(100, Math.max(0, ((t - start) / width) * 100))}%`;
@@ -67,25 +67,39 @@ export function TimeDock({ now, span, onSpan, selection, onSelect, bars, activeC
     return snap(start + ratio * width);
   };
 
+  const MIN_LEN = 30 * MINUTE;
   const onDown = (e: PointerEvent<HTMLDivElement>) => {
     e.currentTarget.setPointerCapture(e.pointerId);
     const t = timeAt(e.clientX);
     if (selection.mode === "moment") onSelect({ mode: "moment", at: t, live: false });
     else {
-      anchor.current = t;
+      drag.current = { kind: "new", anchor: t, len: 0, from0: t };
       onSelect({ mode: "range", from: t, to: t + HOUR });
     }
+  };
+  /** Ручка границы или полоса диапазона: тянем только её, а не выделяем заново. */
+  const grab = (kind: "from" | "to" | "move") => (e: PointerEvent<HTMLElement>) => {
+    if (selection.mode !== "range") return;
+    e.stopPropagation();
+    track.current!.setPointerCapture(e.pointerId);
+    drag.current = { kind, anchor: timeAt(e.clientX), len: selection.to - selection.from, from0: selection.from };
   };
   const onMove = (e: PointerEvent<HTMLDivElement>) => {
     if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
     const t = timeAt(e.clientX);
     if (selection.mode === "moment") onSelect({ mode: "moment", at: t, live: false });
-    else if (anchor.current != null) {
-      const a = anchor.current;
-      onSelect({ mode: "range", from: Math.min(a, t), to: Math.max(a + HOUR, t) });
+    else if (drag.current && selection.mode === "range") {
+      const d = drag.current;
+      if (d.kind === "new") onSelect({ mode: "range", from: Math.min(d.anchor, t), to: Math.max(d.anchor + HOUR, t) });
+      else if (d.kind === "from") onSelect({ mode: "range", from: Math.min(t, selection.to - MIN_LEN), to: selection.to });
+      else if (d.kind === "to") onSelect({ mode: "range", from: selection.from, to: Math.max(t, selection.from + MIN_LEN) });
+      else {
+        const from = Math.min(Math.max(snap(d.from0 + (t - d.anchor)), start), start + width - d.len);
+        onSelect({ mode: "range", from, to: from + d.len });
+      }
     }
   };
-  const onUp = () => { anchor.current = null; };
+  const onUp = () => { drag.current = null; };
 
   const onKey = (e: React.KeyboardEvent) => {
     const step = e.shiftKey ? HOUR : HOUR / 4;
@@ -177,10 +191,29 @@ export function TimeDock({ now, span, onSpan, selection, onSelect, bars, activeC
           ))}
           {/* Прошлое затемнено. */}
           <div className="absolute top-[22px] left-0 h-16 bg-ink/[0.07]" style={{ width: pct(now) }} />
-          {/* Диапазон. */}
+          {/* Диапазон: полоса двигает окно целиком, ручки по краям — каждую границу отдельно. */}
           {selection.mode === "range" && (
-            <div className="absolute top-[22px] h-16 border-y-2 border-ink bg-secondary/60"
-              style={{ left: pct(selection.from), width: `calc(${pct(selection.to)} - ${pct(selection.from)})` }} />
+            <>
+              <div onPointerDown={grab("move")} className="absolute top-[22px] h-16 cursor-grab border-y-2 border-ink bg-secondary/60 active:cursor-grabbing"
+                style={{ left: pct(selection.from), width: `calc(${pct(selection.to)} - ${pct(selection.from)})` }} />
+              {(["from", "to"] as const).map((k) => {
+                const t = k === "from" ? selection.from : selection.to;
+                return (
+                  <div key={k}>
+                    <div onPointerDown={grab(k)} role="presentation"
+                      className="absolute top-[17px] h-[74px] w-4 -translate-x-1/2 cursor-ew-resize rounded-[8px] border-2 border-ink bg-primary shadow-hard-sm"
+                      style={{ left: pct(t) }}>
+                      <span className="absolute top-6 left-[2px] h-[22px] w-0.5 bg-white" />
+                      <span className="absolute top-6 left-2 h-[22px] w-0.5 bg-white" />
+                    </div>
+                    <span className="pointer-events-none absolute top-[92px] -translate-x-1/2 rounded-pill border-[1.5px] border-ink bg-ink px-2 py-0.5 text-[11px] font-extrabold whitespace-nowrap text-white"
+                      style={{ left: pct(t) }}>
+                      {hhmm(t)}
+                    </span>
+                  </div>
+                );
+              })}
+            </>
           )}
           {/* Гистограмма: сколько событий идёт в каждом часе. */}
           <div className="absolute top-[22px] left-0 flex h-16 w-full items-end gap-px px-px pb-1">

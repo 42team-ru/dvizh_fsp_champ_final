@@ -211,7 +211,7 @@ export default function FeedPage() {
           onMore={() => setMore((m) => !m)} count={events?.length} view={view} onView={setView} />
         {more && <FeedExtraFilters value={filters.extra} onChange={filters.setExtra} className="w-full" />}
         {view === "map" ? (
-          <EventsMap withHome filters={toMapFilters(filters.params)} className="w-full" mapClassName="h-[436px]" />
+          <EventsMap withHome filters={toMapFilters(filters.params)} className="h-[calc(100dvh-234px)] min-h-[640px] w-full" mapClassName="min-h-0" />
         ) : (
         <div className="flex min-w-[1216px] flex-col gap-5">
           {events?.length === 0 && <FeedEmpty />}

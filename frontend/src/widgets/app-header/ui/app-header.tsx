@@ -48,7 +48,7 @@ export function AppHeader({ current = "home" }: { current?: "home" | "feed" | "p
               asChild
               variant="nav"
               size="nav"
-              className={`relative justify-start font-bold ${item.w}`}
+              className={`relative justify-start font-bold ${item.key === "activity" && nav.unread === 0 ? "" : item.w}`}
             >
               <Link to={item.to} aria-current={item.key === current ? "page" : undefined}>
                 <Icon name={`${iconFolder(current, item.key)}/${item.icon}`} className="size-[19px]" />

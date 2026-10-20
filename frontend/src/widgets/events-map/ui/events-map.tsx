@@ -228,7 +228,7 @@ export function EventsMap({ filters = {}, className, mapClassName, withHome = fa
   return (
     <div className={cn("flex flex-col gap-4 lg:flex-row lg:items-stretch", className)}>
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-[24px] border-2 border-ink bg-card">
-        <div className={cn("relative min-h-[320px]", mapClassName)}>
+        <div className={cn("relative min-h-[320px] flex-1", mapClassName)}>
           <MapContainer onReady={(el) => { container.current = el; }} />
           <div className="pointer-events-none absolute top-3.5 right-3.5 z-[400] flex items-center gap-2 rounded-pill border-[1.5px] border-ink bg-card px-3 py-1.5 text-[11px] whitespace-nowrap">
             <span className="size-2.5 rounded-full border-[1.5px] border-ink bg-primary" />
@@ -290,7 +290,7 @@ export function EventsMap({ filters = {}, className, mapClassName, withHome = fa
       </div>
 
       <aside aria-label="Лента времени" aria-busy={loading}
-        className="flex max-h-[720px] min-h-0 flex-col gap-2 rounded-[24px] border-2 border-ink bg-card px-4 pt-4 pb-3 lg:w-[290px] lg:shrink-0">
+        className="flex min-h-0 flex-col lg:max-h-none gap-2 rounded-[24px] border-2 border-ink bg-card px-4 pt-4 pb-3 lg:w-[290px] lg:shrink-0">
         <div className="flex items-center justify-between">
           <h2 className="font-display text-base font-extrabold">Лента времени</h2>
           <span className="rounded-pill border-[1.5px] border-ink bg-secondary px-2.5 py-0.5 text-xs font-extrabold">{shownCount}</span>
