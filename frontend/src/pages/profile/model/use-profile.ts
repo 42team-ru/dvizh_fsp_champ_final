@@ -56,7 +56,7 @@ export function useProfile() {
 
   const firstName = user?.firstName ?? "";
   const lastName = user?.lastName ?? "";
-  const number = (user?.id ?? "").replace(/-/g, "").slice(0, 4).toUpperCase();
+  const number = (user?.id ?? "").replace(/-/g, "").slice(0, 6).toUpperCase();
 
   return {
     user,
@@ -67,7 +67,7 @@ export function useProfile() {
     fullName: [firstName, lastName].filter(Boolean).join(" ") || user?.username || "",
     initials: ((firstName[0] ?? "") + (lastName[0] ?? "")).toUpperCase() || (user?.username?.[0] ?? "").toUpperCase(),
     handle: [user?.username && handle(user.username), user?.city].filter(Boolean).join(" · "),
-    passportNumber: `№ SR-${number || "0000"}`,
+    passportNumber: `№ SR-${number || "000000"}`,
     mrz: `P<RUS<${latin(lastName)}<<${latin(firstName)}<<${number}`.slice(0, 44),
     sports,
     stats: [

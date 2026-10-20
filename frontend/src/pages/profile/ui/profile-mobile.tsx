@@ -22,6 +22,12 @@ import { RoughBorder } from "@/shared/components/ui/rough-border";
 import { cn } from "cn";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 import { ProfileShare } from "./profile-share";
+import { PassportWaves } from "@/features/share-link/ui/share-posters";
+import {
+  PassportHologram,
+  PassportMrz,
+  PassportPageHeader,
+} from "./passport-decoration";
 
 const dir = "m-profile";
 
@@ -94,61 +100,79 @@ function Passport() {
   const p = useProfile();
   return (
     <div className="px-4">
-      <div className="box-border w-full overflow-hidden rounded-[26px] border-2 border-ink bg-card shadow-[4px_4px_0_var(--primary)]">
-        <div className="flex h-10 items-center justify-between bg-secondary px-[18px] text-[10px] leading-[normal] font-extrabold tracking-[1px] whitespace-nowrap text-foreground">
-          <span>ЦИФРОВОЙ ПАСПОРТ · Движ</span>
-          <span>{p.passportNumber}</span>
-        </div>
-        <div className="flex flex-col gap-[14px] p-[18px]">
-          <div className="flex items-center gap-[14px]">
-            <UserAvatar
-              user={p.user}
-              className="box-border size-[72px] shrink-0 rounded-[36px] border-2 border-ink object-cover"
-            />
-            <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
-              <Eyebrow className={small}>ИМЯ</Eyebrow>
-              <p className="w-[190px] font-display text-[19px] leading-6 font-bold text-foreground">
-                {p.fullName}
-              </p>
-              <p className="text-[13px] leading-[normal] font-medium whitespace-nowrap text-muted-foreground">
-                {p.handle}
-              </p>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            {p.sports.slice(0, 3).map((s, i) => (
-              <span
-                key={s.sport.id}
-                className={cn(
-                  "rounded-pill border-[1.5px] border-ink px-[14px] py-[6px] text-[13px] leading-[normal] font-extrabold whitespace-nowrap text-foreground",
-                  SPORT_TONES[i],
-                )}
-              >
-                {s.sport.name}
-              </span>
-            ))}
-          </div>
-          <div className="flex gap-2 leading-[normal] font-bold whitespace-nowrap">
-            {p.stats.map((s, i) => (
-              <div
-                key={s.label}
-                className={cn(
-                  "relative box-border flex min-w-0 flex-1 flex-col gap-[2px] rounded-[14px] border-[1.5px] border-transparent p-[10px]",
-                  STAT_TONES[i],
-                )}
-              >
-                <span className="font-display text-lg text-foreground">
-                  {s.value}
-                </span>
-                <span className="text-[11px] text-muted-foreground">
-                  {s.label}
-                </span>
-                <RoughBorder radius={14} strokeWidth={1.5} roughness={0.8} />
+      <div className="relative box-border w-full overflow-hidden rounded-[26px] border-2 border-ink bg-ultramarine p-2 shadow-hard-sm">
+        <div className="relative overflow-hidden rounded-[17px] border-2 border-ink bg-card">
+          <PassportWaves className="pointer-events-none absolute inset-0 text-primary/10" />
+          <PassportPageHeader
+            title="◉ ПАСПОРТ СПОРТСМЕНА"
+            page={1}
+            className="px-3 [&_h2]:text-[10px] [&_h2]:tracking-[0.8px]"
+          />
+          <div className="relative flex flex-col gap-4 p-4">
+            <div className="flex items-center gap-[14px]">
+              <div className="relative shrink-0">
+                <UserAvatar
+                  user={p.user}
+                  className="box-border h-24 w-20 rounded-xl border-2 border-ink object-cover"
+                />
+                <PassportHologram />
               </div>
-            ))}
+              <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
+                <Eyebrow className={small}>ИМЯ</Eyebrow>
+                <p className="break-words font-display text-[19px] leading-6 font-bold text-foreground">
+                  {p.fullName}
+                </p>
+                <p className="break-words text-sm leading-snug font-medium text-muted-foreground">
+                  {p.handle}
+                </p>
+                <p className="text-xs font-bold text-muted-foreground">
+                  {p.passportNumber}
+                </p>
+              </div>
+            </div>
+            <ProfileShare user={p.user} className="w-fit self-end" />
+            <div className="flex flex-wrap gap-2">
+              {p.sports.slice(0, 3).map((s, i) => (
+                <span
+                  key={s.sport.id}
+                  className={cn(
+                    "max-w-full truncate rounded-pill border-[1.5px] border-ink px-3 py-[6px] text-sm leading-[normal] font-extrabold text-foreground",
+                    SPORT_TONES[i],
+                  )}
+                >
+                  {s.sport.name}
+                </span>
+              ))}
+            </div>
+            <div className="flex gap-2 leading-[normal] font-bold">
+              {p.stats.map((s, i) => (
+                <div
+                  key={s.label}
+                  className={cn(
+                    "relative box-border flex min-w-0 flex-1 flex-col gap-[2px] rounded-[14px] border-[1.5px] border-transparent p-[10px]",
+                    STAT_TONES[i],
+                  )}
+                >
+                  <span className="font-display text-lg text-foreground">
+                    {s.value}
+                  </span>
+                    <span className="text-xs leading-4 text-muted-foreground">
+                    {s.label}
+                  </span>
+                  <RoughBorder radius={14} strokeWidth={1.5} roughness={0.8} />
+                </div>
+              ))}
+            </div>
+            <PassportMrz
+              user={p.user}
+              className="text-[clamp(8px,2.55vw,11px)] tracking-normal"
+            />
           </div>
-          <ProfileShare user={p.user} className="w-full" />
         </div>
+        <div
+          aria-hidden="true"
+          className="mx-3 mt-2 border-b-2 border-dashed border-lime"
+        />
       </div>
     </div>
   );
@@ -156,25 +180,50 @@ function Passport() {
 
 function Pet() {
   const owner = usePublicProfile();
+  const { worn } = useWardrobe();
   const [speechContainer, setSpeechContainer] = useState<HTMLDivElement | null>(
     null,
   );
   return (
     <div className="px-4">
-      <div className="box-border flex w-full flex-col gap-3 rounded-[26px] border-2 border-ink bg-sky p-[18px] shadow-[4px_4px_0_var(--ink)]">
-        <div className="flex flex-wrap items-center gap-3">
-          <ProfileBeaverPet
-            speechContainer={speechContainer}
-            className="size-28 shrink-0 [&_.beaver-pet]:h-full [&_svg]:h-full"
-          />
-          <div className="flex min-w-[180px] flex-1 flex-col items-start gap-1">
-            <Eyebrow className={cn(small, "text-foreground")}>
-              {owner ? "ПИТОМЕЦ" : "ТВОЙ ПИТОМЕЦ"}
-            </Eyebrow>
-            <ProfilePetName />
+      <div className="box-border w-full overflow-hidden rounded-[26px] border-2 border-ink bg-ultramarine p-2 shadow-hard-sm">
+        <div className="overflow-hidden rounded-[17px] border-2 border-ink bg-sky">
+          <PassportPageHeader title="СОПРОВОЖДАЮЩИЙ" page={2} />
+          <div className="flex flex-col gap-3 p-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <ProfileBeaverPet
+                speechContainer={speechContainer}
+                className="size-28 shrink-0 [&_.beaver-pet]:h-full [&_svg]:h-full"
+              />
+              <div className="flex min-w-[180px] flex-1 flex-col items-start gap-1">
+                <Eyebrow className={cn(small, "text-foreground")}>
+                  {owner ? "ПИТОМЕЦ" : "ТВОЙ ПИТОМЕЦ"}
+                </Eyebrow>
+                <ProfilePetName />
+              </div>
+            </div>
+            <div
+              ref={setSpeechContainer}
+              className="relative min-h-[92px] w-full"
+            />
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm leading-5">
+              <p className="min-w-0 flex-1 font-semibold">
+                Образ:{" "}
+                {worn.length
+                  ? worn.map((item) => item.item).join(" + ")
+                  : "без образа"}
+              </p>
+              {!owner && (
+                <Link
+                  to="/profile/wardrobe"
+                  className="py-2 font-extrabold text-primary underline underline-offset-4"
+                >
+                  Изменить образ
+                </Link>
+              )}
+            </div>
           </div>
         </div>
-        <div ref={setSpeechContainer} className="relative min-h-[92px] w-full" />
       </div>
     </div>
   );
@@ -256,7 +305,11 @@ function Wardrobe() {
               {w.slot}
             </span>
             {!owner && (
-              <Button asChild variant="soft" className="min-h-11 w-full px-5 text-xs">
+              <Button
+                asChild
+                variant="soft"
+                className="min-h-11 w-full px-5 text-xs"
+              >
                 <Link to="/profile/wardrobe">Сменить</Link>
               </Button>
             )}
@@ -304,7 +357,11 @@ function Gallery() {
   const photos = readOnly && "photos" in user ? user.photos : undefined;
   return (
     <div className="px-4">
-      <ProfileGallery owner={{ ...user, id: user.id }} mine={!readOnly} aboutPhotos={photos} />
+      <ProfileGallery
+        owner={{ ...user, id: user.id }}
+        mine={!readOnly}
+        aboutPhotos={photos}
+      />
     </div>
   );
 }
