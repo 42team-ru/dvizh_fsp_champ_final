@@ -14,7 +14,8 @@ import { cn } from "cn";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 import { LocationPicker } from "@/widgets/events-map/ui/location-picker";
 import { fullName, initials, privateNote, type useEvent } from "../model/use-event";
-import { QrCode } from "@/shared/components/ui/qr-code";
+import { TicketStrip } from "@/entity/event/ui/ticket-strip";
+import { TicketQrStamp } from "@/entity/event/ui/ticket-qr-stamp";
 import { plural } from "@/shared/lib/plural";
 import { EventShare } from "./event-share";
 import { InviteActions } from "@/features/organizer-invite/ui/invite-actions";
@@ -232,17 +233,7 @@ export function EventMobile({ m }: { m: EventModel }) {
 
       <div className="px-4">
         <div className="box-border w-full overflow-hidden rounded-[26px] border-2 border-ink bg-primary shadow-[4px_4px_0_var(--ink)]">
-          <div className="flex flex-col gap-[6px] px-5 pt-[18px] pb-3">
-            <Badge
-              variant="secondary"
-              className="h-auto w-fit border-[1.5px] px-[10px] py-1 text-[9px] leading-[normal] font-extrabold tracking-[1px]"
-            >
-              {m.kindLabel.toUpperCase()} · № {e.id.slice(0, 4).toUpperCase()}
-            </Badge>
-            <p className="font-display text-[28px] leading-[normal] font-extrabold whitespace-nowrap text-white">
-              {m.joinLabel}
-            </p>
-          </div>
+          <TicketStrip id={e.id} kind={m.kindLabel} joinMode={e.joinMode} compact />
           <div className="relative h-[22px]">
             <img
               src={`/${dir}/dash.svg`}
@@ -260,7 +251,6 @@ export function EventMobile({ m }: { m: EventModel }) {
                     hint={f.label === "КОГДА" ? f.lines[1] : f.lines.filter(Boolean).join(" · ")} />
                 ))}
               </div>
-              {!m.moderated && <QrCode path={`/events/${e.id}`} label="QR-код: страница встречи" className="size-[76px]" />}
             </div>
             {/* Детали для участников: сами детали или пояснение по ситуации (как на десктопе) */}
             <p className="rounded-xl border-2 border-dashed border-ink px-3 py-2 text-xs leading-[17px] font-bold text-foreground">
@@ -269,6 +259,12 @@ export function EventMobile({ m }: { m: EventModel }) {
                 : privateNote(e)}
             </p>
           </div>
+          {!m.moderated && e.singleOccurrence?.status !== "CANCELLED" && (viewer.registrationStatus === "CONFIRMED" || viewer.isOrganizer) && (
+            <div className="flex flex-col gap-4 border-t-2 border-dashed border-ink bg-lime px-5 pt-3 pb-5">
+              <Eyebrow className="text-ink">КОНТРОЛЬ</Eyebrow>
+              <TicketQrStamp eventId={e.id} className="self-center" />
+            </div>
+          )}
         </div>
       </div>
 
