@@ -522,32 +522,31 @@ function AwardCard() {
   const org = me.data?.status === 200 ? me.data.data : undefined;
   const top = featured.data?.status === 200 ? featured.data.data : undefined;
   const won = !!org?.id && top?.id === org.id;
+  const link = won ? `/orgs/${org!.id}` : org?.status === "APPROVED" && org.id ? `/orgs/${org.id}` : undefined;
+  // На всю ширину: на компьютере — строкой (кубок, текст, кнопка справа), на телефоне — столбиком.
   return (
-    <section className={cn(CARD, "relative flex flex-col gap-3 overflow-hidden p-6", won ? "bg-secondary" : "bg-lavender-soft")}>
-      <span aria-hidden className="absolute top-5 right-10 size-9 rounded-full border-[3px] border-primary" />
-      <motion.span animate={{ rotate: [0, -8, 8, 0] }} transition={{ duration: 1.6, repeat: Infinity, repeatDelay: 2.4 }}
-        className="flex size-14 items-center justify-center rounded-[16px] border-2 border-ink bg-card shadow-hard-sm">
+    <section className={cn(CARD, "flex flex-col gap-4 p-6 lg:flex-row lg:items-center lg:gap-6", won ? "bg-secondary" : "bg-lavender-soft")}>
+      <span className="flex size-14 shrink-0 items-center justify-center rounded-[16px] border-2 border-ink bg-card shadow-hard-sm">
         <Trophy className="size-7" strokeWidth={2.2} />
-      </motion.span>
-      {won && top ? (
-        <>
-          <Chip tone="bg-ink" className="self-start text-[10px] text-secondary">{top.period.slice(0, 7)}</Chip>
-          <h2 className="font-display text-[26px] leading-8 font-extrabold text-foreground">Вы — организация месяца!</h2>
-          <p className="text-[13px] font-bold text-foreground">Бейдж уже на публичной странице клуба и в ленте.</p>
-          <Button asChild variant="ink" rough={false} className="self-start shadow-none">
-            <Link to={`/orgs/${org!.id}`}><ArrowUpRight className="size-4" />Открыть страницу</Link>
-          </Button>
-        </>
-      ) : (
-        <>
-          <h2 className="font-display text-[22px] leading-7 font-extrabold text-foreground">Стать организацией месяца</h2>
-          <p className="text-[13px] font-bold text-foreground">Счёт за месяц: пришедшие участники ×3 и вернувшиеся ×5. Проводите встречи — и бейдж появится на странице клуба.</p>
-          {org?.status === "APPROVED" && org.id && (
-            <Button asChild variant="outline" rough={false} className="self-start shadow-none">
-              <Link to={`/orgs/${org.id}`}><ArrowUpRight className="size-4" />Страница клуба</Link>
-            </Button>
-          )}
-        </>
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col gap-2">
+        {won && top ? (
+          <>
+            <Chip tone="bg-ink" className="self-start text-[10px] text-secondary">{top.period.slice(0, 7)}</Chip>
+            <h2 className="font-display text-[26px] leading-8 font-extrabold text-foreground">Вы — организация месяца!</h2>
+            <p className="text-[13px] font-bold text-foreground">Бейдж уже на публичной странице клуба и в ленте.</p>
+          </>
+        ) : (
+          <>
+            <h2 className="font-display text-[22px] leading-7 font-extrabold text-foreground">Стать организацией месяца</h2>
+            <p className="text-[13px] font-bold text-foreground">Счёт за месяц: пришедшие участники ×3 и вернувшиеся ×5. Проводите встречи — и бейдж появится на странице клуба.</p>
+          </>
+        )}
+      </div>
+      {link && (
+        <Button asChild variant={won ? "ink" : "outline"} rough={false} className="shrink-0 self-start shadow-none lg:self-center">
+          <Link to={link}><ArrowUpRight className="size-4" />{won ? "Открыть страницу" : "Страница клуба"}</Link>
+        </Button>
       )}
     </section>
   );
@@ -616,10 +615,8 @@ export function OrganizerHome() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
-        <Announce events={m.events} />
-        <AwardCard />
-      </div>
+      <Announce events={m.events} />
+      <AwardCard />
     </div>
   );
 }

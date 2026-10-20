@@ -297,7 +297,7 @@ export function AdminHome() {
       )}
 
       {/* График и очередь */}
-      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid grid-cols-1 items-stretch gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
         <section className={cn(CARD, "flex min-w-0 flex-col gap-3 p-5 sm:p-6")}>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -347,7 +347,7 @@ export function AdminHome() {
       </div>
 
       {/* Пьедестал и свежие мероприятия */}
-      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-2">
+      <div className="grid grid-cols-1 items-stretch gap-5 lg:grid-cols-2">
         <section className={cn(CARD, "flex flex-col gap-4 p-5 sm:p-6")}>
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -417,7 +417,7 @@ export function AdminHome() {
       </div>
 
       {/* Гардероб и новенькие */}
-      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid grid-cols-1 items-stretch gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
         <section className={cn(CARD, "flex flex-col gap-4 bg-sky-soft p-5 sm:p-6")}>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">

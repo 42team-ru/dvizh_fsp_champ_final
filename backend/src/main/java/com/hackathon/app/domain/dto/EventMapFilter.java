@@ -45,6 +45,8 @@ public record EventMapFilter(
 		Boolean forMe,
 		@Schema(description = "Только мероприятия этой организации (карта на странице организации)")
 		UUID organizationId,
+		@Schema(description = "Только мои мероприятия: где я автор или соорганизатор (карта в кабинете)")
+		Boolean mine,
 		@Schema(description = "Центр фильтра по городу: широта, вместе с lon")
 		@DecimalMin("-90") @DecimalMax("90") Double lat,
 		@Schema(description = "Центр фильтра по городу: долгота, вместе с lat")
