@@ -7,6 +7,10 @@ import {
 } from "@react-router/dev/routes";
 
 export default [
+  // Короткие ссылки из QR-кодов: без учёта регистра, ведут на полные страницы.
+  route("e/:code", "routes/short-link.tsx", { id: "short-event" }),
+  route("o/:code", "routes/short-link.tsx", { id: "short-org" }),
+  route("u/:code", "routes/short-link.tsx", { id: "short-user" }),
   layout("providers/guards/auth-guard.tsx", [
     index("routes/home.tsx"),
     route("feed", "routes/feed.tsx"),
