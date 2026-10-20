@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:8099",
+      "url": "http://localhost:8080",
       "description": "Generated server url"
     }
   ],
@@ -6190,7 +6190,7 @@
           "sports"
         ],
         "summary": "Виды спорта",
-        "description": "Без query — весь справочник по алфавиту; с query — поиск по подстроке без учёта регистра, пробелов и ё/е.",
+        "description": "Без query — весь справочник по алфавиту; с query — поиск по подстроке без учёта регистра, пробелов и ё/е, затем похожие с опечаткой («падэл» → «Падел»).",
         "operationId": "sports_search",
         "parameters": [
           {
@@ -7726,6 +7726,16 @@
               "type": "string",
               "format": "uuid",
               "description": "Только мероприятия этой организации (карта на странице организации)"
+            }
+          },
+          {
+            "name": "mine",
+            "in": "query",
+            "description": "Только мои мероприятия: где я автор или соорганизатор (карта в кабинете)",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Только мои мероприятия: где я автор или соорганизатор (карта в кабинете)"
             }
           },
           {

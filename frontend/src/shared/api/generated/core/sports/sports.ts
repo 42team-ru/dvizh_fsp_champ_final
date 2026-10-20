@@ -76,7 +76,7 @@ export const getSportsSearchUrl = (params?: SportsSearchParams,) => {
 }
 
 /**
- * Без query — весь справочник по алфавиту; с query — поиск по подстроке без учёта регистра, пробелов и ё/е.
+ * Без query — весь справочник по алфавиту; с query — поиск по подстроке без учёта регистра, пробелов и ё/е, затем похожие с опечаткой («падэл» → «Падел»).
  * @summary Виды спорта
  */
 export const sportsSearch = async (params?: SportsSearchParams, options?: Parameters<typeof authMutator>[1]): Promise<sportsSearchResponse> => {

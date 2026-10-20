@@ -143,11 +143,14 @@ export default function MyEventsPage() {
         </Button>
       )}
 
-      {orgId && status === "PUBLISHED" && (
+      {status === "PUBLISHED" && (!isOrg || orgId) && (
         <section className="flex flex-col gap-3">
           <h2 className="font-display text-xl font-extrabold text-foreground">На карте</h2>
-          <p className="text-sm font-medium text-muted-foreground">Очные мероприятия организации на ближайшие 30 дней.</p>
-          <EventsMap filters={{ organizationId: orgId }} className="w-full" mapClassName="h-[380px]" />
+          <p className="text-sm font-medium text-muted-foreground">
+            {isOrg ? "Очные мероприятия организации" : "Очные мероприятия, где вы автор или соорганизатор"} на ближайшие 30 дней.
+          </p>
+          {/* Клубу — все события организации, человеку — где он автор или соорганизатор. */}
+          <EventsMap filters={isOrg ? { organizationId: orgId } : { mine: true }} className="w-full" mapClassName="h-[380px]" />
         </section>
       )}
 
