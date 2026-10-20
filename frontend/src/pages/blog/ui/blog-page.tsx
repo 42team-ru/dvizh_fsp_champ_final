@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { type RefObject, useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import { BookOpen, PenLine, Search } from "lucide-react";
 import { cn } from "cn";
@@ -25,6 +25,21 @@ const TABS: { key: Tab; label: string }[] = [
   { key: "mine", label: "Мои посты" },
 ];
 const STEP = 12;
+/** Зазор сетки постов (gap-6), px. */
+const GAP = 24;
+
+/** Высота элемента, следит за изменениями (подгрузились фото, сменилась ширина). 0 — элемент скрыт. */
+function useHeight(ref: RefObject<HTMLElement | null>) {
+  const [height, setHeight] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new ResizeObserver(() => setHeight(el.offsetHeight));
+    observer.observe(el);
+    return () => observer.disconnect();
+  });
+  return height;
+}
 
 function useBlogFeed(tab: Tab, searchText: string, size: number) {
   const feed = useBlogList({
@@ -82,6 +97,18 @@ export default function BlogPage() {
   const { query, items, total } = useBlogFeed(tab, search, size);
   const tabs = nav.canCreate ? TABS : TABS.filter((t) => t.key !== "mine");
   const tabList = useScrollActiveIntoView<HTMLDivElement>(tab);
+  // Рядом с правой колонкой посты идут в две колонки ровно до её высоты (до конца соседнего ряда),
+  // дальше — на всю ширину в три колонки, без пустоты под колонкой. Ряд меряем по первой карточке.
+  const asideRef = useRef<HTMLElement>(null);
+  const firstRef = useRef<HTMLDivElement>(null);
+  const asideHeight = useHeight(asideRef);
+  const rowHeight = useHeight(firstRef);
+  const besideRows = asideHeight && rowHeight ? Math.max(1, Math.ceil((asideHeight + GAP) / (rowHeight + GAP))) : 0;
+  const beside = besideRows ? items.slice(0, besideRows * 2) : items;
+  const below = besideRows ? items.slice(besideRows * 2) : [];
+  const card = (post: BlogPostSummaryResponse) => (
+    <BlogPostCard key={post.id} post={post} href={post.status === "DRAFT" ? `/blog/${post.id}/edit` : undefined} />
+  );
 
   return (
     <BlogShell>
@@ -129,23 +156,26 @@ export default function BlogPage() {
               action={nav.canCreate && <Button asChild><Link to="/blog/new">Написать пост</Link></Button>} />
           )}
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-            {items.map((post) => (
-              <BlogPostCard key={post.id} post={post} href={post.status === "DRAFT" ? `/blog/${post.id}/edit` : undefined} />
-            ))}
+            {beside.map((post, i) => i === 0 ? <div key={post.id} ref={firstRef} className="grid">{card(post)}</div> : card(post))}
           </div>
-          {items.length < total && (
-            <Button variant="outline" className="self-center" onClick={() => setSize((s) => Math.min(s + STEP, 50))}
-              disabled={size >= 50}>
-              Показать ещё
-            </Button>
-          )}
         </div>
-        <aside className="hidden flex-col gap-6 lg:flex">
+        <aside ref={asideRef} className="hidden flex-col gap-6 self-start lg:flex">
           <BlogPrompt />
           <Authors />
           <Kinds />
         </aside>
       </div>
+      {below.length > 0 && (
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {below.map(card)}
+        </div>
+      )}
+      {items.length < total && (
+        <Button variant="outline" className="self-center" onClick={() => setSize((s) => Math.min(s + STEP, 50))}
+          disabled={size >= 50}>
+          Показать ещё
+        </Button>
+      )}
 
       {nav.canCreate && (
         <Button asChild size="lg" className={cn("fixed right-4 bottom-[104px] z-30 shadow-hard lg:hidden")}>
