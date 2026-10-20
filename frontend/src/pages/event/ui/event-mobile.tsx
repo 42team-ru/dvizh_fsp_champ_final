@@ -16,7 +16,7 @@ import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 import { LocationPicker } from "@/widgets/events-map/ui/location-picker";
 import { fullName, initials, privateNote, type useEvent } from "../model/use-event";
 import { TicketStrip } from "@/entity/event/ui/ticket-strip";
-import { TicketQrStamp } from "@/entity/event/ui/ticket-qr-stamp";
+import { TicketAdmittedStamp } from "@/entity/event/ui/ticket-admitted-stamp";
 import { plural } from "@/shared/lib/plural";
 import { EventShare } from "./event-share";
 import { InviteActions } from "@/features/organizer-invite/ui/invite-actions";
@@ -264,10 +264,10 @@ export function EventMobile({ m, onDetails }: { m: EventModel; onDetails: (secti
                 : privateNote(e)}
             </p>
           </div>
-          {!m.moderated && e.singleOccurrence?.status !== "CANCELLED" && (viewer.registrationStatus === "CONFIRMED" || viewer.isOrganizer) && (
-            <div className="flex flex-col gap-4 border-t-2 border-dashed border-ink bg-lime px-5 pt-3 pb-5">
+          {!m.moderated && e.singleOccurrence?.status !== "CANCELLED" && viewer.registrationStatus === "CONFIRMED" && (
+            <div className="relative h-[120px] border-t-2 border-dashed border-ink bg-lime px-5 pt-3">
               <Eyebrow className="text-ink">КОНТРОЛЬ</Eyebrow>
-              <TicketQrStamp eventId={e.id} className="self-center" />
+              <TicketAdmittedStamp event={e} className="top-[34px] left-1/2 -translate-x-1/2" />
             </div>
           )}
         </div>

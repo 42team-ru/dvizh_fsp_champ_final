@@ -23,7 +23,7 @@ import { RoughBorder } from "@/shared/components/ui/rough-border";
 import { cn } from "cn";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
 import { TicketStrip } from "@/entity/event/ui/ticket-strip";
-import { TicketQrStamp } from "@/entity/event/ui/ticket-qr-stamp";
+import { TicketAdmittedStamp } from "@/entity/event/ui/ticket-admitted-stamp";
 import { EventShare } from "./event-share";
 import { InviteActions } from "@/features/organizer-invite/ui/invite-actions";
 import { EventGoingCrowd } from "@/widgets/event-going-crowd/ui/event-going-crowd";
@@ -118,7 +118,7 @@ function RegisterAction({ m, className, hintClassName }: { m: EventModel; classN
 function TicketHero({ m, onDetails }: { m: EventModel; onDetails: (section: EventDetailsSection) => void }) {
   const e = m.event!;
   const cover = coverOf(e);
-  const showQrStamp = !m.moderated && e.singleOccurrence?.status !== "CANCELLED" && (e.viewer.registrationStatus === "CONFIRMED" || e.viewer.isOrganizer);
+  const admitted = !m.moderated && e.singleOccurrence?.status !== "CANCELLED" && e.viewer.registrationStatus === "CONFIRMED";
   return (
     // Тень — drop-shadow на обёртке (box-shadow маска срезала бы целиком). Внешняя обёртка
     // шире на тень и вырезает те же дыры уже из тени, чтобы сквозь вырез был виден фон.
@@ -179,6 +179,7 @@ function TicketHero({ m, onDetails }: { m: EventModel; onDetails: (section: Even
         {(e.status !== "PUBLISHED" || e.singleOccurrence?.status === "CANCELLED") && (
           <CancelledStamp big className="top-[220px] left-[34px] h-[66px] w-[178px] rotate-[9deg]" />
         )}
+        {admitted && <TicketAdmittedStamp event={e} className="top-[214px] left-[34px] z-10" />}
         <div className="relative h-[143px] w-[242px] shrink-0">
           <Eyebrow className="text-foreground">УЧАСТНИКИ</Eyebrow>
           <div className="absolute top-[14px] left-0 flex max-w-full items-baseline gap-2 text-foreground">
@@ -205,15 +206,14 @@ function TicketHero({ m, onDetails }: { m: EventModel; onDetails: (section: Even
             )}
           </div>
         </div>
-        {showQrStamp && <TicketQrStamp eventId={e.id} />}
-        <div className={cn("relative w-[242px] shrink-0", showQrStamp ? "h-[76px]" : "h-[81px]")}>
+        <div className="relative h-[81px] w-[242px] shrink-0">
           {m.moderated ? (
             <p className="rounded-2xl border-2 border-ink bg-destructive px-4 py-3 text-sm font-bold text-destructive-foreground">
               Запись закрыта
             </p>
           ) : (
-            <RegisterAction m={m} className={cn("w-[242px] px-7 text-base leading-[22px]", showQrStamp ? "h-11" : "h-[54px]")}
-              hintClassName={cn("absolute left-0 line-clamp-2 w-full text-center text-xs leading-[15px] font-bold text-foreground", showQrStamp ? "top-[48px]" : "top-[60px]")} />
+            <RegisterAction m={m} className="h-[54px] w-[242px] px-7 text-base leading-[22px]"
+              hintClassName="absolute top-[60px] left-0 line-clamp-2 w-full text-center text-xs leading-[15px] font-bold text-foreground" />
           )}
         </div>
       </div>
@@ -477,7 +477,8 @@ export default function EventPage() {
   return (
     <>
     <EventMobile m={m} onDetails={openDetails} />
-    {m.event && <EventDetailsDialog key={m.id} event={m.event} section={details} onClose={() => setDetails(undefined)} onRestoreFocus={() => detailsTrigger.current?.focus()} />}
+    {m.event && <EventDetailsDialog key={m.id} event={m.event} section={details} onClose={() => setDetails(undefined)} onRestoreFocus={() => detailsTrigger.current?.focus()}
+      action={!m.moderated && <RegisterAction m={m} className="h-11 px-6" hintClassName="min-w-0 flex-1 text-[13px] leading-[18px] font-bold text-muted-foreground" />} />}
     <div className="relative isolate hidden min-h-dvh overflow-clip bg-background lg:block">
       <MemphisBackground seed="event" />
       <AppHeader current="feed" />
