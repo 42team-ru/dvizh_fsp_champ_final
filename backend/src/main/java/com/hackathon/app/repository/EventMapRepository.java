@@ -63,7 +63,7 @@ public class EventMapRepository {
 			sql.append(" and e.sport_id = :sportId");
 		}
 		if (level != null) {
-			sql.append(" and e.level in (:level, 'ANY')");
+			sql.append(" and e.level = :level");
 		}
 		if (joinMode != null) {
 			sql.append(" and e.join_mode = :joinMode");

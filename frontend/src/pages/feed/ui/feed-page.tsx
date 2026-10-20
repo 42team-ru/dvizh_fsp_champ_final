@@ -195,8 +195,8 @@ function Slot({ events, i, placeOf, reasonOf, topReasonOf, onDismiss, ...props }
 
 /** Карта понимает не все фильтры ленты: формат и «Для меня» ей не передаём (на карте только очные). */
 /** Время на карте задаёт её собственный док, поэтому from/to ленты сюда не идут. */
-const toMapFilters = ({ searchText, sportId, level, joinMode, organizationId, lat, lon, radiusKm }: EventsListParams): MapFilters =>
-  ({ searchText, sportId, level, joinMode, organizationId, lat, lon, radiusKm });
+const toMapFilters = ({ searchText, sportId, level, joinMode, forMe, organizationId, lat, lon, radiusKm }: EventsListParams): MapFilters =>
+  ({ searchText, sportId, level, joinMode, forMe, organizationId, lat, lon, radiusKm });
 
 /** Чипы «Сегодня»/«Выходные» задают и окно времени на карте. */
 const presetOf = (chip: FeedChip) => chip === "Сегодня" ? "today" as const : chip === "Выходные" ? "weekend" as const : undefined;

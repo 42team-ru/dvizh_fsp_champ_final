@@ -39,7 +39,7 @@ docker-compose.dev.yml  только БД для разработки
 | Ручка | operationId | Кто / что |
 |---|---|---|
 | `GET /api/sports?query=` | `sports_search` | справочник, поиск без учёта регистра и ё/е |
-| `GET /api/events?searchText&sportId&from&to&level&joinMode&format` | `events_list` | лента: только PUBLISHED, по умолчанию с текущего момента; уровень ANY подходит под любой фильтр |
+| `GET /api/events?searchText&sportId&from&to&level&joinMode&format` | `events_list` | лента: только PUBLISHED, по умолчанию с текущего момента; фильтр уровня строгий (ANY — отдельное значение «Любой») |
 | `GET /api/events/mine` | `events_mine` | где я автор или соорганизатор, все статусы |
 | `POST /api/events/{id}/organizers` `{"login"}` | `events_addOrganizer` | только автор; по логину или email; нельзя админа, уже организатора, записанного участника |
 | `DELETE /api/events/{id}/organizers/{userId}` | `events_removeOrganizer` | автор убирает любого, соорганизатор может выйти сам; автора убрать нельзя |

@@ -62,8 +62,14 @@ export function useFeedEvents(params: EventsListParams, { forYou, ready }: { for
   const preferences = useUsersMyPreferences();
   const home = preferences.data?.status === 200 ? preferences.data.data.home : undefined;
   const source = forYou ? recommended : list;
+  // Подборка не умеет фильтры «Ещё»: уровень, режим записи и формат отсекаем на месте, так же строго, как лента.
+  const matchesExtra = (e: EventSummaryResponse) =>
+    (!params.level || e.level === params.level)
+    && (!params.joinMode || e.joinMode === params.joinMode)
+    && (!params.format || e.format === params.format);
   const items: RecommendedEventResponse[] =
-    forYou ? recommended.data?.pages.flatMap((page) => page.items ?? []) ?? [] : [];
+    forYou ? (recommended.data?.pages.flatMap((page) => page.items ?? []) ?? []).filter((item) => matchesExtra(item.event)) : [];
+  const filteredLocally = forYou && Boolean(params.level || params.joinMode || params.format);
   const events: EventSummaryResponse[] | undefined = forYou
     ? recommended.data ? items.map((item) => item.event) : undefined
     : list.data?.pages.flatMap((page) => page.items ?? []);
@@ -78,7 +84,7 @@ export function useFeedEvents(params: EventsListParams, { forYou, ready }: { for
   };
   return {
     events,
-    totalElements: source.data?.pages[0]?.totalElements,
+    totalElements: filteredLocally ? items.length : source.data?.pages[0]?.totalElements,
     hasNextPage: source.hasNextPage,
     isFetching: source.isFetching,
     isFetchingNextPage: source.isFetchingNextPage,
