@@ -23,7 +23,7 @@ export function useInvalidateAdmin() {
 export function PageHead({ title, text, aside }: { title: string; text?: string; aside?: ReactNode }) {
   return (
     <div className="flex w-full flex-wrap items-start justify-between gap-4">
-      <div className="flex min-w-0 flex-col gap-1.5">
+      <div className="flex min-w-0 flex-[1_1_320px] flex-col gap-1.5">
         <h1 className="font-display text-[28px] leading-[34px] font-extrabold text-foreground">{title}</h1>
         {text && <p className="max-w-[600px] text-[13px] leading-[19px] font-medium text-muted-foreground">{text}</p>}
       </div>

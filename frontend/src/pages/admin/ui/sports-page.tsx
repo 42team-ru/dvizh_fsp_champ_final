@@ -267,10 +267,13 @@ export default function AdminSportsPage() {
       <PageHead title="Виды спорта"
         text="Справочник видов: добавляйте новые с картинкой, меняйте PNG, одобряйте или объединяйте виды, которые предложили пользователи."
         aside={
-          <Button onClick={() => setAction({ kind: "form" })}>
-            <Plus className="size-[18px]" strokeWidth={2.6} />
-            Добавить вид
-          </Button>
+          <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto">
+            <SearchBox placeholder="Название вида" onChange={(v) => { setSearchText(v); setPage(0); }} />
+            <Button onClick={() => setAction({ kind: "form" })}>
+              <Plus className="size-[18px]" strokeWidth={2.6} />
+              Добавить вид
+            </Button>
+          </div>
         } />
 
       <div className="flex w-full flex-wrap items-center gap-3">
@@ -280,7 +283,6 @@ export default function AdminSportsPage() {
           <ImageOff className="size-4" strokeWidth={2.4} />
           Без картинки{c ? ` · ${c.withoutImage}` : ""}
         </button>
-        <SearchBox placeholder="Название вида" className="sm:ml-auto" onChange={(v) => { setSearchText(v); setPage(0); }} />
       </div>
       <p className="text-xs font-medium text-muted-foreground">
         Свои виды создаются пользователями в форме мероприятия. Одобрите, добавьте картинку или объедините с существующим, чтобы не плодить дубли.

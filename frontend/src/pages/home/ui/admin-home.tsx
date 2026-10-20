@@ -298,7 +298,7 @@ export function AdminHome() {
 
       {/* График и очередь */}
       <div className="grid grid-cols-1 items-stretch gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
-        <section className={cn(CARD, "flex min-w-0 flex-col gap-3 p-5 sm:p-6")}>
+        <section className={cn(CARD, "flex min-w-0 flex-col justify-center gap-3 p-5 sm:p-6")}>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className={TITLE}>Новые пользователи</h2>
@@ -313,7 +313,7 @@ export function AdminHome() {
           <p className="text-[11px] font-medium text-muted-foreground">Дни без регистраций приходят нулями. Пиковый день подсвечен.</p>
         </section>
 
-        <section className={cn(CARD, "flex flex-col gap-3 p-5 sm:p-6")}>
+        <section className={cn(CARD, "flex flex-col justify-center gap-3 p-5 sm:p-6")}>
           <div className="flex items-center justify-between gap-3">
             <h2 className={TITLE}>Очередь заявок</h2>
             <Chip tone="bg-lavender-soft" className="text-[10px] normal-case">сначала старые</Chip>
@@ -348,7 +348,7 @@ export function AdminHome() {
 
       {/* Пьедестал и свежие мероприятия */}
       <div className="grid grid-cols-1 items-stretch gap-5 lg:grid-cols-2">
-        <section className={cn(CARD, "flex flex-col gap-4 p-5 sm:p-6")}>
+        <section className={cn(CARD, "flex flex-col justify-center gap-4 p-5 sm:p-6")}>
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className={TITLE}>Организация месяца</h2>
@@ -384,7 +384,7 @@ export function AdminHome() {
           )}
         </section>
 
-        <section className={cn(CARD, "flex flex-col gap-2 p-5 sm:p-6")}>
+        <section className={cn(CARD, "flex flex-col justify-center gap-2 p-5 sm:p-6")}>
           <div className="flex items-center justify-between gap-3">
             <h2 className={TITLE}>Свежие мероприятия</h2>
             <Link to="/admin/events" className="flex items-center gap-1 text-[13px] font-extrabold text-foreground hover:underline">Все {num(totalEvents)} <ArrowRight className="size-3.5" strokeWidth={2.6} /></Link>
@@ -418,7 +418,7 @@ export function AdminHome() {
 
       {/* Гардероб и новенькие */}
       <div className="grid grid-cols-1 items-stretch gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
-        <section className={cn(CARD, "flex flex-col gap-4 bg-sky-soft p-5 sm:p-6")}>
+        <section className={cn(CARD, "flex flex-col justify-center gap-4 bg-sky-soft p-5 sm:p-6")}>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <h2 className={TITLE}>Гардероб бобра</h2>
@@ -444,7 +444,7 @@ export function AdminHome() {
           </p>
         </section>
 
-        <section className={cn(CARD, "flex flex-col gap-2 p-5 sm:p-6")}>
+        <section className={cn(CARD, "flex flex-col justify-center gap-2 p-5 sm:p-6")}>
           <div className="flex items-center justify-between gap-3">
             <h2 className={TITLE}>Новенькие</h2>
             <Link to="/admin/users" className="flex items-center gap-1 text-[13px] font-extrabold text-foreground hover:underline">Все {num(monthData?.users ?? 0)} <ArrowRight className="size-3.5" strokeWidth={2.6} /></Link>
