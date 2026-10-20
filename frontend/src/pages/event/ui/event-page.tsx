@@ -106,7 +106,7 @@ function RegisterAction({ m, className, hintClassName }: { m: EventModel; classN
   return (
     <>
       {active && viewer.canCancel ? (
-        <Button variant="soft" className={className} disabled={m.busy} onClick={m.cancel}>
+        <Button variant="soft" className={cn(className, "hover:bg-muted")} disabled={m.busy} onClick={m.cancel}>
           {viewer.registrationStatus === "PENDING" ? "Отозвать заявку" : "Отменить запись"}
         </Button>
       ) : (

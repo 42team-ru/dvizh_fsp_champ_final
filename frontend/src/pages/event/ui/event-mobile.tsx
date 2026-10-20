@@ -411,7 +411,7 @@ export function EventMobile({ m, onDetails }: { m: EventModel; onDetails: (secti
           </span>
         </div>
         {m.moderated ? null : active && viewer.canCancel ? (
-          <Button variant="soft" className="h-14 w-[180px] shrink-0 px-5 text-base" disabled={m.busy} onClick={m.cancel}>
+          <Button variant="soft" className="h-14 w-[180px] shrink-0 px-5 text-base hover:bg-muted" disabled={m.busy} onClick={m.cancel}>
             {viewer.registrationStatus === "PENDING" ? "Отозвать" : "Отменить"}
           </Button>
         ) : (
