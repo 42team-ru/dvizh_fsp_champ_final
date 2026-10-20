@@ -1,129 +1,264 @@
-import { useRef } from "react";
-import { QRCodeCanvas } from "qrcode.react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { Download, Share2 } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/shared/components/ui/dialog";
-import { QrCode, absoluteUrl } from "@/shared/components/ui/qr-code";
+import { Input } from "@/shared/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/shared/components/ui/dialog";
+import { absoluteUrl } from "@/shared/components/ui/qr-code";
 import { toast } from "@/shared/lib/toast";
+import { downloadPoster } from "../lib/download-poster";
 
-/**
- * Окно «Поделиться»: сверху карточка с QR (билет встречи или обложка паспорта — `children`), ниже ссылка,
- * копирование, системное «Отправить» на телефоне и QR картинкой — распечатать или переслать в мессенджер.
- */
-export function ShareDialog({ open, onOpenChange, path, title, description, children }: {
+export type ShareFormat = "post" | "story";
+
+/** Один холст для превью и PNG: масштабируется только обёртка. */
+function PosterPreview({
+  format,
+  posterRef,
+  children,
+}: {
+  format: ShareFormat;
+  posterRef: React.RefObject<HTMLDivElement | null>;
+  children: ReactNode;
+}) {
+  const frame = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(0);
+  const height = format === "post" ? 1350 : 1920;
+  useEffect(() => {
+    const node = frame.current;
+    if (!node) return;
+    const observer = new ResizeObserver(([entry]) =>
+      setWidth(entry.contentRect.width),
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+  return (
+    <div
+      ref={frame}
+      className="relative w-full overflow-hidden rounded-2xl border-2 border-ink bg-card shadow-hard-sm"
+      style={{
+        maxWidth: format === "post" ? 360 : 258,
+        aspectRatio: `1080 / ${height}`,
+      }}
+    >
+      <div
+        style={{
+          width: 1080,
+          height,
+          transform: `scale(${width / 1080})`,
+          transformOrigin: "top left",
+        }}
+      >
+        <div
+          ref={posterRef}
+          data-share-poster={format}
+          className="relative isolate overflow-hidden font-sans"
+          style={{ width: 1080, height }}
+        >
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Общее окно для афиши встречи и обложки паспорта. Рисунок передаёт вызывающая страница. */
+export function ShareDialog({
+  open,
+  onOpenChange,
+  path,
+  title,
+  description,
+  filename,
+  ready = true,
+  children,
+}: {
   open: boolean;
   onOpenChange(open: boolean): void;
-  /** Путь на сайте, например `/events/…`. */
   path: string;
   title: string;
   description: string;
-  children: React.ReactNode;
+  filename: string;
+  ready?: boolean;
+  children(format: ShareFormat): ReactNode;
 }) {
-  // QR для скачивания: невидимый canvas, отдаёт PNG
-  const canvas = useRef<HTMLCanvasElement>(null);
+  const poster = useRef<HTMLDivElement>(null);
+  const linkId = useId();
+  const [format, setFormat] = useState<ShareFormat>("post");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
   const url = absoluteUrl(path);
+  const canShare =
+    typeof navigator !== "undefined" && typeof navigator.share === "function";
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(url);
       toast.success("Ссылка скопирована");
     } catch {
-      toast.info(url);
+      const input = document.getElementById(linkId) as HTMLInputElement | null;
+      input?.focus();
+      input?.select();
+      toast.info("Выделили ссылку — скопируйте её вручную");
     }
   };
-  const download = () => {
-    const link = document.createElement("a");
-    link.href = canvas.current?.toDataURL("image/png") ?? "";
-    link.download = "qr-dvizh.png";
-    link.click();
+  const download = async () => {
+    if (!poster.current || busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      await downloadPoster(poster.current, filename);
+    } catch {
+      setError(
+        "Не удалось подготовить картинку. Проверьте загрузку изображений и попробуйте ещё раз.",
+      );
+    } finally {
+      setBusy(false);
+    }
   };
-  const canShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
-
+  const socials = [
+    {
+      label: "Telegram",
+      href: `https://t.me/share/url?${new URLSearchParams({ url, text: title })}`,
+    },
+    {
+      label: "ВКонтакте",
+      href: `https://vk.com/share.php?${new URLSearchParams({ url, title })}`,
+    },
+    {
+      label: "WhatsApp",
+      href: `https://wa.me/?${new URLSearchParams({ text: `${title}\n${url}` })}`,
+    },
+  ];
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      {/* широкое окно под экран: на компьютере карточка слева, текст и кнопки справа — всё видно без прокрутки */}
-      <DialogContent className="max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] gap-0 overflow-x-hidden sm:max-w-[calc(100vw-2rem)] overflow-y-auto bg-background p-5 [scrollbar-width:none] sm:p-8 lg:max-w-[1040px] [&::-webkit-scrollbar]:hidden">
-        <div className="grid items-center gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:gap-10">
-          <div className="flex min-w-0 justify-center">{children}</div>
-          <div className="flex min-w-0 flex-col gap-4">
-            <div className="pr-8">
-              <DialogTitle className="font-display text-2xl leading-8 font-bold text-foreground">{title}</DialogTitle>
-              <DialogDescription className="mt-2 text-base font-semibold text-muted-foreground">{description}</DialogDescription>
-            </div>
-            <p className="truncate rounded-xl border-2 border-dashed border-track px-3 py-2.5 text-center text-sm font-bold text-muted-foreground" title={url}>
-              {url}
-            </p>
-            <Button variant="ink" className="h-12 w-full" onClick={() => void copy()}>Скопировать ссылку</Button>
-            <div className="flex gap-2">
-              {canShare && (
-                <Button variant="soft" className="h-12 min-w-0 flex-1 px-3" onClick={() => void navigator.share({ title, url }).catch(() => undefined)}>
-                  Отправить
+      <DialogContent className="max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-[980px] gap-0 overflow-x-hidden overflow-y-auto bg-background p-5 sm:max-w-[980px] sm:p-8">
+        <div className="grid min-w-0 items-center gap-7 md:grid-cols-[minmax(0,360px)_minmax(0,1fr)] md:gap-9">
+          <div className="flex min-w-0 flex-col items-center gap-4 pt-5 md:pt-0">
+            <PosterPreview format={format} posterRef={poster}>
+              {children(format)}
+            </PosterPreview>
+            <div
+              role="group"
+              aria-label="Формат картинки"
+              className="flex gap-1 rounded-pill border-2 border-ink bg-card p-1"
+            >
+              {(
+                [
+                  ["post", "Пост 4:5"],
+                  ["story", "Сторис 9:16"],
+                ] as const
+              ).map(([value, label]) => (
+                <Button
+                  key={value}
+                  variant={format === value ? "default" : "ghost"}
+                  size="sm"
+                  rough={false}
+                  aria-pressed={format === value}
+                  disabled={busy}
+                  onClick={() => setFormat(value)}
+                >
+                  {label}
                 </Button>
-              )}
-              <Button variant="soft" className="h-12 min-w-0 flex-1 px-3" onClick={download}>Скачать QR</Button>
+              ))}
             </div>
+            <span className="text-sm font-semibold text-muted-foreground">
+              PNG · 1080 × {format === "post" ? 1350 : 1920}
+            </span>
+          </div>
+          <div className="flex min-w-0 flex-col gap-5">
+            <div className="pr-5">
+              <DialogTitle className="font-display text-2xl leading-snug font-extrabold">
+                {title}
+              </DialogTitle>
+              <DialogDescription className="mt-3 text-base leading-relaxed font-medium text-muted-foreground">
+                {description}
+              </DialogDescription>
+            </div>
+            <Button
+              variant="secondary"
+              className="h-13 w-full text-base"
+              disabled={busy || !ready}
+              aria-busy={busy}
+              onClick={() => void download()}
+            >
+              <Download className="size-5" />
+              {busy ? "Готовим картинку…" : "Скачать картинку"}
+            </Button>
+            {!ready && (
+              <p role="status" className="text-sm text-muted-foreground">
+                Для картинки нужны загруженные данные профиля.
+              </p>
+            )}
+            {error && (
+              <p
+                role="alert"
+                className="text-sm font-semibold text-destructive"
+              >
+                {error}
+              </p>
+            )}
+            <div className="flex min-w-0 items-center gap-1 rounded-pill border-2 border-ink bg-card p-1.5">
+              <label htmlFor={linkId} className="sr-only">
+                Ссылка для отправки
+              </label>
+              <Input
+                id={linkId}
+                value={url}
+                readOnly
+                onFocus={(e) => e.currentTarget.select()}
+                className="min-w-0 flex-1 border-0 bg-transparent px-2 text-sm shadow-none focus-visible:ring-0"
+              />
+              <Button
+                variant="ink"
+                rough={false}
+                className="h-10 px-3 text-sm"
+                onClick={() => void copy()}
+              >
+                Копировать
+              </Button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {socials.map((social) => (
+                <Button
+                  key={social.label}
+                  asChild
+                  variant="soft"
+                  rough={false}
+                  className="h-11 flex-1 px-3 text-sm"
+                >
+                  <a
+                    href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {social.label}
+                  </a>
+                </Button>
+              ))}
+            </div>
+            {canShare && (
+              <Button
+                variant="soft"
+                className="h-12 md:hidden"
+                onClick={() =>
+                  void navigator.share({ title, url }).catch(() => undefined)
+                }
+              >
+                <Share2 className="size-5" />
+                Отправить с телефона
+              </Button>
+            )}
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              По QR и ссылке откроется страница на Движе. Если понадобится вход,
+              после него вернём сюда.
+            </p>
           </div>
         </div>
-        <QRCodeCanvas ref={canvas} value={url} size={512} level="M" marginSize={2} bgColor="#ffffff" fgColor="#000000" className="hidden" />
       </DialogContent>
     </Dialog>
-  );
-}
-
-/** Приглушённый «посадочный талон» встречи: данные слева, по линии отрыва — корешок с QR. */
-export function ShareTicket({ path, number, sport, title, rows }: {
-  path: string;
-  number: string;
-  sport: string;
-  title: string;
-  rows: { label: string; value: string }[];
-}) {
-  return (
-    <div className="relative mr-[3px] mb-[3px] flex w-full overflow-hidden rounded-[22px] border-2 border-ink bg-primary shadow-hard-sm">
-      <div className="flex min-w-0 flex-1 flex-col gap-3 p-4">
-        <span className="truncate text-[10px] font-extrabold tracking-[1.5px] text-muted-foreground">ПОСАДОЧНЫЙ ТАЛОН · № {number}</span>
-        <span className="w-fit max-w-full truncate rounded-pill border-[1.5px] border-ink bg-card px-[10px] py-[3px] text-[11px] font-extrabold text-foreground">
-          {sport}
-        </span>
-        <p className="line-clamp-3 font-display text-lg leading-[22px] font-bold text-foreground">{title}</p>
-        {rows.map((row) => (
-          <div key={row.label} className="flex min-w-0 flex-col gap-px">
-            <span className="text-[10px] font-extrabold tracking-[1px] text-muted-foreground">{row.label}</span>
-            <span className="line-clamp-2 text-[13px] leading-[17px] font-bold text-foreground">{row.value}</span>
-          </div>
-        ))}
-      </div>
-      <div className="flex w-[118px] shrink-0 flex-col items-center justify-center gap-2 border-l-2 border-dashed border-ink bg-lavender-soft px-3 py-4">
-        <QrCode path={path} label="QR-код: страница встречи" className="size-[92px]" />
-        <span className="text-center text-[9px] leading-3 font-extrabold tracking-[1px] text-muted-foreground">НАВЕДИТЕ<br />КАМЕРУ</span>
-      </div>
-      {/* вырезы на линии отрыва: цвет фона окна, будто талон надорван */}
-      <span className="absolute top-[-12px] right-[107px] box-border size-[22px] rounded-full border-2 border-ink bg-background" />
-      <span className="absolute bottom-[-12px] right-[107px] box-border size-[22px] rounded-full border-2 border-ink bg-background" />
-    </div>
-  );
-}
-
-/** Закрытый паспорт спортсмена: обложка с именем и «органом выдачи», в окошке — QR на профиль. */
-export function SharePassport({ path, name, handle }: { path: string; name: string; handle?: string }) {
-  return (
-    <div className="relative mx-auto flex w-[264px] overflow-hidden rounded-[8px_22px_22px_8px] border-2 border-ink bg-lavender shadow-hard-sm">
-      {/* корешок */}
-      <div className="w-[14px] shrink-0 border-r-2 border-ink bg-ink" />
-      <div className="relative flex min-w-0 flex-1 flex-col items-center gap-3 px-5 pt-5 pb-4 text-center">
-        <img src="/profile/guilloche.svg" alt="" className="pointer-events-none absolute inset-0 size-full max-w-none object-cover opacity-20 mix-blend-screen" />
-        <div className="relative flex flex-col items-center gap-1">
-          <span className="flex size-9 items-center justify-center rounded-full border-2 border-ink bg-card"><img src="/profile/ring-logo.svg" alt="" className="size-6" /></span>
-          <span className="text-[11px] font-extrabold tracking-[2px] text-secondary">ПАСПОРТ СПОРТСМЕНА</span>
-          <span className="text-[9px] font-extrabold tracking-[2px] text-white/70">SPORT PASSPORT</span>
-        </div>
-        <div className="relative rounded-xl border-2 border-ink bg-card p-2">
-          <QrCode path={path} label="QR-код: профиль спортсмена" className="size-[112px] border-0" />
-        </div>
-        <div className="relative flex w-full min-w-0 flex-col gap-px">
-          <p className="truncate font-display text-lg leading-6 font-bold text-white">{name}</p>
-          {handle && <p className="truncate text-xs font-semibold text-white/75">{handle}</p>}
-        </div>
-        <span className="relative text-[10px] font-extrabold tracking-[1.5px] text-secondary">ОРГАН ВЫДАЧИ · ДВИЖ</span>
-      </div>
-    </div>
   );
 }

@@ -96,12 +96,12 @@ const MRZ_WIDTH = 44;
 const mrzLine = (value: string) => value.slice(0, MRZ_WIDTH).padEnd(MRZ_WIDTH, "<");
 
 /** Две строки машиночитаемой зоны паспорта. */
-export function mrzLines(user: { lastName?: string; firstName?: string; city?: string; createdAt?: string; id?: string }) {
-  const issued = user.createdAt ? new Date(user.createdAt) : new Date();
-  const yymmdd = `${String(issued.getFullYear()).slice(2)}${pad(issued.getMonth() + 1)}${pad(issued.getDate())}`;
+export function mrzLines(user: { lastName?: string; firstName?: string; username?: string; city?: string; createdAt?: string; id?: string }) {
+  const issued = user.createdAt ? new Date(user.createdAt) : undefined;
+  const yymmdd = issued ? `${String(issued.getFullYear()).slice(2)}${pad(issued.getMonth() + 1)}${pad(issued.getDate())}` : "<<<<<<";
   const number = passportNumber(user.id).replace("-", "");
   return [
-    mrzLine(`P<SR${translit(user.lastName)}<<${translit(user.firstName)}`),
-    mrzLine(`${number}<7RUS<${translit(user.city) || "RUSSIA"}<<${yymmdd}`),
+    mrzLine(`P<DVZH<${translit(user.lastName || user.username)}<<${translit(user.firstName)}`),
+    mrzLine(`${number}<${yymmdd}<${translit(user.city)}<<${translit(user.username)}`),
   ];
 }

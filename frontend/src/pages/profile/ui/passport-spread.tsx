@@ -34,6 +34,8 @@ import {
 } from "./passport-utils";
 import { ProfileShare } from "./profile-share";
 import { handle } from "@/shared/lib/handle";
+import { PassportWaves } from "@/features/share-link/ui/share-posters";
+import { PassportHologram, PassportMrz, PassportPageHeader } from "./passport-decoration";
 
 const IMG = "/profile";
 const CHIP_TONES = [
@@ -44,7 +46,7 @@ const CHIP_TONES = [
 ];
 
 /** Высота страницы паспорта; разворот выше на 2 × 12 px рамки. */
-const PAGE_H = 760;
+const PAGE_H = 920;
 
 /** Вся подпись поля паспорта: мелкий заголовок и значение. */
 function Field({
@@ -58,12 +60,12 @@ function Field({
 }) {
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-[2px]">
-      <p className="text-[11px] font-extrabold tracking-[1.2px] whitespace-nowrap text-muted-foreground">
+      <p className="text-[11px] leading-4 font-extrabold tracking-[1.2px] whitespace-nowrap text-muted-foreground">
         {label}
       </p>
       <p
         className={cn(
-          "truncate text-foreground",
+          "truncate leading-[1.25] text-foreground",
           large
             ? "font-display text-[21px] font-bold"
             : "text-[18px] font-bold",
@@ -153,7 +155,7 @@ function PetBackdrop() {
   );
 }
 
-/** Левая страница (стр. 2): питомец-сопровождающий. */
+/** Правая страница (стр. 2): питомец-сопровождающий. */
 function PetPage() {
   const owner = usePublicProfile();
   const { user } = useUser();
@@ -170,23 +172,10 @@ function PetPage() {
     <section
       aria-label="Паспорт спортсмена: питомец"
       style={{ height: PAGE_H }}
-      className="absolute top-[12px] left-[606px] flex w-[594px] flex-col gap-[14px] overflow-hidden rounded-tl-[4px] rounded-tr-[20px] rounded-br-[20px] rounded-bl-[4px] border-2 border-ink bg-card px-[26px] pt-6 pb-[22px]"
+      className="absolute top-[12px] left-[618px] flex w-[582px] flex-col gap-[14px] overflow-hidden rounded-tl-[4px] rounded-tr-[20px] rounded-br-[20px] rounded-bl-[4px] border-2 border-ink bg-card px-[26px] pt-0 pb-[22px]"
     >
-      <img
-        src={`${IMG}/guilloche.svg`}
-        alt=""
-        className="pointer-events-none absolute top-[-2px] left-[-2px] w-[594px] max-w-none"
-        style={{ height: PAGE_H }}
-      />
-
-      <header className="relative flex items-center justify-between">
-        <h2 className="text-xs font-extrabold tracking-[2px] whitespace-nowrap text-foreground">
-          СОПРОВОЖДАЮЩИЙ
-        </h2>
-        <span className="text-[9px] font-extrabold tracking-[1.5px] whitespace-nowrap text-muted-foreground">
-          стр. 2
-        </span>
-      </header>
+      <PassportWaves className="pointer-events-none absolute inset-0 text-primary/10" />
+      <PassportPageHeader title="СОПРОВОЖДАЮЩИЙ" page={2} className="-mx-[26px] px-[26px]" />
 
       <div className="relative flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
@@ -198,19 +187,6 @@ function PetPage() {
             ) : null}
           </ProfilePetName>
         </div>
-        {!owner && (
-          <Button
-            variant="soft"
-            asChild
-            aria-label="Изменить образ питомца"
-            className="mt-1 h-10 shrink-0 px-4 text-[13px]"
-          >
-            <Link to="/profile/wardrobe">
-              <Pencil className="size-3.5" />
-              Изменить образ
-            </Link>
-          </Button>
-        )}
       </div>
 
       <div className="relative min-h-0 flex-1 overflow-hidden rounded-[18px] border-2 border-ink bg-sky">
@@ -223,18 +199,16 @@ function PetPage() {
           ref={setSpeechContainer}
           className="beaver-speech-corner absolute top-[68px] left-[150px] z-10 flex h-[104px] w-[284px] items-end"
         />
-        <div className="absolute bottom-[14px] left-[14px] flex items-center gap-2 rounded-pill border-[1.5px] border-ink bg-card py-[6px] pr-3 pl-[10px]">
-          <span className="text-[9px] font-extrabold tracking-[1.5px] text-muted-foreground">
-            ОБРАЗ
-          </span>
-          <span className="text-xs font-bold text-foreground">{outfit}</span>
-        </div>
+      </div>
+      <div className="relative flex items-start gap-3 text-[14px] leading-5 font-semibold">
+        <p className="min-w-0 flex-1">Образ: {outfit}</p>
+        {!owner && <Link to="/profile/wardrobe" className="shrink-0 py-1 font-extrabold text-primary underline underline-offset-4">Изменить образ</Link>}
       </div>
     </section>
   );
 }
 
-/* ---------- Правая страница: данные и отметки о посещении ---------- */
+/* ---------- Левая страница: данные и отметки о посещении ---------- */
 
 type StampType = "round" | "rect" | "oval" | "star";
 
@@ -298,7 +272,7 @@ const STAMP: Record<
 };
 
 /** Холст штампов 640×262 (четыре печати в один ряд, ниже визы) (потом уменьшается до ширины страницы). */
-const STAMP_SCALE = 0.84;
+const STAMP_SCALE = 0.82;
 const STAMP_CANVAS = { w: 640, h: 262 };
 
 /** Четыре места под печати: центр на холсте, поворот и вид оттиска. */
@@ -566,7 +540,7 @@ function StampsView({
   );
 }
 
-/** Правая страница (стр. 3): данные владельца и отметки о посещении. */
+/** Левая страница (стр. 1): данные владельца и отметки о посещении. */
 function DataPage() {
   const owner = usePublicProfile();
   const { user: me } = useUser();
@@ -581,32 +555,19 @@ function DataPage() {
     <section
       aria-label="Паспорт спортсмена: данные и отметки"
       style={{ height: PAGE_H }}
-      className="absolute top-[12px] left-[12px] flex w-[594px] flex-col gap-3 overflow-hidden rounded-tl-[20px] rounded-tr-[4px] rounded-br-[4px] rounded-bl-[20px] border-2 border-ink bg-card px-[26px] pt-6 pb-[22px]"
+      className="absolute top-[12px] left-[12px] flex w-[582px] flex-col gap-2 overflow-hidden rounded-tl-[20px] rounded-tr-[4px] rounded-br-[4px] rounded-bl-[20px] border-2 border-ink bg-card px-[26px] pt-0 pb-[14px]"
     >
-      <img
-        src={`${IMG}/guilloche.svg`}
-        alt=""
-        className="pointer-events-none absolute top-[-2px] left-[-2px] w-[594px] max-w-none"
-        style={{ height: PAGE_H }}
-      />
-
-      <header className="relative flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <img src={`${IMG}/ring-logo.svg`} alt="" className="size-[22px]" />
-          <h2 className="text-xs font-extrabold tracking-[2px] whitespace-nowrap text-foreground">
-            ПАСПОРТ СПОРТСМЕНА
-          </h2>
-        </div>
-        <span className="text-[9px] font-extrabold tracking-[1.5px] whitespace-nowrap text-muted-foreground">
-          SPORT PASSPORT · стр. 3
-        </span>
-      </header>
+      <PassportWaves className="pointer-events-none absolute inset-0 text-primary/10" />
+      <PassportPageHeader title="◉ ПАСПОРТ СПОРТСМЕНА" page={1} className="-mx-[26px] px-[26px]" />
 
       <div className="relative flex items-start gap-[22px]">
-        <UserAvatar
-          user={user}
-          className="h-[190px] w-[150px] shrink-0 rounded-xl border-2 border-ink object-cover"
-        />
+        <div className="flex shrink-0 flex-col gap-3">
+          <div className="relative">
+            <UserAvatar user={user} className="h-[160px] w-[150px] rounded-xl border-2 border-ink object-cover" />
+            <PassportHologram />
+          </div>
+          <ProfileShare user={user} className="px-3" />
+        </div>
         <div className="flex min-w-0 flex-1 flex-col gap-3">
           <div className="flex gap-4">
             <Field
@@ -685,12 +646,12 @@ function DataPage() {
             {user?.bio || "Пока ничего не написано."}
           </p>
         </div>
-        <ProfileShare user={user} className="shrink-0" />
       </div>
 
       <div className="relative mt-auto">
         <Stamps />
       </div>
+      <PassportMrz user={user} />
     </section>
   );
 }
@@ -717,11 +678,7 @@ export function PassportSpread() {
       >
         <DataPage />
         <PetPage />
-        <div
-          aria-hidden="true"
-          className="absolute top-[12px] left-[605px] w-[2px] bg-ink"
-          style={{ height: PAGE_H }}
-        />
+        <div aria-hidden="true" className="absolute top-[16px] bottom-[16px] left-[605px] border-l-[3px] border-dashed border-lime" />
       </div>
     </div>
   );

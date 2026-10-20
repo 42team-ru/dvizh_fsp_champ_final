@@ -17,16 +17,6 @@ import { ViewportScale } from "./providers/viewport-scale";
 
 export const links: Route.LinksFunction = () => [
   { rel: "icon", type: "image/svg+xml", href: "/icon.svg" },
-  { rel: "preconnect", href: "https://fonts.googleapis.com" },
-  {
-    rel: "preconnect",
-    href: "https://fonts.gstatic.com",
-    crossOrigin: "anonymous",
-  },
-  {
-    rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Manrope:wght@400..800&family=Unbounded:wght@600..800&family=IBM+Plex+Mono:wght@500&display=swap",
-  },
 ];
 
 const queryClient = new QueryClient();
