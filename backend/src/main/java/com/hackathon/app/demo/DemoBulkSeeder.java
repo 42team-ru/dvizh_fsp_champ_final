@@ -36,6 +36,7 @@ import com.hackathon.app.service.EventService;
 import com.hackathon.app.service.OrganizationService;
 import com.hackathon.app.service.OrganizationSubscriptionService;
 import com.hackathon.app.service.RegistrationService;
+import com.hackathon.app.service.UserProfileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -68,8 +69,15 @@ class DemoBulkSeeder {
     /** Мероприятия частных лиц на единицу веса города. */
     private static final int EVENTS_PER_CITY_WEIGHT = 2;
     private static final int ONLINE_EVENTS = 16;
-    private static final List<String> LOCATION_NOTES = List.of("У главного входа", "Встречаемся у информационного стенда",
-            "Ищите людей в ярких футболках", "У парковки", "Возле кафе, у скамеек");
+    /** Доля людей с фото в профиле: портрет или снимок с тренировки. */
+    private static final double PORTRAIT_SHARE = 0.4;
+    private static final double SPORT_AVATAR_SHARE = 0.12;
+    /** Доля мероприятий, к которым организатор загрузил фото. */
+    private static final double EVENT_PHOTO_SHARE = 0.6;
+    private static final List<String> OUTDOOR_NOTES = List.of("Встречаемся у главного входа",
+            "У информационного стенда", "Ищите людей в ярких футболках", "У скамеек возле кафе");
+    private static final List<String> INDOOR_NOTES = List.of("На входе скажите, что на нашу тренировку",
+            "Раздевалки слева от входа, зал на втором этаже", "Сбор в холле у ресепшена");
 
     private final DemoProperties props;
     private final AppUserRepository users;
@@ -84,12 +92,14 @@ class DemoBulkSeeder {
     private final CommentService commentService;
     private final EventOrganizerService organizerService;
     private final AdminEventService adminEventService;
+    private final UserProfileService profileService;
+    private final DemoPhotos photos;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final Clock clock;
 
     /** Человек или аккаунт клуба: где живёт и когда присоединился. */
-    record Person(UUID id, String username, City city, Instant signedUpAt) {
+    record Person(UUID id, String username, City city, Instant signedUpAt, boolean female) {
     }
 
     /** Одобренный клуб и его аккаунт — автор событий клуба. */
@@ -173,14 +183,17 @@ class DemoBulkSeeder {
         var plans = new ArrayList<Plan>();
         for (var city : DemoBulkData.CITIES) {
             var locals = run.peopleByCity.getOrDefault(city.name(), List.of());
+            // только то, для чего в городе есть подходящая площадка: хоккей — на льду, сапы — на воде
+            var hosted = DemoBulkData.TEMPLATES.stream().filter(t -> !t.online() && city.hosts(t)).toList();
             for (int i = 0; i < city.weight() * EVENTS_PER_CITY_WEIGHT && !locals.isEmpty(); i++) {
-                var template = run.pick(DemoBulkData.TEMPLATES.stream().filter(t -> !t.online()).toList());
+                var template = run.pick(hosted);
                 plans.add(plan(run, run.pick(locals), null, city, template));
             }
         }
         for (var club : clubs) {
             var templates = DemoBulkData.TEMPLATES.stream()
-                    .filter(t -> !t.online() && t.sport().equals(club.club().sport())).toList();
+                    .filter(t -> !t.online() && t.sport().equals(club.club().sport()) && club.account().city().hosts(t))
+                    .toList();
             int count = run.between(3, 6);
             for (int i = 0; i < count && !templates.isEmpty(); i++) {
                 plans.add(plan(run, club.account(), club.organizationId(), club.account().city(), run.pick(templates)));
@@ -223,10 +236,11 @@ class DemoBulkSeeder {
                     .atTime(run.between(7, 23), run.between(0, 59)).atZone(city.zone()).toInstant();
             var user = users.save(userMapper.toLocalUser(UUID.randomUUID(), username, username + "@demo.local",
                     passwordHash, first, last, city.name(), run.pick(DemoBulkData.BIOS), SystemRole.USER, signedUpAt));
-            people.add(new Person(user.getId(), username, city, signedUpAt));
+            people.add(new Person(user.getId(), username, city, signedUpAt, female));
             cast.remember(user.getId(), signedUpAt);
         }
         data.flushAndClear();
+        avatars(run, people);
         return people;
     }
 
@@ -259,10 +273,14 @@ class DemoBulkSeeder {
                 case PENDING -> {
                 }
             }
+            var logo = photos.one(club.sport(), run.random.nextInt(100));
+            if (logo != null) {
+                organizationService.uploadLogo(account.getId(), logo);
+            }
             data.backdateOrganization(organizationId, submittedAt, reviewedAt);
             if (club.status() == OrganizationStatus.APPROVED) {
                 // события клуб публикует только после одобрения: для них «присоединился» = одобрен
-                approved.add(new ApprovedClub(new Person(account.getId(), club.username(), city, reviewedAt),
+                approved.add(new ApprovedClub(new Person(account.getId(), club.username(), city, reviewedAt, false),
                         organizationId, club));
             }
         }
@@ -303,12 +321,9 @@ class DemoBulkSeeder {
         }
         createdAt = clamp(createdAt, earliestCreated, latestCreated);
 
-        Venue venue = null;
-        if (!template.online()) {
-            var venues = city.venues().stream()
-                    .filter(v -> template.indoor() == null || v.indoor() == template.indoor()).toList();
-            venue = run.pick(venues.isEmpty() ? city.venues() : venues);
-        }
+        // площадка под вид спорта; точка — сама площадка, без случайного сдвига (иначе метка уезжает в реку)
+        Venue venue = template.online() ? null
+                : run.pick(city.venues().stream().filter(v -> v.fits(template)).toList());
         Integer capacity = template.maxCapacity() > 0 ? run.between(template.minCapacity(), template.maxCapacity()) : null;
         var joinMode = run.chance(template.requestShare()) ? JoinMode.REQUEST : JoinMode.FREE;
         // Сервис не создаёт прошедшую встречу: она рождается с датой в будущем и переезжает в прошлое в самом конце.
@@ -318,14 +333,22 @@ class DemoBulkSeeder {
                 createStart, createEnd,
                 template.online() ? EventFormat.ONLINE : EventFormat.OFFLINE,
                 venue == null ? null : venue.address(),
-                venue == null ? null : venue.name() + (run.chance(0.5) ? ". " + run.pick(LOCATION_NOTES) : ""),
+                venue == null ? null : venue.name() + (run.chance(0.5)
+                        ? ". " + run.pick(venue.indoor() ? INDOOR_NOTES : OUTDOOR_NOTES) : ""),
                 template.online() ? "https://meet.example.com/" + Long.toString(run.random.nextLong() & 0xFFFFFFFFL, 36) : null,
-                venue == null ? null : venue.lat() + (run.random.nextDouble() - 0.5) * 0.004,
-                venue == null ? null : venue.lon() + (run.random.nextDouble() - 0.5) * 0.004,
+                venue == null ? null : venue.lat(),
+                venue == null ? null : venue.lon(),
                 run.pick(template.levels()), template.kind(), template.requirements(), template.equipment(), capacity,
                 joinMode, "Чат участников: https://t.me/+" + Long.toString(run.random.nextLong() & 0xFFFFFFFFFFL, 36),
                 null, null);
         var eventId = eventService.create(author.id(), request).id();
+        // организатор загрузил фото: обложка в ленте и галерея в карточке
+        if (run.chance(EVENT_PHOTO_SHARE)) {
+            var indoor = venue == null || venue.indoor();
+            for (var photo : photos.pick(template.sport(), indoor, run.random.nextInt(100), run.between(1, 3))) {
+                eventService.addPhoto(eventId, author.id(), photo, null);
+            }
+        }
 
         // соорганизатор у части событий частных лиц
         UUID coOrganizerId = null;
@@ -345,7 +368,8 @@ class DemoBulkSeeder {
         var commentTimes = new ArrayList<CommentAt>();
         var participants = register(run, eventId, joinMode, capacity, author.id(), coOrganizerId, createdAt, startAt,
                 locals, run.people, registrationTimes);
-        discuss(run, eventId, author.id(), coOrganizerId, createdAt, startAt, endAt, participants, locals, commentTimes);
+        discuss(run, eventId, template, venue, author.id(), coOrganizerId, createdAt, startAt, endAt, participants,
+                locals, commentTimes);
 
         // модерация: немного снятых и удалённых, с причиной
         Instant moderatedAt = null;
@@ -439,16 +463,26 @@ class DemoBulkSeeder {
         return confirmed;
     }
 
-    /** Вопросы и ответы организатора до начала; после прошедших — отзывы. */
-    private void discuss(Run run, UUID eventId, UUID authorId, UUID coOrganizerId, Instant createdAt,
-            Instant startAt, Instant endAt, List<UUID> participants, List<Person> locals, List<CommentAt> times) {
-        if (!run.chance(0.5)) {
+    /**
+     * Вопросы и ответы организатора до начала — про этот вид спорта и эту площадку (сменка — в зал, дождь — на улицу,
+     * ссылка — онлайн); реплики участников между собой; после прошедших — отзывы.
+     */
+    private void discuss(Run run, UUID eventId, Template template, Venue venue, UUID authorId, UUID coOrganizerId,
+            Instant createdAt, Instant startAt, Instant endAt, List<UUID> participants, List<Person> locals,
+            List<CommentAt> times) {
+        if (!run.chance(0.6)) {
             return;
+        }
+        var questions = new ArrayList<Qa>(DemoBulkData.SPORT_QUESTIONS.getOrDefault(template.sport(), List.of()));
+        questions.addAll(List.copyOf(questions)); // вопросы по делу встречаются чаще общих
+        questions.addAll(venue == null ? DemoBulkData.ONLINE_QUESTIONS : DemoBulkData.QUESTIONS);
+        if (venue != null) {
+            questions.addAll(venue.indoor() ? DemoBulkData.INDOOR_QUESTIONS : DemoBulkData.OUTDOOR_QUESTIONS);
         }
         int threads = run.between(1, 3);
         var asked = new HashSet<Qa>();
         for (int i = 0; i < threads; i++) {
-            var qa = run.pick(DemoBulkData.QUESTIONS);
+            var qa = run.pick(questions);
             if (!asked.add(qa)) {
                 continue;
             }
@@ -481,8 +515,16 @@ class DemoBulkSeeder {
                 }
             }
         }
+        var chatterFrom = createdAt.plus(Duration.ofHours(2));
+        var chatterTo = min(startAt, run.now).minus(Duration.ofHours(2));
+        if (venue != null && participants.size() > 1 && run.chance(0.35) && chatterFrom.isBefore(chatterTo)) {
+            say(run, eventId, run.pick(participants), run.pick(DemoBulkData.CHATTER), run.between(chatterFrom, chatterTo),
+                    null, times);
+        }
         if (endAt.plus(Duration.ofHours(1)).isBefore(run.now) && !participants.isEmpty() && run.chance(0.5)) {
-            var qa = run.pick(DemoBulkData.AFTER_EVENT);
+            var reviews = new ArrayList<Qa>(DemoBulkData.AFTER_EVENT);
+            reviews.addAll(DemoBulkData.SPORT_AFTER.getOrDefault(template.sport(), List.of()));
+            var qa = run.pick(reviews);
             var saidAt = run.between(endAt.plus(Duration.ofMinutes(30)), min(endAt.plus(Duration.ofDays(2)), run.now));
             var reviewId = say(run, eventId, run.pick(participants), qa.question(), saidAt, null, times);
             var answeredAt = saidAt.plus(Duration.ofMinutes(run.between(15, 300)));
@@ -511,6 +553,38 @@ class DemoBulkSeeder {
         times.add(new CommentAt(id, at, editedAt, deletedAt));
         run.comments++;
         return id;
+    }
+
+    // --- Фото профиля ---
+
+    /**
+     * Аватары, как их ставят люди: у части — портрет, у части — снимок с любимой тренировки, остальные без фото.
+     * Портреты не повторяются, пока не кончится запас.
+     */
+    private void avatars(Run run, List<Person> people) {
+        var women = photos.portraits(true);
+        var men = photos.portraits(false);
+        int nextWoman = 0;
+        int nextMan = 0;
+        for (var person : people) {
+            double roll = run.random.nextDouble();
+            var portraits = person.female() ? women : men;
+            int next = person.female() ? nextWoman : nextMan;
+            if (roll < PORTRAIT_SHARE && next < portraits.size()) {
+                profileService.uploadAvatar(person.id(), portraits.get(next));
+                if (person.female()) {
+                    nextWoman++;
+                } else {
+                    nextMan++;
+                }
+            } else if (roll < PORTRAIT_SHARE + SPORT_AVATAR_SHARE) {
+                var photo = photos.one(run.pick(DemoBulkData.TEMPLATES).sport(), run.random.nextInt(100));
+                if (photo != null) {
+                    profileService.uploadAvatar(person.id(), photo);
+                }
+            }
+        }
+        data.flushAndClear();
     }
 
     // --- Бобры ---

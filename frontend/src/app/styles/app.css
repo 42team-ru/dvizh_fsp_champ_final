@@ -32,6 +32,14 @@
   --salmon: #ffb9a0;
   --peach-soft: #fff4ee;
   --orange-ink: #c2410c;
+  /* лендинг */
+  --night: #26274a;
+  --ink-faint: #9a9cb8;
+  --lilac-ink: #b9b6e8;
+  --bar-idle: #c9c4ee;
+  --map-green: #e7f3cc;
+  --cream-warm: #fff8e7;
+  --mint-pale: #cff3e3;
 
   --background: var(--paper);
   --foreground: var(--ink);
@@ -152,6 +160,13 @@
   --color-track: var(--track);
   --color-salmon: var(--salmon);
   --color-peach-soft: var(--peach-soft);
+  --color-night: var(--night);
+  --color-ink-faint: var(--ink-faint);
+  --color-lilac-ink: var(--lilac-ink);
+  --color-bar-idle: var(--bar-idle);
+  --color-map-green: var(--map-green);
+  --color-cream-warm: var(--cream-warm);
+  --color-mint-pale: var(--mint-pale);
   --color-orange-ink: var(--orange-ink);
   --color-photo-lime: var(--photo-lime);
   --color-sun: var(--sun);

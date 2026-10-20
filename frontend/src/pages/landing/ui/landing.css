@@ -1,0 +1,57 @@
+﻿/* Карточки и кнопки не меняют позицию при прокрутке и наведении.
+   Обрезается фон секции, а не содержимое и тени отдельных элементов. */
+.landing { position: relative; }
+.landing-shell [data-slot="button"] {
+  translate: none;
+  transition-property: background-color, color, border-color, box-shadow;
+}
+.landing-shell button:focus-visible,
+.landing-shell a:focus-visible { outline: 3px solid var(--orange); outline-offset: 4px; }
+.landing-stage { width: 100%; }
+.landing [data-anim] { opacity: 1; }
+/* Параллакс ограничен 36 px и не затрагивает интерактивные элементы. */
+@media (prefers-reduced-motion: no-preference) and (min-width: 1024px) {
+  .landing-gear { translate: 0 var(--decor-shift, 0px); }
+  .landing-coin { translate: 0 calc(var(--decor-shift, 0px) * -0.65); }
+}
+.landing-hero .landing-stage { padding: 112px 24px 56px; }
+.hero-layout { display: grid; align-items: center; gap: 36px; width: 100%; }
+.hero-copy { min-width: 0; }
+.hero-title {
+  margin-top: 24px;
+  font-size: clamp(32px, 5vw, 52px);
+  line-height: 1.16;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+}
+.hero-description { max-width: 500px; margin-top: 22px; font-size: 17px; line-height: 1.6; }
+.hero-actions { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 28px; }
+.hero-city { position: relative; width: 100%; min-width: 0; }
+.hero-city > img { display: block; width: 100%; height: auto; }
+.hero-city-caption {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
+  gap: 10px; margin: 16px 24px 0;
+}
+.hero-city-beaver { position: absolute; right: 0; bottom: 9%; width: 38%; }
+@media (min-width: 1024px) {
+  .landing-stage { width: 1280px; translate: -50% -50%; scale: var(--stage-scale, 1); }
+  .landing-hero .landing-stage { padding: 116px 64px 64px; }
+  .hero-layout { height: 100%; grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr); gap: 28px; }
+}
+@media (max-width: 1023px) {
+  .landing-stage {
+    max-width: 720px; margin-inline: auto; align-items: stretch;
+    padding: 96px 24px 56px; gap: 28px;
+  }
+  .landing-item { rotate: none !important; flex-shrink: 0; align-self: center; }
+  .landing-item > div { max-width: 100%; }
+  .landing h2 { font-size: clamp(28px, 5vw, 38px); line-height: 1.2; overflow-wrap: anywhere; }
+  .landing [data-slot="button"] { max-width: 100%; white-space: normal; }
+  .landing [aria-label="Подвал"] { justify-content: center; flex-wrap: wrap; gap: 16px; white-space: normal; }
+}
+@media (max-width: 380px) {
+  .landing-nav { gap: 10px; }
+  .landing-nav > button:first-child { gap: 5px; }
+  .landing-stage, .landing-hero .landing-stage { padding-inline: 20px; }
+  .hero-actions > a { width: 100%; }
+}

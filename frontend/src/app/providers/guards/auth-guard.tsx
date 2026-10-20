@@ -22,6 +22,8 @@ const RequireAuth = () => {
   }
 
   if (isError && error?.status === 401) {
+    // Гость на главной видит лендинг, с остальных страниц — сразу вход.
+    if (location.pathname === "/") return <Navigate to="/welcome" replace />;
     return <Navigate to="/auth/login" state={{ from: location }} replace />;
   }
 
