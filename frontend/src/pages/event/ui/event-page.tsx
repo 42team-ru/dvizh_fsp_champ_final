@@ -478,7 +478,7 @@ function Chat({ m }: { m: EventModel }) {
 
 function Going({ m }: { m: EventModel }) {
   const e = m.event!;
-  return <EventGoingCrowd participants={m.crowd} going={m.going} capacity={e.capacity} />;
+  return <EventGoingCrowd participants={e.participants} sample={m.crowd} authorId={e.author.id} organizers={e.organizers} going={m.going} capacity={e.capacity} />;
 }
 
 export default function EventPage() {

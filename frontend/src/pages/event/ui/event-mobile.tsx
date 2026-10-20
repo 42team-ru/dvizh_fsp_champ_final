@@ -358,7 +358,7 @@ export function EventMobile({ m }: { m: EventModel }) {
       )}
 
       <div className="px-4">
-        <EventGoingCrowd participants={m.crowd} going={m.going} capacity={e.capacity} className="rounded-[22px]" />
+        <EventGoingCrowd participants={e.participants} sample={m.crowd} authorId={e.author.id} organizers={e.organizers} going={m.going} capacity={e.capacity} className="rounded-[22px]" />
       </div>
 
       <div id="event-chat-mobile" className="px-4">
