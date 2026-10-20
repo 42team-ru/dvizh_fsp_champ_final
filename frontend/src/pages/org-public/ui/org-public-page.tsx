@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useParams } from "react-router";
 import {
   useOrganizationsGet,
@@ -15,10 +16,12 @@ import { OrganizationSidebar } from "@/widgets/organization-sidebar/ui/organizat
 import { Card } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { AccountMenu } from "@/features/auth/sign-out/ui/account-menu";
+import { OrganizationShare } from "./organization-share";
 
 /** Публичная организация: два запроса при открытии, архив и галерея догружаются по действию. */
 export default function OrgPublicPage() {
   const { id = "" } = useParams();
+  const [shareOpen, setShareOpen] = useState(false);
   const profile = useOrganizationsGet(id, { query: { retry: false } });
   const overview = useOrganizationsOverview(id, { query: { retry: false } });
   const org = profile.data?.data;
@@ -76,7 +79,20 @@ export default function OrgPublicPage() {
           </p>
         ) : (
           <>
-            <OrganizationHeader org={org} overview={o} />
+            <OrganizationHeader
+              org={org}
+              overview={o}
+              onShare={() => setShareOpen(true)}
+            />
+            {shareOpen && (
+              <OrganizationShare
+                key={id}
+                path={`/orgs/${id}`}
+                org={org}
+                overview={o}
+                onOpenChange={setShareOpen}
+              />
+            )}
             <nav
               aria-label="Разделы организации"
               className="no-scrollbar flex gap-2 overflow-x-auto pb-1"
