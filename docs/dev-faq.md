@@ -1,269 +1,242 @@
-# FAQ по деплою для разработчика
+# FAQ по серверу
 
-Короткие ответы «как сделать». Как деплой устроен внутри: [deploy.md](deploy.md).
+Короткие рецепты. Как устроен автодеплой: [deploy.md](deploy.md). Сервер — Ubuntu/Debian, команды
+выполняются на нём по SSH, если не сказано иное. Папка деплоя — `/opt/app`.
 
-Установка приложения, офлайн-оболочка и проверка обновления SW: [PWA на фронтенде](frontend.md#pwa-проверка-локально).
-Проверять через `cd frontend && yarn build && yarn preview` или HTTPS-стенд; в `yarn dev` SW отключается.
-Везде ниже сервер: Ubuntu/Debian, команды выполняются на нём по SSH, если не сказано иное. `/opt/app` — папка деплоя по умолчанию.
-
-## Содержание
-- [Как задеплоить обновление](#как-задеплоить-обновление) (всё в одной папке, `make deploy`, GitHub по SSH)
-- [Как поменять сервер, на который деплоит GitHub Actions](#как-поменять-сервер-на-который-деплоит-github-actions)
-- [Как поднять проект на другом сервере вручную (без GitHub Actions)](#как-поднять-проект-на-другом-сервере-вручную-без-github-actions)
-- [Как откатиться на прошлую версию](#как-откатиться-на-прошлую-версию)
-- [Как включить или выключить демо-режим](#как-включить-или-выключить-демо-режим)
-- [Как подключить домен и HTTPS](#как-подключить-домен-и-https)
-- [Как посмотреть логи, статус, перезапустить](#как-посмотреть-логи-статус-перезапустить)
-- [Как перенести базу данных на другой сервер](#как-перенести-базу-данных-на-другой-сервер)
-- [Какие переменные есть в .env на сервере](#какие-переменные-есть-в-env-на-сервере)
-- [Как настроить ключ и стиль карты 2ГИС](#как-настроить-ключ-и-стиль-карты-2гис)
+- [Задеплоить обновление](#как-задеплоить-обновление)
+- [Поднять проект на новом сервере](#как-поднять-проект-на-новом-сервере)
+- [Поменять сервер для GitHub Actions](#как-поменять-сервер-для-github-actions)
+- [Откатиться на прошлую версию](#как-откатиться-на-прошлую-версию)
+- [Включить или выключить демо-режим](#как-включить-или-выключить-демо-режим)
+- [Подключить домен и HTTPS](#как-подключить-домен-и-https)
+- [Логи, статус, перезапуск](#логи-статус-перезапуск)
+- [Перенести базу на другой сервер](#как-перенести-базу-на-другой-сервер)
+- [Переменные .env на сервере](#переменные-env-на-сервере)
 - [Частые ошибки](#частые-ошибки)
 
 ---
 
 ## Как задеплоить обновление
-Сервер живёт **в одной папке** `/opt/app/source`: это клон репозитория, рядом его `.env`, а корневой `docker-compose.yml` сам собирает бэк и фронт (с ключом карты 2ГИС из того же `.env`). Обновить сервер — одна команда с вашего компьютера:
+
+Сервер живёт в одной папке `/opt/app/source`: клон репозитория, рядом `.env`, корневой
+`docker-compose.yml` сам собирает бэкенд и фронт. С вашего компьютера:
 
 ```bash
-make deploy        # ssh на VPS_HOST → cd VPS_DIR/source → make prod (VPS_HOST и VPS_DIR из корневого .env)
+make deploy        # ssh на VPS_HOST → cd VPS_DIR/source → make prod
 ```
 
-Или на самом сервере в `/opt/app/source`: `make prod` (git pull + пересборка + перезапуск с ожиданием готовности), `make prod-logs`, `make prod-down` (данные сохраняются).
-Проверка: `curl https://ваш-домен/api/ping` должен вернуть `{"status":"ok",...}`.
+`VPS_HOST` и `VPS_DIR` берутся из корневого `.env`; нужен SSH без пароля (ваш ключ в
+`~/.ssh/authorized_keys` сервера).
 
-Автодеплой GitHub Actions выключен (иначе он поднимал бы старый стек в `/opt/app` поверх этого): сборка и тесты в CI идут, деплоя нет. Вернуть — переменная репозитория `AUTO_DEPLOY=true` (и обратный переезд на образы из GHCR, см. ниже).
+На самом сервере в `/opt/app/source`:
 
-### Переезд в одну папку (один раз)
+| Команда          | Что                                                     |
+|------------------|---------------------------------------------------------|
+| `make prod`      | git pull, пересборка, перезапуск с ожиданием готовности |
+| `make prod-logs` | логи                                                    |
+| `make prod-down` | остановить, данные сохраняются                          |
 
-Старый вариант: `/opt/app/docker-compose.yml` (образы из CI) + `/opt/app/source` для ручной сборки. База при переезде сохраняется: том `app_pgdata` тот же, если оставить имя проекта `app`.
+Проверка: `curl https://<домен>/api/ping` → `{"status":"ok",…}`.
 
-```bash
-sudo apt install -y make                      # если make нет
-cd /opt/app/source && git pull --ff-only origin main
-cp /opt/app/.env .env                         # тот же DB_PASSWORD, S3_SECRET_KEY, JWT_SECRET!
-cat >> .env <<'ENV'
-COMPOSE_PROJECT_NAME=app
-PORT=80
-HTTPS_PORT=443
-DEMO_MODE=true
-VITE_2GIS_KEY=ключ_2гис
-ENV
-# проверить, что DOMAIN в .env прежний; строки IMAGE и TAG больше не нужны (не мешают)
-mkdir -p data && cp -a /opt/app/data/caddy data/            # сертификаты HTTPS
-cd /opt/app && docker compose down                           # БЕЗ -v: остановить старый стек, база остаётся
-docker volume create app_miniodata                           # файлы MinIO: раньше папка, теперь том
-docker run --rm -v /opt/app/data/minio:/from -v app_miniodata:/to alpine cp -a /from/. /to/
-cd /opt/app/source && make prod
-```
-
-Если что-то пошло не так — вернуть старое: `cd /opt/app/source && docker compose down`, затем `cd /opt/app && docker compose up -d`.
-
-### GitHub на сервере по SSH (вместо токена в git pull)
-
-Токен в `git pull` вводить не нужно: он остаётся в истории терминала. Достаточно ключа только на чтение этого репозитория (deploy key):
+**GitHub на сервере по SSH.** Чтобы не вводить токен в `git pull`, добавьте deploy key только на чтение:
 
 ```bash
 ssh-keygen -t ed25519 -C "server-deploy" -f ~/.ssh/github -N ""
-cat ~/.ssh/github.pub        # скопировать
-```
-GitHub → репозиторий → Settings → **Deploy keys** → Add deploy key → вставить, галочку «Allow write access» не ставить.
-
-```bash
-cat >> ~/.ssh/config <<'CFG'
-Host github.com
-  IdentityFile ~/.ssh/github
-  IdentitiesOnly yes
-CFG
-ssh -T git@github.com                        # «Hi …! You've successfully authenticated»
+cat ~/.ssh/github.pub   # GitHub → Settings → Deploy keys → Add, без «Allow write access»
+printf 'Host github.com\n  IdentityFile ~/.ssh/github\n  IdentitiesOnly yes\n' >> ~/.ssh/config
+ssh -T git@github.com
 cd /opt/app/source && git remote set-url origin git@github.com:42team-ru/project_template.git
-git pull --ff-only origin main               # теперь без логина и пароля
 ```
 
-Для `make deploy` с вашего компьютера нужен обычный SSH-доступ к серверу (`ssh VPS_HOST` без пароля — свой ключ в `~/.ssh/authorized_keys` сервера) и `VPS_HOST` в корневом `.env`.
+---
 
-## Как поменять сервер, на который деплоит GitHub Actions
-Деплой определяют три секрета репозитория, поэтому «поменять сервер» значит подготовить новый сервер и обновить секреты. Код менять не нужно.
+## Как поднять проект на новом сервере
 
-1. **Подготовить новый сервер** (один раз), зайдя на него по SSH:
-   ```bash
-   curl -fsSL https://get.docker.com | sudo sh
-   sudo usermod -aG docker $USER          # затем выйти и зайти по SSH заново
-   sudo apt-get install -y rsync
-   sudo mkdir -p /opt/app && sudo chown $USER /opt/app
-   printf "DB_PASSWORD=$(openssl rand -hex 16)\nS3_SECRET_KEY=$(openssl rand -hex 24)\nDOMAIN=:80\n" > /opt/app/.env
-   ```
-   Проверьте, что `docker ps` работает без `sudo`. Откройте во внешнем файрволе (в Яндекс Облаке это группа безопасности) входящие TCP 80 и 443, и 22 для SSH.
-2. **Дать GitHub доступ.** Нужен SSH-ключ без пароля, публичная часть которого лежит в `~/.ssh/authorized_keys` нового сервера. Затем обновить секреты:
-   ```bash
-   gh secret set VPS_HOST --body "1.2.3.4"            # IP или домен нового сервера
-   gh secret set VPS_USER --body "ubuntu"             # пользователь на новом сервере
-   gh secret set VPS_SSH_KEY < ~/.ssh/ваш_ключ        # приватный ключ
-   gh variable set VPS_DIR --body "/opt/app"          # если папка другая; иначе не нужно
-   ```
-3. **Запустить деплой:** `gh workflow run "CI/CD"` и `gh run watch`. Первый деплой скачает образы и поднимет всё с нуля (с пустой базой).
-4. **Перенести данные** при необходимости: [перенос базы](#как-перенести-базу-данных-на-другой-сервер).
-5. **Домен:** направить A-запись на новый IP и прописать `DOMAIN` в `/opt/app/.env` ([подробнее](#как-подключить-домен-и-https)). Сертификаты на новом сервере выпускаются заново, это нормально.
-6. Старый сервер выключить после проверки нового.
+### Вариант А: сборка на сервере
 
-Скрипт `scripts/server-setup.sh` делает шаг 1 только для пользователя `root` (ставит Docker и создаёт `.env`); для обычного пользователя используйте команды выше.
+Нужны Docker и git.
 
-## Как поднять проект на другом сервере вручную (без GitHub Actions)
-
-### Вариант А. `git clone` и сборка на сервере (проще всего)
-Нужны Docker и git. Всё собирается из исходников, как у жюри.
 ```bash
-git clone git@github.com:42team-ru/project_template.git
-cd project_template
+git clone git@github.com:42team-ru/project_template.git && cd project_template
 cat > .env <<'EOF'
 PORT=80
 HTTPS_PORT=443
-DOMAIN=:80                      # или ваш домен для HTTPS
-DB_PASSWORD=придумайте-пароль
-JWT_SECRET=случайная-строка-не-короче-32-символов
-S3_SECRET_KEY=пароль-minio-от-8-символов
+DOMAIN=:80                         # или ваш домен для HTTPS
+DB_PASSWORD=<пароль>
+JWT_SECRET=<случайная строка не короче 32 символов>
+S3_SECRET_KEY=<пароль MinIO от 8 символов>
 DEMO_MODE=false
-CORS_ORIGINS=https://ваш-домен  # при DOMAIN=:80 можно http://IP
+CORS_ORIGINS=https://<домен>
+VITE_2GIS_KEY=<ключ>
 EOF
 docker compose up -d --build
 ```
-Обновить позже: `git pull && docker compose up -d --build`.
-Минусы: сборка идёт на сервере; на слабой машине (2 ГБ ОЗУ) она долгая и ей может не хватить памяти, поэтому лучше добавить swap или использовать вариант Б. Корневой `docker-compose.yml` по умолчанию в демо-режиме и с открытым CORS: для реальных пользователей обязательно задайте `DEMO_MODE=false`, `JWT_SECRET` и `CORS_ORIGINS`, как выше.
-Сертификаты хранятся в `./data/caddy` (в `.gitignore`), не удаляйте эту папку.
 
-### Вариант Б. Готовые образы из GHCR (быстро, как в CI)
-Образы собирает CI, на сервер они только скачиваются.
+Обновление: `git pull && docker compose up -d --build`. На машине с 2 ГБ памяти сборка может не
+поместиться — добавьте swap или используйте вариант Б. Сертификаты лежат в `./data/caddy`, не удаляйте
+эту папку.
+
+Корневой compose по умолчанию в демо-режиме и с открытым CORS: для реальных пользователей обязательно
+`DEMO_MODE=false`, свой `JWT_SECRET` и `CORS_ORIGINS`.
+
+### Вариант Б: готовые образы из GHCR
+
 ```bash
 mkdir -p /opt/app && cd /opt/app
-# файл deploy/docker-compose.yml из репозитория положить сюда как docker-compose.yml
-# (git clone в другую папку и скопировать, либо scp с вашего компьютера)
-
-# токен GitHub (classic) с правом read:packages, нужен потому что образы приватные
-echo "ghp_ваш_токен" | docker login ghcr.io -u ВАШ_ЛОГИН_GITHUB --password-stdin
-
+# положить сюда deploy/docker-compose.yml как docker-compose.yml
+echo "<токен GitHub с read:packages>" | docker login ghcr.io -u <логин> --password-stdin
 cat > .env <<'EOF'
 IMAGE=ghcr.io/42team-ru/project_template
-TAG=latest                      # или полный sha коммита
-DB_PASSWORD=придумайте-пароль
-JWT_SECRET=случайная-строка-не-короче-32-символов
-S3_SECRET_KEY=пароль-minio-от-8-символов
-DOMAIN=:80                      # или домен
+TAG=latest
+DB_PASSWORD=<пароль>
+JWT_SECRET=<случайная строка не короче 32 символов>
+S3_SECRET_KEY=<пароль MinIO>
+DOMAIN=:80
 DEMO_MODE=false
 EOF
-docker compose pull
-docker compose up -d --wait
+docker compose pull && docker compose up -d --wait
 ```
+
 Обновление: `docker compose pull && docker compose up -d --wait`.
-Внимание: пока работает автодеплой на этот же сервер, он перезапишет `IMAGE` и `TAG` в `.env` при следующем push.
+
+---
+
+## Как поменять сервер для GitHub Actions
+
+1. Подготовить сервер:
+   ```bash
+   curl -fsSL https://get.docker.com | sudo sh
+   sudo usermod -aG docker $USER          # выйти и зайти по SSH заново
+   sudo mkdir -p /opt/app && sudo chown $USER /opt/app
+   printf "DB_PASSWORD=$(openssl rand -hex 16)\nS3_SECRET_KEY=$(openssl rand -hex 24)\nDOMAIN=:80\n" > /opt/app/.env
+   ```
+   Открыть во внешнем файрволе TCP 22, 80, 443. `scripts/server-setup.sh` делает то же для `root`.
+2. Обновить секреты:
+   ```bash
+   gh secret set VPS_HOST --body "1.2.3.4"
+   gh secret set VPS_USER --body "ubuntu"
+   gh secret set VPS_SSH_KEY < ~/.ssh/<ключ>
+   ```
+3. Запустить: `gh workflow run "CI/CD" && gh run watch`. Первый деплой поднимет всё с пустой базой.
+4. Перенести данные, если нужно, и направить домен на новый IP.
+
+---
 
 ## Как откатиться на прошлую версию
-Каждый деплой публикует образы с тегом `latest` и с полным sha коммита. Откат это запуск старого тега.
+
+Каждый деплой из CI публикует образы с тегом `latest` и с полным sha коммита:
+
 ```bash
-# 1. найти sha: git log --oneline, затем git rev-parse <короткий> (нужен полный, 40 символов), либо вкладка Actions
 cd /opt/app
 sed -i '/^TAG=/d' .env && echo "TAG=<полный sha>" >> .env
 docker compose pull && docker compose up -d --wait
 ```
-Важно:
-- **Миграции БД назад не откатываются** (Flyway только вперёд). Если новая версия уже изменила схему, старый код может не заработать. Безопасный откат это когда схема не менялась; иначе откатывайтесь вместе с базой из [резервной копии](#как-перенести-базу-данных-на-другой-сервер).
-- Следующий push в `main` снова выкатит новую версию и перезапишет `TAG`.
-- Откатить код насовсем: `git revert <коммит>` и push, автодеплой выкатит откат сам.
+
+- Миграции назад не откатываются. Если новая версия уже поменяла схему, старый код может не подняться —
+  откатывайтесь вместе с базой из резервной копии.
+- Насовсем: `git revert <коммит>` и push.
+
+При сборке на сервере (`make prod`) откат — `git checkout <коммит>` в `/opt/app/source` и
+`docker compose up -d --build`.
+
+---
 
 ## Как включить или выключить демо-режим
-Демо-режим создаёт аккаунты `admin`, `anna`, `petr`, `olga`, `ladya` (одобренный клуб), `enisey` (клуб ждёт одобрения) с публичным паролем `demo-password-1` и показывает кнопки быстрого входа для `anna`, `ladya`, `enisey` и `admin` (`petr` и `olga` — без кнопок, вход по логину). На сервере с реальными пользователями он должен быть выключен.
+
 ```bash
-cd /opt/app
-sed -i '/^DEMO_MODE=/d' .env && echo "DEMO_MODE=true" >> .env    # включить (false: выключить)
+sed -i '/^DEMO_MODE=/d' .env && echo "DEMO_MODE=true" >> .env    # false — выключить
 docker compose up -d
 ```
-Созданные аккаунты остаются в БД и после выключения режима, но кнопки и список пропадают. Для реального окружения удалите их из таблицы `users`.
+
+Демо создаёт аккаунты с публичным паролем `demo-password-1` и кнопки быстрого входа. На сервере с
+реальными пользователями режим выключен. После выключения кнопки пропадают, а аккаунты остаются в базе —
+для реального окружения удалите их из `users`. Демо создаётся только на пустой базе.
+
+---
 
 ## Как подключить домен и HTTPS
-1. У регистратора домена добавить A-записи `@` и `www` на IP сервера, **других A-записей быть не должно**. Проверить: `dig +short ваш-домен` должен вернуть только ваш IP.
-2. Убедиться, что на сервере открыты порты 80 и 443.
+
+1. У регистратора — A-записи `@` и `www` на IP сервера, других A-записей быть не должно.
+   Проверка: `dig +short <домен>`.
+2. Открыты порты 80 и 443.
 3. На сервере:
    ```bash
-   cd /opt/app
-   sed -i '/^DOMAIN=/d' .env && echo "DOMAIN=ваш-домен, www.ваш-домен" >> .env
+   sed -i '/^DOMAIN=/d' .env && echo "DOMAIN=<домен>, www.<домен>" >> .env
    docker compose up -d
-   docker compose logs -f web      # ждём "certificate obtained successfully", выход Ctrl+C
+   docker compose logs -f web    # ждём "certificate obtained successfully"
    ```
 
-Не добавляйте домен в `DOMAIN`, пока DNS не указывает на сервер: неудачные проверки у Let's Encrypt ограничены (около 5 в час на имя). Сертификаты лежат в `/opt/app/data/caddy`, повторно не выпускаются. Несколько доменов можно перечислить через запятую.
+Не прописывайте домен, пока DNS не указывает на сервер: у Let's Encrypt около 5 неудачных попыток в час
+на имя.
 
-## Как посмотреть логи, статус, перезапустить
-Всё в папке `/opt/app` (или в корне репозитория при варианте А):
+---
+
+## Логи, статус, перезапуск
+
 ```bash
-docker compose ps                     # статус контейнеров (app должен быть healthy)
-docker compose logs -f app            # логи бэкенда (web: Caddy, db: Postgres)
-docker compose logs --tail=100 app
-docker compose restart app            # перезапустить бэкенд
-docker compose up -d                  # применить изменения .env
-curl localhost/api/ping               # проверка с самого сервера
+docker compose ps                  # app должен быть healthy
+docker compose logs -f app         # бэкенд; web — Caddy, db — Postgres
+docker compose restart app
+docker compose up -d               # применить изменения .env
+curl localhost/api/ping
 ```
-С вашего компьютера, если задан `VPS_HOST` в локальном `.env`: `make logs`.
 
-## Как перенести базу данных на другой сервер
-**Со старого сервера** сделать дамп:
+С вашего компьютера при заданном `VPS_HOST`: `make logs`.
+
+---
+
+## Как перенести базу на другой сервер
+
+На старом:
+
 ```bash
-cd /opt/app
 docker compose exec -T db pg_dump -U app --clean --if-exists app > backup.sql
+tar czf files.tgz data/minio       # файлы S3
 ```
-Скачать на компьютер (`scp ubuntu@старый:/opt/app/backup.sql .`) и закачать на новый сервер (`scp backup.sql ubuntu@новый:/opt/app/`).
 
-**На новом сервере** восстановить в пустую базу, до первого запуска приложения:
+На новом, до первого запуска приложения:
+
 ```bash
-cd /opt/app
 docker compose up -d db
 docker compose exec -T db psql -U app -d app < backup.sql
 docker compose up -d --wait
 ```
-Это же работает как резервная копия перед важным демо: делайте `pg_dump` заранее. Данные Postgres живут в docker volume `pgdata` (удаляется только командой `docker compose down -v` или `docker volume rm`, обычный деплой его не трогает). Файлы (S3) лежат в `/opt/app/data/minio`: для бэкапа достаточно скопировать эту папку вместе с дампом БД (`tar czf files.tgz data/minio`).
 
-## Какие переменные есть в .env на сервере
-Файл `/opt/app/.env` (прод, образы из GHCR); для варианта А тот же набор лежит в `.env` в корне репозитория.
+Перед важным показом делайте `pg_dump` заранее. Volume `pgdata` удаляется только `docker compose down -v`
+или `docker volume rm`.
 
-| Переменная | Для чего | Откуда |
-|---|---|---|
-| `DB_PASSWORD` | пароль Postgres | вы, при подготовке сервера |
-| `JWT_SECRET` | подпись токенов, не короче 32 символов; смена разлогинит всех | CI создаёт сам, если нет |
-| `S3_SECRET_KEY` | пароль MinIO (пользователь `app`); не меняйте после первого запуска — MinIO запоминает его в `data/minio` | CI создаёт сам, если нет |
-| `DOMAIN` | `:80` (HTTP по IP) или домены для HTTPS | вы |
-| `DEMO_MODE` | `true` включает демо-аккаунты, по умолчанию `false` | вы |
-| `IMAGE`, `TAG` | какие образы запускать | CI при каждом деплое |
-| `PORT`, `HTTPS_PORT`, `CORS_ORIGINS` | только для варианта А (корневой compose) | вы |
-| `APP_PUBLIC_URL` | адрес сайта для ссылок в уведомлениях, например `https://sport.example` | вы |
-| `TELEGRAM_ENABLED`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `TELEGRAM_WEBHOOK_SECRET` | бот уведомлений, по умолчанию выключен; после запуска один раз `node scripts/telegram-webhook.mjs set` (см. `docs/notifications.md`) | вы |
-| `MODERATION_LLM_ENABLED` | нейросеть модерации (сервис `llm`, Qwen3.5-0.8B, ~1 ГБ памяти), по умолчанию `true`; `false` — без её голоса (`docs/moderation.md`) | вы |
-| `MODERATION_CLASSIFIER_ENABLED` | классификатор токсичности (сервис `toxicity`, rubert-tiny-toxicity), по умолчанию `true`; `false` — без его голоса (`docs/moderation.md`) | вы |
-| `VITE_2GIS_KEY`, `VITE_2GIS_MAP`, `VITE_2GIS_STYLE_ID` | ключ, движок (`raster` по умолчанию / `mapgl`) и необязательный стиль MapGL. Нужны **при сборке фронта**; `VITE_2GIS_KEY` ещё и бэку (маршруты 2ГИС для подсказки «когда выходить», `make back` берёт его из корневого `.env`, `docker compose` передаёт сам; без ключа — оценка по расстоянию): в варианте А их берёт `docker compose` из корневого `.env`, при деплое через GitHub Actions — секреты репозитория с теми же именами (`gh secret set VITE_2GIS_KEY`). В деве (`make front`) фронт тоже читает их из корневого `.env` | вы |
+---
 
-## Как настроить ключ и стиль карты 2ГИС
+## Переменные .env на сервере
 
-Параметры фронта задаются в корневом `.env` (локально их можно переопределить в `frontend/.env`):
+Полный список с дефолтами: [CONFIG.md](CONFIG.md).
 
-```dotenv
-VITE_2GIS_KEY=ваш_ключ
-VITE_2GIS_MAP=raster
-VITE_2GIS_STYLE_ID=
-```
+| Переменная                                                | Для чего                                                          | Кто задаёт   |
+|-----------------------------------------------------------|-------------------------------------------------------------------|--------------|
+| `DB_PASSWORD`                                             | пароль Postgres                                                   | вы           |
+| `JWT_SECRET`                                              | подпись токенов, не короче 32 символов; смена разлогинит всех     | CI, если нет |
+| `S3_SECRET_KEY`                                           | пароль MinIO; после первого запуска не менять                     | CI, если нет |
+| `DOMAIN`                                                  | `:80` или домены для HTTPS                                        | вы           |
+| `DEMO_MODE`                                               | демо-аккаунты, по умолчанию `false`                               | вы           |
+| `IMAGE`, `TAG`                                            | какие образы запускать (вариант Б)                                | CI           |
+| `APP_PUBLIC_URL`                                          | адрес сайта для ссылок в уведомлениях                             | вы           |
+| `VITE_2GIS_KEY`                                           | карта, подсказки адресов, маршруты; нужен при сборке фронта       | вы           |
+| `TELEGRAM_*`                                              | бот уведомлений ([notifications.md](notifications.md#5-telegram)) | вы           |
+| `MODERATION_LLM_ENABLED`, `MODERATION_CLASSIFIER_ENABLED` | модели модерации, по умолчанию `true`                             | вы           |
 
-`VITE_2GIS_MAP=raster` сохраняет растровую карту. `mapgl` включает векторную MapGL. В [кабинете 2ГИС](https://platform.2gis.ru/) у ключа должен быть включён доступ к **MapGL JS API**; RasterJS и Catalog API — отдельные сервисы. Разрешить `localhost` и домен стенда. Для автоматического fallback оставить у ключа доступ к RasterJS: если MapGL не загрузилась, не поддерживается WebGL или не прошла инициализация (ключ/стиль/тайм-аут), приложение пишет `console.warn` и пробует RasterJS.
-
-Для своего оформления: [styles.2gis.com](https://styles.2gis.com) → создать и сохранить стиль → **Мои стили → Поделиться → Идентификатор стиля**. Записать ID в `VITE_2GIS_STYLE_ID`. Пустой ID означает стандартный стиль MapGL; RasterJS свои цвета подложки не поддерживает. Палитра Memphis из токенов — в [map-frontend.md](map-frontend.md#свой-стиль-memphis).
-
-Сравнение без пересборки: открыть нужную страницу с `?map=mapgl` или `?map=raster` и перезагрузить — query главнее env. После изменения env перезапустить `make front`; на сервере пересобрать фронт (`make prod`/`make deploy`). GitHub Actions берёт три переменные из одноимённых secrets **при сборке**; env уже запущенного контейнера не меняет статичный JS.
+---
 
 ## Частые ошибки
-| Симптом | Причина и решение |
-|---|---|
-| Деплой красный на шаге **SSH setup** | пустые или неверные секреты `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY` (ключ вставлять целиком); проверка: `ssh -i ключ user@host echo ok` |
-| `permission denied ... docker.sock` | пользователя нет в группе docker: `sudo usermod -aG docker $USER` и **зайти по SSH заново** |
-| `pull access denied` / `unauthorized` при `docker compose pull` | на сервере нет логина в GHCR (вариант Б) или у токена нет `read:packages`; при автодеплое проверьте, что у Actions есть право публиковать пакеты |
-| После деплоя пара секунд ошибка или пауза | нормально, пока перезапускается `app`; Caddy держит запросы до 30 с |
-| Деплой красный на `--wait` | `app` не стал healthy: смотрите `docker compose logs app` (часто `JWT_SECRET` короче 32 символов или неверный пароль БД) |
-| Сайт не открывается снаружи, а на сервере `curl localhost/api/ping` работает | закрыты порты 80/443 во внешнем файрволе |
-| Сертификат не выпускается | DNS ещё указывает не на сервер, закрыт порт 80/443 или исчерпан лимит Let's Encrypt (подождать час); логи: `docker compose logs web` |
-| При входе на сервер `System restart required` | обновление ядра, выполните `sudo reboot` когда удобно, контейнеры поднимутся сами |
-| Бэкенд не стартует: `Migration checksum mismatch` | в вашей локальной базе старая версия уже применённой миграции. Локальную базу можно сбросить: `docker compose -f docker-compose.dev.yml rm -sf db && docker volume rm project_template_pgdata-dev && make dev` (данные пропадут) |
-| `type "geometry" does not exist` или `extension "postgis" is not available` | база запущена со старым образом `postgres`, а нужен `postgis/postgis`: `docker compose pull db && docker compose up -d db` (данные сохраняются, образ совместим) |
-| `port is already allocated` на локальной машине | порт занят другим сервисом; при разработке БД на 5440, MinIO на 9440/9441, бэк на 8080, фронт на 5173 |
+
+| Симптом                                                      | Причина и решение                                                                                                      |
+|--------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------|
+| Деплой красный на **SSH setup**                              | неверные `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`; проверка: `ssh -i <ключ> <user>@<host> echo ok`                        |
+| `permission denied ... docker.sock`                          | пользователя нет в группе docker: `sudo usermod -aG docker $USER` и заново зайти по SSH                                |
+| `pull access denied`                                         | нет логина в GHCR или у токена нет `read:packages`                                                                     |
+| Деплой красный на `--wait`                                   | `app` не стал healthy: `docker compose logs app` — часто короткий `JWT_SECRET` или неверный пароль базы                |
+| Снаружи не открывается, а `curl localhost/api/ping` работает | закрыты 80/443 во внешнем файрволе                                                                                     |
+| Сертификат не выпускается                                    | DNS ещё не на сервере, закрыт порт или исчерпан лимит Let's Encrypt; `docker compose logs web`                         |
+| `Migration checksum mismatch` локально                       | в базе старая версия применённой миграции; пересоздать: `docker compose -f docker-compose.dev.yml down -v && make dev` |
+| `type "geometry" does not exist`                             | база запущена из образа `postgres`, а нужен `postgis/postgis`: `docker compose pull db && docker compose up -d db`     |
+| `port is already allocated`                                  | порт занят; локально база на 5440, MinIO 9440/9441, бэкенд 8080, фронт 5173                                            |
+| Демо не появилось после перезапуска                          | в базе уже есть `admin` — сид не запускается; стереть базу и перезапустить                                             |

@@ -1,21 +1,31 @@
 # Документация
 
-| Файл | О чём |
+**Продукт и API**
+
+| Документ | Содержание |
 |---|---|
-| [dev-faq.md](dev-faq.md) | **FAQ по деплою для разработчика**: сменить сервер, задеплоить руками, откат, домен, перенос БД, частые ошибки |
-| [deploy.md](deploy.md) | Как устроен автодеплой (GitHub Actions + GHCR) и почему он быстрый |
-| [development.md](development.md) | Локальная разработка, демо-режим, git-хуки |
-| [architecture.md](architecture.md) | Структура бэкенда по слоям, Orval и контракт API |
-| [postman.md](postman.md) | Postman-коллекция: проверка сценариев приёмки через API одной командой |
-| [final.md](final.md) | **Финал хакатона**: чеклист проверок и команда финальной очистки репозитория |
-| [organizations.md](organizations.md) | Каталог организаций, публичная страница, статистика и подписки на анонсы |
-| [orval.md](orval.md) | Генерация API-клиента для фронта |
-| [map-frontend.md](map-frontend.md) | **Карта событий**: контракт `events_map`, как делать экран на 2ГИС MapGL, грабли |
-| [recommendations.md](recommendations.md) | **Рекомендации**: подборка мероприятий и клубов — признаки, формулы, веса, разнообразие (MMR), API, как подкрутить |
-| [moderation.md](moderation.md) | **Модерация текстов**: словарь, классификатор токсичности и нейросеть Qwen3.5-0.8B в фоне, голосование 2 из 3, очередь постмодерации, API, настройки |
-| [admin-sports.md](admin-sports.md) | **Виды спорта в админке**: статусы, PNG-картинки, модерация своих видов, слияние дублей, API |
-| [frontend.md](frontend.md) | Исходный README шаблона React Router |
-| [sport-images.md](sport-images.md) | **Иллюстрации видов спорта**: как устроены, API `imageUrl`, как сгенерировать новую в том же стиле |
-| [economy.md](economy.md) | **Экономика и достижения**: монеты за встречи, магазин и эксклюзивы бобра, 6 достижений, «Организация месяца» |
-| [beaver-pet.md](beaver-pet.md) | **Бобр-маскот**: как рисовать вещи, предметы, активности и настроения (гайд для агентов) |
-| [beaver-backend-integration.md](beaver-backend-integration.md) | **Бобр в профиле: API бэкенда** — каталог, образ, случайная вещь, админка вещей (картинки в S3), контракт и подключение UI |
+| [API.md](API.md) | REST API по разделам, блок `viewer`, правила записи, коды ошибок |
+| [CONFIG.md](CONFIG.md) | переменные окружения и демо-режим |
+| [architecture.md](architecture.md) | слои бэкенда, правила, база, вход, ошибки |
+| [organizations.md](organizations.md) | допуск, каталог, страница клуба, показатели, подписки |
+| [moderation.md](moderation.md) | словарь, классификатор, нейросеть, голосование 2 из 3, очередь |
+| [recommendations.md](recommendations.md) | подборка встреч и клубов: признаки, формулы, веса, MMR |
+| [notifications.md](notifications.md) | кто что получает, long polling, Telegram, «когда выходить» |
+| [economy.md](economy.md) | монеты, вещи, достижения, награды и «Организация месяца» |
+| [map-frontend.md](map-frontend.md) | карта: API `events_map`, движки 2ГИС, стиль |
+| [admin-sports.md](admin-sports.md) | справочник видов спорта в админке |
+| [sport-images.md](sport-images.md) | иллюстрации видов спорта и достижений, промпты |
+| [beaver-backend-integration.md](beaver-backend-integration.md) | бобр: образ, магазин, сохранённые образы, настроение |
+| [beaver-pet.md](beaver-pet.md) | бобр: как рисовать вещи, активности и эмоции |
+
+**Разработка и деплой**
+
+| Документ | Содержание |
+|---|---|
+| [development.md](development.md) | локальный запуск, демо, тесты, файлы, git-хуки |
+| [frontend.md](frontend.md) | структура фронта, спортивный фон, PWA |
+| [orval.md](orval.md) | клиент API для фронта |
+| [postman.md](postman.md) | проверка шести сценариев через API |
+| [deploy.md](deploy.md) | CI/CD через GitHub Actions и GHCR |
+| [dev-faq.md](dev-faq.md) | рецепты для сервера: деплой, откат, домен, перенос базы, ошибки |
+| [final.md](final.md) | финальный день: проверка и очистка репозитория |

@@ -1,48 +1,35 @@
-# Orval: генерация API-клиента
+# Orval: клиент API для фронта
 
-## Как это работает
-
-OpenAPI-спека хранится в git: `src/shared/api/schemas/openapi.json`.
-Orval генерирует клиент из этого файла в `src/shared/api/generated/core` (тоже в git).
-Бэкенд для генерации и для Docker build **не нужен**.
+Схема OpenAPI лежит в git — `frontend/src/shared/api/schemas/openapi.json`. Orval генерирует из неё
+клиент и хуки TanStack Query в `frontend/src/shared/api/generated/core` — тоже в git. Поэтому фронт и
+Docker-сборка обходятся без бэкенда.
 
 ```text
-бэкенд /v3/api-docs --(yarn api:pull)--> openapi.json --(yarn orval)--> generated/core
+бэкенд /v3/api-docs ──yarn api:pull──▶ openapi.json ──yarn orval──▶ generated/core
 ```
 
-## Команды
+| Команда         | Что                                    |
+|-----------------|----------------------------------------|
+| `yarn api:pull` | скачать схему с бэкенда                |
+| `yarn orval`    | сгенерировать клиент из `openapi.json` |
+| `yarn api:sync` | оба шага                               |
 
-| Команда            | Что делает                                              |
-| ------------------ | ------------------------------------------------------- |
-| `yarn api:pull`    | Скачивает спеку с бэкенда в `openapi.json`              |
-| `yarn orval`       | Генерирует клиент из `openapi.json`                     |
-| `yarn api:sync`    | `api:pull` + `orval`                                    |
-| `yarn local`       | `orval` + `react-router dev`                            |
+**Поменяли API** → `make back` → `cd frontend && yarn api:sync` → закоммитить `openapi.json` и
+`generated/`. JSON форматируется, диффы читаемые. При конфликте в этих файлах руками не мержить —
+заново `yarn api:sync` на смерженном бэкенде.
 
-## Когда обновлять API
+Имена хуков берутся из `operationId`: `events_get` → `useEventsGet`. Данные во фронте получаются только
+через эти хуки, axios руками не вызывается.
 
-Бэкенд изменил API → `yarn api:sync` → закоммитить изменения в `openapi.json` и `generated/`.
-Диффы спеки читаемые (JSON форматируется скриптом).
+**Переменные** (`frontend/.env`):
 
-## Переменные окружения
+| Переменная         | Что                                                                                 |
+|--------------------|-------------------------------------------------------------------------------------|
+| `VITE_BACKEND_URL` | адрес бэкенда: прокси `/api` в `yarn dev` и источник для `api:pull`                 |
+| `API_SPEC_URL`     | необязательно: полный адрес схемы, если она не по `${VITE_BACKEND_URL}/v3/api-docs` |
 
-Файл `.env` (см. `.env.example`):
+**`api:pull` отвечает 404 или `fetch failed`** — бэкенд не запущен или неверный `VITE_BACKEND_URL`.
+Откройте `<адрес>/v3/api-docs`: там должен быть JSON, а не HTML или ошибка входа.
 
-- `VITE_BACKEND_URL` — адрес бэкенда. Нужен для прокси `/api` в `vite dev` и для `yarn api:pull`.
-- `API_SPEC_URL` — необязательно, полный URL спеки, если она не по `${VITE_BACKEND_URL}/v3/api-docs`.
-
-## Требования к бэкенду
-
-Отдавать валидную OpenAPI-схему (JSON) по `/v3/api-docs`.
-
-## Частые проблемы
-
-### `yarn api:pull`: `HTTP 404` или `fetch failed`
-
-1. Запущен ли бэкенд и верный ли `VITE_BACKEND_URL`.
-2. Открывается ли `{VITE_BACKEND_URL}/v3/api-docs` и возвращает ли именно JSON, а не HTML или ошибку авторизации.
-3. Если путь другой — задать `API_SPEC_URL`.
-
-### Клиент не обновился
-
-Проверить, что `openapi.json` изменился после `api:pull`, затем запустить `yarn orval`.
+**`null`, а не `undefined`.** В типах необязательные поля описаны как `endAt?: string`, а бэкенд присылает
+`"endAt": null`. Проверять через `!= null` или `??`.

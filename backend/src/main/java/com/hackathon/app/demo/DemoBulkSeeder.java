@@ -37,6 +37,7 @@ import com.hackathon.app.service.EventService;
 import com.hackathon.app.service.OrganizationService;
 import com.hackathon.app.service.OrganizationSubscriptionService;
 import com.hackathon.app.service.RegistrationService;
+import com.hackathon.app.service.NotificationReminderService;
 import com.hackathon.app.service.UserProfileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -93,6 +94,7 @@ class DemoBulkSeeder {
     private final EventOrganizerService organizerService;
     private final AdminEventService adminEventService;
     private final UserProfileService profileService;
+    private final NotificationReminderService reminders;
     private final DemoPhotos photos;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
@@ -397,6 +399,7 @@ class DemoBulkSeeder {
 
         // Все действия выше уже совершены обычными сервисами; теперь только метки времени переезжают в прошлое.
         data.moveEvent(eventId, createdAt, startAt, endAt);
+        reminders.synchronize(eventId); // напоминания ставились на временную дату — пересчитать по настоящей
         registrationTimes.forEach(t -> data.backdateRegistration(t.id(), t.createdAt(), t.decidedAt()));
         commentTimes.forEach(t -> data.backdateComment(t.id(), t.createdAt(), t.editedAt(), t.deletedAt()));
         if (coOrganizerId != null) {

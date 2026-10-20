@@ -1,77 +1,127 @@
-# Структура проекта
+# Архитектура
 
 ```
-backend/     Spring Boot 4 (Java 25, Gradle Kotlin DSL)
-frontend/    React Router 7 (SPA), Vite, Tailwind, yarn
-deploy/      прод: docker-compose.yml (образы из GHCR) + Caddyfile
-scripts/     dev.mjs (запуск разработки), hygiene.mjs (проверка коммитов), server-setup.sh
-docs/        документация
-docker-compose.yml      всё из исходников одной командой (жюри / ручной деплой)
-docker-compose.dev.yml  только БД для разработки
-*/Dockerfile            полная сборка из исходников; */Dockerfile.ci — тонкие образы для CI
+backend/                Spring Boot 4.1, Java 25, Gradle Kotlin DSL
+frontend/               React Router 7 (SPA), Vite, Tailwind 4, Yarn
+deploy/                 docker-compose.yml для сервера (образы из GHCR) и Caddyfile
+scripts/                dev.mjs (локальный запуск), hygiene.mjs (проверка коммитов), demo_photos.py
+docker-compose.yml      всё из исходников одной командой
+docker-compose.dev.yml  только Postgres и MinIO для разработки
 ```
-Единая точка входа — Caddy: `/api/*` идёт на бэкенд, всё остальное отдаёт собранный фронт (SPA).
 
-## Бэкенд по слоям (`com.hackathon.app`)
-| Пакет | Что внутри |
-|---|---|
-| `rest` | Контроллеры: только HTTP (разобрать запрос, вызвать сервис, вернуть DTO), cookie |
-| `service` | Бизнес-логика и транзакции, не знает про HTTP |
-| `repository` | Spring Data интерфейсы доступа к БД |
-| `domain.entity` | JPA-сущности (наружу не отдаём, только через `dto`) |
-| `domain.enums` | Enum-ы модели (`EventStatus`, `RegistrationStatus`, `OrganizationStatus`, `SystemRole`…): общие для сущностей, DTO и запросов |
-| `domain.dto` | Запросы и ответы API (records, валидация) |
-| `domain.mapper` | MapStruct: entity ↔ dto, **всё заполнение полей сущностей только здесь** (сервис — чистая бизнес-логика). Общий `@Mapper(config = MappingConfig.class)`: поля без источника пропускаются без `ignore = true`, строки идут через `util.Strings.blankToNull` (обрезка, пустые → `null`) |
-| `util` | Статические утилиты без состояния (`Strings`) |
-| `config` | Security, OpenAPI, `@ConfigurationProperties` |
-| `demo` | Демо-данные (только при `DEMO_MODE=true`): сидеры, `/api/demo/accounts`, перенос дат в прошлое. Работает как клиент сервисов |
-| `domain.exception` | Свои исключения и единый `ApiExceptionHandler` (RFC 9457) |
+Единая точка входа — Caddy: `/api/*` уходит на бэкенд, всё остальное — собранный фронт.
 
-Зависимости идут только вниз: `rest → service → repository → entity`. Исключение — пакет `demo` (демо-данные): он вызывает сервисы как клиент, и ничто вне него от `demo` не зависит. Миграции БД: `backend/src/main/resources/db/migration` (Flyway, только вперёд; применённые миграции не править, добавлять новые `V5__...`).
-Пример готового флоу: регистрация и вход (`AuthController`, `AuthService`).
+---
 
-## Мероприятия, записи, виды спорта (`EventController`, `RegistrationController`, `SportController`; миграции `V3__events.sql`, `V4__organizers_and_profile.sql`)
-- Мероприятие (`events`) — центр модели. Вид спорта — справочник `sports` в БД; в форме можно выбрать из списка (`sportId`) или ввести свой (`sportName`):
-  сервер нормализует имя (пробелы, регистр, ё → е), ищет по `normalized_name` и при отсутствии создаёт вид с `custom = true` (`SportService.resolve`).
-- Все правила «можно ли» — в `service.EventAccessPolicy`. Команды бросают исключение с её текстом, карточка отдаёт те же решения в блоке `viewer`
-  (`registrationStatus, canRegister, registerBlockedReason, isOrganizer, canManage, canCancel, canSeePrivateDetails`). Фронт рисует кнопки только по `viewer`.
+## 1. Бэкенд по слоям
 
-| Ручка | operationId | Кто / что |
-|---|---|---|
-| `GET /api/sports?query=` | `sports_search` | справочник, поиск без учёта регистра и ё/е |
-| `GET /api/events?searchText&sportId&from&to&level&joinMode&format` | `events_list` | лента: только PUBLISHED, по умолчанию с текущего момента; фильтр уровня строгий (ANY — отдельное значение «Любой») |
-| `GET /api/events/mine` | `events_mine` | где я автор или соорганизатор, все статусы |
-| `POST /api/events/{id}/organizers` `{"login"}` | `events_addOrganizer` | только автор; по логину или email; нельзя админа, уже организатора, записанного участника |
-| `DELETE /api/events/{id}/organizers/{userId}` | `events_removeOrganizer` | автор убирает любого, соорганизатор может выйти сам; автора убрать нельзя |
-| `GET /api/events/{id}` | `events_get` | карточка в любом статусе (снятое — с `moderationReason`), участники, `viewer`; `onlineUrl`/`privateDetails` — только организатору и подтверждённым |
-| `POST /api/events` | `events_create` | сразу PUBLISHED; админ — 403; очному нужен `address` |
-| `PUT /api/events/{id}` | `events_update` | только организатор (403); удалённое — 409; `capacity` не меньше подтверждённых — 409 |
-| `POST /api/events/{id}/registrations` | `registrations_create` | FREE → CONFIRMED, REQUEST → PENDING; после отмены та же строка переиспользуется |
-| `DELETE /api/events/{id}/registrations/me` | `registrations_cancel` | отмена своей записи/заявки до начала; повтор — 200; отклонённую — 409 |
-| `GET /api/events/{id}/registrations?status=` | `registrations_listForEvent` | заявки и участники — только организатор |
-| `POST /api/registrations/{id}/approve` | `registrations_approve` | организатор; можно подтвердить и ранее отклонённого (исправить ошибку); нет мест — 409 |
-| `POST /api/registrations/{id}/reject` `{"reason"?}` | `registrations_reject` | организатор; причину участник видит в «моих записях» |
-| `GET /api/registrations/mine` | `registrations_mine` | мои записи вместе со статусом мероприятия |
+Пакет `com.hackathon.app`. Зависимости только вниз: `rest → service → repository → domain`.
 
-- Организаторы: автор + соорганизаторы (`event_organizers`). Соорганизатор правит мероприятие, видит и решает заявки, видит приватные детали — как автор;
-  состав меняет только автор (`viewer.canManageOrganizers`). В карточке список `organizers`, автор первым.
-- Отказы записи (409, текст для человека): снято/удалено, организатор на своё, уже началось, уже записан, заявка ждёт, отклонена, «Мест нет».
-  Админ заявки не решает и события не создаёт (403). Сам отклонённый повторно подать не может — исправляет организатор через approve.
-- Запись и одобрение — под блокировкой строки мероприятия (`EventRepository.findByIdForUpdate`), лимит мест не превысить параллельно.
-  Счётчики участников для списков — одним запросом (`RegistrationRepository.countByEventIds`).
-- id генерирует Hibernate (UUID). `createdAt`/`updatedAt` — в базовом `domain.entity.AuditEntity`. Время для проверок («уже началось», `decidedAt`) — у базы: `DbTimeRepository.now()`.
-- Фильтры ленты — Criteria API (`EventSpecifications`), переносимо на H2.
-- Контроллеры логируют на английском `Endpoint called: <METHOD> <путь>, userId=..., request=...` и `Endpoint response: ...`. Если сервис бросил исключение (4xx), строки `Endpoint response` не будет.
-- Ещё не сделано: события от организации (`organization_id` есть в схеме; ждёт `Organization`), модерация админом (поля есть), комментарии.
+| Пакет              | Что внутри                                                                       |
+|--------------------|----------------------------------------------------------------------------------|
+| `rest`             | Контроллеры: разобрать запрос, вызвать сервис, вернуть DTO. Только HTTP и cookie |
+| `service`          | Бизнес-логика, права и транзакции. Про HTTP не знает                             |
+| `repository`       | Spring Data; пространственные запросы — нативным SQL в `EventMapRepository`      |
+| `domain.entity`    | JPA-сущности. Наружу не отдаются                                                 |
+| `domain.dto`       | Запросы и ответы API — records с валидацией                                      |
+| `domain.mapper`    | MapStruct. Все поля сущностей заполняются только здесь, в сервисах сеттеров нет  |
+| `domain.enums`     | Enum модели, по файлу на enum                                                    |
+| `domain.exception` | Свои исключения и `ApiExceptionHandler`                                          |
+| `config`           | Security, OpenAPI, `@ConfigurationProperties`                                    |
+| `util`             | Статические утилиты без состояния                                                |
+| `demo`             | Демо-данные. Вызывает сервисы как клиент; от `demo` ничто не зависит             |
 
-## Правила для контроллеров
-- Только под `/api/...`, с `produces = APPLICATION_JSON_VALUE` (иначе в спецификации будет `*/*`, и Orval сгенерирует `string` вместо типа).
-- `@Tag(name = "...")` и `@Operation(operationId = "<tag>_<действие>")`: от этого зависят имена хуков на фронте (`useAuthLogin`).
-- Возвращать `record`-ы, а не `Map`.
+Новая фича — новые файлы в этих пакетах, а не новый корневой пакет.
 
-## Контракт API и фронт
-Спецификация лежит в git: `frontend/src/shared/api/schemas/openapi.json`; клиент и хуки React Query генерирует Orval в `frontend/src/shared/api/generated/core` (тоже в git, поэтому фронт собирается без бэкенда).
-Поменяли контроллер или DTO → поднять бэк (`make back`) → `cd frontend && yarn api:sync` → закоммитить `openapi.json` и `generated/`. Подробности: [orval.md](orval.md).
+---
 
-## Авторизация
-JWT в двух HttpOnly cookie: `access_token` (15 минут) и `refresh_token` (14 дней, хранится в БД только хешем, ротируется; повторное использование погашенного токена гасит все сессии пользователя). Защита от CSRF: `SameSite=Lax`. `/api/**` требует входа, кроме регистрации, входа, refresh, logout, проверок доступности имени и email, `ping` и Swagger.
+## 2. Правила
+
+**Права — в одном месте.** Всё «можно ли» про мероприятие (записаться, отменить, управлять, видеть
+приватные детали) решает `EventAccessPolicy`. Им пользуются и команды, и сборка ответа: карточка
+приходит с блоком `viewer`, фронт рисует кнопки только по нему. Свой вариант той же проверки в
+контроллере или на фронте — ошибка.
+
+**Гонки.** Запись и одобрение заявки берут блокировку строки мероприятия (`EventRepository.findByIdForUpdate`), поэтому
+двое не займут последнее место.
+
+**Время.** Для проверок («уже началось», `decidedAt`) время берётся у базы — `DbTimeRepository.now()`,
+а не из `Clock` приложения.
+
+**Сущности.** Ключ — UUID от Hibernate, `createdAt`/`updatedAt` — в базовом `AuditEntity`, enum хранится
+строкой. Уникальность и индексы — в миграциях, не в аннотациях.
+
+**Счётчики не хранятся.** «Записались 8 из 16» считается одним запросом по списку мероприятий.
+
+**Удаление мягкое.** У мероприятия `status = DELETED`, у сообщения — `deletedAt`: записавшиеся видят, что
+произошло.
+
+---
+
+## 3. Контроллеры и контракт API
+
+- Только под `/api/...` и с `produces = APPLICATION_JSON_VALUE`, иначе в схеме будет `*/*` и Orval
+  сгенерирует `string` вместо типа.
+- `@Tag` и `@Operation(operationId = "<тег>_<действие>")` — от `operationId` зависят имена хуков на
+  фронте (`events_get` → `useEventsGet`).
+- Возвращаются records, не `Map` и не сущности.
+- Текущий пользователь — `@AuthenticationPrincipal Jwt jwt`; в сервис передаётся `UUID`, не `Jwt`.
+- Лог: `Endpoint called: <METHOD> <путь>, userId=…, request=…` и `Endpoint response: …` на английском.
+
+Схема лежит в git — `frontend/src/shared/api/schemas/openapi.json`, клиент Orval — в
+`frontend/src/shared/api/generated/core`. Фронт собирается без бэкенда. Поменяли API:
+
+```bash
+make back                      # поднять бэкенд с новой схемой
+cd frontend && yarn api:sync   # скачать схему и пересобрать клиент
+```
+
+и закоммитить `openapi.json` вместе с `generated/`. Подробнее: [orval.md](orval.md).
+
+---
+
+## 4. База
+
+PostgreSQL 18 с PostGIS, миграции Flyway в `backend/src/main/resources/db/migration`.
+
+- Миграции только вперёд. Применённую не править, новую — следующим номером. Номер занимать после
+  `git pull`: два одинаковых Flyway не запустит.
+- В проде `ddl-auto: validate`: миграции обязаны совпадать с сущностями. Проверка —
+  `./gradlew postgresTest`.
+- Тесты идут на H2, схема строится из сущностей. Поэтому запросы, которые проходят через тесты, пишутся
+  переносимо: JPQL, derived-методы, Criteria API (`EventSpecifications`). PostGIS, `pg_trgm` и `jsonb` —
+  только в нативных запросах, которые H2 не вызывает.
+- Точка мероприятия хранится как `lat`/`lon`, а колонку `location geometry` база вычисляет сама (`GENERATED ... STORED`,
+  GiST-индекс). В сущности её нет.
+
+---
+
+## 5. Вход
+
+JWT в двух HttpOnly cookie:
+
+| Cookie          | Срок     | Что это                                                               |
+|-----------------|----------|-----------------------------------------------------------------------|
+| `access_token`  | 15 минут | JWT, роль в клейме `role` → `ROLE_<роль>`                             |
+| `refresh_token` | 14 дней  | случайная строка; в базе только хеш, ротируется при каждом обновлении |
+
+Повторное использование уже погашенного refresh-токена гасит все сессии пользователя. CSRF закрыт
+`SameSite=Lax`. `/api/admin/**` требует роль `ADMIN` прямо в `SecurityConfig`, остальные права — в
+сервисах. Статус допуска организации всегда читается из базы, а не из токена.
+
+---
+
+## 6. Ошибки
+
+Единый формат — RFC 9457 `ProblemDetail` через `ApiExceptionHandler`:
+
+| Исключение                                         | HTTP |
+|----------------------------------------------------|------|
+| `BadRequestException`, ошибки `@Valid`             | 400  |
+| `UnauthorizedException`                            | 401  |
+| `ForbiddenException`                               | 403  |
+| `NoSuchElementException`                           | 404  |
+| `ConflictException`, нарушение уникальности в базе | 409  |
+| `ServiceUnavailableException`                      | 503  |
+
+`detail` пишется по-русски для человека — фронт показывает его как есть.

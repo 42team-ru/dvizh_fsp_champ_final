@@ -19,6 +19,7 @@ import com.hackathon.app.domain.enums.EventLevel;
 import com.hackathon.app.domain.enums.JoinMode;
 import com.hackathon.app.service.EventService;
 import com.hackathon.app.service.MeetingAttendance;
+import com.hackathon.app.service.NotificationReminderService;
 import com.hackathon.app.service.OrganizationAwardService;
 import com.hackathon.app.service.RegistrationService;
 import lombok.RequiredArgsConstructor;
@@ -71,6 +72,7 @@ class DemoEconomySeeder {
 	private final OrganizationAwardService awards;
 	private final DemoDataRepository data;
 	private final DemoHistory history;
+	private final NotificationReminderService reminders;
 	private final Clock clock;
 
 	/** Прошедшие встречи основных персонажей ставятся в историю; people — массовка, из неё приходят в «Ладью». */
@@ -234,6 +236,7 @@ class DemoEconomySeeder {
 			data.backdateRegistration(registration.id(), registeredAt, registeredAt);
 		}
 		data.moveEvent(eventId, createdAt, start, end);
+		reminders.synchronize(eventId); // напоминания ставились на временную дату — пересчитать по настоящей
 	}
 
 	/**

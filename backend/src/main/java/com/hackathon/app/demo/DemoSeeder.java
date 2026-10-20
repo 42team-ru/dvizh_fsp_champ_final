@@ -62,7 +62,6 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Демо-данные для экспертов: аккаунты всех ролей, мероприятия в Красноярске и записи на них, чтобы каждый сценарий
@@ -75,8 +74,8 @@ import org.springframework.transaction.annotation.Transactional;
  * Единственный обман — время: сервисы не создают прошлое, поэтому прошедшие встречи создаются с будущими датами и
  * затем переносятся назад ({@link DemoDataRepository}); после этого их обрабатывает настоящий {@code RewardService}.
  * <p>
- * Всё выполняется одной транзакцией: либо демо создано целиком, либо (при сбое) откатывается, и следующий старт
- * повторит попытку. Повторный старт на заполненной базе ничего не создаёт. Даты считаются от текущего дня
+ * Сид идёт в фоне, без общей транзакции (см. {@link #onReady}): при сбое на середине база остаётся с частью демо, и её
+ * нужно стереть. Повторный старт на заполненной базе ничего не создаёт. Даты считаются от текущего дня
  * («послезавтра в 19:00»), поэтому демо не устаревает. Полный сброс: docker compose down -v.
  */
 @Service
@@ -151,9 +150,13 @@ public class DemoSeeder {
 	private final PasswordEncoder passwordEncoder;
 	private final Clock clock;
 
+	/**
+	 * Сид идёт в отдельном потоке: приложение и проба готовности поднимаются сразу, демо-аккаунты появляются в первые
+	 * секунды, а остальное дописывается следом. Общей транзакции нет: каждый вызов сервиса коммитится сам, как у живых
+	 * пользователей, — одна транзакция на весь сид коммитилась минутами (снимки уведомлений по каждой встрече).
+	 */
 	@EventListener(ApplicationReadyEvent.class)
-	@Transactional
-	public void seed() {
+	public void onReady() {
 		if (!props.enabled()) {
 			return;
 		}
@@ -162,6 +165,18 @@ public class DemoSeeder {
 			log.info("Demo data already present, nothing to seed");
 			return;
 		}
+		Thread.ofPlatform().name("demo-seed").start(() -> {
+			try {
+				seed();
+			}
+			catch (RuntimeException e) {
+				// без общей транзакции откатить уже созданное нельзя: база останется с частью демо
+				log.error("Демо-данные созданы не полностью. Сотрите базу (docker compose down -v) и перезапустите", e);
+			}
+		});
+	}
+
+	void seed() {
 		long started = System.currentTimeMillis();
 		var cast = seedAccounts();
 		avatars(cast);
