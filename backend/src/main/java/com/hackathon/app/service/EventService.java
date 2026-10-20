@@ -181,7 +181,8 @@ public class EventService {
                 firstSlot != null ? firstSlot.start() : request.startAt(),
                 firstSlot != null ? firstSlot.end() : request.endAt()));
         occurrenceService.apply(saved, plan, now);
-        // Новое мероприятие никого не оповещает, но ставит напоминания по своим занятиям.
+        if (organization != null) notificationSubjects.organizationEvent(saved, organization);
+        // Напоминания по занятиям создаются существующим механизмом.
         notificationChanges.watch(saved.getId(), userId);
         return get(saved.getId(), userId);
     }

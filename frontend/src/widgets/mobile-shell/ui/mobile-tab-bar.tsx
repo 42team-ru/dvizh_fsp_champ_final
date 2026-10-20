@@ -6,7 +6,7 @@ import { motion } from "motion/react";
 import { useNavAccess } from "@/entity/user/model/use-nav-access";
 import { useCabinetAccess } from "@/entity/user/model/use-cabinet-access";
 
-export type MobileTab = "home" | "feed" | "activity" | "profile" | "admin";
+export type MobileTab = "home" | "feed" | "activity" | "profile" | "admin" | "orgs";
 
 type Tab = { key: string; to: string; label: string; icon?: string; lucide?: LucideIcon; count?: number };
 
@@ -17,7 +17,7 @@ type Tab = { key: string; to: string; label: string; icon?: string; lucide?: Luc
  */
 export function MobileTabBar({ current }: { current: MobileTab }) {
   // У админки своей папки иконок нет: в папке «Профиля» (этой вкладки у админа нет) остальные иконки неактивные.
-  const dir = `m-${current === "admin" ? "profile" : current}`;
+  const dir = `m-${current === "admin" || current === "orgs" ? "profile" : current}`;
   const nav = useNavAccess();
   const cabinet = useCabinetAccess();
 

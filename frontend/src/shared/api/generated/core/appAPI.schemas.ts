@@ -2048,11 +2048,11 @@ export interface PublicUserResponse {
 }
 
 export interface PageResponseAlbumPhotoResponse {
-  items?: AlbumPhotoResponse[];
-  page?: number;
-  size?: number;
-  totalElements?: number;
-  totalPages?: number;
+  items: AlbumPhotoResponse[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
 }
 
 /**
@@ -2216,11 +2216,11 @@ export interface AttendedOccurrenceResponse {
 }
 
 export interface PageResponseAttendedOccurrenceResponse {
-  items?: AttendedOccurrenceResponse[];
-  page?: number;
-  size?: number;
-  totalElements?: number;
-  totalPages?: number;
+  items: AttendedOccurrenceResponse[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
 }
 
 /**
@@ -2314,11 +2314,11 @@ export interface MyRegistrationResponse {
 }
 
 export interface PageResponseMyRegistrationResponse {
-  items?: MyRegistrationResponse[];
-  page?: number;
-  size?: number;
-  totalElements?: number;
-  totalPages?: number;
+  items: MyRegistrationResponse[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
 }
 
 export type RecommendationReasonCode = typeof RecommendationReasonCode[keyof typeof RecommendationReasonCode];
@@ -2395,11 +2395,11 @@ export interface RecommendedEventResponse {
 }
 
 export interface PageResponseRecommendedEventResponse {
-  items?: RecommendedEventResponse[];
-  page?: number;
-  size?: number;
-  totalElements?: number;
-  totalPages?: number;
+  items: RecommendedEventResponse[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
 }
 
 export type RecommendationFeatureCode = typeof RecommendationFeatureCode[keyof typeof RecommendationFeatureCode];
@@ -2604,6 +2604,7 @@ export type NotificationResponseType = typeof NotificationResponseType[keyof typ
 
 export const NotificationResponseType = {
   REMINDER: 'REMINDER',
+  ORG_NEW_EVENT: 'ORG_NEW_EVENT',
   EVENT_CHANGED: 'EVENT_CHANGED',
   EVENT_UNPUBLISHED: 'EVENT_UNPUBLISHED',
   EVENT_DELETED: 'EVENT_DELETED',
@@ -2675,6 +2676,7 @@ export type NotificationTypeCountResponseType = typeof NotificationTypeCountResp
 
 export const NotificationTypeCountResponseType = {
   REMINDER: 'REMINDER',
+  ORG_NEW_EVENT: 'ORG_NEW_EVENT',
   EVENT_CHANGED: 'EVENT_CHANGED',
   EVENT_UNPUBLISHED: 'EVENT_UNPUBLISHED',
   EVENT_DELETED: 'EVENT_DELETED',
@@ -2754,11 +2756,11 @@ export interface EventRegistrationResponse {
 }
 
 export interface PageResponseEventSummaryResponse {
-  items?: EventSummaryResponse[];
-  page?: number;
-  size?: number;
-  totalElements?: number;
-  totalPages?: number;
+  items: EventSummaryResponse[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
 }
 
 export type EventMapFeatureType = typeof EventMapFeatureType[keyof typeof EventMapFeatureType];
@@ -2951,11 +2953,11 @@ export interface AdminUserResponse {
 }
 
 export interface PageResponseAdminUserResponse {
-  items?: AdminUserResponse[];
-  page?: number;
-  size?: number;
-  totalElements?: number;
-  totalPages?: number;
+  items: AdminUserResponse[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
 }
 
 /**
@@ -2995,19 +2997,19 @@ export interface AdminStatsResponse {
 }
 
 export interface PageResponseAdminOrganizationResponse {
-  items?: AdminOrganizationResponse[];
-  page?: number;
-  size?: number;
-  totalElements?: number;
-  totalPages?: number;
+  items: AdminOrganizationResponse[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
 }
 
 export interface PageResponseAdminEventResponse {
-  items?: AdminEventResponse[];
-  page?: number;
-  size?: number;
-  totalElements?: number;
-  totalPages?: number;
+  items: AdminEventResponse[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
 }
 
 /**
@@ -3126,11 +3128,11 @@ export interface HideSportRequest {
 }
 
 export interface PageResponseAdminSportResponse {
-  items?: AdminSportResponse[];
-  page?: number;
-  size?: number;
-  totalElements?: number;
-  totalPages?: number;
+  items: AdminSportResponse[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
 }
 
 /**
@@ -3147,6 +3149,141 @@ export interface AdminSportCountsResponse {
   hidden: number;
   /** Без своей картинки */
   withoutImage: number;
+}
+
+export interface OrganizationSubscriptionResponse {
+  subscribed: boolean;
+  subscribersCount: number;
+  subscriberAvatars: UserShortResponse[];
+}
+
+export interface OrganizationCardResponse {
+  id: string;
+  name: string;
+  description?: string;
+  city?: string;
+  logoUrl?: string;
+  sports: SportResponse[];
+  hostedMeetings: number;
+  subscribersCount: number;
+  subscribed: boolean;
+  attended: boolean;
+  awardMonth?: string;
+}
+
+export interface PageResponseOrganizationCardResponse {
+  items: OrganizationCardResponse[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+export interface PageResponseFileResponse {
+  items: FileResponse[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+export interface Leader {
+  user: UserShortResponse;
+  meetingsCount: number;
+}
+
+export interface MonthCount {
+  month: string;
+  count: number;
+  awardMonth: boolean;
+  current: boolean;
+}
+
+export type OrganizationMeetingResponseMyRegistrationStatus = typeof OrganizationMeetingResponseMyRegistrationStatus[keyof typeof OrganizationMeetingResponseMyRegistrationStatus];
+
+
+export const OrganizationMeetingResponseMyRegistrationStatus = {
+  CONFIRMED: 'CONFIRMED',
+  PENDING: 'PENDING',
+  REJECTED: 'REJECTED',
+  CANCELLED: 'CANCELLED',
+  WAITLISTED: 'WAITLISTED',
+} as const;
+
+export interface OrganizationMeetingResponse {
+  id: string;
+  eventId: string;
+  title: string;
+  sport: SportResponse;
+  startAt: string;
+  timeZone: string;
+  place: string;
+  capacity?: number;
+  attendeesCount: number;
+  attendees: UserShortResponse[];
+  myRegistrationStatus?: OrganizationMeetingResponseMyRegistrationStatus;
+  coverUrl?: string;
+  coverFocus?: FocusPoint;
+  photosCount: number;
+}
+
+export type ScheduleDayDay = typeof ScheduleDayDay[keyof typeof ScheduleDayDay];
+
+
+export const ScheduleDayDay = {
+  MONDAY: 'MONDAY',
+  TUESDAY: 'TUESDAY',
+  WEDNESDAY: 'WEDNESDAY',
+  THURSDAY: 'THURSDAY',
+  FRIDAY: 'FRIDAY',
+  SATURDAY: 'SATURDAY',
+  SUNDAY: 'SUNDAY',
+} as const;
+
+export interface ScheduleDay {
+  day: ScheduleDayDay;
+  eventId: string;
+  startAt: string;
+  timeZone: string;
+  title: string;
+  place: string;
+}
+
+export interface Place {
+  name: string;
+  meetingsCount: number;
+}
+
+export interface SportCount {
+  sport: SportResponse;
+  count: number;
+}
+
+export interface PageResponseOrganizationMeetingResponse {
+  items: OrganizationMeetingResponse[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+export interface OrganizationOverviewResponse {
+  firstEventYear?: number;
+  hostedMeetings: number;
+  yearParticipants: number;
+  photosCount: number;
+  photoMeetingsCount: number;
+  returningShare?: number;
+  petName: string;
+  subscription: OrganizationSubscriptionResponse;
+  months: MonthCount[];
+  schedule: ScheduleDay[];
+  leaders: Leader[];
+  places: Place[];
+  pastSports: SportCount[];
+  upcoming: PageResponseOrganizationMeetingResponse;
+  past: PageResponseOrganizationMeetingResponse;
+  photos: PageResponseFileResponse;
 }
 
 export type UsersUploadAvatarBody = {
@@ -3586,6 +3723,7 @@ export type NotificationsListTypesItem = typeof NotificationsListTypesItem[keyof
 
 export const NotificationsListTypesItem = {
   REMINDER: 'REMINDER',
+  ORG_NEW_EVENT: 'ORG_NEW_EVENT',
   EVENT_CHANGED: 'EVENT_CHANGED',
   EVENT_UNPUBLISHED: 'EVENT_UNPUBLISHED',
   EVENT_DELETED: 'EVENT_DELETED',
@@ -3873,5 +4011,25 @@ published?: boolean;
 export type AdminCreateSportBody = {
   /** PNG-картинка */
   file?: Blob | File;
+};
+
+export type OrganizationsListParams = {
+searchText?: string;
+city?: string;
+sportId?: string;
+mine?: boolean;
+page?: number;
+size?: number;
+};
+
+export type OrganizationsPhotosParams = {
+page?: number;
+size?: number;
+};
+
+export type OrganizationsPastMeetingsParams = {
+sportId?: string;
+page?: number;
+size?: number;
 };
 

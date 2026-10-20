@@ -1,6 +1,11 @@
 package com.hackathon.app.e2e.support;
 
 import com.hackathon.app.domain.dto.AttendanceSummaryResponse;
+import com.hackathon.app.domain.dto.OrganizationOverviewResponse;
+import com.hackathon.app.domain.dto.OrganizationMeetingResponse;
+import com.hackathon.app.domain.dto.AlbumPhotoResponse;
+import com.hackathon.app.domain.dto.OrganizationCardResponse;
+import com.hackathon.app.domain.dto.OrganizationSubscriptionResponse;
 
 import com.hackathon.app.domain.dto.AttendedOccurrenceResponse;
 
@@ -940,4 +945,41 @@ public class Actor {
 	public void deleteSport(UUID id) {
 		api.send("DELETE /api/admin/sports", delete("/api/admin/sports/{id}", id), cookie, null, null, HttpStatus.NO_CONTENT);
 	}
+
+    /** Подписаться на анонсы клуба; повторный запрос не создаёт дубль. */
+    public OrganizationSubscriptionResponse subscribeOrganization(UUID id) {
+        return send("POST organization subscription", post("/api/organizations/{id}/subscription", id), null, type(OrganizationSubscriptionResponse.class));
+    }
+    /** Отписаться, в том числе повторно. */
+    public OrganizationSubscriptionResponse unsubscribeOrganization(UUID id) {
+        return send("DELETE organization subscription", delete("/api/organizations/{id}/subscription", id), null, type(OrganizationSubscriptionResponse.class));
+    }
+    /** Статистика публичного клуба для текущего посетителя. */
+    public OrganizationOverviewResponse organizationOverview(UUID id) {
+        return send("GET organization overview", get("/api/organizations/{id}/overview", id), null, type(OrganizationOverviewResponse.class));
+    }
+    /** Каталог с фильтрами и признаком «мои». */
+    public PageResponse<OrganizationCardResponse> organizations(String search, String city, UUID sportId, boolean mine, int page, int size) {
+        var request = get("/api/organizations").param("mine", String.valueOf(mine)).param("page", String.valueOf(page)).param("size", String.valueOf(size));
+        if (search != null) request.param("searchText", search);
+        if (city != null) request.param("city", city);
+        if (sportId != null) request.param("sportId", sportId.toString());
+        return send("GET organizations", request, null, api.generic(PageResponse.class, OrganizationCardResponse.class));
+    }
+
+    /** Страница прошедших занятий клуба. */
+    public PageResponse<OrganizationMeetingResponse> organizationMeetings(UUID id, UUID sportId, int page, int size) {
+        var request = get("/api/organizations/{id}/meetings", id).param("page", String.valueOf(page)).param("size", String.valueOf(size));
+        if (sportId != null) request.param("sportId", sportId.toString());
+        return send("GET organization meetings", request, null, api.generic(PageResponse.class, OrganizationMeetingResponse.class));
+    }
+    /** Страница общей фотогалереи клуба. */
+    public PageResponse<FileResponse> organizationPhotos(UUID id, int page, int size) {
+        return send("GET organization photos", get("/api/organizations/{id}/photos", id).param("page", String.valueOf(page)).param("size", String.valueOf(size)), null, api.generic(PageResponse.class, FileResponse.class));
+    }
+    /** Фото участника с прошедшей встречи в его альбом. */
+    public AlbumPhotoResponse addAlbumPhoto(UUID eventId, byte[] png) {
+        return send("POST album photo", multipart("/api/users/me/album").param("eventId", eventId.toString())
+                .file(new MockMultipartFile("file", "album.png", "image/png", png)), null, type(AlbumPhotoResponse.class));
+    }
 }

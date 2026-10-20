@@ -3,6 +3,7 @@ package com.hackathon.app.repository;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.Collection;
 
 import com.hackathon.app.domain.entity.EventOrganizer;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,4 +15,7 @@ public interface EventOrganizerRepository extends JpaRepository<EventOrganizer, 
 	Optional<EventOrganizer> findByEventIdAndUserId(UUID eventId, UUID userId);
 
 	List<EventOrganizer> findByEventIdOrderByCreatedAt(UUID eventId);
+
+    List<EventOrganizer> findByEventIdIn(Collection<UUID> eventIds);
+
 }

@@ -4,6 +4,8 @@ package com.hackathon.app.domain.enums;
 public enum NotificationType {
     /** Скоро начало. */
     REMINDER,
+    /** Новая встреча организации, на которую подписан человек. */
+    ORG_NEW_EVENT,
     /** Карточка или расписание изменены. */
     EVENT_CHANGED,
     /** Снято с публикации. */

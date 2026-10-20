@@ -45,7 +45,8 @@ export function useFeedFilters() {
   const params: EventsListParams = useMemo(() => ({
     ...(isSport ? (found ? { sportId: found.id } : { searchText: chip }) : range),
     ...extra,
-  }), [isSport, found, chip, range, extra]);
+    organizationId: searchParams.get("organizationId") || undefined,
+  }), [isSport, found, chip, range, extra, searchParams]);
   const extraCount = Object.values(extra).filter((v) => v !== undefined && v !== false).length;
   return { chip, setChip, extra, setExtra, extraCount, params, forYou, ready: !isSport || !sport.isPending };
 }

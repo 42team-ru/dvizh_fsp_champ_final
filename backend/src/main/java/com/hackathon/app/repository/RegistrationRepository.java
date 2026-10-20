@@ -82,4 +82,7 @@ public interface RegistrationRepository extends JpaRepository<Registration, UUID
 			  and exists (select o.id from EventOccurrence o where o.eventId = e.id and o.startAt < :now
 			      and o.status = com.hackathon.app.domain.enums.OccurrenceStatus.SCHEDULED)""")
 	long countHostedParticipants(UUID authorId, UUID organizationId, java.time.Instant now);
+
+    List<Registration> findByEventIdInAndStatus(Collection<UUID> eventIds, RegistrationStatus status);
+
 }

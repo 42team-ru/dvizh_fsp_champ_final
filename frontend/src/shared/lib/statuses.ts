@@ -111,7 +111,16 @@ export const NOTIFICATION_CATEGORY_LABEL = {
   EVENTS: { label: "Изменения встреч", description: "Перенос, отмена и кворум" },
   REGISTRATIONS: { label: "Записи и заявки", description: "Новые участники и решения по заявкам" },
   DISCUSSIONS: { label: "Ответы в обсуждении", description: "Когда отвечают на ваше сообщение" },
-  ORGANIZATIONS: { label: "Проверка организации", description: "Заявки организаций и решения по ним" },
+  ORGANIZATIONS: { label: "Организации", description: "Анонсы клубов, заявки организаций и решения по ним" },
   ORGANIZERS: { label: "Соорганизаторы", description: "Изменения команды организаторов" },
   ACHIEVEMENTS: { label: "Достижения", description: "Новые награды за вашу активность" },
 } as const;
+
+/** Новая встреча клуба, на анонсы которого подписан участник. */
+export const ORGANIZATION_NOTIFICATION = {
+  ORG_NEW_EVENT: { label: "Новая встреча клуба", icon: "icon-bell" as const, tone: "bg-lime-soft", action: "К встрече" },
+};
+
+/** Завершённое неотменённое занятие в архиве клуба. */
+export const PAST_MEETING_STATUS = { label: "Проведено", tone: "bg-card" };
+export const ORGANIZATION_VERIFIED_LABEL = "Проверена администратором";

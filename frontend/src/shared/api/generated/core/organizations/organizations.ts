@@ -26,9 +26,17 @@ import type {
 
 import type {
   FeaturedOrganizationResponse,
+  OrganizationOverviewResponse,
   OrganizationResponse,
+  OrganizationSubscriptionResponse,
   OrganizationsAddDocumentBody,
+  OrganizationsListParams,
+  OrganizationsPastMeetingsParams,
+  OrganizationsPhotosParams,
   OrganizationsUploadLogoBody,
+  PageResponseFileResponse,
+  PageResponseOrganizationCardResponse,
+  PageResponseOrganizationMeetingResponse,
   ProblemDetail,
   PublicOrganizationResponse,
   SaveOrganizationRequest
@@ -867,3 +875,764 @@ export const useOrganizationsRemoveDocument = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getOrganizationsRemoveDocumentMutationOptions(options), queryClient);
     }
+    export type organizationsSubscribeResponse200 = {
+  data: OrganizationSubscriptionResponse
+  status: 200
+}
+
+export type organizationsSubscribeResponseSuccess = (organizationsSubscribeResponse200) & {
+  headers: Headers;
+};
+;
+
+export type organizationsSubscribeResponse = (organizationsSubscribeResponseSuccess)
+
+export const getOrganizationsSubscribeUrl = (id: string,) => {
+
+
+
+
+  return `/api/organizations/${id}/subscription`
+}
+
+/**
+ * @summary Подписаться на новые встречи организации
+ */
+export const organizationsSubscribe = async (id: string, options?: Parameters<typeof authMutator>[1]): Promise<organizationsSubscribeResponse> => {
+
+  return authMutator<organizationsSubscribeResponse>(getOrganizationsSubscribeUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getOrganizationsSubscribeMutationKey = () => ['organizationsSubscribe'] as const;
+
+export const getOrganizationsSubscribeMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsSubscribe>>, TError,OrganizationsSubscribeMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof organizationsSubscribe>>, TError,OrganizationsSubscribeMutationVariables, TContext> => {
+
+const mutationKey = getOrganizationsSubscribeMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof organizationsSubscribe>>, OrganizationsSubscribeMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  organizationsSubscribe(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OrganizationsSubscribeMutationResult = NonNullable<Awaited<ReturnType<typeof organizationsSubscribe>>>
+
+    export type OrganizationsSubscribeMutationError = ErrorType<unknown>
+    export type OrganizationsSubscribeMutationVariables = {id: string}
+
+    /**
+ * @summary Подписаться на новые встречи организации
+ */
+export const useOrganizationsSubscribe = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsSubscribe>>, TError,OrganizationsSubscribeMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof organizationsSubscribe>>,
+        TError,
+        OrganizationsSubscribeMutationVariables,
+        TContext
+      > => {
+      return useMutation(getOrganizationsSubscribeMutationOptions(options), queryClient);
+    }
+    export type organizationsUnsubscribeResponse200 = {
+  data: OrganizationSubscriptionResponse
+  status: 200
+}
+
+export type organizationsUnsubscribeResponseSuccess = (organizationsUnsubscribeResponse200) & {
+  headers: Headers;
+};
+;
+
+export type organizationsUnsubscribeResponse = (organizationsUnsubscribeResponseSuccess)
+
+export const getOrganizationsUnsubscribeUrl = (id: string,) => {
+
+
+
+
+  return `/api/organizations/${id}/subscription`
+}
+
+/**
+ * @summary Отписаться от новых встреч организации
+ */
+export const organizationsUnsubscribe = async (id: string, options?: Parameters<typeof authMutator>[1]): Promise<organizationsUnsubscribeResponse> => {
+
+  return authMutator<organizationsUnsubscribeResponse>(getOrganizationsUnsubscribeUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getOrganizationsUnsubscribeMutationKey = () => ['organizationsUnsubscribe'] as const;
+
+export const getOrganizationsUnsubscribeMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsUnsubscribe>>, TError,OrganizationsUnsubscribeMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof organizationsUnsubscribe>>, TError,OrganizationsUnsubscribeMutationVariables, TContext> => {
+
+const mutationKey = getOrganizationsUnsubscribeMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof organizationsUnsubscribe>>, OrganizationsUnsubscribeMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  organizationsUnsubscribe(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OrganizationsUnsubscribeMutationResult = NonNullable<Awaited<ReturnType<typeof organizationsUnsubscribe>>>
+
+    export type OrganizationsUnsubscribeMutationError = ErrorType<unknown>
+    export type OrganizationsUnsubscribeMutationVariables = {id: string}
+
+    /**
+ * @summary Отписаться от новых встреч организации
+ */
+export const useOrganizationsUnsubscribe = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof organizationsUnsubscribe>>, TError,OrganizationsUnsubscribeMutationVariables, TContext>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof organizationsUnsubscribe>>,
+        TError,
+        OrganizationsUnsubscribeMutationVariables,
+        TContext
+      > => {
+      return useMutation(getOrganizationsUnsubscribeMutationOptions(options), queryClient);
+    }
+    export type organizationsListResponse200 = {
+  data: PageResponseOrganizationCardResponse
+  status: 200
+}
+
+export type organizationsListResponseSuccess = (organizationsListResponse200) & {
+  headers: Headers;
+};
+;
+
+export type organizationsListResponse = (organizationsListResponseSuccess)
+
+export const getOrganizationsListUrl = (params?: OrganizationsListParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/organizations?${stringifiedParams}` : `/api/organizations`
+}
+
+/**
+ * @summary Каталог одобренных организаций
+ */
+export const organizationsList = async (params?: OrganizationsListParams, options?: Parameters<typeof authMutator>[1]): Promise<organizationsListResponse> => {
+
+  return authMutator<organizationsListResponse>(getOrganizationsListUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getOrganizationsListQueryKey = (params?: OrganizationsListParams,) => {
+    return [
+    `/api/organizations`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getOrganizationsListQueryOptions = <TData = Awaited<ReturnType<typeof organizationsList>>, TError = ErrorType<unknown>>(params?: OrganizationsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsList>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getOrganizationsListQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof organizationsList>>> = ({ signal }) => organizationsList(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof organizationsList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type OrganizationsListQueryResult = NonNullable<Awaited<ReturnType<typeof organizationsList>>>
+export type OrganizationsListQueryError = ErrorType<unknown>
+
+
+export function useOrganizationsList<TData = Awaited<ReturnType<typeof organizationsList>>, TError = ErrorType<unknown>>(
+ params: undefined |  OrganizationsListParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsList>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof organizationsList>>,
+          TError,
+          Awaited<ReturnType<typeof organizationsList>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useOrganizationsList<TData = Awaited<ReturnType<typeof organizationsList>>, TError = ErrorType<unknown>>(
+ params?: OrganizationsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsList>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof organizationsList>>,
+          TError,
+          Awaited<ReturnType<typeof organizationsList>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useOrganizationsList<TData = Awaited<ReturnType<typeof organizationsList>>, TError = ErrorType<unknown>>(
+ params?: OrganizationsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsList>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Каталог одобренных организаций
+ */
+
+export function useOrganizationsList<TData = Awaited<ReturnType<typeof organizationsList>>, TError = ErrorType<unknown>>(
+ params?: OrganizationsListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsList>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getOrganizationsListQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type organizationsPhotosResponse200 = {
+  data: PageResponseFileResponse
+  status: 200
+}
+
+export type organizationsPhotosResponseSuccess = (organizationsPhotosResponse200) & {
+  headers: Headers;
+};
+;
+
+export type organizationsPhotosResponse = (organizationsPhotosResponseSuccess)
+
+export const getOrganizationsPhotosUrl = (id: string,
+    params?: OrganizationsPhotosParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/organizations/${id}/photos?${stringifiedParams}` : `/api/organizations/${id}/photos`
+}
+
+/**
+ * @summary Фото мероприятий и альбомов организации
+ */
+export const organizationsPhotos = async (id: string,
+    params?: OrganizationsPhotosParams, options?: Parameters<typeof authMutator>[1]): Promise<organizationsPhotosResponse> => {
+
+  return authMutator<organizationsPhotosResponse>(getOrganizationsPhotosUrl(id,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getOrganizationsPhotosQueryKey = (id: string,
+    params?: OrganizationsPhotosParams,) => {
+    return [
+    `/api/organizations/${id}/photos`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getOrganizationsPhotosQueryOptions = <TData = Awaited<ReturnType<typeof organizationsPhotos>>, TError = ErrorType<unknown>>(id: string,
+    params?: OrganizationsPhotosParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsPhotos>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getOrganizationsPhotosQueryKey(id,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof organizationsPhotos>>> = ({ signal }) => organizationsPhotos(id,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof organizationsPhotos>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type OrganizationsPhotosQueryResult = NonNullable<Awaited<ReturnType<typeof organizationsPhotos>>>
+export type OrganizationsPhotosQueryError = ErrorType<unknown>
+
+
+export function useOrganizationsPhotos<TData = Awaited<ReturnType<typeof organizationsPhotos>>, TError = ErrorType<unknown>>(
+ id: string,
+    params: undefined |  OrganizationsPhotosParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsPhotos>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof organizationsPhotos>>,
+          TError,
+          Awaited<ReturnType<typeof organizationsPhotos>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useOrganizationsPhotos<TData = Awaited<ReturnType<typeof organizationsPhotos>>, TError = ErrorType<unknown>>(
+ id: string,
+    params?: OrganizationsPhotosParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsPhotos>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof organizationsPhotos>>,
+          TError,
+          Awaited<ReturnType<typeof organizationsPhotos>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useOrganizationsPhotos<TData = Awaited<ReturnType<typeof organizationsPhotos>>, TError = ErrorType<unknown>>(
+ id: string,
+    params?: OrganizationsPhotosParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsPhotos>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Фото мероприятий и альбомов организации
+ */
+
+export function useOrganizationsPhotos<TData = Awaited<ReturnType<typeof organizationsPhotos>>, TError = ErrorType<unknown>>(
+ id: string,
+    params?: OrganizationsPhotosParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsPhotos>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getOrganizationsPhotosQueryOptions(id,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type organizationsOverviewResponse200 = {
+  data: OrganizationOverviewResponse
+  status: 200
+}
+
+export type organizationsOverviewResponseSuccess = (organizationsOverviewResponse200) & {
+  headers: Headers;
+};
+;
+
+export type organizationsOverviewResponse = (organizationsOverviewResponseSuccess)
+
+export const getOrganizationsOverviewUrl = (id: string,) => {
+
+
+
+
+  return `/api/organizations/${id}/overview`
+}
+
+/**
+ * @summary Сводка, расписание и первые страницы встреч и фото клуба
+ */
+export const organizationsOverview = async (id: string, options?: Parameters<typeof authMutator>[1]): Promise<organizationsOverviewResponse> => {
+
+  return authMutator<organizationsOverviewResponse>(getOrganizationsOverviewUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getOrganizationsOverviewQueryKey = (id: string,) => {
+    return [
+    `/api/organizations/${id}/overview`
+    ] as const;
+    }
+
+
+export const getOrganizationsOverviewQueryOptions = <TData = Awaited<ReturnType<typeof organizationsOverview>>, TError = ErrorType<unknown>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsOverview>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getOrganizationsOverviewQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof organizationsOverview>>> = ({ signal }) => organizationsOverview(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof organizationsOverview>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type OrganizationsOverviewQueryResult = NonNullable<Awaited<ReturnType<typeof organizationsOverview>>>
+export type OrganizationsOverviewQueryError = ErrorType<unknown>
+
+
+export function useOrganizationsOverview<TData = Awaited<ReturnType<typeof organizationsOverview>>, TError = ErrorType<unknown>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsOverview>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof organizationsOverview>>,
+          TError,
+          Awaited<ReturnType<typeof organizationsOverview>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useOrganizationsOverview<TData = Awaited<ReturnType<typeof organizationsOverview>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsOverview>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof organizationsOverview>>,
+          TError,
+          Awaited<ReturnType<typeof organizationsOverview>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useOrganizationsOverview<TData = Awaited<ReturnType<typeof organizationsOverview>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsOverview>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Сводка, расписание и первые страницы встреч и фото клуба
+ */
+
+export function useOrganizationsOverview<TData = Awaited<ReturnType<typeof organizationsOverview>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsOverview>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getOrganizationsOverviewQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type organizationsPastMeetingsResponse200 = {
+  data: PageResponseOrganizationMeetingResponse
+  status: 200
+}
+
+export type organizationsPastMeetingsResponseSuccess = (organizationsPastMeetingsResponse200) & {
+  headers: Headers;
+};
+;
+
+export type organizationsPastMeetingsResponse = (organizationsPastMeetingsResponseSuccess)
+
+export const getOrganizationsPastMeetingsUrl = (id: string,
+    params?: OrganizationsPastMeetingsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/organizations/${id}/meetings?${stringifiedParams}` : `/api/organizations/${id}/meetings`
+}
+
+/**
+ * @summary Архив занятий организации с фильтром по спорту
+ */
+export const organizationsPastMeetings = async (id: string,
+    params?: OrganizationsPastMeetingsParams, options?: Parameters<typeof authMutator>[1]): Promise<organizationsPastMeetingsResponse> => {
+
+  return authMutator<organizationsPastMeetingsResponse>(getOrganizationsPastMeetingsUrl(id,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getOrganizationsPastMeetingsQueryKey = (id: string,
+    params?: OrganizationsPastMeetingsParams,) => {
+    return [
+    `/api/organizations/${id}/meetings`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getOrganizationsPastMeetingsQueryOptions = <TData = Awaited<ReturnType<typeof organizationsPastMeetings>>, TError = ErrorType<unknown>>(id: string,
+    params?: OrganizationsPastMeetingsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsPastMeetings>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getOrganizationsPastMeetingsQueryKey(id,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof organizationsPastMeetings>>> = ({ signal }) => organizationsPastMeetings(id,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof organizationsPastMeetings>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type OrganizationsPastMeetingsQueryResult = NonNullable<Awaited<ReturnType<typeof organizationsPastMeetings>>>
+export type OrganizationsPastMeetingsQueryError = ErrorType<unknown>
+
+
+export function useOrganizationsPastMeetings<TData = Awaited<ReturnType<typeof organizationsPastMeetings>>, TError = ErrorType<unknown>>(
+ id: string,
+    params: undefined |  OrganizationsPastMeetingsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsPastMeetings>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof organizationsPastMeetings>>,
+          TError,
+          Awaited<ReturnType<typeof organizationsPastMeetings>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useOrganizationsPastMeetings<TData = Awaited<ReturnType<typeof organizationsPastMeetings>>, TError = ErrorType<unknown>>(
+ id: string,
+    params?: OrganizationsPastMeetingsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsPastMeetings>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof organizationsPastMeetings>>,
+          TError,
+          Awaited<ReturnType<typeof organizationsPastMeetings>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useOrganizationsPastMeetings<TData = Awaited<ReturnType<typeof organizationsPastMeetings>>, TError = ErrorType<unknown>>(
+ id: string,
+    params?: OrganizationsPastMeetingsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsPastMeetings>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Архив занятий организации с фильтром по спорту
+ */
+
+export function useOrganizationsPastMeetings<TData = Awaited<ReturnType<typeof organizationsPastMeetings>>, TError = ErrorType<unknown>>(
+ id: string,
+    params?: OrganizationsPastMeetingsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsPastMeetings>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getOrganizationsPastMeetingsQueryOptions(id,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type organizationsCitiesResponse200 = {
+  data: string[]
+  status: 200
+}
+
+export type organizationsCitiesResponseSuccess = (organizationsCitiesResponse200) & {
+  headers: Headers;
+};
+;
+
+export type organizationsCitiesResponse = (organizationsCitiesResponseSuccess)
+
+export const getOrganizationsCitiesUrl = () => {
+
+
+
+
+  return `/api/organizations/cities`
+}
+
+/**
+ * @summary Города публичного каталога
+ */
+export const organizationsCities = async ( options?: Parameters<typeof authMutator>[1]): Promise<organizationsCitiesResponse> => {
+
+  return authMutator<organizationsCitiesResponse>(getOrganizationsCitiesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getOrganizationsCitiesQueryKey = () => {
+    return [
+    `/api/organizations/cities`
+    ] as const;
+    }
+
+
+export const getOrganizationsCitiesQueryOptions = <TData = Awaited<ReturnType<typeof organizationsCities>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsCities>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getOrganizationsCitiesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof organizationsCities>>> = ({ signal }) => organizationsCities({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof organizationsCities>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type OrganizationsCitiesQueryResult = NonNullable<Awaited<ReturnType<typeof organizationsCities>>>
+export type OrganizationsCitiesQueryError = ErrorType<unknown>
+
+
+export function useOrganizationsCities<TData = Awaited<ReturnType<typeof organizationsCities>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsCities>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof organizationsCities>>,
+          TError,
+          Awaited<ReturnType<typeof organizationsCities>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useOrganizationsCities<TData = Awaited<ReturnType<typeof organizationsCities>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsCities>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof organizationsCities>>,
+          TError,
+          Awaited<ReturnType<typeof organizationsCities>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useOrganizationsCities<TData = Awaited<ReturnType<typeof organizationsCities>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsCities>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Города публичного каталога
+ */
+
+export function useOrganizationsCities<TData = Awaited<ReturnType<typeof organizationsCities>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof organizationsCities>>, TError, TData>>, request?: SecondParameter<typeof authMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getOrganizationsCitiesQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}

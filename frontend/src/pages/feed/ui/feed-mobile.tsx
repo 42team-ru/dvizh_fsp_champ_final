@@ -1,3 +1,4 @@
+import { useSearchParams } from "react-router";
 import { coverOf } from "@/entity/event/lib/cover";
 import { usePetName } from "@/entity/user/model/use-pet-name";
 import { SearchX } from "lucide-react";
@@ -213,7 +214,8 @@ export function FeedMobile() {
     const timer = window.setTimeout(() => setSearchText(search.trim()), 300);
     return () => window.clearTimeout(timer);
   }, [search]);
-  const [view, setView] = useState<"list" | "map">("list");
+  const [searchParams] = useSearchParams();
+  const [view, setView] = useState<"list" | "map">(() => searchParams.get("view") === "map" ? "map" : "list");
   const [more, setMore] = useState(false);
   const params = searchText ? { ...filters.params, searchText } : filters.params;
   const list = useFeedEvents(params, filters);
@@ -301,7 +303,7 @@ export function FeedMobile() {
 
       {view === "map" ? (
         <div className="px-4">
-          <EventsMap withHome filters={{ searchText: params.searchText, sportId: params.sportId, level: params.level, joinMode: params.joinMode }} className="w-full" mapClassName="h-[45dvh]" />
+          <EventsMap withHome filters={{ searchText: params.searchText, sportId: params.sportId, level: params.level, joinMode: params.joinMode, organizationId: params.organizationId }} className="w-full" mapClassName="h-[45dvh]" />
         </div>
       ) : (
         <>

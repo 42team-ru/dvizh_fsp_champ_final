@@ -8,6 +8,7 @@
 | [architecture.md](architecture.md) | Структура бэкенда по слоям, Orval и контракт API |
 | [postman.md](postman.md) | Postman-коллекция: проверка сценариев приёмки через API одной командой |
 | [final.md](final.md) | **Финал хакатона**: чеклист проверок и команда финальной очистки репозитория |
+| [organizations.md](organizations.md) | Каталог организаций, публичная страница, статистика и подписки на анонсы |
 | [orval.md](orval.md) | Генерация API-клиента для фронта |
 | [map-frontend.md](map-frontend.md) | **Карта событий**: контракт `events_map`, как делать экран на 2ГИС MapGL, грабли |
 | [recommendations.md](recommendations.md) | **Рекомендации**: подборка мероприятий и клубов — признаки, формулы, веса, разнообразие (MMR), API, как подкрутить |

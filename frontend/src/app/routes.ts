@@ -19,6 +19,7 @@ export default [
     route("onboarding/org", "routes/org-onboarding.tsx"),
     route("events/new", "routes/event-create.tsx"),
     route("events/:id", "routes/event.tsx"),
+    route("orgs", "routes/orgs-catalog.tsx"),
     route("orgs/:id", "routes/org-public.tsx"),
     route("pet", "routes/pet.tsx"),
     layout("providers/guards/admin-guard.tsx", [

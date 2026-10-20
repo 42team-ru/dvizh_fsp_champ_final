@@ -76,4 +76,7 @@ public interface OccurrenceAttendanceRepository extends JpaRepository<Occurrence
 			where a.eventId = :eventId and a.userId = :userId
 			  and a.occurrenceId in (select o.id from EventOccurrence o where o.eventId = :eventId and o.startAt > :now)""")
 	int deleteFuture(UUID eventId, UUID userId, Instant now);
+
+    List<OccurrenceAttendance> findByOccurrenceIdIn(Collection<UUID> occurrenceIds);
+
 }

@@ -1,6 +1,16 @@
 package com.hackathon.app.rest;
 
 import java.util.UUID;
+import java.util.List;
+import com.hackathon.app.domain.dto.OrganizationCardResponse;
+import com.hackathon.app.domain.dto.OrganizationMeetingResponse;
+import com.hackathon.app.domain.dto.OrganizationOverviewResponse;
+import com.hackathon.app.domain.dto.OrganizationSubscriptionResponse;
+import com.hackathon.app.domain.dto.FileResponse;
+import com.hackathon.app.domain.dto.PageResponse;
+import com.hackathon.app.service.OrganizationOverviewService;
+import com.hackathon.app.service.OrganizationSubscriptionService;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.hackathon.app.domain.dto.OrganizationResponse;
 import com.hackathon.app.domain.dto.PublicOrganizationResponse;
@@ -41,6 +51,78 @@ class OrganizationController {
 
 	private final OrganizationService organizations;
 	private final OrganizationAwardService awards;
+    private final OrganizationOverviewService overview;
+    private final OrganizationSubscriptionService subscriptions;
+
+    @GetMapping
+    @Operation(operationId = "organizations_list", summary = "Каталог одобренных организаций")
+    PageResponse<OrganizationCardResponse> list(@AuthenticationPrincipal Jwt jwt,
+            @RequestParam(required = false) String searchText, @RequestParam(required = false) String city,
+            @RequestParam(required = false) UUID sportId, @RequestParam(defaultValue = "false") boolean mine,
+            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "12") int size) {
+        log.info("Endpoint called: GET /api/organizations, userId={}, request={}/{}/{}/{}/{}/{}", jwt.getSubject(), searchText, city, sportId, mine, page, size);
+        var response = overview.catalog(userId(jwt), searchText, city, sportId, mine, page, size);
+        log.info("Endpoint response: GET /api/organizations, response=items:{},totalElements:{}", response.items().size(), response.totalElements());
+        return response;
+    }
+
+    @GetMapping("/cities")
+    @Operation(operationId = "organizations_cities", summary = "Города публичного каталога")
+    List<String> cities() {
+        log.info("Endpoint called: GET /api/organizations/cities");
+        var response = overview.cities();
+        log.info("Endpoint response: GET /api/organizations/cities, response={}", response);
+        return response;
+    }
+
+    @GetMapping("/{id}/overview")
+    @Operation(operationId = "organizations_overview", summary = "Сводка, расписание и первые страницы встреч и фото клуба")
+    OrganizationOverviewResponse overview(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+        log.info("Endpoint called: GET /api/organizations/{}/overview, userId={}", id, jwt.getSubject());
+        var response = overview.overview(id, userId(jwt));
+        log.info("Endpoint response: GET /api/organizations/{}/overview, response=hostedMeetings:{},photosCount:{}", id, response.hostedMeetings(), response.photosCount());
+        return response;
+    }
+
+    @GetMapping("/{id}/meetings")
+    @Operation(operationId = "organizations_pastMeetings", summary = "Архив занятий организации с фильтром по спорту")
+    PageResponse<OrganizationMeetingResponse> meetings(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,
+            @RequestParam(required = false) UUID sportId, @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "4") int size) {
+        log.info("Endpoint called: GET /api/organizations/{}/meetings, userId={}, request={}/{}/{}", id, jwt.getSubject(), sportId, page, size);
+        var response = overview.past(id, userId(jwt), sportId, page, size);
+        log.info("Endpoint response: GET /api/organizations/{}/meetings, response=items:{},totalElements:{}", id, response.items().size(), response.totalElements());
+        return response;
+    }
+
+    @GetMapping("/{id}/photos")
+    @Operation(operationId = "organizations_photos", summary = "Фото мероприятий и альбомов организации")
+    PageResponse<FileResponse> photos(@PathVariable UUID id, @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "24") int size) {
+        log.info("Endpoint called: GET /api/organizations/{}/photos, request={}/{}", id, page, size);
+        var response = overview.photos(id, page, size);
+        log.info("Endpoint response: GET /api/organizations/{}/photos, response=items:{},totalElements:{}", id, response.items().size(), response.totalElements());
+        return response;
+    }
+
+    @PostMapping("/{id}/subscription")
+    @Operation(operationId = "organizations_subscribe", summary = "Подписаться на новые встречи организации")
+    OrganizationSubscriptionResponse subscribe(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+        log.info("Endpoint called: POST /api/organizations/{}/subscription, userId={}", id, jwt.getSubject());
+        var response = subscriptions.change(id, userId(jwt), true);
+        log.info("Endpoint response: POST /api/organizations/{}/subscription, response=subscribed:{},subscribersCount:{}", id, response.subscribed(), response.subscribersCount());
+        return response;
+    }
+
+    @DeleteMapping("/{id}/subscription")
+    @Operation(operationId = "organizations_unsubscribe", summary = "Отписаться от новых встреч организации")
+    OrganizationSubscriptionResponse unsubscribe(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+        log.info("Endpoint called: DELETE /api/organizations/{}/subscription, userId={}", id, jwt.getSubject());
+        var response = subscriptions.change(id, userId(jwt), false);
+        log.info("Endpoint response: DELETE /api/organizations/{}/subscription, response=subscribed:{},subscribersCount:{}", id, response.subscribed(), response.subscribersCount());
+        return response;
+    }
+
 
 	@GetMapping("/me")
 	@Operation(operationId = "organizations_me", summary = "Анкета своей организации со статусом допуска")
@@ -114,7 +196,10 @@ class OrganizationController {
 	@GetMapping("/{id}")
 	@Operation(operationId = "organizations_get", summary = "Публичная страница одобренной организации")
 	PublicOrganizationResponse get(@PathVariable UUID id) {
-		return organizations.getPublic(id);
+        log.info("Endpoint called: GET /api/organizations/{}", id);
+        var response = organizations.getPublic(id);
+        log.info("Endpoint response: GET /api/organizations/{}, response=organizationId:{}", id, response.id());
+        return response;
 	}
 
 	private static UUID userId(Jwt jwt) {
