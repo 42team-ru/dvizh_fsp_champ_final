@@ -111,7 +111,7 @@ export default function OrgPublicPage() {
               ))}
             </nav>
             {/* «О клубе» видно сразу: на телефоне — над встречами, на компьютере — первым в правой колонке. */}
-            <div className="grid min-w-0 items-start gap-7 lg:grid-cols-[minmax(0,1fr)_380px]">
+            <div className="grid grid-cols-1 min-w-0 items-start gap-7 lg:grid-cols-[minmax(0,1fr)_380px]">
               <Card id="about" className="scroll-mt-6 gap-3 p-5 lg:col-start-2 lg:row-start-1">
                 <h2 className="font-display text-[23px] font-extrabold">
                   О клубе

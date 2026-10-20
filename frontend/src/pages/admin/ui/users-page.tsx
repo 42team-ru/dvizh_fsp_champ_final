@@ -26,7 +26,8 @@ function useCount(role?: AdminListUsersRole) {
   return q.data?.status === 200 ? q.data.data.totalElements ?? 0 : 0;
 }
 
-const COLS = "grid grid-cols-[minmax(0,1.4fr)_minmax(0,1.2fr)_64px_minmax(0,0.8fr)_48px_48px_64px_40px] items-center gap-3.5";
+/** На телефоне строка — человек с ролью и стрелка; остальные колонки с md. */
+const COLS = "grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1.2fr)_64px_minmax(0,0.8fr)_48px_48px_64px_40px] md:gap-3.5";
 
 function Row({ user: u, odd }: { user: AdminUserResponse; odd: boolean }) {
   const name = [u.firstName, u.lastName].filter(Boolean).join(" ") || u.username;
@@ -42,12 +43,12 @@ function Row({ user: u, odd }: { user: AdminUserResponse; odd: boolean }) {
           </span>
         </div>
       </div>
-      <span className="truncate text-[13px] font-medium text-foreground">{u.email}</span>
+      <span className="hidden truncate text-[13px] font-medium text-foreground md:block">{u.email}</span>
       <span><Chip tone={ROLE_TONE[u.systemRole]} className="px-2 py-px text-[10px]">{u.systemRole}</Chip></span>
-      <span className="truncate text-[13px] font-bold text-foreground">{u.city ?? "—"}</span>
-      <span className="text-sm font-extrabold text-foreground">{u.eventsCount}</span>
-      <span className="text-sm font-extrabold text-foreground">{u.registrationsCount}</span>
-      <span className="text-xs font-medium text-muted-foreground">{dateShort(u.createdAt)}</span>
+      <span className="hidden truncate text-[13px] font-bold text-foreground md:block">{u.city ?? "—"}</span>
+      <span className="hidden text-sm font-extrabold text-foreground md:block">{u.eventsCount}</span>
+      <span className="hidden text-sm font-extrabold text-foreground md:block">{u.registrationsCount}</span>
+      <span className="hidden text-xs font-medium text-muted-foreground md:block">{dateShort(u.createdAt)}</span>
       <Link to={`/admin/events?authorId=${u.id}`} aria-label={`Мероприятия: ${name}`}
         className="flex size-8 items-center justify-center rounded-full border-2 border-ink bg-card transition-colors hover:bg-secondary">
         <ArrowUpRight className="size-3.5" strokeWidth={2.6} />
@@ -84,8 +85,8 @@ export default function AdminUsersPage() {
         <EmptyState icon={UsersRound} tone="bg-sky" title="Никого не нашлось" text="Попробуйте другую роль или запрос." />
       ) : (
         <div className="w-full overflow-x-auto rounded-[20px] border-2 border-ink bg-card">
-          <div className="min-w-[900px]">
-            <div className={cn(COLS, "px-4 py-3")}>
+          <div className="md:min-w-[900px]">
+            <div className={cn(COLS, "hidden px-4 py-3 md:grid")}>
               <span className={TH}>Пользователь</span>
               <span className={TH}>Email</span>
               <span className={TH}>Роль</span>

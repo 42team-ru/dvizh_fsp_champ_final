@@ -1,5 +1,7 @@
 /* Метки событий на карте 2ГИС: RasterJS (DG.divIcon) и MapGL (HtmlMarker). Цвета — токены дизайна, обводка и жёсткая тень как в Memphis. */
 .map-pin-host { background: none; border: none; }
+/* Внутри карты зум страницы снят (map-utils mount): метки и кнопки возвращают его, чтобы на 2K/4K быть того же размера, что интерфейс. */
+.map-pin, .map-cluster, .map-dot, .map-dot-muted, .map-home, .map-controls { zoom: var(--vp-zoom, 1); }
 .map-pin {
   display: flex;
   position: relative;

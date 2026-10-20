@@ -9,7 +9,7 @@ export function OrganizationBlog({ organizationId }: { organizationId: string })
   return (
     <section id="blog" className="flex scroll-mt-6 flex-col gap-4">
       <h2 className="font-display text-[23px] font-extrabold">Блог клуба</h2>
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         {posts.map((p) => <BlogPostCard key={p.id} post={p} />)}
       </div>
     </section>

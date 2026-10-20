@@ -82,11 +82,13 @@ export function MarkdownEditor({ value, onChange, placeholder = "", maxLength, i
         const start = e.view.coordsAtPos(from);
         const end = e.view.coordsAtPos(to);
         const rect = box.current.getBoundingClientRect();
-        const above = Math.min(start.top, end.top) - rect.top - 50;
+        // координаты экрана → px разметки: на 2K/4K страница увеличена zoom (ViewportScale)
+        const zoom = rect.width / (box.current.offsetWidth || 1) || 1;
+        const above = (Math.min(start.top, end.top) - rect.top) / zoom - 50;
         bubble = {
           // над выделением, а если там верхняя панель — под ним
-          top: above >= 56 ? above : Math.max(start.bottom, end.bottom) - rect.top + 8,
-          left: Math.max(0, Math.min((start.left + end.left) / 2 - rect.left - 130, rect.width - 280)),
+          top: above >= 56 ? above : (Math.max(start.bottom, end.bottom) - rect.top) / zoom + 8,
+          left: Math.max(0, Math.min(((start.left + end.left) / 2 - rect.left) / zoom - 130, rect.width / zoom - 280)),
         };
       }
       return {

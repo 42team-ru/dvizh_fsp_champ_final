@@ -379,7 +379,7 @@ export function PastMeetings({
             <h3 className="text-sm font-extrabold capitalize">{month}</h3>
             <span className="h-0.5 flex-1 bg-lavender" />
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {meetings.map((m) => (
               <PastCard key={m.id} meeting={m} />
             ))}

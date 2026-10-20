@@ -154,7 +154,7 @@ export default function AdminOrganizationPage() {
         <>
           <header className="flex w-full flex-wrap items-center gap-5 rounded-[24px] border-2 border-ink bg-card px-6 py-[22px]">
             <LetterTile name={org.name} logoUrl={org.logoUrl} className="size-[88px] rounded-[22px] border-[3px] text-[38px]" />
-            <div className="flex min-w-0 flex-1 flex-col gap-2">
+            <div className="flex min-w-[min(100%,220px)] flex-1 flex-col gap-2">
               <div className="flex flex-wrap gap-2">
                 {status && <Chip tone={status.tone} className="text-[10px]">{status.label}</Chip>}
                 {(org.sports ?? []).map((s) => (
@@ -227,7 +227,7 @@ export default function AdminOrganizationPage() {
                   <h2 className={H2}>Заявитель</h2>
                   <div className="flex flex-wrap items-center gap-3.5">
                     <UserAvatar user={account} className="size-[52px] shrink-0 rounded-full border-2 border-ink" />
-                    <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <div className="flex min-w-[min(100%,180px)] flex-1 flex-col gap-0.5">
                       <span className="text-base font-extrabold text-foreground">
                         {[account.firstName, account.lastName].filter(Boolean).join(" ") || account.username}
                       </span>

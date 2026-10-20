@@ -71,7 +71,8 @@ const quorumDot = (o: OccurrenceResponse) =>
 /** Мемфис-декор героя: волна, плюс, круг, треугольник. */
 function HeroDecor() {
   return (
-    <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+    // фигуры расставлены под две колонки героя; в одной колонке (телефон, планшет) они легли бы на заголовок
+    <div aria-hidden className="pointer-events-none absolute inset-0 hidden overflow-hidden lg:block">
       <svg className="absolute top-6 left-[46%] h-4 w-24 text-secondary" viewBox="0 0 96 16"><path d="M2 12 10 4l8 8 8-8 8 8 8-8 8 8 8-8 8 8 8-8 8 8 8-8" fill="none" stroke="currentColor" strokeWidth="3" /></svg>
       <Plus className="absolute top-7 left-[59%] size-6 text-white" strokeWidth={3} />
       <motion.span animate={{ y: [0, -6, 0] }} transition={{ duration: 3, repeat: Infinity }} className="absolute top-12 left-[71%] size-7 rounded-full border-[3px] border-white" />
@@ -205,7 +206,7 @@ function BublikHint({ busiest }: { busiest?: { event: EventSummaryResponse; pend
   return (
     <section className="relative flex flex-wrap items-center gap-4 rounded-[24px] border-2 border-ink bg-mint-soft py-5 pr-5 pl-5 sm:pl-[140px]">
       <MyBeaverBadge className="absolute top-[-18px] left-3 hidden h-[110px] w-[120px] sm:block" />
-      <div className="min-w-0 flex-1">
+      <div className="min-w-[min(100%,260px)] flex-1">
         <p className={LABEL}>Бублик подсказывает</p>
         <p className="mt-1 font-display text-[17px] leading-[22px] font-bold text-foreground">
           {pending} {plural(pending, ["заявка", "заявки", "заявок"])} на «{e.title}» {pending === 1 ? "ждёт" : "ждут"} ответа
@@ -570,7 +571,7 @@ export function OrganizerHome() {
       <Hero slot={m.next} orgName={orgName} />
       <BublikHint busiest={m.busiest} />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Pulse label="Занятий на неделе" value={m.weekCount} hint={m.weekSeries ? `из ${m.weekSeries} ${plural(m.weekSeries, ["серии", "серий", "серий"])}` : "впереди"} />
         <Pulse label="Придут за неделю" value={m.weekAttendees} hint="отметились">
           <div className="flex h-6 items-end gap-1">
@@ -587,7 +588,7 @@ export function OrganizerHome() {
         </Pulse>
       </div>
 
-      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_400px]">
+      <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_400px]">
         <Week week={m.week} series={m.series} />
         <Inbox />
       </div>
@@ -606,12 +607,12 @@ export function OrganizerHome() {
           text="Создайте встречу — укажите вид спорта, время и место."
           action={<Button asChild><Link to="/events/new">Создать событие</Link></Button>} />
       ) : (
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {list.slice(0, 3).map((e, i) => <MyEventCard key={e.id} e={e} pending={m.pendingByEvent[e.id] ?? 0} index={i} />)}
         </div>
       )}
 
-      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
         <Announce events={m.events} />
         <AwardCard />
       </div>

@@ -11,6 +11,7 @@ import { EmptyState } from "@/shared/components/ui/empty-state";
 import { Input } from "@/shared/components/ui/input";
 import { plural } from "@/shared/lib/plural";
 import { useNavAccess } from "@/entity/user/model/use-nav-access";
+import { useScrollActiveIntoView } from "@/shared/lib/use-scroll-active";
 import { authorHref, authorName } from "@/entity/blog/lib/post";
 import { BlogShell } from "@/widgets/blog-shell/ui/blog-shell";
 import { BlogPostCard } from "@/widgets/blog-post-card/ui/blog-post-card";
@@ -80,6 +81,7 @@ export default function BlogPage() {
   const [size, setSize] = useState(STEP);
   const { query, items, total } = useBlogFeed(tab, search, size);
   const tabs = nav.canCreate ? TABS : TABS.filter((t) => t.key !== "mine");
+  const tabList = useScrollActiveIntoView<HTMLDivElement>(tab);
 
   return (
     <BlogShell>
@@ -98,7 +100,7 @@ export default function BlogPage() {
       </div>
 
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-        <div role="tablist" aria-label="Какие посты" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0 lg:pb-0">
+        <div ref={tabList} role="tablist" aria-label="Какие посты" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0 lg:pb-0">
           {tabs.map((t) => (
             <Button key={t.key} role="tab" aria-selected={tab === t.key} size="chip" variant={tab === t.key ? "ink" : "soft"}
               className="shrink-0" onClick={() => { setTab(t.key); setSize(STEP); }}>
@@ -115,18 +117,18 @@ export default function BlogPage() {
         )}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_376px] lg:gap-8">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_376px] lg:gap-8">
         <div className="flex flex-col gap-6">
           <div className="lg:hidden"><BlogPrompt compact /></div>
           {query.isPending && <p className="text-[15px] font-semibold text-muted-foreground" role="status">Загружаем посты…</p>}
           {query.isError && <p role="alert" className="text-[15px] font-semibold text-destructive">Не удалось загрузить блог. Обновите страницу.</p>}
           {query.isSuccess && items.length === 0 && (
-            <EmptyState icon={BookOpen} tone="bg-sky"
+            <EmptyState icon={BookOpen} tone="bg-sky" className="min-h-[340px] justify-center lg:min-h-[520px]"
               title={tab === "mine" ? "Ты ещё ничего не написал" : search ? "Ничего не нашлось" : "Здесь пока пусто"}
               text={tab === "mine" ? "Сходи на встречу и расскажи, как всё прошло, — или напиши гайд для новичков." : "Попробуй другую вкладку или поиск."}
               action={nav.canCreate && <Button asChild><Link to="/blog/new">Написать пост</Link></Button>} />
           )}
-          <div className="grid gap-6 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             {items.map((post) => (
               <BlogPostCard key={post.id} post={post} href={post.status === "DRAFT" ? `/blog/${post.id}/edit` : undefined} />
             ))}

@@ -28,7 +28,7 @@ export function FeedPagination({
     <div className="flex flex-col gap-5">
       <div ref={sentinel} className="h-px" aria-hidden="true" />
       {(isPending || isFetchingNextPage) && (
-        <div role="status" aria-label="Загружаем события" className="grid gap-4 sm:grid-cols-3">
+        <div role="status" aria-label="Загружаем события" className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {[0, 1, 2].map((i) => (
             <Card key={i} aria-hidden="true" className="overflow-hidden p-0 motion-safe:animate-pulse">
               <div className="h-32 bg-muted" />

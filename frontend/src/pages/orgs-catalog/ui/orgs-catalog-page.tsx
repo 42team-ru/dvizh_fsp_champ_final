@@ -87,7 +87,7 @@ export default function OrgsCatalogPage() {
             Мои
           </Button>
         </div>
-        <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_200px_200px]">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_200px_200px]">
           <label className="relative">
             <Search className="pointer-events-none absolute top-3.5 left-3 size-4 text-muted-foreground" />
             <Input
@@ -183,7 +183,7 @@ export default function OrgsCatalogPage() {
           </>
         ) : (
           <>
-            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
               {data?.items.map((org) => (
                 <Card key={org.id} className="gap-4 p-5 shadow-hard-sm">
                   <div className="flex items-center gap-4">

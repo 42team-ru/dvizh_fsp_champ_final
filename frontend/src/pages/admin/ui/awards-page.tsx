@@ -60,11 +60,11 @@ export default function AdminAwardsPage() {
               <motion.span
                 animate={{ rotate: [0, -8, 8, 0] }}
                 transition={{ duration: 1.6, repeat: Infinity, repeatDelay: 2 }}
-                className="flex size-24 shrink-0 items-center justify-center rounded-[22px] border-[3px] border-ink bg-card"
+                className="flex size-16 shrink-0 items-center justify-center rounded-[18px] border-[3px] border-ink bg-card sm:size-24 sm:rounded-[22px]"
               >
-                <Trophy className="size-10" strokeWidth={2.2} />
+                <Trophy className="size-8 sm:size-10" strokeWidth={2.2} />
               </motion.span>
-              <div className="flex min-w-0 flex-1 flex-col gap-2">
+              <div className="flex min-w-[min(100%,220px)] flex-1 flex-col gap-2">
                 <div className="flex flex-wrap gap-2">
                   <Chip tone={proposed ? "bg-ink text-secondary" : "bg-card"} className={cn("text-[10px]", proposed && "text-secondary")}>
                     {proposed ? "предложена" : "подтверждена"}

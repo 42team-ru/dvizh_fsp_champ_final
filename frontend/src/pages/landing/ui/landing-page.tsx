@@ -12,7 +12,7 @@ export default function LandingPage() {
   const slide = SLIDES[active - 1];
 
   return (
-    <div className="landing-shell font-sans text-ink">
+    <div className="landing-shell h-dvh overflow-hidden font-sans text-ink">
       <LandingNav active={active} onNavigate={goTo} />
       <main ref={scrollerRef} className="landing h-dvh overflow-x-hidden overflow-y-auto overscroll-y-none lg:snap-y lg:snap-proximity">
         <HeroSlide />

@@ -14,7 +14,6 @@ const NAV = [
   { key: "feed", to: "/feed", label: "Лента", icon: "icon-grid" },
   { key: "blog", to: "/blog", label: "Блог", icon: null },
   { key: "activity", to: "/activity", label: "Активность", icon: "icon-bell" },
-  { key: "profile", to: "/profile", label: "Профиль", icon: "icon-user" },
 ] as const;
 
 /**
@@ -35,8 +34,8 @@ const iconFolder = (current: string, key: string) =>
 export function AppHeader({ current = "home" }: { current?: "home" | "feed" | "blog" | "profile" | "activity" | "cabinet" | "admin" | "orgs" }) {
   const cabinet = useCabinetAccess();
   const nav = useNavAccess();
-  const items = NAV.filter((item) =>
-    (item.key !== "activity" || nav.showActivity) && (item.key !== "profile" || nav.showProfile));
+  // «Профиль» — только в меню аккаунта справа
+  const items = NAV.filter((item) => item.key !== "activity" || nav.showActivity);
   return (
     <header className="sticky top-0 z-40 box-border h-[76px] border-b-2 border-ink bg-background">
       <div className="mx-auto flex h-full w-full max-w-[1280px] items-center px-4 xl:px-8 2xl:max-w-[1440px]">

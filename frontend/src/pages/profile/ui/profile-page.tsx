@@ -14,6 +14,7 @@ import { Eyebrow } from "@/shared/components/ui/eyebrow";
 import { RoughBorder } from "@/shared/components/ui/rough-border";
 import { cn } from "cn";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
+import { useFitHeight } from "@/shared/lib/use-fit-height";
 
 
 function Img({ name, className }: { name: string; className?: string }) {
@@ -40,6 +41,9 @@ export default function ProfilePage() {
   const owner = usePublicProfile();
   const { user: me } = useUser();
   const user = owner ? owner.user : me;
+  // паспорт виден целиком с первого экрана и на низких окнах (FullHD с масштабом 125%, ноутбуки):
+  // верхний ряд уменьшается целиком; 132 = шапка 76 + отступ сверху 32 + запас снизу 24
+  const fit = useFitHeight(132);
   return (
     <>
     <ProfileMobile />
@@ -47,8 +51,8 @@ export default function ProfilePage() {
       <MemphisBackground seed={owner ? "user" : "profile"} />
       <AppHeader current={owner ? "feed" : "profile"} />
       <main className="mx-auto w-full max-w-[1280px] px-8 pt-8 pb-12">
-        <div className="grid grid-cols-1 items-stretch gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
-          <PassportSpread />
+        <div className="grid grid-cols-1 items-stretch gap-6 xl:grid-cols-[minmax(0,1fr)_340px]" style={fit.style}>
+          <PassportSpread ref={fit.measure} />
           <div className="grid min-w-0 grid-cols-2 items-start gap-4 xl:flex xl:flex-col xl:items-stretch">
             <Attendance />
             <HistoryCard />

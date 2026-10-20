@@ -1,5 +1,5 @@
 import { DEFAULT_CENTER, KEY, type Bbox, type MapPoint, type MapProvider, type PointPicker } from "../map-contract";
-import { HOME_PIN, clusterHtml, contains, inBbox, mount, mountControls, pad, pinHtml } from "../map-utils";
+import { HOME_PIN, clusterHtml, contains, inBbox, mount, mountControls, pad, pinHtml, vpZoom } from "../map-utils";
 
 /** RasterJS: координаты SDK [lat, lng], наружу всегда [lon, lat]. */
 /* Минимальные типы того, что используем из глобального DG (RasterJS). */
@@ -76,6 +76,9 @@ const controls = (el: HTMLElement, map: DgMap) => mountControls(el, {
   zoomOut: () => map.zoomOut(),
 });
 
+/** Размер в пикселях карты: метки увеличены вместе со страницей на 2K/4K (см. mount). */
+const scaled = ([x, y]: [number, number]): [number, number] => [x * vpZoom(), y * vpZoom()];
+
 function readBbox(map: DgMap): Bbox {
   const b = map.getBounds();
   const sw = b.getSouthWest();
@@ -83,13 +86,13 @@ function readBbox(map: DgMap): Bbox {
   return { minLon: sw.lng, minLat: sw.lat, maxLon: ne.lng, maxLat: ne.lat };
 }
 
-/** Простая кластеризация по экрану: точки ближе RADIUS пикселей собираются в кружок с числом. */
+/** Простая кластеризация по экрану: точки ближе RADIUS пикселей (с зумом страницы) собираются в кружок с числом. */
 const RADIUS = 56;
 function clusterize(map: DgMap, points: MapPoint[]) {
   const groups: { at: Point; points: MapPoint[] }[] = [];
   for (const point of points) {
     const at = map.latLngToContainerPoint([point.coordinates[1], point.coordinates[0]]);
-    const near = groups.find((g) => Math.hypot(g.at.x - at.x, g.at.y - at.y) < RADIUS);
+    const near = groups.find((g) => Math.hypot(g.at.x - at.x, g.at.y - at.y) < RADIUS * vpZoom());
     if (near) near.points.push(point);
     else groups.push({ at, points: [point] });
   }
@@ -175,7 +178,7 @@ export async function createEventsMap(container: HTMLElement, center = DEFAULT_C
       home?.remove();
       home = point
         ? dg.marker([point[1], point[0]], {
-            icon: dg.divIcon({ className: "map-pin-host", iconSize: HOME_PIN.size, iconAnchor: HOME_PIN.anchor, html: HOME_PIN.html }),
+            icon: dg.divIcon({ className: "map-pin-host", iconSize: scaled(HOME_PIN.size), iconAnchor: scaled(HOME_PIN.anchor), html: HOME_PIN.html }),
             interactive: false,
             zIndexOffset: 2000,
           }).addTo(map)

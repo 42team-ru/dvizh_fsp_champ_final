@@ -106,9 +106,12 @@ function Button({
       data-slot="button"
       data-variant={variant}
       data-size={size}
+      // relative — до className: fixed/absolute/sticky снаружи должны его перекрыть (рамке подходит любое позиционирование)
       className={cn(
-        buttonVariants({ variant, size, className }),
-        enabled && "relative border-transparent"
+        buttonVariants({ variant, size }),
+        enabled && "relative",
+        className,
+        enabled && "border-transparent"
       )}
       {...props}
     >

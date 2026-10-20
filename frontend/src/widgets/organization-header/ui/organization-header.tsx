@@ -116,7 +116,8 @@ export function OrganizationHeader({
           </div>
         )}
       </div>
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      {/* три счётчика на планшете — в один ряд, без одинокой карточки во втором */}
+      <div className={`grid grid-cols-2 gap-3 lg:grid-cols-4 ${stats.length === 3 ? "sm:grid-cols-3" : ""}`}>
         {stats.map(([value, label]) => (
           <div
             key={label}

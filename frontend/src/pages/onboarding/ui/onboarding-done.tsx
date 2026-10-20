@@ -90,7 +90,7 @@ function Events() {
         <EmptyState icon={Compass} tone="bg-mint" title="Пока ничего не нашлось"
           text="Рядом нет встреч по твоим видам. Загляни в ленту — там все встречи города." />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {items.map((item, i) => <RecCard key={item.event.id} item={item} index={i} onDismiss={dismiss} />)}
         </div>
       )}
@@ -153,7 +153,7 @@ function Clubs() {
   return (
     <section className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-5">
       <h2 className="shrink-0 font-display text-2xl font-extrabold">Клубы для вас</h2>
-      <div className="grid flex-1 gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 flex-1 gap-3 sm:grid-cols-2">
         {clubs.map((c, i) => (
           <motion.div key={c.organization.id} initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.4 + i * 0.1 }} whileHover={{ y: -2 }}>

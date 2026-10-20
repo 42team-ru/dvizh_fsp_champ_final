@@ -30,6 +30,7 @@ import { RoughBorder } from "@/shared/components/ui/rough-border";
 import { cn } from "cn";
 import { quoteText } from "@/shared/lib/statuses";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
+import { FitWidth } from "@/shared/components/ui/fit-width";
 import { TicketStrip } from "@/entity/event/ui/ticket-strip";
 import { TicketAdmittedStamp } from "@/entity/event/ui/ticket-admitted-stamp";
 import { EventShare } from "./event-share";
@@ -511,6 +512,8 @@ export default function EventPage() {
     <div className="relative isolate hidden min-h-dvh overflow-clip bg-background lg:block">
       <MemphisBackground seed="event" />
       <AppHeader current="feed" />
+      {/* билет нарисован под 1280: на 1024–1279 страница уменьшается целиком, а не обрезается */}
+      <FitWidth width={1280}>
       <main className="mx-auto flex w-full max-w-[1280px] flex-col items-center gap-7 px-8 pt-8 pb-12">
         <TopBar m={m} />
         {m.query.isPending && <p className="w-[1216px] text-lg font-semibold text-muted-foreground">Загружаем событие…</p>}
@@ -554,6 +557,7 @@ export default function EventPage() {
           </>
         )}
       </main>
+      </FitWidth>
     </div>
     </>
   );

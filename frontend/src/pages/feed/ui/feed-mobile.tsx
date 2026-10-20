@@ -162,7 +162,8 @@ function SmallRow({ items, placeOf, reasonOf, onDismiss }: {
             </span>
           </div>
           <div className="flex flex-col gap-[6px] p-3">
-            <p className="font-display text-[13px] leading-[17px] font-bold text-foreground">
+            {/* плитка в полэкрана: длинное слово («программированию») переносится с дефисом, а не обрезается */}
+            <p className="font-display text-[13px] leading-[17px] font-bold hyphens-auto text-foreground">
               {s.title}
             </p>
             {reasonOf?.(e.id) ? (

@@ -419,7 +419,7 @@ function RegistrationTab({ e }: { e: EventResponse }) {
 
       <div className="space-y-3.5">
         <h3 className="font-display text-base font-bold">Условия</h3>
-        <dl className="grid gap-x-4 gap-y-3 sm:grid-cols-[120px_1fr]">
+        <dl className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-[120px_1fr]">
           <dt className="text-[13px] font-extrabold text-muted-foreground">Уровень</dt>
           <dd><Chip>{EVENT_LEVEL_LABEL[e.level]}</Chip></dd>
           {e.requirements && <>

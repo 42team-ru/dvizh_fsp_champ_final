@@ -9,6 +9,7 @@ import { UserAvatar } from "@/shared/components/ui/user-avatar";
 import type { UserShortResponse } from "@/shared/api/generated/core/appAPI.schemas";
 import { fullName } from "@/pages/event/model/use-event";
 import { handle } from "@/shared/lib/handle";
+import { useScrollActiveIntoView } from "@/shared/lib/use-scroll-active";
 
 /** Плашка статуса: текст капсом, цвет — только подсказка. */
 export function Chip({ tone = "bg-card", className, children }: { tone?: string; className?: string; children: ReactNode }) {
@@ -48,8 +49,9 @@ export function PillTabs<K extends string>({
   onChange: (key: K) => void;
   className?: string;
 }) {
+  const ref = useScrollActiveIntoView<HTMLDivElement>(value);
   return (
-    <div role="tablist" className={cn("no-scrollbar flex max-w-full gap-1 overflow-x-auto rounded-pill border-2 border-ink bg-card p-1", className)}>
+    <div ref={ref} role="tablist" className={cn("no-scrollbar flex max-w-full gap-1 overflow-x-auto rounded-pill border-2 border-ink bg-card p-1", className)}>
       {tabs.map((t) => {
         const active = t.key === value;
         return (

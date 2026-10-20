@@ -110,7 +110,7 @@ function AddPhotoBody({ userId, initialEventId, onClose }: { userId: string; ini
       aria-busy={add.isPending}
     >
       {header}
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <fieldset className="flex min-w-0 flex-col gap-2">
           <legend className="mb-2 text-[10px] font-extrabold tracking-[1.5px] text-muted-foreground">1 · С КАКОГО ЗАНЯТИЯ</legend>
           {eligible.isPending ? (

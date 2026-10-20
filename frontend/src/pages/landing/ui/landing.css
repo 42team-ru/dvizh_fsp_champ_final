@@ -1,6 +1,10 @@
 ﻿/* Карточки и кнопки не меняют позицию при прокрутке и наведении.
    Обрезается фон секции, а не содержимое и тени отдельных элементов. */
-.landing { position: relative; }
+.landing { position: relative; scrollbar-width: none; }
+/* Полоса прокрутки в Chrome оставляла белый зазор справа; листаем колесом, тачем и точками. */
+.landing::-webkit-scrollbar { display: none; }
+/* Глобальный scrollbar-gutter резервирует место под полосу страницы, а она на лендинге не прокручивается. */
+html:has(.landing-shell) { scrollbar-gutter: auto; }
 .landing-shell [data-slot="button"] {
   translate: none;
   transition-property: background-color, color, border-color, box-shadow;

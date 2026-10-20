@@ -17,6 +17,7 @@ import { cn } from "cn";
 import type { LucideIcon } from "lucide-react";
 import { MyEventsMap } from "@/widgets/events-map/ui/my-events-map";
 import { MemphisBackground } from "@/shared/components/ui/memphis-background";
+import { FitWidth } from "@/shared/components/ui/fit-width";
 import { plural } from "@/shared/lib/plural";
 import { InviteActions, usePendingInvites } from "@/features/organizer-invite/ui/invite-actions";
 
@@ -186,6 +187,8 @@ export default function ActivityPage() {
     <div className="relative isolate hidden min-h-dvh overflow-clip bg-background lg:block">
       <MemphisBackground seed="activity" />
       <AppHeader current="activity" />
+      {/* колонки нарисованы под 1280: на 1024–1279 страница уменьшается целиком, а не обрезается */}
+      <FitWidth width={1280}>
       <main className="mx-auto flex w-full max-w-[1280px] flex-col gap-7 px-8 pt-8 pb-12">
         <FilterBar m={m} />
         <BlogPrompt compact className="w-[1216px] empty:hidden" />
@@ -210,6 +213,7 @@ export default function ActivityPage() {
           )}
         </div>
       </main>
+      </FitWidth>
     </div>
     </>
   );
