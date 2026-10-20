@@ -5,7 +5,7 @@
 
 	# Всё серверное -> бэк. Пока app перезапускается при деплое, Caddy держит запрос до 30с и ретраит
 	# (вместо 502), так что пользователь видит лишь небольшую задержку.
-	@backend path /api/* /actuator/health* /swagger-ui* /v3/api-docs*
+	@backend path /api /api/* /actuator/health* /swagger-ui* /v3/api-docs*
 	handle @backend {
 		reverse_proxy app:8080 {
 			lb_try_duration 30s
@@ -16,7 +16,32 @@
 	# Остальное -> SPA (fallback на index.html для роутов React)
 	handle {
 		root * /srv/web
-		try_files {path} /index.html
-		file_server
+		route {
+			# Эти файлы не должны превращаться в HTML при ошибке пути.
+			@pwa path /sw.js /manifest.webmanifest
+			handle @pwa {
+				header Cache-Control "no-cache"
+				@worker path /sw.js
+				header @worker Service-Worker-Allowed "/"
+				@manifest path /manifest.webmanifest
+				header @manifest Content-Type "application/manifest+json"
+				file_server
+			}
+			@assets path /assets/*
+			handle @assets {
+				header Cache-Control "public, max-age=31536000, immutable"
+				file_server
+			}
+			@static path /fonts/* /icons/*
+			handle @static {
+				header Cache-Control "no-cache"
+				file_server
+			}
+			handle {
+				try_files {path} /index.html
+				header Cache-Control "no-cache"
+				file_server
+			}
+		}
 	}
 }

@@ -25,6 +25,8 @@ const RequireAuth = () => {
   }
 
   if (isError) {
+    // Установленное приложение без сети открывается из кеша: объясняем по-человечески, а не «Network Error».
+    const offline = typeof navigator !== "undefined" && !navigator.onLine;
     return (
       <main className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-background p-6">
         <div className="pointer-events-none absolute inset-0">
@@ -38,11 +40,14 @@ const RequireAuth = () => {
 
           <div className="space-y-2 text-center">
             <h1 className="text-xl font-semibold tracking-tight text-foreground">
-              Не удалось загрузить профиль
+              {offline ? "Нет подключения к интернету" : "Не удалось загрузить профиль"}
             </h1>
             <p className="text-muted-foreground text-sm">
-              {error?.detail ??
-                "Проверьте подключение к сети или повторите попытку позже."}
+              {offline
+                ? "Движ откроется, как только появится сеть. Нажмите «Повторить», когда подключитесь."
+                : error?.detail && error.detail !== "Network Error"
+                  ? error.detail
+                  : "Проверьте подключение к сети или повторите попытку позже."}
             </p>
           </div>
 
